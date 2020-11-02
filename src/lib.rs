@@ -52,58 +52,51 @@ lazy_static! {
 static WRAPPER_CONFIG: OnceCell<config::FullConfig> = OnceCell::new();
 
 // --------------------------- Utilities functions for communicating with slave ------------------------------
-fn send_command_to_slave<T, V>(handle: SlaveHandle, value: T) -> Result<V, String>
+
+fn execute_fmi_command_status<T>(handle_ptr: *const c_int, value: T) -> i32
+where
+    T: serde::ser::Serialize + std::panic::UnwindSafe,
+{
+    match execute_fmi_command_return::<_, i32>(handle_ptr, value) {
+        Ok(status) => status as i32,
+        Err(_) => Fmi2Status::Fmi2Error as i32,
+    }
+}
+
+fn execute_fmi_command_return<T, V>(handle_ptr: *const c_int, value: T) -> Result<V, ()>
 where
     T: serde::ser::Serialize + std::panic::UnwindSafe,
     V: serde::de::DeserializeOwned,
 {
-    let map = HANDLE_TO_SOCKETS.lock().unwrap();
-    let command_socket = map.get(&handle).unwrap().lock().unwrap();
-
-    let format = WRAPPER_CONFIG
-        .get()
-        .expect("the configuration is not ready. do not invoke this function prior to setting configuration")
-        .handshake_info
-        .serialization_format;
-
-    command_socket.send_as_object(value, format, None).unwrap();
-
-    let bytes = command_socket.recv_bytes(0).unwrap();
-
-    let res = match format {
-        SerializationFormat::Pickle => {
-            serde_pickle::from_slice(&bytes).expect("unable to un-pickle object")
-        }
-        SerializationFormat::Json => {
-            serde_json::from_slice(&bytes).expect("unable to decode json object")
-        }
-    };
-
-    Ok(res)
-    //Ok(command_socket.recv_from_pickle().unwrap())
-}
-
-fn execute_fmi_command<T>(handle_ptr: *const c_int, value: T) -> Fmi2Status
-where
-    T: serde::ser::Serialize + std::panic::UnwindSafe,
-{
     let result_or_panic = catch_unwind(|| {
         let handle = unsafe { *handle_ptr };
 
-        send_command_to_slave::<_, i32>(handle, value)
+        let map = HANDLE_TO_SOCKETS.lock().unwrap();
+        let command_socket = map.get(&handle).unwrap().lock().unwrap();
+        let format = WRAPPER_CONFIG
+            .get()
+            .expect("the configuration is not ready. do not invoke this function prior to setting configuration")
+            .handshake_info
+            .serialization_format;
+
+        command_socket.send_as_object(value, format, None).unwrap();
+        let bytes = command_socket.recv_bytes(0).unwrap();
+        let res: V = match format {
+            SerializationFormat::Pickle => {
+                serde_pickle::from_slice(&bytes).expect("unable to un-pickle object")
+            }
+            SerializationFormat::Json => {
+                serde_json::from_slice(&bytes).expect("unable to decode json object")
+            }
+        };
+        res
     });
 
     match result_or_panic {
-        Ok(result) => match result {
-            Ok(status) => Fmi2Status::try_from(status).unwrap(),
-            Err(_) => {
-                eprintln!("Failed sending command, a recoverable error was raised");
-                Fmi2Status::Fmi2Error
-            }
-        },
-        Err(_) => {
+        Ok(value) => Ok(value),
+        Err(_panic) => {
             eprintln!("Failed sending command to slave. a panic was raised during the call");
-            Fmi2Status::Fmi2Fatal
+            Err(())
         }
     }
 }
@@ -271,7 +264,7 @@ pub extern "C" fn fmi2Instantiate(
 
 #[no_mangle]
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
-    execute_fmi_command(c, (FMI2FunctionCode::FreeInstance,));
+    execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
 }
 
 #[no_mangle]
@@ -287,14 +280,14 @@ pub extern "C" fn fmi2SetDebugLogging(
         let cat = unsafe { CStr::from_ptr(*categories.offset(i)).to_str().unwrap() };
         categories_vec.push(cat);
     }
-    execute_fmi_command(
+    execute_fmi_command_status(
         c,
         (
             FMI2FunctionCode::SetDebugLogging,
             categories_vec,
             logging_on == 0,
         ),
-    ) as i32
+    )
 }
 
 #[no_mangle]
@@ -322,7 +315,7 @@ pub extern "C" fn fmi2SetupExperiment(
         }
     };
 
-    execute_fmi_command(
+    execute_fmi_command_status(
         c,
         (
             FMI2FunctionCode::SetupExperiement,
@@ -335,22 +328,22 @@ pub extern "C" fn fmi2SetupExperiment(
 
 #[no_mangle]
 pub extern "C" fn fmi2EnterInitializationMode(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command(c, (FMI2FunctionCode::EnterInitializationMode,)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::EnterInitializationMode,)) as i32
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2ExitInitializationMode(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command(c, (FMI2FunctionCode::ExitInitializationMode,)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::ExitInitializationMode,)) as i32
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2Terminate(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command(c, (FMI2FunctionCode::Terminate,)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::Terminate,)) as i32
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2Reset(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command(c, (FMI2FunctionCode::Reset,)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::Reset,)) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
@@ -362,7 +355,7 @@ pub extern "C" fn fmi2DoStep(
     step_size: c_double,
     no_set_prior: c_int,
 ) -> c_int {
-    execute_fmi_command(
+    execute_fmi_command_status(
         c,
         (
             FMI2FunctionCode::DoStep,
@@ -392,7 +385,7 @@ pub extern "C" fn fmi2GetReal(
 
     // TODO
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
 }
 
 #[no_mangle]
@@ -407,7 +400,7 @@ pub extern "C" fn fmi2GetInteger(
 
     // TODO
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
 }
 
 #[no_mangle]
@@ -423,7 +416,7 @@ pub extern "C" fn fmi2GetBoolean(
 
     // TODO
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
 }
 
 /* See https://github.com/rust-lang/rust/issues/21709
@@ -448,7 +441,7 @@ pub extern "C" fn fmi2GetString(
 
     // TODO
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
 
     // match BACKEND.lock().unwrap().get_string(handle, references) {
     //     Ok((status, values_slave)) => {
@@ -488,7 +481,7 @@ pub extern "C" fn fmi2SetReal(
     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
     let values = unsafe { std::slice::from_raw_parts(values, nvr) };
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, values))) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, values))) as i32
 }
 
 #[no_mangle]
@@ -502,7 +495,7 @@ pub extern "C" fn fmi2SetInteger(
     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
     let values = unsafe { std::slice::from_raw_parts(values, nvr) };
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, values))) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, values))) as i32
 }
 
 #[no_mangle]
@@ -516,7 +509,7 @@ pub extern "C" fn fmi2SetBoolean(
     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
     let values = unsafe { std::slice::from_raw_parts(values as *const bool, nvr) };
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, values))) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, values))) as i32
 }
 
 #[no_mangle]
@@ -541,7 +534,7 @@ pub extern "C" fn fmi2SetString(
         };
     }
 
-    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, vec))) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, vec))) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------

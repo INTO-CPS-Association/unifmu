@@ -1,12 +1,18 @@
-import argparse
-from argparse import ArgumentError, ArgumentParser
 import json
+import logging
 import sys
-from fmu import FMU, Fmi2Status
+import xml.etree.ElementTree as ET
+from argparse import ArgumentParser
+from pathlib import Path
+
 import zmq
 
+from fmi2 import Fmi2Status
+from adder import Adder
 
-import logging
+
+def get_slave_instance():
+    return Adder()
 
 
 if __name__ == "__main__":
@@ -43,7 +49,25 @@ if __name__ == "__main__":
     handshake_socket.send_string(handshake_json)
     print(handshake_json)
 
-    slave = FMU()
+    # create slave object then use model description to create a mapping between fmi value references and attribute names of FMU
+    slave = get_slave_instance()
+
+    reference_to_attr = {}
+    with open(Path.cwd().parent / "modelDescription.xml") as f:
+        for v in ET.parse(f).find("ModelVariables"):
+            reference_to_attr[v.attrib["valueReference"]] = v.attrib["name"]
+
+    # -------- getter and setter functions ---------
+    def get_xxx(references):
+        attributes = [reference_to_attr[vref] for vref in references]
+        values = [getattr(slave, a) for a in attributes]
+        return (Fmi2Status.ok, values)
+
+    def set_xxx(references, values):
+        attributes = [reference_to_attr[vref] for vref in references]
+        for a, v in zip(attributes, values):
+            setattr(slave, a, v)
+        return Fmi2Status.ok
 
     def free_instance():
         logger.debug("freeing instance")
@@ -56,8 +80,8 @@ if __name__ == "__main__":
         3: slave.exit_initialization_mode,
         4: slave.terminate,
         5: slave.reset,
-        6: slave.set_xxx,
-        7: slave.get_xxx,
+        6: set_xxx,
+        7: get_xxx,
         8: slave.do_step,
     }
 
@@ -74,8 +98,8 @@ if __name__ == "__main__":
         logger.info(f"received command of kind {kind} with args: {args}")
 
         if kind in command_to_slave_methods:
-            status = command_to_slave_methods[kind](*args)
-            command_socket.send_pyobj(status)
+            result = command_to_slave_methods[kind](*args)
+            command_socket.send_pyobj(result)
 
         elif kind == 9:
 

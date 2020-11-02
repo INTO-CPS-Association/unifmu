@@ -1,6 +1,3 @@
-from typing import List, Tuple
-
-
 class Fmi2Status:
     """Represents the status of the FMU or the results of function calls.
 
@@ -49,34 +46,3 @@ class FMU:
 
     def reset(self):
         return Fmi2Status.ok
-
-    def get_xxx(self, references):
-        try:
-            # variables are stored in order of their value reference
-            attributes = [self.variables[i].name for i in references]
-
-            values = [getattr(self, a) for a in attributes]
-
-            return (Fmi2Status.ok, values)
-
-        except Exception:
-            self.log_err(
-                "An exception was raised when reading variables from slave",
-                exc_info=True,
-            )
-            return (Fmi2Status.error, None)
-
-    def set_xxx(self, references, values):
-        try:
-            # variables are stored in order of their value reference
-            attributes = [self.variables[i].name for i in references]
-
-            for a, v in zip(attributes, values):
-                setattr(self, a, v)
-
-        except Exception:
-
-            return Fmi2Status.error
-
-        else:
-            return Fmi2Status.ok
