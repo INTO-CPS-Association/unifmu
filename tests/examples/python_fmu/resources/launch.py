@@ -74,7 +74,7 @@ if __name__ == "__main__":
         logger.info(f"received command of kind {kind} with args: {args}")
 
         if kind in command_to_slave_methods:
-            status = command_to_slave_methods[kind](args)
+            status = command_to_slave_methods[kind](*args)
             command_socket.send_pyobj(status)
 
         elif kind == 9:

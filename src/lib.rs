@@ -1,11 +1,16 @@
+#![allow(non_snake_case)]
 use crate::config::FullConfig;
 use crate::config::LaunchConfig;
+use crate::fmi2::Fmi2Status;
+use libc::c_double;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fs::read_to_string;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
+use std::os::raw::c_uint;
+use std::os::raw::c_void;
 use std::panic::catch_unwind;
 use std::ptr::null_mut;
 use std::result::Result;
@@ -49,7 +54,7 @@ static WRAPPER_CONFIG: OnceCell<config::FullConfig> = OnceCell::new();
 // --------------------------- Utilities functions for communicating with slave ------------------------------
 fn send_command_to_slave<T, V>(handle: SlaveHandle, value: T) -> Result<V, String>
 where
-    T: serde::ser::Serialize,
+    T: serde::ser::Serialize + std::panic::UnwindSafe,
     V: serde::de::DeserializeOwned,
 {
     let map = HANDLE_TO_SOCKETS.lock().unwrap();
@@ -78,9 +83,36 @@ where
     //Ok(command_socket.recv_from_pickle().unwrap())
 }
 
+fn execute_fmi_command<T>(handle_ptr: *const c_int, value: T) -> Fmi2Status
+where
+    T: serde::ser::Serialize + std::panic::UnwindSafe,
+{
+    let result_or_panic = catch_unwind(|| {
+        let handle = unsafe { *handle_ptr };
+
+        send_command_to_slave::<_, Fmi2Status>(handle, value)
+    });
+
+    match result_or_panic {
+        Ok(result) => match result {
+            Ok(status) => status,
+            Err(_) => {
+                eprintln!("Failed sending command, a recoverable error was raised");
+                Fmi2Status::Fmi2Error
+            }
+        },
+        Err(_) => {
+            eprintln!("Failed sending command to slave. a panic was raised during the call");
+            Fmi2Status::Fmi2Fatal
+        }
+    }
+}
+
 // -------------------------------------------------------------------------------------------------------------
+use serde_repr::Serialize_repr;
 
 #[repr(i32)]
+#[derive(Serialize_repr)]
 enum FMI2FunctionCode {
     SetDebugLogging = 0,
     SetupExperiement = 1,
@@ -94,7 +126,6 @@ enum FMI2FunctionCode {
     FreeInstance = 9,
 }
 
-#[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn fmi2Instantiate(
     instance_name: *const c_char,
@@ -226,17 +257,337 @@ pub extern "C" fn fmi2Instantiate(
 
 #[no_mangle]
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
-    let status_or_panic = catch_unwind(|| {
-        let handle = unsafe { *c };
+    execute_fmi_command(c, (FMI2FunctionCode::FreeInstance,));
+}
 
-        let _: i32 =
-            send_command_to_slave(handle, (FMI2FunctionCode::FreeInstance as i32,)).unwrap();
+// ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
 
-        println!("received response");
-    });
+#[no_mangle]
+pub extern "C" fn fmi2DoStep(
+    c: *const SlaveHandle,
+    current: c_double,
+    step_size: c_double,
+    no_set_prior: c_int,
+) -> c_int {
+    execute_fmi_command(
+        c,
+        (
+            FMI2FunctionCode::DoStep,
+            current,
+            step_size,
+            no_set_prior == 0,
+        ),
+    ) as i32
+}
 
-    match status_or_panic {
-        Ok(_) => println!("slave successfully freed"),
-        Err(_) => eprint!("failed to remove slave"),
+#[no_mangle]
+pub extern "C" fn fmi2CancelStep(c: *const c_int) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+// ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
+#[no_mangle]
+pub extern "C" fn fmi2GetReal(
+    c: *const SlaveHandle,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *mut c_double,
+) -> c_int {
+    let handle = unsafe { *c };
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+
+    // TODO
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2GetInteger(
+    c: *const SlaveHandle,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *mut c_int,
+) -> c_int {
+    let handle = unsafe { *c };
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+
+    // TODO
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+}
+
+#[no_mangle]
+
+pub extern "C" fn fmi2GetBoolean(
+    c: *const SlaveHandle,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *mut c_int,
+) -> c_int {
+    let handle = unsafe { *c };
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+
+    // TODO
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+}
+
+/* See https://github.com/rust-lang/rust/issues/21709
+lazy_static! {
+    /// To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
+    /// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
+    /// We chose to do it on an instance basis, e.g. each instance has its own string buffer.
+    static ref HANDLE_TO_STR_BUFFER: Mutex<HashMap<SlaveHandle, >> = Mutex::new(HashMap::new());
+}
+*/
+
+#[no_mangle]
+
+pub extern "C" fn fmi2GetString(
+    c: *const c_int,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *mut *mut *mut c_char,
+) -> c_int {
+    let handle = unsafe { *c };
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+
+    // TODO
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, references)) as i32
+
+    // match BACKEND.lock().unwrap().get_string(handle, references) {
+    //     Ok((status, values_slave)) => {
+    //         if status <= Fmi2Status::Fmi2Warning {
+    //             // Convert vector of strings into c-string double pointer
+    //             // Note that we intentionally omit dropping the memory
+    //             // This should be cleared by next call to a FMI function (currently is not the case)
+    //             let mut vec_cstr = values_slave
+    //                 .unwrap()
+    //                 .into_iter()
+    //                 .map(|s| CString::new(s).unwrap().into_raw())
+    //                 .collect::<Vec<_>>();
+
+    //             vec_cstr.shrink_to_fit();
+    //             assert!(vec_cstr.len() == vec_cstr.capacity());
+
+    //             let vec_cstr = Box::leak(Box::new(vec_cstr)); // TODO fix leak
+
+    //             unsafe { std::ptr::write(values, vec_cstr.as_mut_ptr()) };
+    //         }
+    //         status.into()
+    //     }
+    //     Err(_e) => panic!("ERROR HANDLING NOT IMPLEMENTED"),
+    // }
+}
+
+// ------------------------------------- FMI FUNCTIONS (Setters) --------------------------------
+
+#[no_mangle]
+
+pub extern "C" fn fmi2SetReal(
+    c: *const c_int,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *const c_double,
+) -> c_int {
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    let values = unsafe { std::slice::from_raw_parts(values, nvr) };
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, values))) as i32
+}
+
+#[no_mangle]
+
+pub extern "C" fn fmi2SetInteger(
+    c: *const c_int,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *const c_int,
+) -> c_int {
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    let values = unsafe { std::slice::from_raw_parts(values, nvr) };
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, values))) as i32
+}
+
+#[no_mangle]
+
+pub extern "C" fn fmi2SetBoolean(
+    c: *const c_int,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *const c_int,
+) -> c_int {
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    let values = unsafe { std::slice::from_raw_parts(values as *const bool, nvr) };
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, values))) as i32
+}
+
+#[no_mangle]
+
+pub extern "C" fn fmi2SetString(
+    c: *const c_int,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *const *const c_char,
+) -> c_int {
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    let handle = unsafe { *c };
+
+    let mut vec: Vec<&str> = Vec::with_capacity(nvr);
+
+    for i in 0..nvr {
+        unsafe {
+            let cstr = CStr::from_ptr(*values.offset(i as isize))
+                .to_str()
+                .expect("Unable to convert C-string to Rust compatible string");
+            vec.insert(i, cstr);
+        };
     }
+
+    execute_fmi_command(c, (FMI2FunctionCode::GetXXX, (references, vec))) as i32
+}
+
+// ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetDirectionalDerivative(
+    c: *const c_int,
+    unknown_refs: *const c_int,
+    nvr_unknown: usize,
+    known_refs: *const c_int,
+    nvr_known: usize,
+    values_known: *const c_double,
+    values_unkown: *mut c_double,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2SetRealInputDerivatives(c: *const c_int, vr: *const c_uint) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetRealOutputDerivatives(c: *const c_int) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+// ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2SetFMUstate(c: *const c_int, state: *const c_void) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2SerializeFMUstate(
+    c: *const c_int,
+    state: *mut c_void,
+    data: *const c_char,
+    size: usize,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2DeSerializeFMUstate(
+    c: *const c_int,
+    serialized_state: *const c_char,
+    size: usize,
+    state: *mut c_void,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2SerializedFMUstateSize(c: *const c_int, state: *mut *mut c_void) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetFMUstate(c: *const c_int, state: *mut *mut c_void) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2FreeFMUstate(c: *const c_int) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+// ------------------------------------- FMI FUNCTIONS (Status) --------------------------------
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetRealStatus(
+    c: *const c_int,
+    status_kind: c_int,
+    value: *mut c_double,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetStatus(
+    c: *const c_int,
+    status_kind: c_int,
+    Fmi2Status: *mut c_int,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetIntegerStatus(
+    c: *const c_int,
+    status_kind: c_int,
+    value: *mut c_int,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetBooleanStatus(
+    c: *const c_int,
+    status_kind: c_int,
+    value: *mut c_int,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+pub extern "C" fn fmi2GetStringStatus(
+    c: *const c_int,
+    status_kind: c_int,
+    value: *mut c_char,
+) -> c_int {
+    eprintln!("NOT IMPLEMENTED");
+    Fmi2Status::Fmi2Error.into()
 }

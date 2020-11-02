@@ -20,6 +20,7 @@ serde = {version = "*", features = ["derive"]}
 serde-pickle = "*"
 toml = "0.5"
 serde_json = "*"
+serde_repr = "*"
 num_enum = "*"
 anyhow = "*"
 url = "*"

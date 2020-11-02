@@ -5,7 +5,9 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
 use std::os::raw::c_void;
+use wrapper::fmi2;
 use wrapper::fmi2::Fmi2CallbackFunctions;
+use wrapper::fmi2DoStep;
 use wrapper::fmi2FreeInstance;
 use wrapper::fmi2Instantiate;
 
@@ -98,6 +100,8 @@ fn test_fmu(name: &str) {
     );
 
     assert_ne!(handle, null_mut());
+
+    fmi2DoStep(handle, 0.0, 1.0, 0);
 
     fmi2FreeInstance(handle);
 }
