@@ -1,0 +1,8 @@
+[command]
+windows = [ "python", "launch.py" ]
+linux = [ "python3.8-dbg", "launch.py" ]
+macos = ["python3.8","launch.py"]
+
+[timeout]
+launch = 500
+command = 500
