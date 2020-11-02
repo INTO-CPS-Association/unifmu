@@ -55,10 +55,10 @@ pub struct PyfmuConfig {
 // ==================== status codes =====================
 
 /// Represents the possible status codes which are returned from the slave
+#[repr(i32)]
 #[derive(
     Serialize, Deserialize, Debug, TryFromPrimitive, IntoPrimitive, PartialEq, PartialOrd, Eq,
 )]
-#[repr(i32)]
 pub enum Fmi2Status {
     Fmi2OK,
     Fmi2Warning,

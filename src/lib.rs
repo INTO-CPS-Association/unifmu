@@ -90,12 +90,12 @@ where
     let result_or_panic = catch_unwind(|| {
         let handle = unsafe { *handle_ptr };
 
-        send_command_to_slave::<_, Fmi2Status>(handle, value)
+        send_command_to_slave::<_, i32>(handle, value)
     });
 
     match result_or_panic {
         Ok(result) => match result {
-            Ok(status) => status,
+            Ok(status) => Fmi2Status::try_from(status).unwrap(),
             Err(_) => {
                 eprintln!("Failed sending command, a recoverable error was raised");
                 Fmi2Status::Fmi2Error
@@ -125,6 +125,20 @@ enum FMI2FunctionCode {
     DoStep = 8,
     FreeInstance = 9,
 }
+
+// ------------------------------------- FMI FUNCTIONS --------------------------------
+
+#[no_mangle]
+pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
+    b"default\0".as_ptr() as *const i8
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2GetVersion() -> *const c_char {
+    b"2.0\0".as_ptr() as *const i8
+}
+
+// ------------------------------------- FMI FUNCTIONS (Life-Cycle) --------------------------------
 
 #[no_mangle]
 pub extern "C" fn fmi2Instantiate(
@@ -258,6 +272,85 @@ pub extern "C" fn fmi2Instantiate(
 #[no_mangle]
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
     execute_fmi_command(c, (FMI2FunctionCode::FreeInstance,));
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2SetDebugLogging(
+    c: *const SlaveHandle,
+    logging_on: c_int,
+    n_categories: usize,
+    categories: *const *const c_char,
+) -> c_int {
+    let mut categories_vec: Vec<&str> = vec![];
+    let n_categories = n_categories as isize;
+    for i in 0..n_categories {
+        let cat = unsafe { CStr::from_ptr(*categories.offset(i)).to_str().unwrap() };
+        categories_vec.push(cat);
+    }
+    execute_fmi_command(
+        c,
+        (
+            FMI2FunctionCode::SetDebugLogging,
+            categories_vec,
+            logging_on == 0,
+        ),
+    ) as i32
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2SetupExperiment(
+    c: *const SlaveHandle,
+    tolerance_defined: c_int,
+    tolerance: c_double,
+    start_time: c_double,
+    stop_time_defined: c_int,
+    stop_time: c_double,
+) -> c_int {
+    let tolerance = {
+        if tolerance_defined != 0 {
+            Some(tolerance)
+        } else {
+            None
+        }
+    };
+
+    let stop_time = {
+        if stop_time_defined != 0 {
+            Some(stop_time)
+        } else {
+            None
+        }
+    };
+
+    execute_fmi_command(
+        c,
+        (
+            FMI2FunctionCode::SetupExperiement,
+            tolerance,
+            start_time,
+            stop_time,
+        ),
+    ) as i32
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2EnterInitializationMode(c: *const SlaveHandle) -> c_int {
+    execute_fmi_command(c, (FMI2FunctionCode::EnterInitializationMode,)) as i32
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2ExitInitializationMode(c: *const SlaveHandle) -> c_int {
+    execute_fmi_command(c, (FMI2FunctionCode::ExitInitializationMode,)) as i32
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2Terminate(c: *const SlaveHandle) -> c_int {
+    execute_fmi_command(c, (FMI2FunctionCode::Terminate,)) as i32
+}
+
+#[no_mangle]
+pub extern "C" fn fmi2Reset(c: *const SlaveHandle) -> c_int {
+    execute_fmi_command(c, (FMI2FunctionCode::Reset,)) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------

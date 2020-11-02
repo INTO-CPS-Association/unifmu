@@ -29,13 +29,13 @@ class FMU:
     def __init__(self) -> None:
         pass
 
-    def set_debug_logging(self):
+    def set_debug_logging(self, categories, logging_on):
         return Fmi2Status.ok
 
     def do_step(self, current_time: float, step_size: float, no_step_prior: bool):
         return Fmi2Status.ok
 
-    def setup_experiment(self):
+    def setup_experiment(self, tolerance=None, start_time=None, stop_time=None):
         return Fmi2Status.ok
 
     def enter_initialization_mode(self):

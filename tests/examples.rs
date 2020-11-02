@@ -5,11 +5,11 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
 use std::os::raw::c_void;
-use wrapper::fmi2;
-use wrapper::fmi2::Fmi2CallbackFunctions;
-use wrapper::fmi2DoStep;
-use wrapper::fmi2FreeInstance;
-use wrapper::fmi2Instantiate;
+use wrapper::fmi2::{Fmi2CallbackFunctions, Fmi2Status};
+use wrapper::{
+    fmi2CancelStep, fmi2DoStep, fmi2EnterInitializationMode, fmi2ExitInitializationMode,
+    fmi2FreeInstance, fmi2Instantiate, fmi2SetupExperiment,
+};
 
 use url::Url;
 
@@ -100,6 +100,21 @@ fn test_fmu(name: &str) {
     );
 
     assert_ne!(handle, null_mut());
+
+    assert_eq!(
+        fmi2SetupExperiment(handle, 0, 0.0, 0.0, 0, 0.0),
+        Fmi2Status::Fmi2OK as i32
+    );
+
+    assert_eq!(
+        fmi2EnterInitializationMode(handle),
+        Fmi2Status::Fmi2OK as i32
+    );
+
+    assert_eq!(
+        fmi2ExitInitializationMode(handle),
+        Fmi2Status::Fmi2OK as i32
+    );
 
     fmi2DoStep(handle, 0.0, 1.0, 0);
 
