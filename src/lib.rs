@@ -373,19 +373,19 @@ pub extern "C" fn fmi2CancelStep(c: *const c_int) -> c_int {
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
-#[no_mangle]
-pub extern "C" fn fmi2GetReal(
-    c: *const SlaveHandle,
-    vr: *const c_uint,
-    nvr: usize,
-    values: *mut c_double,
-) -> c_int {
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
 
-    match execute_fmi_command_return::<_, Vec<c_double>>(c, (FMI2FunctionCode::GetXXX, references))
-    {
+fn fmi2GetXXX<T>(c: *const SlaveHandle, vr: *const c_uint, nvr: usize, values: *mut T) -> c_int
+where
+    T: serde::de::DeserializeOwned,
+{
+    let result_or_panic = catch_unwind(|| {
+        let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+
+        execute_fmi_command_return::<_, Vec<T>>(c, (FMI2FunctionCode::GetXXX, references)).unwrap()
+    });
+
+    match result_or_panic {
         Ok(values_slave) => {
-            println!("vector is: {:?}", values_slave);
             unsafe {
                 std::ptr::copy(values_slave.as_ptr(), values, nvr);
             }
@@ -396,18 +396,23 @@ pub extern "C" fn fmi2GetReal(
 }
 
 #[no_mangle]
+pub extern "C" fn fmi2GetReal(
+    c: *const SlaveHandle,
+    vr: *const c_uint,
+    nvr: usize,
+    values: *mut c_double,
+) -> c_int {
+    fmi2GetXXX(c, vr, nvr, values)
+}
+
+#[no_mangle]
 pub extern "C" fn fmi2GetInteger(
     c: *const SlaveHandle,
     vr: *const c_uint,
     nvr: usize,
     values: *mut c_int,
 ) -> c_int {
-    let handle = unsafe { *c };
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-
-    // TODO
-
-    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    fmi2GetXXX(c, vr, nvr, values)
 }
 
 #[no_mangle]
@@ -418,19 +423,15 @@ pub extern "C" fn fmi2GetBoolean(
     nvr: usize,
     values: *mut c_int,
 ) -> c_int {
-    let handle = unsafe { *c };
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-
-    // TODO
-
-    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    eprintln!("not implemented");
+    return Fmi2Status::Fmi2Error as i32;
 }
 
 /* See https://github.com/rust-lang/rust/issues/21709
 lazy_static! {
-    /// To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
-    /// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
-    /// We chose to do it on an instance basis, e.g. each instance has its own string buffer.
+    / To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
+    / they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
+    / We chose to do it on an instance basis, e.g. each instance has its own string buffer.
     static ref HANDLE_TO_STR_BUFFER: Mutex<HashMap<SlaveHandle, >> = Mutex::new(HashMap::new());
 }
 */
@@ -443,12 +444,15 @@ pub extern "C" fn fmi2GetString(
     nvr: usize,
     values: *mut *mut *mut c_char,
 ) -> c_int {
-    let handle = unsafe { *c };
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    eprintln!("not implemented");
+    return Fmi2Status::Fmi2Error as i32;
 
-    // TODO
+    // let handle = unsafe { *c };
+    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
 
-    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    // // TODO
+
+    // execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
 
     // match BACKEND.lock().unwrap().get_string(handle, references) {
     //     Ok((status, values_slave)) => {
