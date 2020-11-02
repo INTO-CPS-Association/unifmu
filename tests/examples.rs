@@ -8,7 +8,8 @@ use std::os::raw::c_void;
 use wrapper::fmi2::{Fmi2CallbackFunctions, Fmi2Status};
 use wrapper::{
     fmi2CancelStep, fmi2DoStep, fmi2EnterInitializationMode, fmi2ExitInitializationMode,
-    fmi2FreeInstance, fmi2Instantiate, fmi2SetupExperiment,
+    fmi2FreeInstance, fmi2GetBoolean, fmi2GetInteger, fmi2GetReal, fmi2GetString, fmi2Instantiate,
+    fmi2SetBoolean, fmi2SetInteger, fmi2SetReal, fmi2SetupExperiment,
 };
 
 use url::Url;
@@ -116,6 +117,20 @@ fn test_fmu(name: &str) {
         Fmi2Status::Fmi2OK as i32
     );
 
+    let references = &[0, 1, 2];
+    let mut values: [f64; 3] = [0.0, 0.0, 0.0];
+    fmi2GetReal(handle, references.as_ptr(), 1, values.as_mut_ptr());
+    assert_eq!(values, [0.0, 0.0, 0.0]);
+
+    let references = &[0, 1];
+    let mut values: [f64; 2] = [10.0, 20.0];
+    fmi2SetReal(handle, references.as_ptr(), 2, values.as_mut_ptr());
+
+    let references = &[2];
+    let mut values: [f64; 1] = [0.0];
+    fmi2GetReal(handle, references.as_ptr(), 1, values.as_mut_ptr());
+
+    assert_eq!(values, [30.0]);
     fmi2DoStep(handle, 0.0, 1.0, 0);
 
     fmi2FreeInstance(handle);

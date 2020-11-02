@@ -380,12 +380,19 @@ pub extern "C" fn fmi2GetReal(
     nvr: usize,
     values: *mut c_double,
 ) -> c_int {
-    let handle = unsafe { *c };
     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
 
-    // TODO
-
-    execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
+    match execute_fmi_command_return::<_, Vec<c_double>>(c, (FMI2FunctionCode::GetXXX, references))
+    {
+        Ok(values_slave) => {
+            println!("vector is: {:?}", values_slave);
+            unsafe {
+                std::ptr::copy(values_slave.as_ptr(), values, nvr);
+            }
+            Fmi2Status::Fmi2OK as i32
+        }
+        Err(_) => Fmi2Status::Fmi2Error as i32,
+    }
 }
 
 #[no_mangle]
@@ -481,7 +488,7 @@ pub extern "C" fn fmi2SetReal(
     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
     let values = unsafe { std::slice::from_raw_parts(values, nvr) };
 
-    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, values))) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, references, values)) as i32
 }
 
 #[no_mangle]

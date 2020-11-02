@@ -6,4 +6,7 @@ class Adder(FMU):
 
         self.a = 0.0
         self.b = 0.0
-        self.s = self.a + self.b
+
+    @property
+    def s(self):
+        return self.a + self.b

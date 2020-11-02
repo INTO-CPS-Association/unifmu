@@ -55,13 +55,15 @@ if __name__ == "__main__":
     reference_to_attr = {}
     with open(Path.cwd().parent / "modelDescription.xml") as f:
         for v in ET.parse(f).find("ModelVariables"):
-            reference_to_attr[v.attrib["valueReference"]] = v.attrib["name"]
+            reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
+
+    print(reference_to_attr)
 
     # -------- getter and setter functions ---------
     def get_xxx(references):
         attributes = [reference_to_attr[vref] for vref in references]
         values = [getattr(slave, a) for a in attributes]
-        return (Fmi2Status.ok, values)
+        return values
 
     def set_xxx(references, values):
         attributes = [reference_to_attr[vref] for vref in references]
