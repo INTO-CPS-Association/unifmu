@@ -144,7 +144,8 @@ fn test_fmu(name: &str) {
     fmi2FreeInstance(handle);
 }
 
-#[test]
-fn python_fmu() {
-    test_fmu("python_fmu")
+fn main() {
+    for i in 0..100 {
+        test_fmu("python_fmu")
+    }
 }

@@ -133,6 +133,33 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 
 // ------------------------------------- FMI FUNCTIONS (Life-Cycle) --------------------------------
 
+/// Instantiates a slave instance by invoking a command in a new process
+/// the command is specified by the configuration file, launch.toml, that should be located in the resources directory
+/// fmi-commands are sent between the wrapper and slave(s) using a message queue library, specifically zmq.
+///
+/// The protocol for instantiating a slave can be defined as:
+/// 1. read the launch.toml file
+/// 2. wrapper crates a single handshake socket
+/// 2. wrapper invokes the launch-command defined for the specific OS, the handshake-endpoint is appended to the defined command
+/// 3. slave opens two socket, handshake and command
+/// 4. slave uses handshake-socket to send the a endpoint of the command socket back to the wrapper
+///
+///
+/// Not the connection has been establihed between the wrapper and the newly instantiated slave.
+/// The protocol for sending fmi-commands between wrapper and slave can be defined as
+/// 1. C-API fmi-function is invoked on wrapper
+/// 2. C-types are converted into native Rust-types
+/// 3. Rust types are serialized
+/// 4. Wrapper sends message to command_socket of slave
+/// 5. Slave deserializes message and responds
+/// 6. step 4+5 are repeated until fmi2FreeInstance
+///
+/// Notes:
+/// * The slave choses decides the following:
+///     * transport layer
+///     * port and endpoint
+///     * serialization format (Json, FlexBuffers, Pickle, etc)
+///
 #[no_mangle]
 pub extern "C" fn fmi2Instantiate(
     instance_name: *const c_char,
@@ -224,13 +251,12 @@ pub extern "C" fn fmi2Instantiate(
             handshake_info
         );
 
-        WRAPPER_CONFIG
-            .set(FullConfig {
-                launch_config: config.clone(),
-                handshake_info: handshake_info.clone(),
-            })
-            .unwrap();
-
+        // intialize configuration, in case it has not been done before.
+        // In practice just try to set it and ignore the potential error indicating that it was full
+        let _ = WRAPPER_CONFIG.set(FullConfig {
+            launch_config: config.clone(),
+            handshake_info: handshake_info.clone(),
+        });
         let command_socket = CONTEXT.socket(zmq::REQ).unwrap();
         command_socket
             .connect(&handshake_info.command_endpoint)
@@ -265,6 +291,8 @@ pub extern "C" fn fmi2Instantiate(
 #[no_mangle]
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
     execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
+
+    unsafe { Box::from_raw(c) };
 }
 
 #[no_mangle]
