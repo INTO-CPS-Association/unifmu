@@ -6,6 +6,7 @@ use libc::c_double;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::CStr;
+use std::ffi::CString;
 use std::fs::read_to_string;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
@@ -40,6 +41,8 @@ use once_cell::sync::OnceCell;
 /// An identifier that can be used to uniquely identify a slave within the context of a specific backend.
 pub type SlaveHandle = i32;
 
+// -------------------------- ZMQ -----------------------------------
+
 lazy_static! {
     static ref CONTEXT: zmq::Context = zmq::Context::new();
 }
@@ -48,6 +51,8 @@ lazy_static! {
     static ref HANDLE_TO_SOCKETS: Mutex<HashMap<SlaveHandle, Mutex<zmq::Socket>>> =
         Mutex::new(HashMap::new());
 }
+
+// ----------------------------- PROCESS -----------------------------------
 
 lazy_static! {
     static ref HANDLE_TO_PROCESS: Mutex<HashMap<SlaveHandle, Popen>> = Mutex::new(HashMap::new());
@@ -283,11 +288,11 @@ pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
         // ensure that process is terminated
         HANDLE_TO_PROCESS.lock().unwrap().remove(&handle).unwrap();
 
-        // HANDLE_TO_SOCKETS
-        //     .lock()
-        //     .unwrap()
-        //     .remove(&handle)
-        //     .expect("the sockets associated with the slave appears to be missing");
+        HANDLE_TO_SOCKETS
+            .lock()
+            .unwrap()
+            .remove(&handle)
+            .expect("the sockets associated with the slave appears to be missing");
 
         unsafe { Box::from_raw(c) };
     });
@@ -466,9 +471,15 @@ pub extern "C" fn fmi2GetBoolean(
     }
 }
 
+struct StringBuffer {
+    array: Vec<*mut c_char>,
+}
+unsafe impl Send for StringBuffer {}
+unsafe impl Sync for StringBuffer {}
+
+// https://users.rust-lang.org/t/share-mut-t-between-threads-wrapped-in-mutex/19621/2
 lazy_static! {
-    static ref HANDLE_TO_STR_BUFFER: Mutex<HashMap<SlaveHandle, Vec<String>>> =
-        Mutex::new(HashMap::new());
+    static ref STRING_BUFFER: Mutex<StringBuffer> = Mutex::new(StringBuffer { array: Vec::new() });
 }
 
 /// Reads strings from FMU
@@ -493,7 +504,6 @@ pub extern "C" fn fmi2GetString(
         // Convert vector of strings into c-string double pointer
         // Note that we intentionally omit dropping the memory
         // This should be cleared by next call to a FMI function (currently is not the case)
-        use std::ffi::CString;
         let mut vec_cstr = strings
             .into_iter()
             .map(|s| CString::new(s).unwrap().into_raw())
@@ -502,9 +512,17 @@ pub extern "C" fn fmi2GetString(
         vec_cstr.shrink_to_fit();
         assert!(vec_cstr.len() == vec_cstr.capacity());
 
-        let vec_cstr = Box::leak(Box::new(vec_cstr)); // TODO fix leak
+        unsafe {
+            let mut string_buffer = STRING_BUFFER.lock().unwrap();
+            // free previously allocated using CString::into_raw
+            for v in string_buffer.array.iter() {
+                CString::from_raw(*v);
+            }
 
-        unsafe { std::ptr::write(values, vec_cstr.as_mut_ptr()) };
+            string_buffer.array = vec_cstr;
+
+            std::ptr::write(values, string_buffer.array.as_mut_ptr());
+        }
     }) {
         Ok(_) => Fmi2Status::Fmi2OK as i32,
         Err(_) => Fmi2Status::Fmi2Error as i32,
