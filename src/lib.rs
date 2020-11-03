@@ -590,7 +590,7 @@ pub extern "C" fn fmi2SetString(
         };
     }
 
-    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, vec))) as i32
+    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, references, vec)) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------

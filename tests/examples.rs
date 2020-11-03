@@ -15,7 +15,7 @@ use wrapper::fmi2::{Fmi2CallbackFunctions, Fmi2Status};
 use wrapper::{
     fmi2CancelStep, fmi2DoStep, fmi2EnterInitializationMode, fmi2ExitInitializationMode,
     fmi2FreeInstance, fmi2GetBoolean, fmi2GetInteger, fmi2GetReal, fmi2GetString, fmi2Instantiate,
-    fmi2SetBoolean, fmi2SetInteger, fmi2SetReal, fmi2SetupExperiment,
+    fmi2SetBoolean, fmi2SetInteger, fmi2SetReal, fmi2SetString, fmi2SetupExperiment,
 };
 
 use url::Url;
@@ -198,17 +198,29 @@ fn test_fmu(name: &str) {
         vec!["", "", ""]
     );
 
-    // let mut values: [c_int; 2] = [1, 1];
-    // fmi2SetString(handle, [6, 7].as_ptr(), values.len(), values.as_mut_ptr());
+    let string_a = b"abc\0";
+    let string_b = b"def\0";
+    let mut values = [string_a.as_ptr(), string_b.as_ptr()];
 
-    // fmi2DoStep(handle, 0.0, 1.0, 0);
+    fmi2SetString(
+        handle,
+        [9, 10].as_ptr(),
+        2,
+        values.as_mut_ptr() as *const *const i8,
+    );
 
-    // let mut values: [c_int; 1] = [0];
-    // fmi2GetString(handle, [8].as_ptr(), values.len(), values.as_mut_ptr());
-    // assert_eq!(values, [1]);
+    fmi2DoStep(handle, 0.0, 1.0, 0);
 
-    // cleanup
+    let values = MaybeUninit::uninit().as_mut_ptr();
+    fmi2GetString(handle, [11].as_ptr(), 1, values);
 
+    assert_ne!(values, null_mut());
+    assert_eq!(
+        unsafe { cstrings_to_vec(*values as *const *const c_char, 1) },
+        vec!["abcdef"]
+    );
+
+    // --------- cleanup -------------
     fmi2FreeInstance(handle);
 }
 
