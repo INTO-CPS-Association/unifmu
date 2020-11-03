@@ -1,12 +1,16 @@
+use core::ptr::null;
 use core::ptr::null_mut;
 use libc::puts;
+use libc::strcmp;
 use std::env::current_dir;
 use std::ffi::CStr;
 use std::ffi::CString;
+use std::mem::MaybeUninit;
 use std::os::raw::c_char;
 use std::os::raw::c_double;
 use std::os::raw::c_int;
 use std::os::raw::c_void;
+
 use wrapper::fmi2::{Fmi2CallbackFunctions, Fmi2Status};
 use wrapper::{
     fmi2CancelStep, fmi2DoStep, fmi2EnterInitializationMode, fmi2ExitInitializationMode,
@@ -170,6 +174,38 @@ fn test_fmu(name: &str) {
     let mut values: [c_int; 1] = [0];
     fmi2GetBoolean(handle, [8].as_ptr(), values.len(), values.as_mut_ptr());
     assert_eq!(values, [1]);
+
+    // =============== string ======================
+
+    unsafe fn cstrings_to_vec(cstrings: *const *const c_char, n: usize) -> Vec<String> {
+        let mut vec: Vec<String> = Vec::with_capacity(n);
+        for i in 0..n {
+            let cstring = CStr::from_ptr(*cstrings.offset(i as isize))
+                .to_str()
+                .unwrap()
+                .to_string();
+            vec.insert(i, cstring);
+        }
+        vec
+    }
+
+    let values = MaybeUninit::uninit().as_mut_ptr();
+    fmi2GetString(handle, [9, 10, 11].as_ptr(), 3, values);
+
+    assert_ne!(values, null_mut());
+    assert_eq!(
+        unsafe { cstrings_to_vec(*values as *const *const c_char, 3) },
+        vec!["", "", ""]
+    );
+
+    // let mut values: [c_int; 2] = [1, 1];
+    // fmi2SetString(handle, [6, 7].as_ptr(), values.len(), values.as_mut_ptr());
+
+    // fmi2DoStep(handle, 0.0, 1.0, 0);
+
+    // let mut values: [c_int; 1] = [0];
+    // fmi2GetString(handle, [8].as_ptr(), values.len(), values.as_mut_ptr());
+    // assert_eq!(values, [1]);
 
     // cleanup
 

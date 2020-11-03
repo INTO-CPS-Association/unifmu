@@ -461,56 +461,49 @@ pub extern "C" fn fmi2GetBoolean(
     }
 }
 
-/* See https://github.com/rust-lang/rust/issues/21709
 lazy_static! {
-    / To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
-    / they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
-    / We chose to do it on an instance basis, e.g. each instance has its own string buffer.
-    static ref HANDLE_TO_STR_BUFFER: Mutex<HashMap<SlaveHandle, >> = Mutex::new(HashMap::new());
+    static ref HANDLE_TO_STR_BUFFER: Mutex<HashMap<SlaveHandle, Vec<String>>> =
+        Mutex::new(HashMap::new());
 }
-*/
 
+/// Reads strings from FMU
+///
+/// Note:
+/// To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
+/// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
+/// We chose to do it on an instance basis, e.g. each instance has its own string buffer.
 #[no_mangle]
-
 pub extern "C" fn fmi2GetString(
     c: *const c_int,
     vr: *const c_uint,
     nvr: usize,
     values: *mut *mut *mut c_char,
 ) -> c_int {
-    eprintln!("not implemented");
-    return Fmi2Status::Fmi2Error as i32;
+    match catch_unwind(|| {
+        let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+        let strings =
+            execute_fmi_command_return::<_, Vec<String>>(c, (FMI2FunctionCode::GetXXX, references))
+                .unwrap();
 
-    // let handle = unsafe { *c };
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+        // Convert vector of strings into c-string double pointer
+        // Note that we intentionally omit dropping the memory
+        // This should be cleared by next call to a FMI function (currently is not the case)
+        use std::ffi::CString;
+        let mut vec_cstr = strings
+            .into_iter()
+            .map(|s| CString::new(s).unwrap().into_raw())
+            .collect::<Vec<_>>();
 
-    // // TODO
+        vec_cstr.shrink_to_fit();
+        assert!(vec_cstr.len() == vec_cstr.capacity());
 
-    // execute_fmi_command_status(c, (FMI2FunctionCode::GetXXX, references)) as i32
+        let vec_cstr = Box::leak(Box::new(vec_cstr)); // TODO fix leak
 
-    // match BACKEND.lock().unwrap().get_string(handle, references) {
-    //     Ok((status, values_slave)) => {
-    //         if status <= Fmi2Status::Fmi2Warning {
-    //             // Convert vector of strings into c-string double pointer
-    //             // Note that we intentionally omit dropping the memory
-    //             // This should be cleared by next call to a FMI function (currently is not the case)
-    //             let mut vec_cstr = values_slave
-    //                 .unwrap()
-    //                 .into_iter()
-    //                 .map(|s| CString::new(s).unwrap().into_raw())
-    //                 .collect::<Vec<_>>();
-
-    //             vec_cstr.shrink_to_fit();
-    //             assert!(vec_cstr.len() == vec_cstr.capacity());
-
-    //             let vec_cstr = Box::leak(Box::new(vec_cstr)); // TODO fix leak
-
-    //             unsafe { std::ptr::write(values, vec_cstr.as_mut_ptr()) };
-    //         }
-    //         status.into()
-    //     }
-    //     Err(_e) => panic!("ERROR HANDLING NOT IMPLEMENTED"),
-    // }
+        unsafe { std::ptr::write(values, vec_cstr.as_mut_ptr()) };
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Error as i32,
+    }
 }
 
 // ------------------------------------- FMI FUNCTIONS (Setters) --------------------------------
