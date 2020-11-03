@@ -3,8 +3,8 @@ use crate::config::FullConfig;
 use crate::config::LaunchConfig;
 use crate::fmi2::Fmi2Status;
 use libc::c_double;
+use once_cell::sync::OnceCell;
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::read_to_string;
@@ -15,9 +15,7 @@ use std::os::raw::c_void;
 use std::panic::catch_unwind;
 use std::ptr::null_mut;
 use std::result::Result;
-use std::sync::atomic::AtomicI32;
 use std::sync::Mutex;
-use std::time::Duration;
 
 use lazy_static::lazy_static;
 use subprocess::Popen;
@@ -31,32 +29,31 @@ pub mod serialization;
 use crate::config::HandshakeInfo;
 use crate::config::SerializationFormat;
 use crate::fmi2::Fmi2CallbackFunctions;
-use crate::fmi2::Fmi2Type;
 use crate::serialization::BindToRandom;
 use crate::serialization::JsonReceiver;
 use crate::serialization::ObjectSender;
 use crate::serialization::PickleReceiver;
-use once_cell::sync::OnceCell;
+
+// ----------------------- Library instantiation and cleanup ---------------------------
+
+struct LibraryContext {
+    zmq_context: zmq::Context,
+    handle_to_socket: Mutex<HashMap<SlaveHandle, zmq::Socket>>,
+    handle_to_process: Mutex<HashMap<SlaveHandle, Popen>>,
+}
 
 /// An identifier that can be used to uniquely identify a slave within the context of a specific backend.
 pub type SlaveHandle = i32;
 
+lazy_static! {
+    static ref CONTEXT: Mutex<LibraryContext> = Mutex::new(LibraryContext {
+        zmq_context: zmq::Context::new(),
+        handle_to_socket: Mutex::new(HashMap::new()),
+        handle_to_process: Mutex::new(HashMap::new()),
+    });
+}
+
 // -------------------------- ZMQ -----------------------------------
-
-lazy_static! {
-    static ref CONTEXT: zmq::Context = zmq::Context::new();
-}
-
-lazy_static! {
-    static ref HANDLE_TO_SOCKETS: Mutex<HashMap<SlaveHandle, Mutex<zmq::Socket>>> =
-        Mutex::new(HashMap::new());
-}
-
-// ----------------------------- PROCESS -----------------------------------
-
-lazy_static! {
-    static ref HANDLE_TO_PROCESS: Mutex<HashMap<SlaveHandle, Popen>> = Mutex::new(HashMap::new());
-}
 
 static WRAPPER_CONFIG: OnceCell<config::FullConfig> = OnceCell::new();
 
@@ -80,16 +77,29 @@ where
     let result_or_panic = catch_unwind(|| {
         let handle = unsafe { *handle_ptr };
 
-        let map = HANDLE_TO_SOCKETS.lock().unwrap();
-        let command_socket = map.get(&handle).unwrap().lock().unwrap();
+        let context = CONTEXT.lock().unwrap();
         let format = WRAPPER_CONFIG
             .get()
             .expect("the configuration is not ready. do not invoke this function prior to setting configuration")
             .handshake_info
             .serialization_format;
 
-        command_socket.send_as_object(value, format, None).unwrap();
-        let bytes = command_socket.recv_bytes(0).unwrap();
+        context
+            .handle_to_socket
+            .lock()
+            .unwrap()
+            .get(&handle)
+            .unwrap()
+            .send_as_object(value, format, None)
+            .unwrap();
+        let bytes = context
+            .handle_to_socket
+            .lock()
+            .unwrap()
+            .get(&handle)
+            .unwrap()
+            .recv_bytes(0)
+            .unwrap();
         let res: V = match format {
             SerializationFormat::Pickle => {
                 serde_pickle::from_slice(&bytes).expect("unable to un-pickle object")
@@ -171,35 +181,18 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 ///
 #[no_mangle]
 pub extern "C" fn fmi2Instantiate(
-    instance_name: *const c_char,
-    fmu_type: c_int,
-    fmu_guid: *const c_char,
+    _instance_name: *const c_char,
+    _fmu_type: c_int,
+    _fmu_guid: *const c_char,
     fmu_resource_location: *const c_char,
-    functions: Fmi2CallbackFunctions,
-    visible: c_int,
-    logging_on: c_int,
+    _functions: Fmi2CallbackFunctions,
+    _visible: c_int,
+    _logging_on: c_int,
 ) -> *mut i32 {
     let panic_result: Result<i32, _> = catch_unwind(|| {
-        let _ = unsafe { CStr::from_ptr(instance_name) }
-            .to_str()
-            .expect("Unable to convert instance name to a string");
-
-        let _ = Fmi2Type::try_from(fmu_type).expect("Unrecognized FMU type");
-
-        let _ = unsafe { CStr::from_ptr(fmu_guid) }
-            .to_str()
-            .expect("Unable to convert guid to a string");
-
         let resource_location = unsafe { CStr::from_ptr(fmu_resource_location) }
             .to_str()
             .expect("Unable to convert resource location to a string");
-
-        // let _ = functions.logger.expect(
-        //     "logging function appears to be null, this is not permitted by the FMI specification.",
-        // );
-
-        let _ = visible != 0;
-        let _ = logging_on != 0;
 
         // locate resource directory
         let resources_dir = Url::parse(resource_location)
@@ -218,9 +211,17 @@ pub extern "C" fn fmi2Instantiate(
         // creating a handshake-socket which is used by the slave-process to pass connection strings back to the wrapper
 
         let handshake_socket = CONTEXT
+            .lock()
+            .unwrap()
+            .zmq_context
             .socket(zmq::PULL)
             .expect("Unable to create handshake");
-
+        let command_socket = CONTEXT
+            .lock()
+            .unwrap()
+            .zmq_context
+            .socket(zmq::REQ)
+            .unwrap();
         let handshake_port = handshake_socket.bind_to_random_port("*").unwrap();
 
         // to start the slave-process the os-specific launch command is read from the launch.toml file
@@ -255,21 +256,25 @@ pub extern "C" fn fmi2Instantiate(
             launch_config: config.clone(),
             handshake_info: handshake_info.clone(),
         });
-        let command_socket = CONTEXT.socket(zmq::REQ).unwrap();
         command_socket
             .connect(&handshake_info.command_endpoint)
             .expect("unable to establish a connection to the slave's command socket");
 
         // associate a numerical id with each slave and its corresponding socket(s)
-        let mut handle_to_sock = HANDLE_TO_SOCKETS.lock().unwrap();
+        let context = CONTEXT.lock().unwrap();
 
         let mut handle: SlaveHandle = 0;
-        while handle_to_sock.contains_key(&handle) {
+        let mut handle_to_socket = context.handle_to_socket.lock().unwrap();
+        while handle_to_socket.contains_key(&handle) {
             handle += 1;
         }
 
-        handle_to_sock.insert(handle, Mutex::new(command_socket));
-        HANDLE_TO_PROCESS.lock().unwrap().insert(handle, res);
+        handle_to_socket.insert(handle, command_socket);
+        context
+            .handle_to_process
+            .lock()
+            .unwrap()
+            .insert(handle, res);
         handle
     });
 
@@ -286,11 +291,11 @@ pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
         execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
 
         // ensure that process is terminated
-        HANDLE_TO_PROCESS.lock().unwrap().remove(&handle).unwrap();
+        let context = CONTEXT.lock().unwrap();
+        let mut handle_to_process = context.handle_to_process.lock().unwrap();
+        let _ = handle_to_process.remove(&handle).unwrap();
 
-        HANDLE_TO_SOCKETS
-            .lock()
-            .unwrap()
+        handle_to_process
             .remove(&handle)
             .expect("the sockets associated with the slave appears to be missing");
 

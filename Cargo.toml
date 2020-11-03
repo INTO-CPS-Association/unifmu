@@ -29,6 +29,9 @@ easy_ffi = "*"
 lazy_static = "*"
 once_cell = "*"
 
+[patch.crates-io]
+lazy_static = { git = "https://github.com/rust-fuzz/resettable-lazy-static.rs" }
+
 # ------------------ profiling ---------------------------
 # CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --tool=memcheck --leak-check=full --suppressions=./valgrind.supp"
 
