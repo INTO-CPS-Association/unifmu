@@ -96,8 +96,6 @@ fn test_fmu(name: &str) {
     let visible: c_int = 0;
     let logging_on: c_int = 0;
 
-    println!("{:?}", instance_name);
-
     let handle = fmi2Instantiate(
         instance_name_ptr as *const i8,
         fmu_type,

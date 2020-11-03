@@ -4,6 +4,7 @@ use std::env::current_dir;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::os::raw::c_char;
+use std::os::raw::c_double;
 use std::os::raw::c_int;
 use std::os::raw::c_void;
 use wrapper::fmi2::{Fmi2CallbackFunctions, Fmi2Status};
@@ -56,15 +57,6 @@ extern "C" fn logger(
 }
 
 fn test_fmu(name: &str) {
-    // see documentation of Cstring.as_ptr
-
-    // lets leak
-    // let string = CString::new("Test").unwrap();
-
-    // let ptr = string.into_raw();
-    // unsafe { puts(ptr) };
-    //
-
     let instance_name = b"a\0";
     let instance_name_ptr = instance_name.as_ptr();
 
@@ -96,8 +88,6 @@ fn test_fmu(name: &str) {
     let visible: c_int = 0;
     let logging_on: c_int = 0;
 
-    println!("{:?}", instance_name);
-
     let handle = fmi2Instantiate(
         instance_name_ptr as *const i8,
         fmu_type,
@@ -124,22 +114,64 @@ fn test_fmu(name: &str) {
         fmi2ExitInitializationMode(handle),
         Fmi2Status::Fmi2OK as i32
     );
-
-    let references = &[0, 1, 2];
-    let mut values: [f64; 3] = [0.0, 0.0, 0.0];
-    fmi2GetReal(handle, references.as_ptr(), 1, values.as_mut_ptr());
+    // ============== real ===============
+    let mut values: [c_double; 3] = [0.0, 0.0, 0.0];
+    fmi2GetReal(
+        handle,
+        [1, 2, 3].as_ptr(),
+        values.len(),
+        values.as_mut_ptr(),
+    );
     assert_eq!(values, [0.0, 0.0, 0.0]);
 
-    let references = &[0, 1];
-    let mut values: [f64; 2] = [10.0, 20.0];
-    fmi2SetReal(handle, references.as_ptr(), 2, values.as_mut_ptr());
+    let mut values: [c_double; 2] = [10.0, 20.0];
+    fmi2SetReal(handle, [0, 1].as_ptr(), values.len(), values.as_mut_ptr());
 
-    let references = &[2];
-    let mut values: [f64; 1] = [0.0];
-    fmi2GetReal(handle, references.as_ptr(), 1, values.as_mut_ptr());
-
-    assert_eq!(values, [30.0]);
     fmi2DoStep(handle, 0.0, 1.0, 0);
+
+    let mut values: [c_double; 1] = [0.0];
+    fmi2GetReal(handle, [2].as_ptr(), values.len(), values.as_mut_ptr());
+    assert_eq!(values, [30.0]);
+
+    // ============== integer ===============
+    let mut values: [c_int; 3] = [0, 0, 0];
+    fmi2GetInteger(
+        handle,
+        [3, 4, 5].as_ptr(),
+        values.len(),
+        values.as_mut_ptr(),
+    );
+    assert_eq!(values, [0, 0, 0]);
+
+    let mut values: [c_int; 2] = [10, 20];
+    fmi2SetInteger(handle, [3, 4].as_ptr(), values.len(), values.as_mut_ptr());
+
+    fmi2DoStep(handle, 0.0, 1.0, 0);
+
+    let mut values: [c_int; 1] = [0];
+    fmi2GetInteger(handle, [5].as_ptr(), values.len(), values.as_mut_ptr());
+    assert_eq!(values, [30]);
+
+    // ============== boolean ===============
+    let mut values: [c_int; 3] = [0, 0, 0];
+    fmi2GetBoolean(
+        handle,
+        [6, 7, 8].as_ptr(),
+        values.len(),
+        values.as_mut_ptr(),
+    );
+    assert_eq!(values, [0, 0, 0]);
+
+    let mut values: [c_int; 2] = [1, 1];
+    fmi2SetBoolean(handle, [6, 7].as_ptr(), values.len(), values.as_mut_ptr());
+
+    fmi2DoStep(handle, 0.0, 1.0, 0);
+
+    let mut values: [c_int; 1] = [0];
+    fmi2GetBoolean(handle, [8].as_ptr(), values.len(), values.as_mut_ptr());
+    assert_eq!(values, [1]);
+
+    // cleanup
 
     fmi2FreeInstance(handle);
 }

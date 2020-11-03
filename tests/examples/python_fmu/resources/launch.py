@@ -35,7 +35,6 @@ if __name__ == "__main__":
     handshake_socket = context.socket(zmq.PUSH)
     command_socket = context.socket(zmq.REP)
 
-    print(f"connecting to: {args.handshake_endpoint}")
     handshake_socket.connect(f"{args.handshake_endpoint}")
 
     command_port = command_socket.bind_to_random_port("tcp://127.0.0.1")
@@ -47,7 +46,6 @@ if __name__ == "__main__":
 
     handshake_json = json.dumps(handshake_info)
     handshake_socket.send_string(handshake_json)
-    print(handshake_json)
 
     # create slave object then use model description to create a mapping between fmi value references and attribute names of FMU
     slave = get_slave_instance()
@@ -55,11 +53,11 @@ if __name__ == "__main__":
     reference_to_attr = {}
     with open(Path.cwd().parent / "modelDescription.xml") as f:
         for v in ET.parse(f).find("ModelVariables"):
-            reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
-
-    print(reference_to_attr)
+            reference_to_attr[int(v.attrib["valueReference"])
+                              ] = v.attrib["name"]
 
     # -------- getter and setter functions ---------
+
     def get_xxx(references):
         attributes = [reference_to_attr[vref] for vref in references]
         values = [getattr(slave, a) for a in attributes]
@@ -107,4 +105,3 @@ if __name__ == "__main__":
 
             command_socket.send_pyobj(0)
             sys.exit(0)
-

@@ -171,7 +171,6 @@ pub extern "C" fn fmi2Instantiate(
     logging_on: c_int,
 ) -> *mut i32 {
     let panic_result: Result<i32, _> = catch_unwind(|| {
-        // convert C-style fmi2 parameters to rust types
         let _ = unsafe { CStr::from_ptr(instance_name) }
             .to_str()
             .expect("Unable to convert instance name to a string");
@@ -201,15 +200,11 @@ pub extern "C" fn fmi2Instantiate(
 
         let config_path = resources_dir.join("launch.toml");
 
-        println!("loading configuration file from: {:?}", resources_dir);
-
         assert!(config_path.is_file());
         let config = read_to_string(config_path).expect("unable to read configuration file");
 
         let config: config::LaunchConfig = toml::from_str(config.as_str())
             .expect("configuration file was opened, but contents were not valid toml");
-
-        println!("config is: {:?}", config);
 
         // creating a handshake-socket which is used by the slave-process to pass connection strings back to the wrapper
 
@@ -246,11 +241,6 @@ pub extern "C" fn fmi2Instantiate(
             .recv_from_json()
             .expect("Failed to read and parse handshake information sent by slave");
 
-        println!(
-            "connection string recieved by wrapper: {:?}",
-            handshake_info
-        );
-
         // intialize configuration, in case it has not been done before.
         // In practice just try to set it and ignore the potential error indicating that it was full
         let _ = WRAPPER_CONFIG.set(FullConfig {
@@ -262,7 +252,6 @@ pub extern "C" fn fmi2Instantiate(
             .connect(&handshake_info.command_endpoint)
             .expect("unable to establish a connection to the slave's command socket");
 
-        println!("now connected to command socket!");
         // associate a numerical id with each slave and its corresponding socket(s)
         let mut handle_to_sock = HANDLE_TO_SOCKETS.lock().unwrap();
 
@@ -277,14 +266,8 @@ pub extern "C" fn fmi2Instantiate(
     });
 
     match panic_result {
-        Ok(h) => {
-            println!("slave instantiated!");
-            Box::into_raw(Box::new(h))
-        }
-        Err(e) => {
-            eprintln!("Failed to instantiate slave due to {:?}", e);
-            null_mut()
-        }
+        Ok(h) => Box::into_raw(Box::new(h)),
+        Err(_) => null_mut(),
     }
 }
 
@@ -292,7 +275,17 @@ pub extern "C" fn fmi2Instantiate(
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
     execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
 
-    unsafe { Box::from_raw(c) };
+    let _ = catch_unwind(|| {
+        let handle = unsafe { *c };
+
+        HANDLE_TO_SOCKETS
+            .lock()
+            .unwrap()
+            .remove(&handle)
+            .expect("the sockets associated with the slave appears to be missing");
+
+        unsafe { Box::from_raw(c) };
+    });
 }
 
 #[no_mangle]
@@ -451,8 +444,21 @@ pub extern "C" fn fmi2GetBoolean(
     nvr: usize,
     values: *mut c_int,
 ) -> c_int {
-    eprintln!("not implemented");
-    return Fmi2Status::Fmi2Error as i32;
+    match catch_unwind(|| {
+        let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+        let bools =
+            execute_fmi_command_return::<_, Vec<bool>>(c, (FMI2FunctionCode::GetXXX, references))
+                .unwrap();
+
+        for i in 0..nvr {
+            unsafe {
+                *values.offset(i as isize) = bools[i] as i32;
+            }
+        }
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Error as i32,
+    }
 }
 
 /* See https://github.com/rust-lang/rust/issues/21709
@@ -509,18 +515,31 @@ pub extern "C" fn fmi2GetString(
 
 // ------------------------------------- FMI FUNCTIONS (Setters) --------------------------------
 
-#[no_mangle]
+fn fmi2SetXXX<T>(c: *const c_int, vr: *const c_uint, nvr: usize, values: *const T) -> c_int
+where
+    T: serde::ser::Serialize + std::panic::RefUnwindSafe,
+{
+    let result_or_panic = catch_unwind(|| {
+        let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+        let values = unsafe { std::slice::from_raw_parts(values, nvr) };
 
+        execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, references, values)) as i32
+    });
+
+    match result_or_panic {
+        Ok(status) => status,
+        Err(_) => Fmi2Status::Fmi2Error as i32,
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn fmi2SetReal(
     c: *const c_int,
     vr: *const c_uint,
     nvr: usize,
     values: *const c_double,
 ) -> c_int {
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-    let values = unsafe { std::slice::from_raw_parts(values, nvr) };
-
-    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, references, values)) as i32
+    fmi2SetXXX(c, vr, nvr, values)
 }
 
 #[no_mangle]
@@ -531,24 +550,29 @@ pub extern "C" fn fmi2SetInteger(
     nvr: usize,
     values: *const c_int,
 ) -> c_int {
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-    let values = unsafe { std::slice::from_raw_parts(values, nvr) };
-
-    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, values))) as i32
+    fmi2SetXXX(c, vr, nvr, values)
 }
 
 #[no_mangle]
 
+/// set boolean variables of FMU
+///
+/// Note: fmi2 uses C-int to represent booleans and NOT the boolean type defined by C99 in stdbool.h, _Bool.
+/// Rust's bool type is defined to have the same size as _Bool, as the values passed through the C-API must be converted.
 pub extern "C" fn fmi2SetBoolean(
     c: *const c_int,
     vr: *const c_uint,
     nvr: usize,
     values: *const c_int,
 ) -> c_int {
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-    let values = unsafe { std::slice::from_raw_parts(values as *const bool, nvr) };
-
-    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, (references, values))) as i32
+    match catch_unwind(|| {
+        let integers = unsafe { std::slice::from_raw_parts(values, nvr) };
+        let bools = integers.iter().map(|&x| x == 1).collect::<Vec<bool>>();
+        fmi2SetXXX(c, vr, nvr, bools.as_ptr())
+    }) {
+        Ok(status) => status,
+        Err(_) => Fmi2Status::Fmi2Error as i32,
+    }
 }
 
 #[no_mangle]
