@@ -185,9 +185,9 @@ pub extern "C" fn fmi2Instantiate(
             .to_str()
             .expect("Unable to convert resource location to a string");
 
-        let _ = functions.logger.expect(
-            "logging function appears to be null, this is not permitted by the FMI specification.",
-        );
+        // let _ = functions.logger.expect(
+        //     "logging function appears to be null, this is not permitted by the FMI specification.",
+        // );
 
         let _ = visible != 0;
         let _ = logging_on != 0;
@@ -577,7 +577,6 @@ pub extern "C" fn fmi2SetString(
     values: *const *const c_char,
 ) -> c_int {
     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-    let handle = unsafe { *c };
 
     let mut vec: Vec<&str> = Vec::with_capacity(nvr);
 
