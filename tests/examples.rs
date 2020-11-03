@@ -11,8 +11,8 @@ use std::os::raw::c_double;
 use std::os::raw::c_int;
 use std::os::raw::c_void;
 
-use wrapper::fmi2::{Fmi2CallbackFunctions, Fmi2Status};
-use wrapper::{
+use unifmu::fmi2::{Fmi2CallbackFunctions, Fmi2Status};
+use unifmu::{
     fmi2CancelStep, fmi2DoStep, fmi2EnterInitializationMode, fmi2ExitInitializationMode,
     fmi2FreeInstance, fmi2GetBoolean, fmi2GetInteger, fmi2GetReal, fmi2GetString, fmi2Instantiate,
     fmi2SetBoolean, fmi2SetInteger, fmi2SetReal, fmi2SetString, fmi2SetupExperiment,
