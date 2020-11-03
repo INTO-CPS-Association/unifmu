@@ -49,6 +49,10 @@ lazy_static! {
         Mutex::new(HashMap::new());
 }
 
+lazy_static! {
+    static ref HANDLE_TO_PROCESS: Mutex<HashMap<SlaveHandle, Popen>> = Mutex::new(HashMap::new());
+}
+
 static WRAPPER_CONFIG: OnceCell<config::FullConfig> = OnceCell::new();
 
 // --------------------------- Utilities functions for communicating with slave ------------------------------
@@ -227,15 +231,14 @@ pub extern "C" fn fmi2Instantiate(
         let endpoint = format!("tcp://localhost:{:?}", handshake_port);
         command.push(endpoint.to_string());
 
-        let _res = Popen::create(
+        let res = Popen::create(
             &command,
             PopenConfig {
                 cwd: Some(resources_dir.as_os_str().to_owned()),
                 ..Default::default()
             },
         )
-        .expect("Unable to start process using command")
-        .detach();
+        .expect("Unable to start process using command");
 
         let handshake_info: HandshakeInfo = handshake_socket
             .recv_from_json()
@@ -261,7 +264,7 @@ pub extern "C" fn fmi2Instantiate(
         }
 
         handle_to_sock.insert(handle, Mutex::new(command_socket));
-
+        HANDLE_TO_PROCESS.lock().unwrap().insert(handle, res);
         handle
     });
 
@@ -273,16 +276,18 @@ pub extern "C" fn fmi2Instantiate(
 
 #[no_mangle]
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
-    execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
-
     let _ = catch_unwind(|| {
         let handle = unsafe { *c };
+        execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
 
-        HANDLE_TO_SOCKETS
-            .lock()
-            .unwrap()
-            .remove(&handle)
-            .expect("the sockets associated with the slave appears to be missing");
+        // ensure that process is terminated
+        HANDLE_TO_PROCESS.lock().unwrap().remove(&handle).unwrap();
+
+        // HANDLE_TO_SOCKETS
+        //     .lock()
+        //     .unwrap()
+        //     .remove(&handle)
+        //     .expect("the sockets associated with the slave appears to be missing");
 
         unsafe { Box::from_raw(c) };
     });

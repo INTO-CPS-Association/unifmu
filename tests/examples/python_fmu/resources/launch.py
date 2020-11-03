@@ -17,7 +17,7 @@ def get_slave_instance():
 
 if __name__ == "__main__":
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger(__file__)
 
     parser = ArgumentParser()
@@ -103,5 +103,5 @@ if __name__ == "__main__":
 
         elif kind == 9:
 
-            command_socket.send_pyobj(0)
+            command_socket.send_pyobj(Fmi2Status.ok)
             sys.exit(0)
