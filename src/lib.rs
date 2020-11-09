@@ -286,21 +286,23 @@ pub extern "C" fn fmi2Instantiate(
 
 #[no_mangle]
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
-    let _ = catch_unwind(|| {
+    match catch_unwind(|| {
         let handle = unsafe { *c };
         execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
 
         // ensure that process is terminated
         let context = CONTEXT.lock().unwrap();
-        let mut handle_to_process = context.handle_to_process.lock().unwrap();
-        let _ = handle_to_process.remove(&handle).unwrap();
+        context.handle_to_process.lock().unwrap().remove(&handle)
+            .expect("the process associated with the slave appears to be missing. Potential causes are double free or that the slave was never instantiated");
 
-        handle_to_process
-            .remove(&handle)
-            .expect("the sockets associated with the slave appears to be missing");
+        context.handle_to_socket.lock().unwrap().remove(&handle)
+            .expect("the process associated with the slave appears to be missing. Potential causes are double free or that the slave was never instantiated");
 
         unsafe { Box::from_raw(c) };
-    });
+    }) {
+        Ok(_) => (),
+        Err(_) => eprintln!("Failed freeing slave"),
+    }
 }
 
 #[no_mangle]
