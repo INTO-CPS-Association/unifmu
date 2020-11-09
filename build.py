@@ -1,14 +1,18 @@
 import argparse
+from os import popen, system
 from pathlib import Path
 
 import logging
 import shutil
+from shutil import SameFileError
 import subprocess
 import os
 import sys
+from sys import platform
+import platform
 
 
-class Chdir():
+class Chdir:
     def __init__(self, wd):
         self.old_wd = Path.cwd()
         self.wd = wd
@@ -21,7 +25,37 @@ class Chdir():
 
 
 def path_to_host_binary() -> Path:
-    return Path("tests/examples/python_fmu/binaries/linux64/libunifmu.so").absolute()
+
+    binary_basename = "unifmu"
+
+    system_to_binary_inout_tuple = {
+        "Linux": (f"lib{binary_basename}.so", f"linux64/{binary_basename}.so"),
+        "Windows": (f"{binary_basename}.dll", f"win64/{binary_basename}.dll"),
+        "Darwin": (f"lib{binary_basename}.dylib", f"darwin64/{binary_basename}.dylib"),
+    }
+
+    input, output = system_to_binary_inout_tuple[platform.system()]
+    binary_in = Path.cwd() / "target" / "debug" / input
+    binary_out = Path.cwd() / "tests" / "examples" / "python_fmu" / "binaries" / output
+
+    return binary_in, binary_out
+
+
+def path_to_c_executable() -> Path:
+
+    system_to_executable = {
+        "Linux": "integration_tests",
+        "Windows": "Debug/integration_tests.exe",
+        "Darwin": "integration_tests",
+    }
+
+    return (
+        Path.cwd()
+        / "tests"
+        / "c_tests"
+        / "build"
+        / system_to_executable[platform.system()]
+    )
 
 
 if __name__ == "__main__":
@@ -31,34 +65,57 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--update-wrapper", "-u", dest="update_wrapper", action="store_true",
-                        help="updates the shared object inside the example FMUs")
+    parser.add_argument(
+        "--update-wrapper",
+        "-u",
+        dest="update_wrapper",
+        action="store_true",
+        help="updates the shared object inside the example FMUs",
+    )
 
-    parser.add_argument("--test-rust", dest="test_rust",
-                        action="store_true", help="run rust integration tests")
+    parser.add_argument(
+        "--test-rust",
+        dest="test_rust",
+        action="store_true",
+        help="run rust integration tests",
+    )
 
-    parser.add_argument("--test-c", dest="test_c",
-                        action="store_true", help="run C integration tests")
+    parser.add_argument(
+        "--test-c", dest="test_c", action="store_true", help="run C integration tests"
+    )
 
     args = parser.parse_args()
 
-    if(args.update_wrapper):
+    library_in, library_out = path_to_host_binary()
+
+    if args.update_wrapper:
 
         logger.info("building wrapper")
         res = subprocess.Popen(args=["cargo", "build"]).wait()
 
-        if(res != 0):
+        if res != 0:
             logger.error("wrapper failed to build")
             sys.exit(-1)
 
-        binary_in = Path("target/debug/libunifmu.so")
-        binary_out = path_to_host_binary()
         logger.info(
-            f"wrapper was build, copying from '{binary_in}' to '{binary_out}'")
-        shutil.copy(src=binary_in, dst=binary_out)
+            f"wrapper was build, copying from '{library_in}' to '{library_out}'"
+        )
+
+        try:
+            shutil.copy(src=library_in, dst=library_out)
+        except SameFileError:
+            pass
+
         logger.info("wrapper updated")
 
-    if(args.test_c):
+    if args.test_rust:
+        res = subprocess.Popen(["cargo", "test"]).wait()
+
+        if res != 0:
+            logger.error("Rust test failed")
+            sys.exit(0)
+
+    if args.test_c:
 
         build_dir = Path("tests/c_tests/build")
         old_wd = Path.cwd()
@@ -69,28 +126,26 @@ if __name__ == "__main__":
             logger.info("configuring cmake")
             res = subprocess.Popen(args=["cmake", ".."]).wait()
 
-            if(res != 0):
+            if res != 0:
                 logger.error("unable to configure cmake")
                 sys.exit(-1)
 
             logger.info("building tests")
             res = subprocess.Popen(args=["cmake", "--build", "."]).wait()
 
-            if(res != 0):
+            if res != 0:
                 logger.error("unable to compile C integration tests")
                 sys.exit(-1)
 
         logger.info("running C integration tests")
 
-        library_path = path_to_host_binary()
-        resources_uri = (
-            Path.cwd() / "tests/examples/python_fmu/resources").as_uri()
-        test_executable = (
-            Path.cwd() / "tests/c_tests/build/integration_tests").absolute()
+        resources_uri = (Path.cwd() / "tests/examples/python_fmu/resources").as_uri()
+        test_executable = path_to_c_executable()
         res = subprocess.Popen(
-            args=[test_executable, library_path, resources_uri]).wait()
+            args=[test_executable, library_out, resources_uri]
+        ).wait()
 
-        if(res != 0):
+        if res != 0:
             logger.error("C integration tests failed")
             sys.exit(-1)
 
