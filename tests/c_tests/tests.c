@@ -1,3 +1,28 @@
+// we define macros to ease the burden of handling os specific "dlopen" - functionality
+#define STRINGIFY(x) #x
+#if __unix__
+#include <dlfcn.h>
+#define OPENFUNC dlopen
+#define LOADFUNC dlsym
+#define CLOSEFUNC dlclose
+#elif defined(_WIN32) || defined(WIN32)
+#include <windows.h>
+#include <libloaderapi.h>
+#define OPENFUNC LoadLibrary
+#define CLOSEFUNC FreeLibrary
+#define LOADFUNC GetProcAddress
+
+#endif
+#define IMPORT(n)                                   \
+    funcs->n = (n##TYPE *)##LOADFUNC##(handle, #n); \
+    if (funcs->n == NULL)                           \
+    {                                               \
+        printf(STRINGIFY(unable to load function    \
+                         :##n));                    \
+        return -1;                                  \
+    }
+;
+
 #include <stddef.h>
 #include <assert.h>
 #include <stdio.h>
@@ -8,91 +33,127 @@
 #include "fmi2Functions.h"
 #include "fmi2FunctionTypes.h"
 
-#ifdef __unix__
-#include <dlfcn.h>
-#elif defined(_WIN32) || defined(WIN32)
-#endif
+typedef struct
+{
+    fmi2GetTypesPlatformTYPE *fmi2GetTypesPlatform;
+    fmi2GetVersionTYPE *fmi2GetVersion;
+    fmi2SetDebugLoggingTYPE *fmi2SetDebugLogging;
+    fmi2InstantiateTYPE *fmi2Instantiate;
+    fmi2FreeInstanceTYPE *fmi2FreeInstance;
+    fmi2SetupExperimentTYPE *fmi2SetupExperiment;
+    fmi2EnterInitializationModeTYPE *fmi2EnterInitializationMode;
+    fmi2ExitInitializationModeTYPE *fmi2ExitInitializationMode;
+    fmi2TerminateTYPE *fmi2Terminate;
+    fmi2ResetTYPE *fmi2Reset;
+    fmi2GetRealTYPE *fmi2GetReal;
+    fmi2GetIntegerTYPE *fmi2GetInteger;
+    fmi2GetBooleanTYPE *fmi2GetBoolean;
+    fmi2GetStringTYPE *fmi2GetString;
+    fmi2SetRealTYPE *fmi2SetReal;
+    fmi2SetIntegerTYPE *fmi2SetInteger;
+    fmi2SetBooleanTYPE *fmi2SetBoolean;
+    fmi2SetStringTYPE *fmi2SetString;
+    fmi2GetFMUstateTYPE *fmi2GetFMUstate;
+    fmi2SetFMUstateTYPE *fmi2SetFMUstate;
+    fmi2FreeFMUstateTYPE *fmi2FreeFMUstate;
+    fmi2SerializedFMUstateSizeTYPE *fmi2SerializedFMUstateSize;
+    fmi2SerializeFMUstateTYPE *fmi2SerializeFMUstate;
+    fmi2DeSerializeFMUstateTYPE *fmi2DeSerializeFMUstate;
+    fmi2GetDirectionalDerivativeTYPE *fmi2GetDirectionalDerivative;
+    fmi2SetRealInputDerivativesTYPE *fmi2SetRealInputDerivatives;
+    fmi2GetRealOutputDerivativesTYPE *fmi2GetRealOutputDerivatives;
+    fmi2DoStepTYPE *fmi2DoStep;
+    fmi2CancelStepTYPE *fmi2CancelStep;
+    fmi2GetStatusTYPE *fmi2GetStatus;
+    fmi2GetRealStatusTYPE *fmi2GetRealStatus;
+    fmi2GetIntegerStatusTYPE *fmi2GetIntegerStatus;
+    fmi2GetBooleanStatusTYPE *fmi2GetBooleanStatus;
+    fmi2GetStringStatusTYPE *fmi2GetStringStatus;
+} Fmi2Functions;
 
-#define STRINGIFY(x) #x
-#define GETSYM(n) fmi2##n##TYPE *fmi2##n = dlsym(handle, STRINGIFY(fmi2##n));
+void *handle;
+
+int load_library(Fmi2Functions *funcs, const char *filename)
+{
+
+    handle = OPENFUNC(filename);
+    IMPORT(fmi2GetTypesPlatform);
+    IMPORT(fmi2GetVersion);
+    IMPORT(fmi2SetDebugLogging);
+    IMPORT(fmi2Instantiate);
+    IMPORT(fmi2FreeInstance);
+    IMPORT(fmi2SetupExperiment);
+    IMPORT(fmi2EnterInitializationMode);
+    IMPORT(fmi2ExitInitializationMode);
+    IMPORT(fmi2Terminate);
+    IMPORT(fmi2Reset);
+    IMPORT(fmi2GetReal);
+    IMPORT(fmi2GetInteger);
+    IMPORT(fmi2GetBoolean);
+    IMPORT(fmi2GetString);
+    IMPORT(fmi2SetReal);
+    IMPORT(fmi2SetInteger);
+    IMPORT(fmi2SetBoolean);
+    IMPORT(fmi2SetString);
+    IMPORT(fmi2GetFMUstate);
+    IMPORT(fmi2SetFMUstate);
+    IMPORT(fmi2FreeFMUstate);
+    IMPORT(fmi2SerializedFMUstateSize);
+    IMPORT(fmi2SerializeFMUstate);
+    IMPORT(fmi2DeSerializeFMUstate);
+    IMPORT(fmi2GetDirectionalDerivative);
+    IMPORT(fmi2SetRealInputDerivatives);
+    IMPORT(fmi2GetRealOutputDerivatives);
+    IMPORT(fmi2DoStep);
+    IMPORT(fmi2CancelStep);
+    IMPORT(fmi2GetStatus);
+    IMPORT(fmi2GetRealStatus);
+    IMPORT(fmi2GetIntegerStatus);
+    IMPORT(fmi2GetBooleanStatus);
+    IMPORT(fmi2GetStringStatus);
+
+    return 0;
+}
+
+int free_library()
+{
+    return CLOSEFUNC(handle);
+}
 
 int main(int argc, char **argv)
 {
 
-    char *a = STRINGIFY(10);
     char *library_path = argv[1];
     char *uri = argv[2];
 
     printf("loading library: %s\n", library_path);
 
-    void *handle = dlopen(library_path, RTLD_NOW);
+    Fmi2Functions f;
 
-// common functions
-#ifdef __unix__
-    GETSYM(GetTypesPlatform)
-    GETSYM(GetVersion)
-    GETSYM(SetDebugLogging)
-    GETSYM(Instantiate)
-    GETSYM(FreeInstance)
-    GETSYM(SetupExperiment)
-    GETSYM(EnterInitializationMode)
-    GETSYM(ExitInitializationMode)
-    GETSYM(Terminate)
-    GETSYM(Reset)
-    GETSYM(GetReal)
-    GETSYM(GetInteger)
-    GETSYM(GetBoolean)
-    GETSYM(GetString)
-    GETSYM(SetReal)
-    GETSYM(SetInteger)
-    GETSYM(SetBoolean)
-    GETSYM(SetString)
-    GETSYM(GetFMUstate)
-    GETSYM(SetFMUstate)
-    GETSYM(FreeFMUstate)
-    GETSYM(SerializedFMUstateSize)
-    GETSYM(SerializeFMUstate)
-    GETSYM(DeSerializeFMUstate)
-    GETSYM(GetDirectionalDerivative)
-    GETSYM(SetRealInputDerivatives)
-    GETSYM(GetRealOutputDerivatives)
-    GETSYM(DoStep)
-    GETSYM(CancelStep)
-    GETSYM(GetStatus)
-    GETSYM(GetRealStatus)
-    GETSYM(GetIntegerStatus)
-    GETSYM(GetBooleanStatus)
-    GETSYM(GetStringStatus)
-#endif
-
-    if (handle == NULL)
-    {
-        perror("Failed to open dll");
-        return -1;
-    }
+    assert(load_library(&f, library_path) == 0);
 
     double t_start = 0;
     double t_end = 1;
     int steps = 1000;
     double step_size = (t_end - t_start) / steps;
 
-    void *c = fmi2Instantiate("a", fmi2CoSimulation, "", uri, NULL, false, false);
+    void *c = f.fmi2Instantiate("a", fmi2CoSimulation, "", uri, NULL, false, false);
 
-    fmi2SetupExperiment(c, false, 0, t_start, true, t_end);
-    fmi2EnterInitializationMode(c);
-    fmi2ExitInitializationMode(c);
+    f.fmi2SetupExperiment(c, false, 0, t_start, true, t_end);
+    f.fmi2EnterInitializationMode(c);
+    f.fmi2ExitInitializationMode(c);
 
     // real
     {
         fmi2Real vals[] = {1.0, 1.0};
         fmi2ValueReference refs[] = {0, 1};
-        assert(fmi2GetReal(c, refs, 2, vals) == fmi2OK);
+        assert(f.fmi2GetReal(c, refs, 2, vals) == fmi2OK);
         assert(vals[0] == 0 && vals[1] == 0);
         vals[0] = 1.0;
         vals[1] = 1.0;
-        assert(fmi2SetReal(c, refs, 2, vals) == fmi2OK);
+        assert(f.fmi2SetReal(c, refs, 2, vals) == fmi2OK);
         refs[0] = 2;
-        assert(fmi2GetReal(c, refs, 1, vals) == fmi2OK);
+        assert(f.fmi2GetReal(c, refs, 1, vals) == fmi2OK);
         assert(vals[0] == 2.0);
     }
 
@@ -100,43 +161,44 @@ int main(int argc, char **argv)
     {
         fmi2Integer vals[] = {1, 1};
         fmi2ValueReference refs[] = {3, 4};
-        assert(fmi2GetInteger(c, refs, 2, vals) == fmi2OK);
+        assert(f.fmi2GetInteger(c, refs, 2, vals) == fmi2OK);
         assert(vals[0] == 0 && vals[1] == 0);
         vals[0] = 1;
         vals[1] = 1;
-        assert(fmi2SetInteger(c, refs, 2, vals) == fmi2OK);
+        assert(f.fmi2SetInteger(c, refs, 2, vals) == fmi2OK);
         refs[0] = 5;
-        assert(fmi2GetInteger(c, refs, 1, vals) == fmi2OK);
+        assert(f.fmi2GetInteger(c, refs, 1, vals) == fmi2OK);
         assert(vals[0] == 2);
     }
-    // boolean
+
+    //boolean
     {
         fmi2Boolean vals[] = {true, true};
         fmi2ValueReference refs[] = {6, 7};
-        assert(fmi2GetBoolean(c, refs, 2, vals) == fmi2OK);
+        assert(f.fmi2GetBoolean(c, refs, 2, vals) == fmi2OK);
         assert(vals[0] == false && vals[1] == false);
         vals[0] = true;
         vals[1] = true;
-        assert(fmi2SetBoolean(c, refs, 2, vals) == fmi2OK);
+        assert(f.fmi2SetBoolean(c, refs, 2, vals) == fmi2OK);
         refs[0] = 8;
-        assert(fmi2GetBoolean(c, refs, 1, vals) == fmi2OK);
+        assert(f.fmi2GetBoolean(c, refs, 1, vals) == fmi2OK);
         assert(vals[0] == true);
     }
 
     // string
     {
-        char **vals = NULL;
+        fmi2String *vals = NULL;
 
         fmi2ValueReference refs[] = {9, 10};
-        assert(fmi2GetString(c, refs, 2, &vals) == fmi2OK);
+        assert(f.fmi2GetString(c, refs, 2, &vals) == fmi2OK);
         assert(strcmp(vals[0], "") == 0 && strcmp(vals[1], "") == 0);
         vals = malloc(2 * sizeof(char *));
         vals[0] = "abc";
         vals[1] = "def";
-        assert(fmi2SetString(c, refs, 2, vals) == fmi2OK);
+        assert(f.fmi2SetString(c, refs, 2, vals) == fmi2OK);
         free(vals);
         refs[0] = 11;
-        assert(fmi2GetString(c, refs, 1, &vals) == fmi2OK);
+        assert(f.fmi2GetString(c, refs, 1, &vals) == fmi2OK);
         assert(strcmp(vals[0], "abcdef") == 0);
     }
 
@@ -145,12 +207,12 @@ int main(int argc, char **argv)
     for (int i = 0; i < steps; ++i)
     {
 
-        fmi2DoStep(c, cur_time, step_size, false);
+        f.fmi2DoStep(c, cur_time, step_size, false);
         cur_time += step_size;
     }
-    fmi2Terminate(c);
-    fmi2FreeInstance(c);
-    int res = dlclose(handle);
+    f.fmi2Terminate(c);
+    f.fmi2FreeInstance(c);
+    free_library();
 
     return 0;
 }
