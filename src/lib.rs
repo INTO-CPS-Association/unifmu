@@ -36,14 +36,6 @@ use crate::serialization::PickleReceiver;
 
 // ----------------------- Library instantiation and cleanup ---------------------------
 
-struct DropTest {}
-
-impl Drop for DropTest {
-    fn drop(&mut self) {
-        println!("ooh i got dropped")
-    }
-}
-
 struct LibraryContext {
     zmq_context: zmq::Context,
     handle_to_socket: Mutex<HashMap<SlaveHandle, zmq::Socket>>,
@@ -59,10 +51,6 @@ lazy_static! {
         handle_to_socket: Mutex::new(HashMap::new()),
         handle_to_process: Mutex::new(HashMap::new()),
     });
-}
-
-lazy_static! {
-    static ref DROPTEST: Mutex<Option<DropTest>> = Mutex::new(Some(DropTest {}));
 }
 
 // -------------------------- ZMQ -----------------------------------
@@ -201,8 +189,6 @@ pub extern "C" fn fmi2Instantiate(
     _visible: c_int,
     _logging_on: c_int,
 ) -> *mut i32 {
-    *DROPTEST.lock().unwrap() = None;
-
     let panic_result: Result<i32, _> = catch_unwind(|| {
         let resource_location = unsafe { CStr::from_ptr(fmu_resource_location) }
             .to_str()
