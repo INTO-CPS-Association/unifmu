@@ -2,24 +2,21 @@
 #define STRINGIFY(x) #x
 #if __unix__
 #include <dlfcn.h>
-#define OPENFUNC dlopen
-#define LOADFUNC dlsym
 #define CLOSEFUNC dlclose
+#define LOADFUNC dlsym
 #elif defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #include <libloaderapi.h>
-#define OPENFUNC LoadLibrary
 #define CLOSEFUNC FreeLibrary
 #define LOADFUNC GetProcAddress
 
 #endif
-#define IMPORT(n)                                   \
-    funcs->n = (n##TYPE *)##LOADFUNC##(handle, #n); \
-    if (funcs->n == NULL)                           \
-    {                                               \
-        printf(STRINGIFY(unable to load function    \
-                         :##n));                    \
-        return -1;                                  \
+#define IMPORT(n)                                      \
+    funcs->n = (n##TYPE *)LOADFUNC(handle, #n);        \
+    if (funcs->n == NULL)                              \
+    {                                                  \
+        printf(STRINGIFY(unable to load function##n)); \
+        return -1;                                     \
     }
 ;
 
@@ -75,8 +72,12 @@ void *handle;
 
 int load_library(Fmi2Functions *funcs, const char *filename)
 {
+#ifdef __unix__
+    handle = dlopen(filename, RTLD_NOW);
+#elif defined(_WIN32) || defined(WIN32)
+    handle = LoadLibrary(filename);
+#endif
 
-    handle = OPENFUNC(filename);
     IMPORT(fmi2GetTypesPlatform);
     IMPORT(fmi2GetVersion);
     IMPORT(fmi2SetDebugLogging);
