@@ -318,7 +318,7 @@ pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
 
         unsafe { Box::from_raw(c) };
     }) {
-        Ok(_) => (), // println!("slave freed"),
+        Ok(_) => (),
         Err(_) => eprintln!("Failed freeing slave"),
     }
 }

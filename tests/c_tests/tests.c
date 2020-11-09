@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "fmi2Functions.h"
@@ -123,18 +124,20 @@ int main(int argc, char **argv)
     }
 
     // string
-    // boolean
     {
-        fmi2Boolean vals[] = {true, true};
-        fmi2ValueReference refs[] = {6, 7};
-        assert(fmi2GetBoolean(c, refs, 2, vals) == fmi2OK);
-        assert(vals[0] == false && vals[1] == false);
-        vals[0] = true;
-        vals[1] = true;
-        assert(fmi2SetBoolean(c, refs, 2, vals) == fmi2OK);
-        refs[0] = 8;
-        assert(fmi2GetBoolean(c, refs, 1, vals) == fmi2OK);
-        assert(vals[0] == true);
+        char **vals = NULL;
+
+        fmi2ValueReference refs[] = {9, 10};
+        assert(fmi2GetString(c, refs, 2, &vals) == fmi2OK);
+        assert(strcmp(vals[0], "") == 0 && strcmp(vals[1], "") == 0);
+        vals = malloc(2 * sizeof(char *));
+        vals[0] = "abc";
+        vals[1] = "def";
+        assert(fmi2SetString(c, refs, 2, vals) == fmi2OK);
+        free(vals);
+        refs[0] = 11;
+        assert(fmi2GetString(c, refs, 1, &vals) == fmi2OK);
+        assert(strcmp(vals[0], "abcdef") == 0);
     }
 
     // stepping
@@ -145,7 +148,8 @@ int main(int argc, char **argv)
         fmi2DoStep(c, cur_time, step_size, false);
         cur_time += step_size;
     }
-
+    fmi2Terminate(c);
+    fmi2FreeInstance(c);
     int res = dlclose(handle);
 
     return 0;

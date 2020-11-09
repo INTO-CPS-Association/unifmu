@@ -93,3 +93,5 @@ if __name__ == "__main__":
         if(res != 0):
             logger.error("C integration tests failed")
             sys.exit(-1)
+
+        logger.info("C integration tests successful")

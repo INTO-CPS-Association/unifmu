@@ -17,7 +17,7 @@ def get_slave_instance():
 
 if __name__ == "__main__":
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger(__file__)
 
     parser = ArgumentParser()
