@@ -36,6 +36,14 @@ use crate::serialization::PickleReceiver;
 
 // ----------------------- Library instantiation and cleanup ---------------------------
 
+struct DropTest {}
+
+impl Drop for DropTest {
+    fn drop(&mut self) {
+        println!("ooh i got dropped")
+    }
+}
+
 struct LibraryContext {
     zmq_context: zmq::Context,
     handle_to_socket: Mutex<HashMap<SlaveHandle, zmq::Socket>>,
@@ -51,6 +59,10 @@ lazy_static! {
         handle_to_socket: Mutex::new(HashMap::new()),
         handle_to_process: Mutex::new(HashMap::new()),
     });
+}
+
+lazy_static! {
+    static ref DROPTEST: Mutex<Option<DropTest>> = Mutex::new(Some(DropTest {}));
 }
 
 // -------------------------- ZMQ -----------------------------------
@@ -189,6 +201,8 @@ pub extern "C" fn fmi2Instantiate(
     _visible: c_int,
     _logging_on: c_int,
 ) -> *mut i32 {
+    *DROPTEST.lock().unwrap() = None;
+
     let panic_result: Result<i32, _> = catch_unwind(|| {
         let resource_location = unsafe { CStr::from_ptr(fmu_resource_location) }
             .to_str()
@@ -222,6 +236,7 @@ pub extern "C" fn fmi2Instantiate(
             .zmq_context
             .socket(zmq::REQ)
             .unwrap();
+        command_socket.set_linger(-1).unwrap();
         let handshake_port = handshake_socket.bind_to_random_port("*").unwrap();
 
         // to start the slave-process the os-specific launch command is read from the launch.toml file
@@ -288,8 +303,11 @@ pub extern "C" fn fmi2Instantiate(
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
     match catch_unwind(|| {
         let handle = unsafe { *c };
-        execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
+        //println!("sending free command");
+        let status = execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
+        println!("freeing with status {:?}", status);
 
+        //println!("getting rid of sockets");
         // ensure that process is terminated
         let context = CONTEXT.lock().unwrap();
         context.handle_to_process.lock().unwrap().remove(&handle)
@@ -300,7 +318,7 @@ pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
 
         unsafe { Box::from_raw(c) };
     }) {
-        Ok(_) => (),
+        Ok(_) => (), // println!("slave freed"),
         Err(_) => eprintln!("Failed freeing slave"),
     }
 }

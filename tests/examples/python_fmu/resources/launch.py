@@ -17,7 +17,7 @@ def get_slave_instance():
 
 if __name__ == "__main__":
 
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__file__)
 
     parser = ArgumentParser()
@@ -32,6 +32,7 @@ if __name__ == "__main__":
 
     # initializing message queue
     context = zmq.Context()
+    context.setsockopt(zmq.LINGER, -1)
     handshake_socket = context.socket(zmq.PUSH)
     command_socket = context.socket(zmq.REP)
 
@@ -99,6 +100,7 @@ if __name__ == "__main__":
 
         if kind in command_to_slave_methods:
             result = command_to_slave_methods[kind](*args)
+            logger.info(f"returning value: {result}")
             command_socket.send_pyobj(result)
 
         elif kind == 9:
