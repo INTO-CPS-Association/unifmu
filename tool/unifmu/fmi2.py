@@ -69,7 +69,7 @@ class SimpleType:
     pass
 
 
-class FmiModelDescription:
+class ModelDescription:
     "based on fmi 2.0.1 p. 32"
 
     def __init__(
@@ -83,18 +83,36 @@ class FmiModelDescription:
         copyright: str,
         license: str,
         generation_tool: str,
-        generation_data_and_time: str,
+        generation_date_and_time: str,
         variable_naming_convention: str,
-        number_of_event_indicators: int,
         model_variables,
         model_structure,
-        co_simulation,
-        model_exchange,
+        co_simulation: CoSimulation,
+        model_exchange: ModelExchange,
         unit_definitions,
         type_defintions,
         log_categories,
         default_experiment,
         vendor_annotations,
     ):
-        pass
+        self.fmi_version = fmi_version
+        self.model_name = model_name
+        self.guid = guid
+        self.description = description
+        self.author = author
+        self.version = version
+        self.copyright = copyright
+        self.license = license
+        self.generation_tool = generation_tool
+        self.generation_date_and_time = generation_date_and_time
+        self.variable_naming_convention = variable_naming_convention
+        self.model_variables = model_variables
+        self.model_structure = model_structure
+        self.co_simulation = co_simulation
+        self.model_exchange = model_exchange
+        self.unit_definitions = unit_definitions
+        self.type_defintions = type_defintions
+        self.log_categories = log_categories
+        self.default_experiment = default_experiment
+        self.vendor_annotations = vendor_annotations
 

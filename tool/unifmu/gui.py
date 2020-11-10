@@ -3,6 +3,7 @@
 Hello World, but with more meat.
 """
 
+import datetime
 from os import close, spawnl
 from sys import flags
 import wx
@@ -11,7 +12,7 @@ import wx.gizmos
 
 from wx.core import NumberEntryDialog, PrintDialog
 
-from fmi2 import FmiModelDescription, CoSimulation
+from unifmu.fmi2 import ModelDescription, CoSimulation
 
 
 class FMI2Tooltips:
@@ -61,7 +62,10 @@ class CreateFMUFrame(wx.Frame):
 
         backend_label = wx.StaticText(panel, label="Backend")
         self.backend_combo = wx.ComboBox(
-            panel, value="None", choices=["None", "UniFMU"], style=wx.CB_READONLY
+            panel,
+            value="None",
+            choices=["None", "UniFMU->Python"],
+            style=wx.CB_READONLY,
         )
         self.backend_combo.SetToolTip(
             "Copy an ready-to use backend into the generated FMU, providing a quick way to get started"
@@ -117,7 +121,92 @@ class CreateFMUFrame(wx.Frame):
         # self.Show()
 
     def on_generate(self, event):
-        print("generating")
+
+        # --------------------- inference and defaults for missing information ----------------------
+
+        guid = "a"
+        version = "0.0.1"
+        copyright = ""
+        license = ""
+        copyright = ""
+
+        generation_tool = "unifmu"
+        variable_naming_convention = "flat"
+
+        # mapping is used to define defaults for variables which can be inferred from the choice of backend
+        # for example unifmu variants can instantiate multiple processes, but struggle to use memory management functions
+        (
+            model_identifier,
+            needs_execution_tool,
+            can_handle_variable_communication_step_size,
+            can_interpolate_inputs,
+            max_output_derivative_order,
+            can_run_asynchronously,
+            can_be_instantiated_only_once_per_process,
+            can_not_use_memory_management_functions,
+            can_get_and_set_fmu_state,
+            can_serialize_fmu_state,
+            provides_directional_derivatives,
+        ) = {
+            "UniFMU->Python": (
+                "unifmu",
+                True,
+                True,
+                False,
+                0,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+            )
+        }[
+            self.backend_combo.Value
+        ]
+
+        # generation date and time must be some kind of xsd string
+        data_time_obj = datetime.datetime.now()
+        generation_date_and_time = datetime.datetime.strftime(
+            data_time_obj, "%Y-%m-%dT%H:%M:%SZ"
+        )
+
+        # ------------------------ end of inference ----------------------------
+
+        mdd = ModelDescription(
+            fmi_version=self.fmi_selector.GetSelection,
+            model_name=self.name_field.Value,
+            guid=guid,
+            description=self.description_field.Value,
+            author=self.author_field,
+            version=version,
+            copyright=copyright,
+            license=license,
+            generation_tool=generation_tool,
+            variable_naming_convention=variable_naming_convention,
+            generation_date_and_time=generation_date_and_time,
+            model_variables=[],
+            model_structure=[],
+            co_simulation=CoSimulation(
+                model_identifier=model_identifier,
+                needs_execution_tool=needs_execution_tool,
+                can_handle_variable_communication_step_size=can_handle_variable_communication_step_size,
+                can_interpolate_inputs=can_interpolate_inputs,
+                max_output_derivative_order=max_output_derivative_order,
+                can_run_asynchronously=can_run_asynchronously,
+                can_be_instantiated_only_once_per_process=can_be_instantiated_only_once_per_process,
+                can_not_use_memory_management_functions=can_not_use_memory_management_functions,
+                can_get_and_set_fmu_state=can_get_and_set_fmu_state,
+                can_serialize_fmu_state=can_serialize_fmu_state,
+                provides_directional_derivatives=provides_directional_derivatives,
+            ),
+            model_exchange=None,
+            unit_definitions=None,
+            type_defintions=None,
+            log_categories=[],
+            default_experiment=None,
+            vendor_annotations=None,
+        )
 
     def on_cancel(self, event):
         self.Close()
@@ -152,29 +241,49 @@ class HomeScreenFrame(wx.Frame):
         name_label = wx.StaticText(panel, label="Name")
 
         # ---------------- fields.capabilities ---------------------
-        # needs_execution_tool=True,
-
-        # can_handle_variable_communication_step_size=True,
-        # can_be_instantiated_only_once_per_process=True,
-        # can_interpolate_inputs=True,
-        # max_output_derivative_order=0,
-        # can_run_asynchronously=True,
-        # can_not_use_memory_management_functions=True,
-        # can_get_and_set_fmu_state=True,
-        # can_serialize_fmu_state=True,
-        # provides_directional_derivatives=False,
-
-        # needs_execution_tool_box = wx.CheckBox(panel, label="Needs execution tool")
-        # needs_execution_tool_box.SetToolTip(FMI2Tooltips.needs_execution_tool)
 
         def create_box(label, tooltip):
             box = wx.CheckBox(panel, label=label)
             box.SetToolTip(tooltip)
             return box
 
-        can_handle_variable_communication_step_size_box = create_box(
-            "Variable step-size", ""
+        self.can_handle_variable_communication_step_size_box = create_box(
+            "variable step-size", "supports calls to fmi2DoStep step length",
         )
+
+        self.can_be_instantiated_only_once_per_process_box = create_box(
+            "multiple slave instances",
+            "supports the creation of several slaves by calling fmi2Instantiate multiple times",
+        )
+
+        self.can_interpolate_inputs_box = create_box("input interpolation", "todo")
+
+        self.can_run_asynchronously_box = create_box("async support", "todo")
+
+        self.can_not_use_memory_management_functions_box = create_box(
+            "can use memory management function",
+            "supports the use of tool defined functions for allocating and de-allocating memory",
+        )
+        self.can_get_and_set_fmu_state_box = create_box("get/set state", "todo")
+        self.can_serialize_fmu_state_box = create_box(
+            "serialization",
+            "supports serialization of the FMUs state, allowing a snapshot of the FMU to be captured and resumed at a later stage",
+        )
+        self.provides_directional_derivatives_box = create_box(
+            "directional derivatives",
+            "provides change of the outputs as a reuslt of a change of inputs corresponding to moving along a line in the statespace",
+        )
+
+        derivatives_sizer = wx.BoxSizer()
+        derivatives_label = wx.StaticText(panel, label="max derivative order")
+        self.derivatives_spin = wx.SpinCtrl(panel)
+        self.derivatives_spin.SetToolTip(
+            "the highest order of the directional derivatives provided by the FMU"
+        )
+        derivatives_sizer.Add(self.derivatives_spin)
+        derivatives_sizer.Add(derivatives_label)
+
+        # --------------- fields.scalar_variables ------------------------
 
         # sizers
 
@@ -190,9 +299,16 @@ class HomeScreenFrame(wx.Frame):
         basic_sizer.Add(name_label)
         basic_sizer.Add(self.name_field, flag=wx.EXPAND)
 
-        capabilities_sizer = wx.FlexGridSizer(cols=2)
-        capabilities_sizer.Add(can_handle_variable_communication_step_size_box)
-        # capabilities_sizer.Add(can_be_instantiated_only_once_per_process_box)
+        capabilities_sizer = wx.FlexGridSizer(cols=3)
+        capabilities_sizer.Add(self.can_handle_variable_communication_step_size_box)
+        capabilities_sizer.Add(self.can_be_instantiated_only_once_per_process_box)
+        capabilities_sizer.Add(self.can_interpolate_inputs_box)
+        capabilities_sizer.Add(self.can_run_asynchronously_box)
+        capabilities_sizer.Add(self.can_not_use_memory_management_functions_box)
+        capabilities_sizer.Add(self.can_get_and_set_fmu_state_box)
+        capabilities_sizer.Add(self.can_serialize_fmu_state_box)
+        capabilities_sizer.Add(self.provides_directional_derivatives_box)
+        capabilities_sizer.Add(derivatives_sizer)
 
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(wx.StaticText(panel, label="Basic"), flag=wx.CENTER)
@@ -201,7 +317,7 @@ class HomeScreenFrame(wx.Frame):
 
         main_sizer.Add(wx.StaticText(panel, label="Capabilities"), flag=wx.CENTER)
         main_sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND)
-        main_sizer.Add(capabilities_sizer, flag=wx.EXPAND)
+        main_sizer.Add(capabilities_sizer, 1, flag=wx.EXPAND)
 
         # create a menu bar
         self.makeMenuBar()
@@ -272,38 +388,6 @@ class HomeScreenFrame(wx.Frame):
 
         # dummy data
         global md
-        md = FmiModelDescription(
-            fmi_version="2.0.1",
-            model_name="my_fmu",
-            guid="abcd",
-            description="some description",
-            author="john doe",
-            version="1.0.0",
-            copyright="",
-            license="",
-            generation_tool="UniFMU",
-            variable_naming_convention="flat",
-            co_simulation=CoSimulation(
-                model_identifier="unifmu",
-                needs_execution_tool=True,
-                can_handle_variable_communication_step_size=True,
-                can_be_instantiated_only_once_per_process=True,
-                can_interpolate_inputs=True,
-                max_output_derivative_order=0,
-                can_run_asynchronously=True,
-                can_not_use_memory_management_functions=True,
-                can_get_and_set_fmu_state=True,
-                can_serialize_fmu_state=True,
-                provides_directional_derivatives=False,
-            ),
-            model_exchange=None,
-            number_of_event_indicators=0,
-            unit_definitions=None,
-            type_defintions=None,
-            log_categories=None,
-            default_experiment=None,
-            vendor_annotations=None,
-        )
 
     def on_edit(self, event):
 
@@ -326,12 +410,11 @@ class HomeScreenFrame(wx.Frame):
 
 md = None
 
-if __name__ == "__main__":
-    # When this module is run (not imported) then create the app, the
-    # frame, show it, and start the event loop.
 
+def show_gui():
     app = wx.App()
     frm = HomeScreenFrame(title="FMU Builder")
     frm.Show()
 
     app.MainLoop()
+

@@ -32,8 +32,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/INTO-CPS-Association/unifmu",
-    packages=find_packages("src"),
-    package_dir={"": "src"},
+    packages=find_packages("tool"),
+    package_dir={"": "tool"},
     project_urls={
         "Bug Tracker": "https://github.com/INTO-CPS-Association/unifmu/issues",
         "Documentation": "https://into-cps-application.readthedocs.io/en/latest/submodules/unifmu/docs/index.html",
@@ -51,6 +51,6 @@ setup(
     #     ]
     # },
     # include_package_data=True,
-    python_requires=">=3.6",
-    # entry_points={"console_scripts": ["pyfmu=pyfmu.pyfmu_cli:main"]},
+    python_requires=">=3.5",
+    entry_points={"console_scripts": ["unifmu=unifmu.cli:main"]},
 )
