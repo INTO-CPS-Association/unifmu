@@ -12,6 +12,9 @@ on:
 jobs:
   build-wrapper-windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
 
     steps:
       - uses: actions/checkout@v2
@@ -27,7 +30,9 @@ jobs:
 
   build-wrapper-linux:
     runs-on: windows-latest
-
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Install package
