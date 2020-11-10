@@ -1,3 +1,4 @@
+![Build and update wrappers](https://github.com/INTO-CPS-Association/unifmu/workflows/Build%20and%20update%20wrappers/badge.svg)
 # Universal Functional Mock-Up Unit (UniFMU)
 
 A fundamental challenge for successfully applying 
