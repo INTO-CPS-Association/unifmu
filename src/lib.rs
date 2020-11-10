@@ -291,7 +291,6 @@ pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
         let handle = unsafe { *c };
         //println!("sending free command");
         let status = execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
-        println!("freeing with status {:?}", status);
 
         //println!("getting rid of sockets");
         // ensure that process is terminated
@@ -483,7 +482,7 @@ pub extern "C" fn fmi2GetBoolean(
 }
 
 struct StringBuffer {
-    array: Vec<*mut c_char>,
+    array: Vec<CString>,
 }
 unsafe impl Send for StringBuffer {}
 unsafe impl Sync for StringBuffer {}
@@ -491,6 +490,10 @@ unsafe impl Sync for StringBuffer {}
 // https://users.rust-lang.org/t/share-mut-t-between-threads-wrapped-in-mutex/19621/2
 lazy_static! {
     static ref STRING_BUFFER: Mutex<StringBuffer> = Mutex::new(StringBuffer { array: Vec::new() });
+}
+
+lazy_static! {
+    static ref DUMMY: Mutex<CString> = Mutex::new(CString::new("test").unwrap());
 }
 
 /// Reads strings from FMU
@@ -504,7 +507,7 @@ pub extern "C" fn fmi2GetString(
     c: *const c_int,
     vr: *const c_uint,
     nvr: usize,
-    values: *mut *mut *mut c_char,
+    values: *mut *const c_char,
 ) -> c_int {
     match catch_unwind(|| {
         let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
@@ -512,27 +515,17 @@ pub extern "C" fn fmi2GetString(
             execute_fmi_command_return::<_, Vec<String>>(c, (FMI2FunctionCode::GetXXX, references))
                 .unwrap();
 
-        // Convert vector of strings into c-string double pointer
-        // Note that we intentionally omit dropping the memory
-        // This should be cleared by next call to a FMI function (currently is not the case)
-        let mut vec_cstr = strings
+        let mut string_buffer = STRING_BUFFER.lock().unwrap();
+
+        string_buffer.array = strings
             .into_iter()
-            .map(|s| CString::new(s).unwrap().into_raw())
+            .map(|s| CString::new(s).unwrap())
             .collect::<Vec<_>>();
 
-        vec_cstr.shrink_to_fit();
-        assert!(vec_cstr.len() == vec_cstr.capacity());
-
         unsafe {
-            let mut string_buffer = STRING_BUFFER.lock().unwrap();
-            // free previously allocated using CString::into_raw
-            for v in string_buffer.array.iter() {
-                CString::from_raw(*v);
+            for (idx, cstr) in string_buffer.array.iter().enumerate() {
+                std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
             }
-
-            string_buffer.array = vec_cstr;
-
-            std::ptr::write(values, string_buffer.array.as_mut_ptr());
         }
     }) {
         Ok(_) => Fmi2Status::Fmi2OK as i32,

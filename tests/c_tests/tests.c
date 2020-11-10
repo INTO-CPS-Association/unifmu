@@ -188,19 +188,16 @@ int main(int argc, char **argv)
 
     // string
     {
-        fmi2String *vals = NULL;
+        const char *vals[3];
+        fmi2ValueReference refs[] = {9, 10, 11};
+        assert(f.fmi2GetString(c, refs, 3, vals) == fmi2OK);
+        assert(strcmp(vals[0], "") == 0 && strcmp(vals[1], "") == 0 && strcmp(vals[2], "") == 0);
 
-        fmi2ValueReference refs[] = {9, 10};
-        assert(f.fmi2GetString(c, refs, 2, &vals) == fmi2OK);
-        assert(strcmp(vals[0], "") == 0 && strcmp(vals[1], "") == 0);
-        vals = malloc(2 * sizeof(char *));
         vals[0] = "abc";
         vals[1] = "def";
         assert(f.fmi2SetString(c, refs, 2, vals) == fmi2OK);
-        free(vals);
-        refs[0] = 11;
-        assert(f.fmi2GetString(c, refs, 1, &vals) == fmi2OK);
-        assert(strcmp(vals[0], "abcdef") == 0);
+        assert(f.fmi2GetString(c, refs, 3, vals) == fmi2OK);
+        assert(strcmp(vals[2], "abcdef") == 0);
     }
 
     // stepping
