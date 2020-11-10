@@ -5,12 +5,13 @@ Hello World, but with more meat.
 
 import datetime
 from os import close, spawnl
+from pathlib import Path
 from sys import flags
 import wx
 import wx.adv
 import wx.gizmos
 
-from wx.core import NumberEntryDialog, PrintDialog
+from wx.core import NumberEntryDialog, PrintDialog, VERTICAL
 
 from unifmu.fmi2 import ModelDescription, CoSimulation
 
@@ -56,6 +57,7 @@ class CreateFMUFrame(wx.Frame):
             majorDimension=1,
             style=wx.RA_SPECIFY_ROWS,
         )
+        self.fmi_selector.SetSelection(1)
         self.fmi_selector.SetToolTip(
             "Which version of the Functional Mock-Up interface the FMU targets"
         )
@@ -68,7 +70,7 @@ class CreateFMUFrame(wx.Frame):
             style=wx.CB_READONLY,
         )
         self.backend_combo.SetToolTip(
-            "Copy an ready-to use backend into the generated FMU, providing a quick way to get started"
+            "Copy an ready-to use backend into the generated FMU, providing a quick way to get started using a fully functional FMU"
         )
 
         self.button_generate = wx.Button(panel, label="Generate")
@@ -104,6 +106,28 @@ class CreateFMUFrame(wx.Frame):
         fmi_sizer.Add(backend_label, 0, wx.ALL, border_size)
         fmi_sizer.Add(self.backend_combo, 1, wx.ALL, border_size)
 
+        # ------------- export ------------------
+
+        outdir_sizer = wx.BoxSizer()
+        outdir_sizer.Add(wx.StaticText(panel, label="Output Directory:"))
+        self.outdir_picker = wx.DirPickerCtrl(
+            panel, message="Select Base Directory", path=Path.cwd().__fspath__(),
+        )
+        self.outdir_picker.SetToolTip(
+            "Select the directory in which the generated FMU will be written. Note that it will NOT be overwritten; a new directory or zip-archive is created."
+        )
+        outdir_sizer.Add(self.outdir_picker, 1, wx.EXPAND, border_size)
+
+        self.export_zipped_box = wx.CheckBox(panel, label="zip and append .fmu suffix")
+
+        # self.export_filename = wx.TextCtrl(panel, style=wx.TE_RICH2, value="MyFMU")
+        # self.export_filename.settool("Defines the name of the generated FMU. For example a name MyFMU leads to the creation of MyFMU.fmu ")
+
+        export_sizer = wx.BoxSizer(VERTICAL)
+        export_sizer.Add(outdir_sizer, 0, wx.EXPAND, border_size)
+        export_sizer.Add(self.export_zipped_box, 0, wx.EXPAND, border_size)
+
+        # ------------- generate and cancel buttons ----------------
         button_sizer = wx.BoxSizer()
         button_sizer.Add(self.button_cancel, 1, wx.ALL, border_size)
         button_sizer.Add(self.button_generate, 1, wx.ALL, border_size)
@@ -113,6 +137,7 @@ class CreateFMUFrame(wx.Frame):
         main_sizer.Add(author_sizer, 0, wx.ALL | wx.EXPAND, border_size)
         main_sizer.Add(description_sizer, 1, wx.ALL | wx.EXPAND, border_size)
         main_sizer.Add(fmi_sizer, 0, wx.ALL | wx.EXPAND | wx.CENTER, border_size)
+        main_sizer.Add(export_sizer, 0, wx.ALL | wx.EXPAND | wx.CENTER, border_size)
         main_sizer.Add(button_sizer, 0, wx.ALL | wx.CENTER, border_size)
 
         # fit controls
@@ -148,6 +173,19 @@ class CreateFMUFrame(wx.Frame):
             can_serialize_fmu_state,
             provides_directional_derivatives,
         ) = {
+            "None": (
+                "TODO",
+                False,
+                False,
+                False,
+                0,
+                False,
+                True,
+                True,
+                False,
+                False,
+                False,
+            ),
             "UniFMU->Python": (
                 "unifmu",
                 True,
@@ -160,7 +198,7 @@ class CreateFMUFrame(wx.Frame):
                 False,
                 False,
                 False,
-            )
+            ),
         }[
             self.backend_combo.Value
         ]
@@ -206,6 +244,17 @@ class CreateFMUFrame(wx.Frame):
             log_categories=[],
             default_experiment=None,
             vendor_annotations=None,
+        )
+
+        from unifmu.generate import generate_fmu
+
+        output_path = Path(self.outdir_picker.Path) / "MyFMU"
+
+        generate_fmu(
+            mdd,
+            path="",
+            backend=self.backend_combo.Value,
+            zipped=self.export_zipped_box.Value,
         )
 
     def on_cancel(self, event):
