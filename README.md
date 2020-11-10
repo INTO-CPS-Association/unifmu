@@ -39,7 +39,7 @@ Below is a configuration for starting a python based FMU, see `examples/python_f
 ``` toml
 [command]
 windows = [ "python", "launch.py" ]
-linux = [ "python3.8-dbg", "launch.py" ]
+linux = [ "python3.8", "launch.py" ]
 macos = ["python3.8","launch.py"]
 
 [timeout]
@@ -49,7 +49,7 @@ command = 500
 
 For this specific launch.toml file the UniFMU starts a new process by invoking the specified command, in this case:
 ``` bash
-Python3.8 launch.py --handshake-endpoint "tcp://localhost:5000"
+python3.8 launch.py --handshake-endpoint "tcp://localhost:5000"
 ```
 
 The  process reads the launch.py file located in the resource folder.
