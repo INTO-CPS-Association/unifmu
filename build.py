@@ -14,6 +14,7 @@ import platform
 
 class Chdir:
     def __init__(self, wd):
+        wd = Path(wd)
         self.old_wd = Path.cwd()
         self.wd = wd
 
@@ -57,10 +58,8 @@ if __name__ == "__main__":
         "Darwin": (f"lib{binary_basename}.dylib", f"darwin64/{binary_basename}.dylib"),
     }[s]
 
-    wrapper_in = (Path.cwd() / "target" / "debug" / input).__fspath__()
-    wrapper_out = (
-        Path.cwd() / "examples" / "python_fmu" / "binaries" / output
-    ).__fspath__()
+    wrapper_in = Path(f"wrapper/target/debug/{input}").absolute().__fspath__()
+    wrapper_out = Path(f"examples/python_fmu/binaries/{output}").absolute().__fspath__()
 
     # -------------- parse args -------------------------
 
@@ -88,7 +87,8 @@ if __name__ == "__main__":
     if args.update_wrapper:
 
         logger.info("building wrapper")
-        res = subprocess.Popen(args=["cargo", "build"]).wait()
+        with Chdir("wrapper"):
+            res = subprocess.Popen(args=["cargo", "build"]).wait()
 
         if res != 0:
             logger.error("wrapper failed to build")
@@ -115,7 +115,6 @@ if __name__ == "__main__":
     if args.test_c:
 
         build_dir = Path("tests/c_tests/build")
-        old_wd = Path.cwd()
 
         build_dir.mkdir(exist_ok=True)
 
