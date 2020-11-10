@@ -36,7 +36,8 @@ def path_to_host_binary() -> Path:
 
     input, output = system_to_binary_inout_tuple[platform.system()]
     binary_in = Path.cwd() / "target" / "debug" / input
-    binary_out = Path.cwd() / "tests" / "examples" / "python_fmu" / "binaries" / output
+    binary_out = Path.cwd() / "tests" / "examples" / \
+        "python_fmu" / "binaries" / output
 
     return binary_in, binary_out
 
@@ -124,7 +125,8 @@ if __name__ == "__main__":
 
         with Chdir(build_dir):
             logger.info("configuring cmake")
-            res = subprocess.Popen(args=["cmake", ".."]).wait()
+            res = subprocess.Popen(
+                args=["cmake", "-DCMAKE_BUILD_TYPE=Debug", ".."]).wait()
 
             if res != 0:
                 logger.error("unable to configure cmake")
@@ -139,10 +141,12 @@ if __name__ == "__main__":
 
         logger.info("running C integration tests")
 
-        resources_uri = (Path.cwd() / "tests/examples/python_fmu/resources").as_uri()
+        resources_uri = (
+            Path.cwd() / "tests/examples/python_fmu/resources").as_uri()
         test_executable = path_to_c_executable()
         res = subprocess.Popen(
-            args=[test_executable, library_out, resources_uri]
+            args=[test_executable,
+                  library_out, resources_uri]
         ).wait()
 
         if res != 0:

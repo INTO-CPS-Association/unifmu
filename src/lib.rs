@@ -46,11 +46,26 @@ struct LibraryContext {
 pub type SlaveHandle = i32;
 
 lazy_static! {
-    static ref CONTEXT: Mutex<LibraryContext> = Mutex::new(LibraryContext {
-        zmq_context: zmq::Context::new(),
-        handle_to_socket: Mutex::new(HashMap::new()),
-        handle_to_process: Mutex::new(HashMap::new()),
-    });
+    static ref CONTEXT: Mutex<Option<LibraryContext>> = Mutex::new(None);
+}
+
+/// Initialize static variables if necessary.
+///
+/// The issue is a result of the FMI2 specifications lack of a function that marks the end of a simulation.
+/// As a result we have to free resources, opportunistically whenever the number of active slaves are 0, e.g all handles are freed.
+/// However, there is nothing stopping the envrionment from creating new instances of FMUs following this.
+fn ensure_context_initialized() {
+    if CONTEXT.lock().unwrap().is_none() {
+        *CONTEXT.lock().unwrap() = Some(LibraryContext {
+            zmq_context: zmq::Context::new(),
+            handle_to_socket: Mutex::new(HashMap::new()),
+            handle_to_process: Mutex::new(HashMap::new()),
+        });
+    }
+}
+
+fn free_context() {
+    *CONTEXT.lock().unwrap() = None;
 }
 
 // -------------------------- ZMQ -----------------------------------
@@ -77,13 +92,14 @@ where
     let result_or_panic = catch_unwind(|| {
         let handle = unsafe { *handle_ptr };
 
-        let context = CONTEXT.lock().unwrap();
+        let context_lock = CONTEXT.lock().unwrap();
+        let context = context_lock.as_ref().unwrap();
+
         let format = WRAPPER_CONFIG
             .get()
             .expect("the configuration is not ready. do not invoke this function prior to setting configuration")
             .handshake_info
             .serialization_format;
-
         context
             .handle_to_socket
             .lock()
@@ -190,6 +206,8 @@ pub extern "C" fn fmi2Instantiate(
     _logging_on: c_int,
 ) -> *mut i32 {
     let panic_result: Result<i32, _> = catch_unwind(|| {
+        ensure_context_initialized();
+
         let resource_location = unsafe { CStr::from_ptr(fmu_resource_location) }
             .to_str()
             .expect("Unable to convert resource location to a string");
@@ -210,19 +228,14 @@ pub extern "C" fn fmi2Instantiate(
 
         // creating a handshake-socket which is used by the slave-process to pass connection strings back to the wrapper
 
-        let handshake_socket = CONTEXT
-            .lock()
-            .unwrap()
+        let context_lock = CONTEXT.lock().unwrap();
+        let context = context_lock.as_ref().unwrap();
+        let handshake_socket = context
             .zmq_context
             .socket(zmq::PULL)
             .expect("Unable to create handshake");
-        let command_socket = CONTEXT
-            .lock()
-            .unwrap()
-            .zmq_context
-            .socket(zmq::REQ)
-            .unwrap();
-        command_socket.set_linger(-1).unwrap();
+        let command_socket = context.zmq_context.socket(zmq::REQ).unwrap();
+        // command_socket.set_linger().unwrap();
         let handshake_port = handshake_socket.bind_to_random_port("*").unwrap();
 
         // to start the slave-process the os-specific launch command is read from the launch.toml file
@@ -262,7 +275,6 @@ pub extern "C" fn fmi2Instantiate(
             .expect("unable to establish a connection to the slave's command socket");
 
         // associate a numerical id with each slave and its corresponding socket(s)
-        let context = CONTEXT.lock().unwrap();
 
         let mut handle: SlaveHandle = 0;
         let mut handle_to_socket = context.handle_to_socket.lock().unwrap();
@@ -289,17 +301,31 @@ pub extern "C" fn fmi2Instantiate(
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
     match catch_unwind(|| {
         let handle = unsafe { *c };
-        //println!("sending free command");
-        let status = execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
+        execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
 
-        //println!("getting rid of sockets");
         // ensure that process is terminated
-        let context = CONTEXT.lock().unwrap();
-        context.handle_to_process.lock().unwrap().remove(&handle)
+        {
+            let context_lock = CONTEXT.lock().unwrap();
+            let context = context_lock.as_ref().unwrap();
+            context.handle_to_process.lock().unwrap().remove(&handle)
             .expect("the process associated with the slave appears to be missing. Potential causes are double free or that the slave was never instantiated");
 
-        context.handle_to_socket.lock().unwrap().remove(&handle)
+            context.handle_to_socket.lock().unwrap().remove(&handle)
             .expect("the process associated with the slave appears to be missing. Potential causes are double free or that the slave was never instantiated");
+        }
+
+        if CONTEXT
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .handle_to_socket
+            .lock()
+            .unwrap()
+            .is_empty()
+        {
+            free_context();
+        }
 
         unsafe { Box::from_raw(c) };
     }) {

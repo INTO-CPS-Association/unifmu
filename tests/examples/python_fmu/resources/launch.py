@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     # initializing message queue
     context = zmq.Context()
-    context.setsockopt(zmq.LINGER, -1)
+    # context.setsockopt(zmq.LINGER, -1)
     handshake_socket = context.socket(zmq.PUSH)
     command_socket = context.socket(zmq.REP)
 
