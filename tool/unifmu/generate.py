@@ -1,7 +1,7 @@
 import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import xml.etree as ET
+import xml.etree.ElementTree as ET
 from unifmu.fmi2 import ModelDescription
 
 
@@ -20,7 +20,7 @@ def generate_fmu(md: ModelDescription, path, backend: str, zipped: bool):
         fmd.set("modelName", md.model_name)
         fmd.set("guid", md.guid)
         fmd.set("author", md.author)
-        fmd.set("generationDateAndTime", md.generation_data_and_time)
+        fmd.set("generationDateAndTime", md.generation_date_and_time)
         fmd.set("variableNamingConvention", md.variable_naming_convention)
         fmd.set("generationTool", md.generation_tool)
 
@@ -39,7 +39,7 @@ def generate_fmu(md: ModelDescription, path, backend: str, zipped: bool):
 
         # 2.2.4 p.42) Log categories:
         cs = ET.SubElement(fmd, "LogCategories")
-        for ac in md.log_categorieslog_categories:
+        for ac in md.log_categories:
             c = ET.SubElement(cs, "Category")
             c.set("name", ac)
 
@@ -55,7 +55,7 @@ def generate_fmu(md: ModelDescription, path, backend: str, zipped: bool):
             "string": "String",
         }
 
-        for var in md.model_variables.variables:
+        for var in md.model_variables:
             var.variability
             value_reference = str(var.value_reference)
 
@@ -105,7 +105,10 @@ def generate_fmu(md: ModelDescription, path, backend: str, zipped: bool):
             #
             # See 2.2 p.28
             md: bytes = ET.tostring(
-                fmd, pretty_print=True, encoding="utf-8", xml_declaration=True
+                fmd,
+                encoding="utf-8",
+                xml_declaration=True
+                # fmd, pretty_print=True, encoding="utf-8", xml_declaration=True
             )
 
         except Exception as e:

@@ -108,24 +108,35 @@ class CreateFMUFrame(wx.Frame):
 
         # ------------- export ------------------
 
-        outdir_sizer = wx.BoxSizer()
-        outdir_sizer.Add(wx.StaticText(panel, label="Output Directory:"))
         self.outdir_picker = wx.DirPickerCtrl(
             panel, message="Select Base Directory", path=Path.cwd().__fspath__(),
         )
         self.outdir_picker.SetToolTip(
             "Select the directory in which the generated FMU will be written. Note that it will NOT be overwritten; a new directory or zip-archive is created."
         )
-        outdir_sizer.Add(self.outdir_picker, 1, wx.EXPAND, border_size)
+
+        self.filename_field = wx.TextCtrl(panel, style=wx.TE_RICH2, value="MyFMU")
 
         self.export_zipped_box = wx.CheckBox(panel, label="zip and append .fmu suffix")
 
-        # self.export_filename = wx.TextCtrl(panel, style=wx.TE_RICH2, value="MyFMU")
-        # self.export_filename.settool("Defines the name of the generated FMU. For example a name MyFMU leads to the creation of MyFMU.fmu ")
+        filename_sizer = wx.BoxSizer()
+        filename_sizer.AddMany(
+            [
+                (self.filename_field, 0, wx.ALL | wx.EXPAND, border_size),
+                (self.export_zipped_box, 0, wx.ALL | wx.EXPAND, border_size),
+            ]
+        )
 
-        export_sizer = wx.BoxSizer(VERTICAL)
-        export_sizer.Add(outdir_sizer, 0, wx.EXPAND, border_size)
-        export_sizer.Add(self.export_zipped_box, 0, wx.EXPAND, border_size)
+        export_sizer = wx.FlexGridSizer(2)
+        export_sizer.AddGrowableCol(1, 1)
+        export_sizer.AddMany(
+            [
+                (wx.StaticText(panel, label="Output Directory:"), 0, wx.ALL),
+                (self.outdir_picker, 1, wx.ALL | wx.EXPAND),
+                (wx.StaticText(panel, label="Filename:"), 0, wx.ALL),
+                (filename_sizer, 1, wx.ALL | wx.EXPAND),
+            ]
+        )
 
         # ------------- generate and cancel buttons ----------------
         button_sizer = wx.BoxSizer()
@@ -137,7 +148,7 @@ class CreateFMUFrame(wx.Frame):
         main_sizer.Add(author_sizer, 0, wx.ALL | wx.EXPAND, border_size)
         main_sizer.Add(description_sizer, 1, wx.ALL | wx.EXPAND, border_size)
         main_sizer.Add(fmi_sizer, 0, wx.ALL | wx.EXPAND | wx.CENTER, border_size)
-        main_sizer.Add(export_sizer, 0, wx.ALL | wx.EXPAND | wx.CENTER, border_size)
+        main_sizer.Add(export_sizer, 1, wx.ALL | wx.EXPAND, border_size)
         main_sizer.Add(button_sizer, 0, wx.ALL | wx.CENTER, border_size)
 
         # fit controls
@@ -248,11 +259,11 @@ class CreateFMUFrame(wx.Frame):
 
         from unifmu.generate import generate_fmu
 
-        output_path = Path(self.outdir_picker.Path) / "MyFMU"
+        output_path = Path(self.outdir_picker.Path) / self.filename_field.Value
 
         generate_fmu(
             mdd,
-            path="",
+            path=output_path,
             backend=self.backend_combo.Value,
             zipped=self.export_zipped_box.Value,
         )
