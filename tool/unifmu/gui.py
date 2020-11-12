@@ -3,6 +3,7 @@
 Hello World, but with more meat.
 """
 
+
 import datetime
 from os import close, spawnl
 from pathlib import Path
@@ -13,6 +14,7 @@ import wx.gizmos
 
 from wx.core import NumberEntryDialog, PrintDialog, VERTICAL
 
+from unifmu.generate import generate_fmu
 from unifmu.fmi2 import ModelDescription, CoSimulation
 
 
@@ -223,11 +225,11 @@ class CreateFMUFrame(wx.Frame):
         # ------------------------ end of inference ----------------------------
 
         mdd = ModelDescription(
-            fmi_version=self.fmi_selector.GetSelection,
+            fmi_version=str(self.fmi_selector.GetSelection),
             model_name=self.name_field.Value,
             guid=guid,
             description=self.description_field.Value,
-            author=self.author_field,
+            author=self.author_field.Value,
             version=version,
             copyright=copyright,
             license=license,
@@ -257,16 +259,16 @@ class CreateFMUFrame(wx.Frame):
             vendor_annotations=None,
         )
 
-        from unifmu.generate import generate_fmu
-
         output_path = Path(self.outdir_picker.Path) / self.filename_field.Value
+        print(output_path)
 
-        generate_fmu(
-            mdd,
-            path=output_path,
-            backend=self.backend_combo.Value,
-            zipped=self.export_zipped_box.Value,
-        )
+        from unifmu.generate import generate_fmu_from_backend
+
+        generate_fmu_from_backend("python", output_path)
+
+        # generate_fmu(
+        #     mdd, output_path=output_path, backend=self.backend_combo.Value,
+        # )
 
     def on_cancel(self, event):
         self.Close()

@@ -1,7 +1,7 @@
 """Contains definitions of concepts related to FMI 2.0.x"""
 
 
-from typing import Any
+from typing import Any, List, Optional
 
 
 class ScalarVariable:
@@ -9,14 +9,20 @@ class ScalarVariable:
         self,
         name: str,
         value_reference: str,
+        data_type: str,
         variability: str,
         causality: str,
-        start: Any = None,
+        initial: str,
+        description: str,
+        start: Optional[Any],
     ):
         self.name = name
         self.value_reference = value_reference
+        self.data_type = data_type
         self.variability = variability
         self.causality = causality
+        self.initial = initial
+        self.description = description
         self.start = start
 
 
@@ -85,13 +91,13 @@ class ModelDescription:
         generation_tool: str,
         generation_date_and_time: str,
         variable_naming_convention: str,
-        model_variables,
+        model_variables: List[ScalarVariable],
         model_structure,
         co_simulation: CoSimulation,
-        model_exchange: ModelExchange,
+        model_exchange: Optional[ModelExchange],
         unit_definitions,
         type_defintions,
-        log_categories,
+        log_categories: List[str],
         default_experiment,
         vendor_annotations,
     ):

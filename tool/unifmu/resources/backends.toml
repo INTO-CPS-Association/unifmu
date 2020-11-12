@@ -1,0 +1,14 @@
+[backend.blank]
+files = [["foo","bar"]]
+
+[backend.python]
+
+files = [
+    ["common/unifmu_binaries/*","binaries"],
+    ["backends/python/*.py","resources/"],
+    ["backends/python/launch.toml","resources/"],
+    ["backends/python/modelDescription.xml",""],
+]
+# binaries = "common/unifmu_binaries"
+# resources = "backends/python/*"
+# md = "backends/python/modelDescription.xml"

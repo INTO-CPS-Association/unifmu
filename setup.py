@@ -1,4 +1,17 @@
+from pathlib import Path, PurePosixPath
 from setuptools import setup, find_packages
+
+
+# setuptools does not support ** in glob
+# https://github.com/pypa/setuptools/issues/1806
+def get_resource_files():
+
+    files = [
+        "/".join(PurePosixPath(p).__fspath__().split("/")[2:])
+        for p in Path("tool/unifmu/resources").rglob("*")
+        if p.is_file()
+    ]
+    return files
 
 
 long_description = """
@@ -42,15 +55,8 @@ setup(
     install_requires=["zmq"],
     extras_require=_extras_require,
     # resources needed by the CLI to generate and export
-    # package_data={
-    #     "pyfmu": [
-    #         "resources/templates/*.j2",
-    #         "resources/wrapper/binaries/*/*[.so|.dll]",
-    #         "resources/validation/*",
-    #         "resources/config.json",
-    #     ]
-    # },
-    # include_package_data=True,
+    package_data={"unifmu": get_resource_files()},
+    include_package_data=True,
     python_requires=">=3.5",
     entry_points={"console_scripts": ["unifmu=unifmu.cli:main"]},
 )
