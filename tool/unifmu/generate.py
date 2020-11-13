@@ -1,20 +1,13 @@
 from os import makedirs
-from os.path import isdir
 from pathlib import Path
-from shutil import Error, copy, copy2, copytree
-from tempfile import TemporaryDirectory, mkdtemp, tempdir
+from shutil import copy
+from tempfile import TemporaryDirectory
 import shutil
-import fnmatch
-from pprint import pprint
-
-
-import tempfile
-from typing import List, Tuple
+from typing import List
 
 # import xml.etree.ElementTree as ET
 import pkg_resources
 import lxml.etree as ET
-from pkg_resources import to_filename
 import toml
 
 from unifmu.fmi2 import ModelDescription
@@ -218,8 +211,6 @@ def generate_fmu_from_backend(backend: str, output_path):
                 **resource_to_output,
                 **{src: dst},
             }
-        print("We need the following resources")
-        pprint(resource_to_output)
 
         # dump all needed into a temporary directory
         # this should ensures a file structure identical to the resources directory
@@ -228,7 +219,6 @@ def generate_fmu_from_backend(backend: str, output_path):
             makedirs(file_out.parent, exist_ok=True)
 
             stream = pkg_resources.resource_string(__name__, f"resources/{src}")
-            print(f"loading resource: {src} to temporary file: {file_out}")
             with open(file_out, "wb") as f:
                 f.write(stream)
 
@@ -244,18 +234,4 @@ def generate_fmu_from_backend(backend: str, output_path):
 
 def import_fmu(path) -> ModelDescription:
     raise NotImplementedError()
-
-
-if __name__ == "__main__":
-    # we collect a list of resource files, on which we can run glob expression from backends.toml
-    # files, dirs = list_resource_files("resources/")
-
-    # print("after filtering:")
-    # pprint((fnmatch.filter(files, "resources/common/")))
-
-    # assert pkg_resources.resource_exists(__name__, "resources/a")
-
-    generate_fmu_from_backend(
-        "python", "myfmu",
-    )
 
