@@ -1,16 +1,20 @@
 from os import makedirs
+from os.path import isdir
 from pathlib import Path
-from shutil import copy, copytree
+from shutil import Error, copy, copy2, copytree
 from tempfile import TemporaryDirectory, mkdtemp, tempdir
 import shutil
 import fnmatch
+from pprint import pprint
+
 
 import tempfile
-from typing import List
+from typing import List, Tuple
 
 # import xml.etree.ElementTree as ET
 import pkg_resources
 import lxml.etree as ET
+from pkg_resources import to_filename
 import toml
 
 from unifmu.fmi2 import ModelDescription
@@ -143,66 +147,115 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
         shutil.copytree(fmu_dir_tmp, output_path)
 
 
-def generate_fmu_from_backend(backend: str, output_path):
-    """ We need to jump thorugh some hoops to get a hold of the datafiles stored by setuptools
+def list_resource_files(resource_name: str) -> List[str]:
+    """Get a list containing all datafiles and directories available through setuptools pkg_resources interface
+
+    Directories are appended a trailing slash to disinguish them from files, e.g. resoures -> resources/
     """
 
-    # since setuptools may compress files, we cant access we need to use some tricks to get these
-    def collect_resource_names(resource_name: str, list: List[str]):
+    files = []
+    dirs = []
+
+    def inner_recursion(resource_name: str):
+
+        if not pkg_resources.resource_exists(__name__, resource_name):
+            raise RuntimeError(
+                f"The resource {resource_name}, does not seem to be available "
+            )
 
         # base case
         if not pkg_resources.resource_isdir(__name__, resource_name):
-            list.append(resource_name)
+            files.append(resource_name)
 
         # recursive case
         else:
+            if not resource_name.endswith("/"):
+                resource_name += "/"
+
+            dirs.append(resource_name)
             children = pkg_resources.resource_listdir(__name__, resource_name)
 
-            resource_names_extended = [f"{resource_name}/{c}" for c in children]
+            resource_names_extended = [f"{resource_name}{c}" for c in children]
 
             for child_resource in resource_names_extended:
-                collect_resource_names(child_resource, list)
+                inner_recursion(child_resource)
+
+    inner_recursion(resource_name)
+
+    return files
+
+
+def generate_fmu_from_backend(backend: str, output_path):
+    """Create a new FMU at specified location using a particular backend.
+
+    The resources making up each backend are defined in a configuration file located in the resources directory.
+    Specifically each backend defines a list of source-to-destination experssions:
+    
+    ["backends/python/*.py","resources/"],
+
+    """
 
     # we collect a list of resource files, on which we can run glob expression from backends.toml
-    resources = []
-    collect_resource_names("resources", resources)
+    resource_files = list_resource_files("resources")
 
     backend_manifest = toml.loads(
         pkg_resources.resource_string(__name__, "resources/backends.toml").decode()
     )["backend"][backend]
 
-    with TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
+    if "files" not in backend_manifest:
+        raise RuntimeError("'files' attribute is not defined in the configuration")
 
-        tmpdir = Path(mkdtemp())
+    # create phyiscal files in tmpdir, such that the copy/mv semantics can be implemented with function of standard lib
+    with TemporaryDirectory() as tmpdir_resources, TemporaryDirectory() as tmpdir_fmu:
+        tmpdir_resources = Path(tmpdir_resources)
+        tmpdir_fmu = Path(tmpdir_fmu)
 
+        # apply glob expressions from manifest to identify files and directories to copy to the FMU archive
         resource_to_output = {}
 
-        if "files" in backend_manifest:
+        for src, dst in backend_manifest["files"]:
+            resource_to_output = {
+                **resource_to_output,
+                **{src: dst},
+            }
+        print("We need the following resources")
+        pprint(resource_to_output)
 
-            for pattern, dst in backend_manifest["files"]:
-                pattern = "resources/" + pattern
+        # dump all needed into a temporary directory
+        # this should ensures a file structure identical to the resources directory
+        for src in resource_to_output:
+            file_out = tmpdir_resources / src
+            makedirs(file_out.parent, exist_ok=True)
 
-                resource_to_output = {
-                    **resource_to_output,
-                    **{match: dst for match in fnmatch.filter(resources, pattern)},
-                }
+            stream = pkg_resources.resource_string(__name__, f"resources/{src}")
+            print(f"loading resource: {src} to temporary file: {file_out}")
+            with open(file_out, "wb") as f:
+                f.write(stream)
 
-            for resource, dst in resource_to_output.items():
+        for src, dst in resource_to_output.items():
 
-                out: Path = tmpdir / dst / Path(resource).name
+            src = tmpdir_resources / src
+            dst = tmpdir_fmu / dst
+            makedirs(dst.parent, exist_ok=True)
+            copy(src, dst)
 
-                makedirs(out.parent, exist_ok=True)
-                assert out.parent.is_dir()
-
-                print(f"writing {resource} to {out}")
-                stream = pkg_resources.resource_string(__name__, resource)
-
-                with open(out, "wb") as f:
-                    f.write(stream)
-
-        copytree(tmpdir, output_path)
+        shutil.copytree(tmpdir_fmu, output_path)
 
 
 def import_fmu(path) -> ModelDescription:
     raise NotImplementedError()
+
+
+if __name__ == "__main__":
+    # we collect a list of resource files, on which we can run glob expression from backends.toml
+    # files, dirs = list_resource_files("resources/")
+
+    # print("after filtering:")
+    # pprint((fnmatch.filter(files, "resources/common/")))
+
+    # assert pkg_resources.resource_exists(__name__, "resources/a")
+
+    generate_fmu_from_backend(
+        "python", "myfmu",
+    )
+
