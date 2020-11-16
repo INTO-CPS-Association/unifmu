@@ -1,7 +1,6 @@
 import argparse
 from os import popen, system
 from pathlib import Path
-
 import logging
 import shutil
 from shutil import SameFileError
@@ -10,6 +9,9 @@ import os
 import sys
 from sys import executable, platform
 import platform
+from tempfile import TemporaryDirectory
+
+from unifmu.generate import generate_fmu_from_backend, get_backends
 
 
 class Chdir:
@@ -60,7 +62,7 @@ if __name__ == "__main__":
 
     wrapper_in = Path(f"wrapper/target/debug/{input}").absolute().__fspath__()
     wrapper_out = Path(
-        f"examples/python_fmu/binaries/{output}").absolute().__fspath__()
+        f"tool/unifmu/resources/common/unifmu_binaries/{output}").absolute().__fspath__()
 
     # -------------- parse args -------------------------
 
@@ -112,8 +114,6 @@ if __name__ == "__main__":
 
     if args.export_examples:
 
-        from unifmu.generate import generate_fmu_from_backend, get_backends
-
         for b in get_backends():
             outdir = Path(f"examples/{b}_fmu")
             generate_fmu_from_backend(b, outdir)
@@ -127,10 +127,8 @@ if __name__ == "__main__":
 
     if args.test_c:
 
-        assert Path("examples/python_fmu").is_dir(
-        ), "the example must be exported before running the C integration tests"
+        # build tests
         build_dir = Path("tests/c_tests/build")
-
         build_dir.mkdir(exist_ok=True)
 
         with Chdir(build_dir):
@@ -150,17 +148,23 @@ if __name__ == "__main__":
                 logger.error("unable to compile C integration tests")
                 sys.exit(-1)
 
-        logger.info("running C integration tests")
+        # export test examples into tmp directory and execute tests
+        with TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
 
-        resources_uri = (
-            (Path.cwd() / "examples" / "python_fmu" / "resources").absolute().as_uri()
-        )
-        res = subprocess.Popen(
-            args=[integration_tests_executable, wrapper_out, resources_uri]
-        ).wait()
+            fmu_path = tmpdir / "python_fmu"
+            generate_fmu_from_backend("python", fmu_path)
 
-        if res != 0:
-            logger.error("C integration tests failed")
-            sys.exit(-1)
+            resources_uri = (fmu_path / "resources").absolute().as_uri()
 
-        logger.info("C integration tests successful")
+            logger.info("running C integration tests")
+            res = subprocess.Popen(
+                args=[integration_tests_executable,
+                      wrapper_out, resources_uri]
+            ).wait()
+
+            if res != 0:
+                logger.error("C integration tests failed")
+                sys.exit(-1)
+
+            logger.info("C integration tests successful")

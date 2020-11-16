@@ -14,10 +14,10 @@ files = []
 files = [
     ["common/unifmu_binaries/win64/unifmu.dll","binaries/win64/unifmu.dll"],
     ["common/unifmu_binaries/linux64/unifmu.so","binaries/linux64/unifmu.so"],
-    ["backends/python/adder.py","resources/adder.py"], 
-    ["backends/python/fmi2.py","resources/fmi2.py"], 
-    ["backends/python/fmi2.py","resources/fmi2.py"],
-    ["backends/python/launch.py","resources/launch.py"], 
-    ["backends/python/launch.toml","resources/launch.toml"],
-    ["backends/python/modelDescription.xml","modelDescription.xml"],
+    ["backends/python_fmu/adder.py","resources/adder.py"], 
+    ["backends/python_fmu/fmi2.py","resources/fmi2.py"], 
+    ["backends/python_fmu/fmi2.py","resources/fmi2.py"],
+    ["backends/python_fmu/launch.py","resources/launch.py"], 
+    ["backends/python_fmu/launch.toml","resources/launch.toml"],
+    ["backends/python_fmu/modelDescription.xml","modelDescription.xml"],
 ]
