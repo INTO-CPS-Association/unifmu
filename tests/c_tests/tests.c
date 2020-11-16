@@ -1,25 +1,11 @@
-// we define macros to ease the burden of handling os specific "dlopen" - functionality
-#define STRINGIFY(x) #x
+#include <stdlib.h>
 
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #include <libloaderapi.h>
-#define CLOSEFUNC FreeLibrary
-#define LOADFUNC GetProcAddress
 #else
 #include <dlfcn.h>
-#define CLOSEFUNC dlclose
-#define LOADFUNC dlsym
-
 #endif
-#define IMPORT(n)                                      \
-    funcs->n = (n##TYPE *)LOADFUNC(handle, #n);        \
-    if (funcs->n == NULL)                              \
-    {                                                  \
-        printf(STRINGIFY(unable to load function##n)); \
-        return -1;                                     \
-    }
-;
 
 #include <stddef.h>
 #include <assert.h>
@@ -71,55 +57,75 @@ typedef struct
 
 void *handle;
 
-int load_library(Fmi2Functions *funcs, const char *filename)
+void *load_symbol(const char *name, void *handle)
 {
-#ifdef __unix__
-    handle = dlopen(filename, RTLD_NOW);
-#elif defined(_WIN32) || defined(WIN32)
-    handle = LoadLibrary(filename);
+    void *func;
+#if defined(_WIN32) || defined(WIN32)
+    func = GetProcAddress(handle, name);
+#else
+    func = dlsym(handle, name);
 #endif
 
-    IMPORT(fmi2GetTypesPlatform);
-    IMPORT(fmi2GetVersion);
-    IMPORT(fmi2SetDebugLogging);
-    IMPORT(fmi2Instantiate);
-    IMPORT(fmi2FreeInstance);
-    IMPORT(fmi2SetupExperiment);
-    IMPORT(fmi2EnterInitializationMode);
-    IMPORT(fmi2ExitInitializationMode);
-    IMPORT(fmi2Terminate);
-    IMPORT(fmi2Reset);
-    IMPORT(fmi2GetReal);
-    IMPORT(fmi2GetInteger);
-    IMPORT(fmi2GetBoolean);
-    IMPORT(fmi2GetString);
-    IMPORT(fmi2SetReal);
-    IMPORT(fmi2SetInteger);
-    IMPORT(fmi2SetBoolean);
-    IMPORT(fmi2SetString);
-    IMPORT(fmi2GetFMUstate);
-    IMPORT(fmi2SetFMUstate);
-    IMPORT(fmi2FreeFMUstate);
-    IMPORT(fmi2SerializedFMUstateSize);
-    IMPORT(fmi2SerializeFMUstate);
-    IMPORT(fmi2DeSerializeFMUstate);
-    IMPORT(fmi2GetDirectionalDerivative);
-    IMPORT(fmi2SetRealInputDerivatives);
-    IMPORT(fmi2GetRealOutputDerivatives);
-    IMPORT(fmi2DoStep);
-    IMPORT(fmi2CancelStep);
-    IMPORT(fmi2GetStatus);
-    IMPORT(fmi2GetRealStatus);
-    IMPORT(fmi2GetIntegerStatus);
-    IMPORT(fmi2GetBooleanStatus);
-    IMPORT(fmi2GetStringStatus);
+    if (func == NULL)
+    {
+        printf("Unable to load function %s from shared library\n", name);
+        abort();
+    }
+    return func;
+}
+
+int load_library(Fmi2Functions *funcs, const char *filename)
+{
+#if defined(_WIN32) || defined(WIN32)
+    handle = LoadLibrary(filename);
+#else
+    handle = dlopen(filename, RTLD_NOW);
+#endif
+    funcs->fmi2GetTypesPlatform = (fmi2GetTypesPlatformTYPE *)load_symbol("fmi2GetTypesPlatform", handle);
+    funcs->fmi2GetVersion = (fmi2GetVersionTYPE *)load_symbol("fmi2GetVersion", handle);
+    funcs->fmi2SetDebugLogging = (fmi2SetDebugLoggingTYPE *)load_symbol("fmi2SetDebugLogging", handle);
+    funcs->fmi2Instantiate = (fmi2InstantiateTYPE *)load_symbol("fmi2Instantiate", handle);
+    funcs->fmi2FreeInstance = (fmi2FreeInstanceTYPE *)load_symbol("fmi2FreeInstance", handle);
+    funcs->fmi2SetupExperiment = (fmi2SetupExperimentTYPE *)load_symbol("fmi2SetupExperiment", handle);
+    funcs->fmi2EnterInitializationMode = (fmi2EnterInitializationModeTYPE *)load_symbol("fmi2EnterInitializationMode", handle);
+    funcs->fmi2ExitInitializationMode = (fmi2ExitInitializationModeTYPE *)load_symbol("fmi2ExitInitializationMode", handle);
+    funcs->fmi2Terminate = (fmi2TerminateTYPE *)load_symbol("fmi2Terminate", handle);
+    funcs->fmi2Reset = (fmi2ResetTYPE *)load_symbol("fmi2Reset", handle);
+    funcs->fmi2GetReal = (fmi2GetRealTYPE *)load_symbol("fmi2GetReal", handle);
+    funcs->fmi2GetInteger = (fmi2GetIntegerTYPE *)load_symbol("fmi2GetInteger", handle);
+    funcs->fmi2GetBoolean = (fmi2GetBooleanTYPE *)load_symbol("fmi2GetBoolean", handle);
+    funcs->fmi2GetString = (fmi2GetStringTYPE *)load_symbol("fmi2GetString", handle);
+    funcs->fmi2SetReal = (fmi2SetRealTYPE *)load_symbol("fmi2SetReal", handle);
+    funcs->fmi2SetInteger = (fmi2SetIntegerTYPE *)load_symbol("fmi2SetInteger", handle);
+    funcs->fmi2SetBoolean = (fmi2SetBooleanTYPE *)load_symbol("fmi2SetBoolean", handle);
+    funcs->fmi2SetString = (fmi2SetStringTYPE *)load_symbol("fmi2SetString", handle);
+    funcs->fmi2GetFMUstate = (fmi2GetFMUstateTYPE *)load_symbol("fmi2GetFMUstate", handle);
+    funcs->fmi2SetFMUstate = (fmi2SetFMUstateTYPE *)load_symbol("fmi2SetFMUstate", handle);
+    funcs->fmi2FreeFMUstate = (fmi2FreeFMUstateTYPE *)load_symbol("fmi2FreeFMUstate", handle);
+    funcs->fmi2SerializedFMUstateSize = (fmi2SerializedFMUstateSizeTYPE *)load_symbol("fmi2SerializedFMUstateSize", handle);
+    funcs->fmi2SerializeFMUstate = (fmi2SerializeFMUstateTYPE *)load_symbol("fmi2SerializeFMUstate", handle);
+    funcs->fmi2DeSerializeFMUstate = (fmi2DeSerializeFMUstateTYPE *)load_symbol("fmi2DeSerializeFMUstate", handle);
+    funcs->fmi2GetDirectionalDerivative = (fmi2GetDirectionalDerivativeTYPE *)load_symbol("fmi2GetDirectionalDerivative", handle);
+    funcs->fmi2SetRealInputDerivatives = (fmi2SetRealInputDerivativesTYPE *)load_symbol("fmi2SetRealInputDerivatives", handle);
+    funcs->fmi2GetRealOutputDerivatives = (fmi2GetRealOutputDerivativesTYPE *)load_symbol("fmi2GetRealOutputDerivatives", handle);
+    funcs->fmi2DoStep = (fmi2DoStepTYPE *)load_symbol("fmi2DoStep", handle);
+    funcs->fmi2CancelStep = (fmi2CancelStepTYPE *)load_symbol("fmi2CancelStep", handle);
+    funcs->fmi2GetStatus = (fmi2GetStatusTYPE *)load_symbol("fmi2GetStatus", handle);
+    funcs->fmi2GetRealStatus = (fmi2GetRealStatusTYPE *)load_symbol("fmi2GetRealStatus", handle);
+    funcs->fmi2GetIntegerStatus = (fmi2GetIntegerStatusTYPE *)load_symbol("fmi2GetIntegerStatus", handle);
+    funcs->fmi2GetBooleanStatus = (fmi2GetBooleanStatusTYPE *)load_symbol("fmi2GetBooleanStatus", handle);
+    funcs->fmi2GetStringStatus = (fmi2GetStringStatusTYPE *)load_symbol("fmi2GetStringStatus", handle);
 
     return 0;
 }
 
 int free_library()
 {
-    return CLOSEFUNC(handle);
+#ifdef defined(_WIN32) || defined(WIN32)
+    FreeLibrary(handle)
+#else
+    dlclose(handle);
+#endif
 }
 
 int main(int argc, char **argv)
