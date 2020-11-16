@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install package
         run: |
+          pip install setuptools
           pip install .[tests]
       - name: Build wrapper
         run: |
@@ -37,6 +38,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install package
         run: |
+          pip3 install setuptools
           pip3 install .[tests]
       - name: Build wrapper
         run: |
