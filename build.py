@@ -10,6 +10,8 @@ import sys
 from sys import executable, platform
 import platform
 from tempfile import TemporaryDirectory
+from os import makedirs
+
 
 from unifmu.generate import generate_fmu_from_backend, get_backends
 
@@ -62,7 +64,9 @@ if __name__ == "__main__":
 
     wrapper_in = Path(f"wrapper/target/debug/{input}").absolute().__fspath__()
     wrapper_out = Path(
-        f"tool/unifmu/resources/common/unifmu_binaries/{output}").absolute().__fspath__()
+        f"tool/unifmu/resources/common/unifmu_binaries/{output}").absolute()
+    makedirs(wrapper_out.parent, exist_ok=True)
+    wrapper_out = wrapper_out.__fspath__()
 
     # -------------- parse args -------------------------
 
