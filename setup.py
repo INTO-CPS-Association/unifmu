@@ -32,7 +32,7 @@ _extras_require = {
         "sphinxcontrib-bibtex",
         "sphinxcontrib-programoutput",
     ],
-    "tests": ["zmq"],
+    "tests": ["zmq", "lxml"],
     "gui": ["wxpython"]
 }
 _extras_require["dev"] = _extras_require["docs"] + _extras_require["tests"]
