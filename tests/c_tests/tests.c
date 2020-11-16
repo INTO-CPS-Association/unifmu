@@ -1,14 +1,15 @@
 // we define macros to ease the burden of handling os specific "dlopen" - functionality
 #define STRINGIFY(x) #x
-#if __unix__
-#include <dlfcn.h>
-#define CLOSEFUNC dlclose
-#define LOADFUNC dlsym
-#elif defined(_WIN32) || defined(WIN32)
+
+#if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #include <libloaderapi.h>
 #define CLOSEFUNC FreeLibrary
 #define LOADFUNC GetProcAddress
+#else
+#include <dlfcn.h>
+#define CLOSEFUNC dlclose
+#define LOADFUNC dlsym
 
 #endif
 #define IMPORT(n)                                      \
