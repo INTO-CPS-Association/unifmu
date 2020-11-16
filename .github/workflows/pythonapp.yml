@@ -14,33 +14,33 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
 
     steps:
       - uses: actions/checkout@v2
       - name: Install package
         run: |
           pip install .[tests]
-      - name: Build wrapper and update examples
+      - name: Build wrapper
         run: |
-          python build.py --update-wrapper --export-examples
+          python build.py --update-wrapper
       - name: Run integration tests
         run: |
           python build.py --test-c
 
   build-wrapper-linux:
-    runs-on: windows-latest
+    runs-on: linux-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Install package
         run: |
           pip install .[tests]
-      - name: Build wrapper and update examples
+      - name: Build wrapper
         run: |
-          python build.py --update-wrapper --export-examples
+          python build.py --update-wrapper
       - name: Run integration tests
         run: |
           python build.py --test-c
