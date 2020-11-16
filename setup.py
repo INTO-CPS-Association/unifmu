@@ -32,8 +32,8 @@ _extras_require = {
         "sphinxcontrib-bibtex",
         "sphinxcontrib-programoutput",
     ],
-    "tests": ["",],
-    "gui": ["wxpython"],
+    "tests": ["zmq"],
+    "gui": ["wxpython"]
 }
 _extras_require["dev"] = _extras_require["docs"] + _extras_require["tests"]
 
@@ -52,7 +52,7 @@ setup(
         "Documentation": "https://into-cps-application.readthedocs.io/en/latest/submodules/unifmu/docs/index.html",
         "Source Code": "https://github.com/INTO-CPS-Association/unifmu",
     },
-    install_requires=["zmq"],
+    install_requires=[],
     extras_require=_extras_require,
     # resources needed by the CLI to generate and export
     package_data={"unifmu": get_resource_files()},

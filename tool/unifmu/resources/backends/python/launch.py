@@ -7,7 +7,7 @@ from pathlib import Path
 
 import zmq
 
-from fmi2 import Fmi2Status
+from fmi2 import Fmi2Status, FMU
 from adder import Adder
 
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     handshake_socket.send_string(handshake_json)
 
     # create slave object then use model description to create a mapping between fmi value references and attribute names of FMU
-    slave = get_slave_instance()
+    slave: FMU = get_slave_instance()
 
     reference_to_attr = {}
     with open(Path.cwd().parent / "modelDescription.xml") as f:
@@ -72,19 +72,32 @@ if __name__ == "__main__":
 
     # methods bound to a slave which returns status codes
     command_to_slave_methods = {
+        # common
         0: slave.set_debug_logging,
         1: slave.setup_experiment,
-        2: slave.enter_initialization_mode,
-        3: slave.exit_initialization_mode,
-        4: slave.terminate,
-        5: slave.reset,
-        6: set_xxx,
-        7: get_xxx,
-        8: slave.do_step,
+        3: slave.enter_initialization_mode,
+        4: slave.exit_initialization_mode,
+        5: slave.terminate,
+        6: slave.reset,
+        7: set_xxx,
+        8: get_xxx,
+        9: slave.serialize,
+        10: slave.deserialize,
+        11: slave.get_directional_derivative,
+        # model exchange
+        # cosim
+        12: slave.set_input_derivatives,
+        13: slave.get_output_derivatives,
+        14: slave.do_step,
+        15: slave.cancel_step,
+        16: slave.get_xxx_status,
     }
 
     # commands that which are not bound to a
-    command_to_free_function = {9: free_instance}
+    command_to_free_function = {2: free_instance}
+
+    assert len(set(command_to_slave_methods.keys()).intersection(
+        set(command_to_free_function.keys()))) == 0, "command kind should be either free or bound to slave, not both"
 
     # event loop
     while True:
@@ -100,7 +113,7 @@ if __name__ == "__main__":
             logger.info(f"returning value: {result}")
             command_socket.send_pyobj(result)
 
-        elif kind == 9:
+        elif kind == 2:
 
             command_socket.send_pyobj(Fmi2Status.ok)
             sys.exit(0)

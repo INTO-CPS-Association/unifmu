@@ -1,3 +1,6 @@
+from typing import List, Tuple
+
+
 class Fmi2Status:
     """Represents the status of the FMU or the results of function calls.
 
@@ -26,23 +29,49 @@ class FMU:
     def __init__(self) -> None:
         pass
 
-    def set_debug_logging(self, categories, logging_on):
+    # --------- common --------------
+    def set_debug_logging(self, categories, logging_on) -> int:
         return Fmi2Status.ok
 
-    def do_step(self, current_time: float, step_size: float, no_step_prior: bool):
+    def setup_experiment(self, tolerance=None, start_time=None, stop_time=None) -> int:
         return Fmi2Status.ok
 
-    def setup_experiment(self, tolerance=None, start_time=None, stop_time=None):
+    def enter_initialization_mode(self) -> int:
         return Fmi2Status.ok
 
-    def enter_initialization_mode(self):
+    def exit_initialization_mode(self) -> int:
         return Fmi2Status.ok
 
-    def exit_initialization_mode(self):
+    def terminate(self) -> int:
         return Fmi2Status.ok
 
-    def terminate(self):
+    def reset(self) -> int:
         return Fmi2Status.ok
 
-    def reset(self):
+    # getters and setters implemented in launch.py
+
+    def serialize(self) -> bytes:
+        raise NotImplementedError()
+
+    def deserialize(self, state: bytes):
+        raise NotImplementedError()
+
+    def get_directional_derivative(self, references_unknown: List[int], references_known: List[int], values_known: List[float]) -> List[float]:
+        raise NotImplementedError()
+
+    # --------- co-sim --------------
+
+    def set_input_derivatives(self):
+        raise NotImplementedError()
+
+    def get_output_derivatives(self):
+        raise NotImplementedError()
+
+    def do_step(self, current_time: float, step_size: float, no_step_prior: bool) -> int:
         return Fmi2Status.ok
+
+    def cancel_step(self) -> int:
+        raise NotImplementedError()
+
+    def get_xxx_status(self) -> Tuple[int, any]:
+        raise NotImplementedError()

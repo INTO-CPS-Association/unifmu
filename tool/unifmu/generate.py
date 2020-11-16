@@ -35,7 +35,8 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
         #
         cs = ET.SubElement(fmd, "CoSimulation")
         cs.set("modelIdentifier", md.co_simulation.model_identifier)
-        cs.set("needsExecutionTool", str(md.co_simulation.needs_execution_tool))
+        cs.set("needsExecutionTool", str(
+            md.co_simulation.needs_execution_tool))
         cs.set(
             "canNotUseMemoryManagementFunctions",
             str(md.co_simulation.can_not_use_memory_management_functions),
@@ -67,7 +68,8 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
             var.variability
             value_reference = str(var.value_reference)
 
-            idx_comment = ET.Comment(f'Index of variable = "{variable_index + 1}"')
+            idx_comment = ET.Comment(
+                f'Index of variable = "{variable_index + 1}"')
             mvs.append(idx_comment)
             sv = ET.SubElement(mvs, "ScalarVariable")
             sv.set("name", var.name)
@@ -105,11 +107,13 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
         if outputs:
             os = ET.SubElement(ms, "Outputs")
             for idx, o in outputs:
-                ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
+                ET.SubElement(os, "Unknown", {
+                              "index": str(idx), "dependencies": ""})
 
             os = ET.SubElement(ms, "InitialUnknowns")
             for idx, o in outputs:
-                ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
+                ET.SubElement(os, "Unknown", {
+                              "index": str(idx), "dependencies": ""})
 
         try:
             # FMI requires encoding to be encoded as UTF-8 and contain a header:
@@ -178,25 +182,32 @@ def list_resource_files(resource_name: str) -> List[str]:
     return files
 
 
+def get_backends() -> List[str]:
+
+    return toml.loads(
+        pkg_resources.resource_string(
+            __name__, "resources/backends.toml").decode()
+    )["backend"].keys()
+
+
 def generate_fmu_from_backend(backend: str, output_path):
     """Create a new FMU at specified location using a particular backend.
 
     The resources making up each backend are defined in a configuration file located in the resources directory.
     Specifically each backend defines a list of source-to-destination experssions:
-    
+
     ["backends/python/*.py","resources/"],
 
     """
 
-    # we collect a list of resource files, on which we can run glob expression from backends.toml
-    resource_files = list_resource_files("resources")
-
     backend_manifest = toml.loads(
-        pkg_resources.resource_string(__name__, "resources/backends.toml").decode()
+        pkg_resources.resource_string(
+            __name__, "resources/backends.toml").decode()
     )["backend"][backend]
 
     if "files" not in backend_manifest:
-        raise RuntimeError("'files' attribute is not defined in the configuration")
+        raise RuntimeError(
+            "'files' attribute is not defined in the configuration")
 
     # create phyiscal files in tmpdir, such that the copy/mv semantics can be implemented with function of standard lib
     with TemporaryDirectory() as tmpdir_resources, TemporaryDirectory() as tmpdir_fmu:
@@ -218,7 +229,8 @@ def generate_fmu_from_backend(backend: str, output_path):
             file_out = tmpdir_resources / src
             makedirs(file_out.parent, exist_ok=True)
 
-            stream = pkg_resources.resource_string(__name__, f"resources/{src}")
+            stream = pkg_resources.resource_string(
+                __name__, f"resources/{src}")
             with open(file_out, "wb") as f:
                 f.write(stream)
 
@@ -234,4 +246,3 @@ def generate_fmu_from_backend(backend: str, output_path):
 
 def import_fmu(path) -> ModelDescription:
     raise NotImplementedError()
-

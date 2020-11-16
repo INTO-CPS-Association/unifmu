@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install package
         run: |
-          pip install .[dev]
+          pip install .[tests]
       - name: Build wrapper and update examples
         run: |
           python build.py --update-wrapper
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install package
         run: |
-          pip install .[dev]
+          pip install .[tests]
       - name: Build wrapper and update examples
         run: |
           python build.py --update-wrapper

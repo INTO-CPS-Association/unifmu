@@ -1,8 +1,0 @@
-[command]
-windows = [ "python", "launch.py" ]
-linux = [ "python", "launch.py" ]
-macos = ["python","launch.py"]
-
-[timeout]
-launch = 500
-command = 500

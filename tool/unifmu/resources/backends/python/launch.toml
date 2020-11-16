@@ -1,6 +1,6 @@
 [command]
 windows = [ "python", "launch.py" ]
-linux = [ "python", "launch.py" ]
+linux = [ "python3.8", "launch.py" ]
 macos = ["python","launch.py"]
 
 [timeout]

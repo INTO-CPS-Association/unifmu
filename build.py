@@ -59,7 +59,8 @@ if __name__ == "__main__":
     }[s]
 
     wrapper_in = Path(f"wrapper/target/debug/{input}").absolute().__fspath__()
-    wrapper_out = Path(f"examples/python_fmu/binaries/{output}").absolute().__fspath__()
+    wrapper_out = Path(
+        f"examples/python_fmu/binaries/{output}").absolute().__fspath__()
 
     # -------------- parse args -------------------------
 
@@ -80,6 +81,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--test-c", dest="test_c", action="store_true", help="run C integration tests"
+    )
+
+    parser.add_argument(
+        "--export-examples", dest="export_examples", action="store_true", help="copy example FMUs to the examples directory"
     )
 
     args = parser.parse_args()
@@ -105,15 +110,25 @@ if __name__ == "__main__":
 
         logger.info("wrapper updated")
 
+    if args.export_examples:
+
+        from unifmu.generate import generate_fmu_from_backend, get_backends
+
+        for b in get_backends():
+            outdir = Path(f"examples/{b}_fmu")
+            generate_fmu_from_backend(b, outdir)
+
     if args.test_rust:
         res = subprocess.Popen(["cargo", "test"]).wait()
 
         if res != 0:
             logger.error("Rust test failed")
-            sys.exit(0)
+            sys.exit(-1)
 
     if args.test_c:
 
+        assert Path("examples/python_fmu").is_dir(
+        ), "the example must be exported before running the C integration tests"
         build_dir = Path("tests/c_tests/build")
 
         build_dir.mkdir(exist_ok=True)

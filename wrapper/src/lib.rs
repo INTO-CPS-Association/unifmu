@@ -142,16 +142,29 @@ use serde_repr::Serialize_repr;
 #[repr(i32)]
 #[derive(Serialize_repr)]
 enum FMI2FunctionCode {
+    // ----- common functions ------
+    // GetTypesPlatform <- implemented by wrapper
+    // GetVersion <- implemented by wrapper
     SetDebugLogging = 0,
+    // Instantiate <- implemented by wrapper
     SetupExperiement = 1,
-    EnterInitializationMode = 2,
-    ExitInitializationMode = 3,
-    Terminate = 4,
-    Reset = 5,
-    SetXXX = 6,
-    GetXXX = 7,
-    DoStep = 8,
-    FreeInstance = 9,
+    FreeInstance = 2,
+    EnterInitializationMode = 3,
+    ExitInitializationMode = 4,
+    Terminate = 5,
+    Reset = 6,
+    SetXXX = 7,
+    GetXXX = 8,
+    Serialize = 9,
+    Deserialize = 10,
+    GetDirectionalDerivative = 11,
+    // model-exchange (not implemented)
+    // ----- cosim ------
+    SetRealInputDerivatives = 12,
+    GetRealOutputDerivatives = 13,
+    DoStep = 14,
+    CancelStep = 15,
+    GetXXXStatus = 16,
 }
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
@@ -251,6 +264,8 @@ pub extern "C" fn fmi2Instantiate(
         let endpoint = format!("tcp://localhost:{:?}", handshake_port);
         command.push(endpoint.to_string());
 
+        println!("COMMAND IS: {:?}", command);
+
         let res = Popen::create(
             &command,
             PopenConfig {
@@ -258,7 +273,7 @@ pub extern "C" fn fmi2Instantiate(
                 ..Default::default()
             },
         )
-        .expect("Unable to start process using command");
+        .expect("Unable to start the process using the specified command. Ensure that you can invoke the command directly from a shell");
 
         let handshake_info: HandshakeInfo = handshake_socket
             .recv_from_json()

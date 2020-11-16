@@ -1,3 +1,6 @@
+# auto-exported examples
+examples/
+
 /.vscode
 **.pyc
 
