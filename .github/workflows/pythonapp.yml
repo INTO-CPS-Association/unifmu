@@ -23,7 +23,7 @@ jobs:
           pip install .[tests]
       - name: Build wrapper and update examples
         run: |
-          python build.py --update-wrapper
+          python build.py --update-wrapper --export-examples
       - name: Run integration tests
         run: |
           python build.py --test-c
@@ -40,7 +40,7 @@ jobs:
           pip install .[tests]
       - name: Build wrapper and update examples
         run: |
-          python build.py --update-wrapper
+          python build.py --update-wrapper --export-examples
       - name: Run integration tests
         run: |
           python build.py --test-c
