@@ -45,4 +45,4 @@ jobs:
           python3 build.py --update-wrapper
       - name: Run integration tests
         run: |
-          python build.py --test-c
+          python3 build.py --test-c
