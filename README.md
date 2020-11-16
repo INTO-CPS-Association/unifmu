@@ -120,3 +120,32 @@ To run the C integration tests run:
 ``` bash
 python build.py --test-c
 ```
+
+## Frequently Asked Questions
+
+### How do execute the launch command though a shell?
+The command specified in the launch.toml are executed without the use of a shell.
+This means that functionality provided by the shell such as wildcards, per session environment variables, and aliases, are not evaluated.
+Specifically, the process is launched using a popen-like api with shell=False, see [subprocess](https://docs.rs/subprocess/latest/subprocess/) for information on the differences.
+
+There are several reasons for not launching directly through the shell by default. First, it may simply not be necessary if no functionality form the shell is needed. 
+In this case launching through the shell simply adds more complexity and reduces transparency.
+Secondly, a system may have multiple shells and not all platforms have a consistent way to locate the shell.
+
+If you want to invoke the launch command though the shell, you can specify the shell executable as the first argument as shown below: 
+
+``` toml
+# launch.toml
+[command]
+windows = [ "powershell.exe", "launch.ps1" ]
+linux = [ "/bin/sh","launch.sh"]
+macos = ["zsh","launch.sh"]
+```
+The example shows how an platform specific helper script would be invoked:
+
+``` bash
+# launch.sh
+python3.8 --version         # other steps, logging, etc.
+EXPORT FOO=BAR              # set environment variable
+python3.8 launch.py $1 $2   # last arguments are --handshake-endpoint and its value
+```
