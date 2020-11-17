@@ -25,6 +25,26 @@ class Fmi2Status:
     pending = 5
 
 
+class Fmi2StatusKind:
+    """Defines the different types of statuses the master can inquire the slave about, see p.104
+    
+    These are used for async related functionality of FMI2.
+
+    Values:
+        * do_step_status: request the status of the step function. If not completed fmi2Pending is returned,
+                        if complete the status of the step function is returned. 
+        * pending_status: request a string description of describing the progress of the step function.
+        * last_successfull_time: returns the simulation time of the last successfull simulation step.
+        * terminated: ask the slave if it wants to terminate the simulation. This can be called after the 
+                        step function returns the discard status.
+    """
+
+    do_step_status = 0
+    pending_status = 1
+    last_successfull_time = 2
+    terminated = 3
+
+
 class Fmi2FMU:
     """Base class for FMUs implemented using UniFMU's Python backend.
     
@@ -109,5 +129,6 @@ class Fmi2FMU:
     def cancel_step(self) -> int:
         raise NotImplementedError()
 
-    def get_xxx_status(self) -> Tuple[int, Any]:
+    def get_xxx_status(self, kind: int) -> Tuple[int, Any]:
+        """Inquire about the status of an async FMU's step methods progress."""
         raise NotImplementedError()
