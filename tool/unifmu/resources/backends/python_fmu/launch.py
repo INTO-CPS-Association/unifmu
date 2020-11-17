@@ -7,7 +7,7 @@ from pathlib import Path
 
 import zmq
 
-from fmi2 import Fmi2Status, FMU
+from fmi2 import Fmi2Status, Fmi2FMU
 from adder import Adder
 
 
@@ -46,13 +46,12 @@ if __name__ == "__main__":
     handshake_socket.send_string(handshake_json)
 
     # create slave object then use model description to create a mapping between fmi value references and attribute names of FMU
-    slave: FMU = get_slave_instance()
+    slave: Fmi2FMU = get_slave_instance()
 
     reference_to_attr = {}
     with open(Path.cwd().parent / "modelDescription.xml") as f:
         for v in ET.parse(f).find("ModelVariables"):
-            reference_to_attr[int(v.attrib["valueReference"])
-                              ] = v.attrib["name"]
+            reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
 
     # -------- getter and setter functions ---------
 
@@ -96,8 +95,14 @@ if __name__ == "__main__":
     # commands that which are not bound to a
     command_to_free_function = {2: free_instance}
 
-    assert len(set(command_to_slave_methods.keys()).intersection(
-        set(command_to_free_function.keys()))) == 0, "command kind should be either free or bound to slave, not both"
+    assert (
+        len(
+            set(command_to_slave_methods.keys()).intersection(
+                set(command_to_free_function.keys())
+            )
+        )
+        == 0
+    ), "command kind should be either free or bound to slave, not both"
 
     # event loop
     while True:

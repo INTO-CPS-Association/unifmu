@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 
 class Fmi2Status:
@@ -25,7 +25,17 @@ class Fmi2Status:
     pending = 5
 
 
-class FMU:
+class Fmi2FMU:
+    """Base class for FMUs implemented using UniFMU's Python backend.
+    
+    Deriving from this class provides dummy implementation for FMI2 function, 
+    eliminating the need to implement functionality not needed by the FMU.
+    An additional ulility of the base class is to provide function-prototypes
+    which the an IDE may use to provide code completion hints to the author.
+
+    The behavior of the FMU can be implemented by overwriting these methods.
+    """
+
     def __init__(self) -> None:
         pass
 
@@ -33,30 +43,54 @@ class FMU:
     def set_debug_logging(self, categories, logging_on) -> int:
         return Fmi2Status.ok
 
-    def setup_experiment(self, tolerance=None, start_time=None, stop_time=None) -> int:
+    def setup_experiment(
+        self, start_time: float, stop_time=None, tolerance=None
+    ) -> int:
         return Fmi2Status.ok
 
     def enter_initialization_mode(self) -> int:
+        """Informs the FMU to enter initialization mode. 
+        Before this all inputs with 'initial ∈ {exact, approx}', have been set by the tool.
+        
+        At this stage all outputs of 'initial ∈ {calculated}' can be assigned.
+        """
         return Fmi2Status.ok
 
     def exit_initialization_mode(self) -> int:
+        """Informs the fmu to exit initialziation mode."""
         return Fmi2Status.ok
 
     def terminate(self) -> int:
+        """Informs the FMU that the simulation has finished, after this the final values of the FMU can be enquired by the tool.
+        
+        Note that termination is not the same as the FMU be freed; the fmu may be reset and used for another simulation run.
+        As such it may be sensible to preserve expensive to construct resources, that would otherwise have to be recreated.
+        
+        If you need to add destructor like functionality, instead overwrite the objects __del__ method, which is invoked when the 
+        FMU is finally dropped.
+        """
         return Fmi2Status.ok
 
     def reset(self) -> int:
+        """Restores the FMU to the same state as it would be after instantiation"""
         return Fmi2Status.ok
 
     # getters and setters implemented in launch.py
 
     def serialize(self) -> bytes:
+        """Convert the state of the FMU into a sequences of bytes which can later be used to roll-back the state of the FMU to that point"""
         raise NotImplementedError()
 
     def deserialize(self, state: bytes):
+        """Restore a FMU to the state recoreded by the serialize method"""
         raise NotImplementedError()
 
-    def get_directional_derivative(self, references_unknown: List[int], references_known: List[int], values_known: List[float]) -> List[float]:
+    def get_directional_derivative(
+        self,
+        references_unknown: List[int],
+        references_known: List[int],
+        values_known: List[float],
+    ) -> List[float]:
         raise NotImplementedError()
 
     # --------- co-sim --------------
@@ -67,11 +101,13 @@ class FMU:
     def get_output_derivatives(self):
         raise NotImplementedError()
 
-    def do_step(self, current_time: float, step_size: float, no_step_prior: bool) -> int:
+    def do_step(
+        self, current_time: float, step_size: float, no_step_prior: bool
+    ) -> int:
         return Fmi2Status.ok
 
     def cancel_step(self) -> int:
         raise NotImplementedError()
 
-    def get_xxx_status(self) -> Tuple[int, any]:
+    def get_xxx_status(self) -> Tuple[int, Any]:
         raise NotImplementedError()
