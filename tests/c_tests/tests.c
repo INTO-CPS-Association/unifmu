@@ -122,7 +122,7 @@ int load_library(Fmi2Functions *funcs, const char *filename)
 int free_library()
 {
 #if defined(_WIN32) || defined(WIN32)
-    FreeLibrary(handle)
+    FreeLibrary(handle);
 #else
     dlclose(handle);
 #endif
