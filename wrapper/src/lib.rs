@@ -3,6 +3,7 @@ use crate::config::FullConfig;
 use crate::config::LaunchConfig;
 use crate::fmi2::Fmi2Status;
 use libc::c_double;
+use libc::size_t;
 use once_cell::sync::OnceCell;
 use serde_bytes::ByteBuf;
 use serde_bytes::Bytes;
@@ -813,9 +814,27 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
 
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2SerializedFMUstateSize(c: *const c_int, state: *mut *mut c_void) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+pub extern "C" fn fmi2SerializedFMUstateSize(
+    c: *const c_int,
+    state: *const c_int,
+    size: *mut size_t,
+) -> c_int {
+    match catch_unwind(|| {
+        let slave_handle = unsafe { *c };
+        let state_handle = unsafe { *state };
+
+        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
+        let state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+
+        let test = state_lock.get(&state_handle).unwrap().len();
+
+        unsafe {
+            *size = test;
+        }
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 // ------------------------------------- FMI FUNCTIONS (Status) --------------------------------

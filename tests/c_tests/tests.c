@@ -205,12 +205,15 @@ int main(int argc, char **argv)
     double step_size = (t_end - t_start) / steps;
 
     void *c = f.fmi2Instantiate("a", fmi2CoSimulation, "", uri, NULL, false, false);
-    void *states[1] = {NULL};
+    assert(c != NULL);
 
-    f.fmi2SetupExperiment(c, false, 0, t_start, true, t_end);
-    f.fmi2EnterInitializationMode(c);
-    f.fmi2ExitInitializationMode(c);
-    f.fmi2GetFMUstate(c, states);
+    assert(f.fmi2SetupExperiment(c, false, 0, t_start, true, t_end) == fmi2OK);
+    assert(f.fmi2EnterInitializationMode(c) == fmi2OK);
+    assert(f.fmi2ExitInitializationMode(c) == fmi2OK);
+
+    void *states[1] = {NULL};
+    size_t state_size;
+    assert(f.fmi2GetFMUstate(c, states) == fmi2OK);
 
     check_get_and_set(c, &f);
 
@@ -219,17 +222,17 @@ int main(int argc, char **argv)
     for (int i = 0; i < steps; ++i)
     {
 
-        f.fmi2DoStep(c, cur_time, step_size, false);
+        assert(f.fmi2DoStep(c, cur_time, step_size, false) == fmi2OK);
         cur_time += step_size;
     }
 
     // roll back to initial state
-    f.fmi2SetFMUstate(c, states[0]);
+    assert(f.fmi2SetFMUstate(c, states[0]) == fmi2OK);
     check_get_and_set(c, &f);
-    f.fmi2FreeFMUstate(c, states);
+    assert(f.fmi2FreeFMUstate(c, states) == fmi2OK);
 
     // terminate FMU
-    f.fmi2Terminate(c);
+    assert(f.fmi2Terminate(c) == fmi2OK);
     f.fmi2FreeInstance(c);
     free_library();
 
