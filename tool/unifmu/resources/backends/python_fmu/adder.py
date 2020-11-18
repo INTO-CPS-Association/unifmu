@@ -1,6 +1,7 @@
 import pickle
+from typing import Tuple
 
-from fmi2 import Fmi2FMU
+from fmi2 import Fmi2FMU, Fmi2Status
 
 
 class Adder(Fmi2FMU):
@@ -18,22 +19,23 @@ class Adder(Fmi2FMU):
         self.string_a = ""
         self.string_b = ""
 
-    def serialize(self) -> bytes:
-        return pickle.dumps(
+    def serialize(self):
+
+        bytes = pickle.dumps(
             (
                 self.real_a,
                 self.real_b,
-                self.real_c,
                 self.integer_a,
                 self.integer_b,
                 self.boolean_a,
-                self.boolean_c,
+                self.boolean_b,
                 self.string_a,
                 self.string_b,
             )
         )
+        return bytes, Fmi2Status.ok
 
-    def deserialize(self, bytes):
+    def deserialize(self, bytes) -> int:
         (
             real_a,
             real_b,
@@ -44,6 +46,16 @@ class Adder(Fmi2FMU):
             string_a,
             string_b,
         ) = pickle.loads(bytes)
+        self.real_a = real_a
+        self.real_b = real_b
+        self.integer_a = integer_a
+        self.integer_b = integer_b
+        self.boolean_a = boolean_a
+        self.boolean_b = boolean_b
+        self.string_a = string_a
+        self.string_b = string_b
+
+        return Fmi2Status.ok
 
     @property
     def real_c(self):
@@ -60,3 +72,4 @@ class Adder(Fmi2FMU):
     @property
     def string_c(self):
         return self.string_a + self.string_b
+

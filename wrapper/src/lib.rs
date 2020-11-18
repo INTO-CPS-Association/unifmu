@@ -4,6 +4,8 @@ use crate::config::LaunchConfig;
 use crate::fmi2::Fmi2Status;
 use libc::c_double;
 use once_cell::sync::OnceCell;
+use serde_bytes::ByteBuf;
+use serde_bytes::Bytes;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
@@ -16,6 +18,7 @@ use std::panic::catch_unwind;
 use std::ptr::null_mut;
 use std::result::Result;
 use std::sync::Mutex;
+use std::sync::MutexGuard;
 
 use lazy_static::lazy_static;
 use subprocess::Popen;
@@ -264,8 +267,6 @@ pub extern "C" fn fmi2Instantiate(
         let endpoint = format!("tcp://localhost:{:?}", handshake_port);
         command.push(endpoint.to_string());
 
-        println!("COMMAND IS: {:?}", command);
-
         let res = Popen::create(
             &command,
             PopenConfig {
@@ -303,6 +304,11 @@ pub extern "C" fn fmi2Instantiate(
             .lock()
             .unwrap()
             .insert(handle, res);
+
+        SERIALIZATION_BUFFER
+            .lock()
+            .unwrap()
+            .insert(handle, Mutex::new(HashMap::new()));
         handle
     });
 
@@ -450,8 +456,7 @@ pub extern "C" fn fmi2DoStep(
 
 #[no_mangle]
 pub extern "C" fn fmi2CancelStep(c: *const c_int) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+    execute_fmi_command_status(c, (FMI2FunctionCode::CancelStep,)) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
@@ -532,11 +537,6 @@ unsafe impl Sync for StringBuffer {}
 lazy_static! {
     static ref STRING_BUFFER: Mutex<StringBuffer> = Mutex::new(StringBuffer { array: Vec::new() });
 }
-
-lazy_static! {
-    static ref DUMMY: Mutex<CString> = Mutex::new(CString::new("test").unwrap());
-}
-
 /// Reads strings from FMU
 ///
 /// Note:
@@ -692,11 +692,99 @@ pub extern "C" fn fmi2GetRealOutputDerivatives(c: *const c_int) -> c_int {
 }
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
+
+lazy_static! {
+    /// Stores 0 or more snapshots of the individual slaves that support serialization
+    static ref SERIALIZATION_BUFFER: Mutex<HashMap<SlaveHandle, Mutex<HashMap<i32,Vec<u8>>>>> =
+        Mutex::new(HashMap::new());
+}
+
+trait InsertNext<V> {
+    /// Insert value into map at the next available entry and return a handle to the element
+    fn insert_next(&mut self, value: V) -> Result<i32, String>;
+}
+
+impl<V> InsertNext<V> for MutexGuard<'_, HashMap<i32, V>> {
+    fn insert_next(&mut self, value: V) -> Result<i32, String> {
+        for i in 0..std::i32::MAX {
+            if !self.contains_key(&i) {
+                self.insert(i, value);
+                return Ok(i);
+            }
+        }
+
+        Err(String::from("No free keys available"))
+    }
+}
+
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2SetFMUstate(c: *const c_int, state: *const c_void) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+pub extern "C" fn fmi2SetFMUstate(c: *const c_int, state: *const c_int) -> c_int {
+    match catch_unwind(|| {
+        let slave_handle: i32 = unsafe { *c };
+        let state_handle: i32 = unsafe { *state };
+        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
+        let state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+        let bytes = state_lock.get(&state_handle).unwrap();
+
+        let status = execute_fmi_command_return::<_, i32>(
+            c,
+            (FMI2FunctionCode::Deserialize, Bytes::new(bytes)),
+        )
+        .unwrap();
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+/// Store a copy of the FMU's state in a buffer for later retrival, see. p25
+/// Whether a new buffer should be allocated depends on state's value:
+/// * state points to null: allocate a new buffer and return a pointer to this
+/// * state points to previously state: overwrite that buffer with current state
+pub extern "C" fn fmi2GetFMUstate(c: *const c_int, state: *mut *mut c_int) -> c_int {
+    match catch_unwind(|| {
+        let (bytes, status) =
+            execute_fmi_command_return::<_, (ByteBuf, i32)>(c, (FMI2FunctionCode::Serialize,))
+                .unwrap();
+
+        let slave_handle: i32 = unsafe { *c };
+        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
+        let mut state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+
+        let state_handle = state_lock
+            .insert_next(bytes.to_vec())
+            .expect("unable to insert serialized state into buffer");
+        unsafe { std::ptr::write(state, Box::into_raw(Box::new(state_handle))) }
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
+}
+
+#[no_mangle]
+#[allow(non_snake_case, unused_variables)]
+/// Free previously recorded state of slave
+/// If state points to null the call is ignored as defined by the specification
+pub extern "C" fn fmi2FreeFMUstate(c: *const c_int, state: *mut *mut c_void) -> c_int {
+    match catch_unwind(|| match unsafe { state.as_ref() } {
+        None => (),
+        Some(s) => {
+            let slave_handle = unsafe { *c };
+            let state_handle = unsafe { *(*s as *mut i32) };
+
+            let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
+            let mut state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+
+            state_lock.remove(&state_handle).unwrap();
+            unsafe { Box::from_raw(*state) };
+        }
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 #[no_mangle]
@@ -726,20 +814,6 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
 pub extern "C" fn fmi2SerializedFMUstateSize(c: *const c_int, state: *mut *mut c_void) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
-}
-
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetFMUstate(c: *const c_int, state: *mut *mut c_void) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
-}
-
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2FreeFMUstate(c: *const c_int) -> c_int {
     eprintln!("NOT IMPLEMENTED");
     Fmi2Status::Fmi2Error.into()
 }

@@ -122,10 +122,69 @@ int load_library(Fmi2Functions *funcs, const char *filename)
 int free_library()
 {
 #if defined(_WIN32) || defined(WIN32)
-    FreeLibrary(handle);
+    return FreeLibrary(handle);
 #else
-    dlclose(handle);
+    return dlclose(handle);
 #endif
+}
+
+void check_get_and_set(void *c, Fmi2Functions *f)
+{
+    // real
+    {
+        fmi2Real vals[] = {1.0, 1.0};
+        fmi2ValueReference refs[] = {0, 1};
+        assert(f->fmi2GetReal(c, refs, 2, vals) == fmi2OK);
+        assert(vals[0] == 0 && vals[1] == 0);
+        vals[0] = 1.0;
+        vals[1] = 1.0;
+        assert(f->fmi2SetReal(c, refs, 2, vals) == fmi2OK);
+        refs[0] = 2;
+        assert(f->fmi2GetReal(c, refs, 1, vals) == fmi2OK);
+        assert(vals[0] == 2.0);
+    }
+
+    // integer
+    {
+        fmi2Integer vals[] = {1, 1};
+        fmi2ValueReference refs[] = {3, 4};
+        assert(f->fmi2GetInteger(c, refs, 2, vals) == fmi2OK);
+        assert(vals[0] == 0 && vals[1] == 0);
+        vals[0] = 1;
+        vals[1] = 1;
+        assert(f->fmi2SetInteger(c, refs, 2, vals) == fmi2OK);
+        refs[0] = 5;
+        assert(f->fmi2GetInteger(c, refs, 1, vals) == fmi2OK);
+        assert(vals[0] == 2);
+    }
+
+    //boolean
+    {
+        fmi2Boolean vals[] = {true, true};
+        fmi2ValueReference refs[] = {6, 7};
+        assert(f->fmi2GetBoolean(c, refs, 2, vals) == fmi2OK);
+        assert(vals[0] == false && vals[1] == false);
+        vals[0] = true;
+        vals[1] = true;
+        assert(f->fmi2SetBoolean(c, refs, 2, vals) == fmi2OK);
+        refs[0] = 8;
+        assert(f->fmi2GetBoolean(c, refs, 1, vals) == fmi2OK);
+        assert(vals[0] == true);
+    }
+
+    // string
+    {
+        const char *vals[3];
+        fmi2ValueReference refs[] = {9, 10, 11};
+        assert(f->fmi2GetString(c, refs, 3, vals) == fmi2OK);
+        assert(strcmp(vals[0], "") == 0 && strcmp(vals[1], "") == 0 && strcmp(vals[2], "") == 0);
+
+        vals[0] = "abc";
+        vals[1] = "def";
+        assert(f->fmi2SetString(c, refs, 2, vals) == fmi2OK);
+        assert(f->fmi2GetString(c, refs, 3, vals) == fmi2OK);
+        assert(strcmp(vals[2], "abcdef") == 0);
+    }
 }
 
 int main(int argc, char **argv)
@@ -146,66 +205,14 @@ int main(int argc, char **argv)
     double step_size = (t_end - t_start) / steps;
 
     void *c = f.fmi2Instantiate("a", fmi2CoSimulation, "", uri, NULL, false, false);
+    void *states[1] = {NULL};
 
     f.fmi2SetupExperiment(c, false, 0, t_start, true, t_end);
     f.fmi2EnterInitializationMode(c);
     f.fmi2ExitInitializationMode(c);
+    f.fmi2GetFMUstate(c, states);
 
-    // real
-    {
-        fmi2Real vals[] = {1.0, 1.0};
-        fmi2ValueReference refs[] = {0, 1};
-        assert(f.fmi2GetReal(c, refs, 2, vals) == fmi2OK);
-        assert(vals[0] == 0 && vals[1] == 0);
-        vals[0] = 1.0;
-        vals[1] = 1.0;
-        assert(f.fmi2SetReal(c, refs, 2, vals) == fmi2OK);
-        refs[0] = 2;
-        assert(f.fmi2GetReal(c, refs, 1, vals) == fmi2OK);
-        assert(vals[0] == 2.0);
-    }
-
-    // integer
-    {
-        fmi2Integer vals[] = {1, 1};
-        fmi2ValueReference refs[] = {3, 4};
-        assert(f.fmi2GetInteger(c, refs, 2, vals) == fmi2OK);
-        assert(vals[0] == 0 && vals[1] == 0);
-        vals[0] = 1;
-        vals[1] = 1;
-        assert(f.fmi2SetInteger(c, refs, 2, vals) == fmi2OK);
-        refs[0] = 5;
-        assert(f.fmi2GetInteger(c, refs, 1, vals) == fmi2OK);
-        assert(vals[0] == 2);
-    }
-
-    //boolean
-    {
-        fmi2Boolean vals[] = {true, true};
-        fmi2ValueReference refs[] = {6, 7};
-        assert(f.fmi2GetBoolean(c, refs, 2, vals) == fmi2OK);
-        assert(vals[0] == false && vals[1] == false);
-        vals[0] = true;
-        vals[1] = true;
-        assert(f.fmi2SetBoolean(c, refs, 2, vals) == fmi2OK);
-        refs[0] = 8;
-        assert(f.fmi2GetBoolean(c, refs, 1, vals) == fmi2OK);
-        assert(vals[0] == true);
-    }
-
-    // string
-    {
-        const char *vals[3];
-        fmi2ValueReference refs[] = {9, 10, 11};
-        assert(f.fmi2GetString(c, refs, 3, vals) == fmi2OK);
-        assert(strcmp(vals[0], "") == 0 && strcmp(vals[1], "") == 0 && strcmp(vals[2], "") == 0);
-
-        vals[0] = "abc";
-        vals[1] = "def";
-        assert(f.fmi2SetString(c, refs, 2, vals) == fmi2OK);
-        assert(f.fmi2GetString(c, refs, 3, vals) == fmi2OK);
-        assert(strcmp(vals[2], "abcdef") == 0);
-    }
+    check_get_and_set(c, &f);
 
     // stepping
     double cur_time = t_start;
@@ -215,6 +222,13 @@ int main(int argc, char **argv)
         f.fmi2DoStep(c, cur_time, step_size, false);
         cur_time += step_size;
     }
+
+    // roll back to initial state
+    f.fmi2SetFMUstate(c, states[0]);
+    check_get_and_set(c, &f);
+    f.fmi2FreeFMUstate(c, states);
+
+    // terminate FMU
     f.fmi2Terminate(c);
     f.fmi2FreeInstance(c);
     free_library();
