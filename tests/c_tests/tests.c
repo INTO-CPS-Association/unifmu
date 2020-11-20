@@ -188,11 +188,10 @@ void check_get_and_set(void *c, Fmi2Functions *f)
 
 int main(int argc, char **argv)
 {
-    assert(argc == 3);
+
+    assert(argc != 0);
     char *library_path = argv[1];
     char *uri = argv[2];
-
-    printf("loading library: %s\n", library_path);
 
     Fmi2Functions f;
 
@@ -204,6 +203,10 @@ int main(int argc, char **argv)
     int steps = 1000;
     double step_size = (t_end - t_start) / steps;
 
+    // static fmi functions
+    assert(strcmp(f.fmi2GetTypesPlatform(), "default") == 0);
+    assert(strcmp(f.fmi2GetVersion(), "2.0") == 0);
+    // instantiate and test slave
     void *c = f.fmi2Instantiate("a", fmi2CoSimulation, "", uri, NULL, false, false);
     assert(c != NULL);
 
@@ -211,9 +214,10 @@ int main(int argc, char **argv)
     assert(f.fmi2EnterInitializationMode(c) == fmi2OK);
     assert(f.fmi2ExitInitializationMode(c) == fmi2OK);
 
-    void *states[1] = {NULL};
+    void *state_ptr[] = {NULL};
     size_t state_size = 0;
-    assert(f.fmi2GetFMUstate(c, states) == fmi2OK);
+    assert(f.fmi2GetFMUstate(c, state_ptr) == fmi2OK);
+    assert(*state_ptr != NULL);
 
     check_get_and_set(c, &f);
 
@@ -226,13 +230,23 @@ int main(int argc, char **argv)
         cur_time += step_size;
     }
 
-    // roll back to initial state
-    assert(f.fmi2SetFMUstate(c, states[0]) == fmi2OK);
-    assert(f.fmi2SerializedFMUstateSize(c, states[0], &state_size) == fmi2OK);
-    assert(state_size != 0);
-    //assert(f.fmi2SerializedFMUstateSize(c, states[0], &state_size) != 0);
+    // roll back to initial state, then check if it behaves as newly intialized
+    assert(f.fmi2SetFMUstate(c, *state_ptr) == fmi2OK);
     check_get_and_set(c, &f);
-    assert(f.fmi2FreeFMUstate(c, states) == fmi2OK);
+
+    // serialization
+    assert(f.fmi2SerializedFMUstateSize(c, *state_ptr, &state_size) == fmi2OK);
+    assert(state_size != 0);
+    fmi2Byte *state_buffer = (fmi2Byte *)malloc(state_size);
+    assert(f.fmi2SerializeFMUstate(c, *state_ptr, state_buffer, state_size) == fmi2OK);
+    assert(f.fmi2FreeFMUstate(c, state_ptr) == fmi2OK);
+    assert(*state_ptr == NULL);
+    assert(f.fmi2DeSerializeFMUstate(c, state_buffer, state_size, state_ptr) == fmi2OK);
+    free(state_buffer);
+    assert(f.fmi2SetFMUstate(c, *state_ptr) == fmi2OK);
+    check_get_and_set(c, &f);
+    assert(f.fmi2FreeFMUstate(c, state_ptr) == fmi2OK);
+    assert(*state_ptr == NULL);
 
     // terminate FMU
     assert(f.fmi2Terminate(c) == fmi2OK);

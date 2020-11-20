@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 use crate::config::FullConfig;
 use crate::fmi2::Fmi2Status;
+use core::ptr::null;
 use libc::c_double;
 use libc::size_t;
 use once_cell::sync::OnceCell;
@@ -780,6 +781,7 @@ pub extern "C" fn fmi2FreeFMUstate(c: *const c_int, state: *mut *mut c_void) -> 
 
             state_lock.remove(&state_handle).unwrap();
             unsafe { Box::from_raw(*state) };
+            unsafe { *state = null_mut() };
         }
     }) {
         Ok(_) => Fmi2Status::Fmi2OK as i32,
