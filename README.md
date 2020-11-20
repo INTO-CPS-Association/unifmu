@@ -4,9 +4,10 @@
 
 A challenge of integrating FMI based co-simulation into a development process is that available modelling tools may not cover a modelling need.
 In these cases it may be necessary to implement af FMU from scratch.
-Unfortunately, this is a challenging task which requires a understanding of FMI inner workings.
+Unfortunately, this is a challenging task that requires a deep understanding of FMI inner workings.
 
-UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language. UniFMU also contains a provides a GUI and CLI tool for generating new FMUs from a selection of languages, see adapters.
+UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language. 
+UniFMU also provides a GUI and CLI tool for generating new FMUs from a selection of languages, see backends.
 
 <centering>
 <img src="docs/_static/gui_ubuntu.png">
@@ -150,37 +151,82 @@ python build.py --test-c
 
 ## Backends
 
-An backend is responsible for translating commands sent over a socket, into appropriate actions on the model.
+An backend is a piece of code that is responsible for communicating with the wrapper to execute commands on the proxy-fmu.
+It does so by implementing a application-layer protocol called *unifmu-protocol* which is built on top of [ZeroMQ](https://zeromq.org/).
 
-Generic backends are provided out of the box for the following languages:
+Note that several backends for popular languages are provided by the tool out of the box. 
+These can be be exported using the GUI or located manually inside the resources folder in the `tool/unifmu/resources`. 
 
-1. Python
 
-### Python
+### Protocol
 
-### Writing an backend
+The goal of the unifmu-protocol is to allow the wrapper to execute commands on slave in a simple and language agnostic way.
+This is done by implementing a request-response protocol where the wrapper sends a command consisting of an function id and a list of arguments for the specific method. When the slave receives the message it extract the id, calls the models do_step method, and sends the result back to the wrapper.
 
-The following functions are implemented exclusively by the wrapper:
-_. fmi2GetTypesPlatform
-_. fmi2GetVersion
-\*. fmi2Instantiate
+The process is described by the psudo code below, which shows the wrapper and the backend code:
 
-The table depeicts the commands, their associated id's, the expected paramters, and finally, the values they return to the wrapper.
+__Wrapper__
+``` python
+def fmi2Instantiate(...):
+    # create sockets, execute launch command, and establish connection
 
-| Function                    | Id  | Parameters                                                 | Return                          |
-| --------------------------- | --- | ---------------------------------------------------------- | ------------------------------- |
-| fmi2SetDebugLogging         | 0   | categories: list[str], logging_on: bool                    | status : int                    |
-| fmi2SetupExperiment         | 1   | start_time: float, tolerance: float?, stop_time: float?    | status: int                     |
-| fmi2EnterInitializationMode | 2   | None                                                       | status: int                     |
-| fmi2ExitInitializationMode  | 3   | None                                                       | status: int                     |
-| fmi2Terminate               | 4   | None                                                       | status: int                     |
-| fmi2Reset                   | 5   | None                                                       | status:int                      |
-| fmi2Set_xxx                 | 6   | references: list[int], values: list[float\|int\|bool\|str] | status:int                      |
-| fmi2Get_xxx                 | 7   | references: list[int]                                      | values: [float\|int\|bool\|str] |
-| fmi2DoStep                  | 8   | current : float, step_size : float, no_prior: bool         | status:int                      |
-| fmi2FreeInstance            | 9   | None                                                       | status:int                      |
+def fmi2DoStep(current_time, step_size, ...):
+    data = serialize(DO_STEP_ID, current_time, step_size, ...)
+    status = send_and_get_response(data)
+```
+__Backend__
+``` python
+# setup zeroMQ sockets and perform handshake with wrapper
+while(true)
+
+    command_id, args = wait_for_command()
+
+    if command_id == DO_STEP_ID:
+        status = do_step(args)
+        respond_to_wrapper(status)
+    ...
+
+```
+
+Since the FMI standard is based on calling through a binary C interface, many functions such as getters and setters only differ in their type (real, integer, boolean, and string).
+To reduce the burden of implementing the backends, related functions are grouped together as shown in the figure below. To emphasize, only the methods indicated by the blue labels must be implemented by a backend.
+
+Additionally, some FMI functions are not necessary to implement since they are implemented by the wrapper itself.
+These functions are marked with a red lock icon in the figure below.
 
 <img src="docs/_static/FMI2 Functions.png">
+
+Each of the blue tags corresponds to a command that must be implemented by the backend.
+
+
+
+| Function                     | Id  | Parameters                                                 | Return                          |
+| ---------------------------- | --- | ---------------------------------------------------------- | ------------------------------- |
+| set_debug_logging            | 0   | categories: list[str], logging_on: bool                    | status : int                    |
+| setup_experiment             | 1   | start_time: float, tolerance: float?, stop_time: float?    | status: int                     |
+| enter_initialization_mode    | 2   | None                                                       | status: int                     |
+| exit_initialization_mode     | 3   | None                                                       | status: int                     |
+| terminate                    | 4   | None                                                       | status: int                     |
+| reset                        | 5   | None                                                       | status:int                      |
+| set_xxx                      | 6   | references: list[int], values: list[float\|int\|bool\|str] | status:int                      |
+| get_xxx                      | 7   | references: list[int]                                      | values: [float\|int\|bool\|str] |
+| do_step                      | 8   | current : float, step_size : float, no_prior: bool         | status:int                      |
+| serialize*                   | 9   | None                                                       | state: bytes, status : int      |
+| deserialize*                 | 10  | data: bytes                                                | status: int                     |
+| get_directional_derivative** | 11  | TODO                                                       | TODO                            |
+| set_input_derivatives        | 12  | TODO                                                       | TODO                            |
+| get_output_derivatives       | 13  | TODO                                                       | TODO                            |
+| do_step                      | 14  | TODO                                                       | TODO                            |
+| cancel_step                  | 15  | TODO                                                       | TODO                            |
+| get_xxx_status               | 16  | TODO                                                       | TODO                            |
+
+There are some exceptions, functions marked with asterisks in the table below are only required if the FMU using it sets
+specific flags in their model description.
+
+*. required if "canGetAndSetFMUstate"
+
+**. required if "providesDirectionalDerivatives" 
+
 
 ## Frequently Asked Questions
 

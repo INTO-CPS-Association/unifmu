@@ -189,7 +189,7 @@ void check_get_and_set(void *c, Fmi2Functions *f)
 
 int main(int argc, char **argv)
 {
-
+    assert(argc == 3);
     char *library_path = argv[1];
     char *uri = argv[2];
 
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
     assert(f.fmi2ExitInitializationMode(c) == fmi2OK);
 
     void *states[1] = {NULL};
-    size_t state_size;
+    size_t state_size = 0;
     assert(f.fmi2GetFMUstate(c, states) == fmi2OK);
 
     check_get_and_set(c, &f);
@@ -228,6 +228,9 @@ int main(int argc, char **argv)
 
     // roll back to initial state
     assert(f.fmi2SetFMUstate(c, states[0]) == fmi2OK);
+    assert(f.fmi2SerializedFMUstateSize(c, states[0], &state_size) == fmi2OK);
+    assert(state_size != 0);
+    //assert(f.fmi2SerializedFMUstateSize(c, states[0], &state_size) != 0);
     check_get_and_set(c, &f);
     assert(f.fmi2FreeFMUstate(c, states) == fmi2OK);
 
