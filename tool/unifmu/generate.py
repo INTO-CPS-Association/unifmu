@@ -1,4 +1,3 @@
-from gui import md
 from os import makedirs
 from pathlib import Path
 from shutil import copy
