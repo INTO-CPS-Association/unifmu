@@ -55,13 +55,11 @@ typedef struct
     fmi2GetStringStatusTYPE *fmi2GetStringStatus;
 } Fmi2Functions;
 
-void *handle;
-
 void *load_symbol(const char *name, void *handle)
 {
     void *func;
 #if defined(_WIN32) || defined(WIN32)
-    func = GetProcAddress(handle, name);
+    func = (void *)GetProcAddress(handle, name);
 #else
     func = dlsym(handle, name);
 #endif
@@ -74,8 +72,9 @@ void *load_symbol(const char *name, void *handle)
     return func;
 }
 
-int load_library(Fmi2Functions *funcs, const char *filename)
+void *load_library(Fmi2Functions *funcs, const char *filename)
 {
+    void *handle;
 #if defined(_WIN32) || defined(WIN32)
     handle = LoadLibrary(filename);
 #else
@@ -116,10 +115,10 @@ int load_library(Fmi2Functions *funcs, const char *filename)
     funcs->fmi2GetBooleanStatus = (fmi2GetBooleanStatusTYPE *)load_symbol("fmi2GetBooleanStatus", handle);
     funcs->fmi2GetStringStatus = (fmi2GetStringStatusTYPE *)load_symbol("fmi2GetStringStatus", handle);
 
-    return 0;
+    return handle;
 }
 
-int free_library()
+int free_library(void *handle)
 {
 #if defined(_WIN32) || defined(WIN32)
     return FreeLibrary(handle);
@@ -197,7 +196,8 @@ int main(int argc, char **argv)
 
     Fmi2Functions f;
 
-    assert(load_library(&f, library_path) == 0);
+    void *handle = load_library(&f, library_path);
+    assert(handle != NULL);
 
     double t_start = 0;
     double t_end = 1;
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
     // terminate FMU
     assert(f.fmi2Terminate(c) == fmi2OK);
     f.fmi2FreeInstance(c);
-    free_library();
+    free_library(handle);
 
     return 0;
 }
