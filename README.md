@@ -267,6 +267,27 @@ In the case of the _python_fmu_ example the command launches python, which is wh
 In addition to this the commandline tool is implemented itself is implemented in Python.
 To summarize Python is required to use the tool that generates and packages the FMUs, but it is not required during their execution.
 
+### How can i make my FMU portable?
+
+Suppose that your FMU is written in python and that your launch.toml looks like:
+``` toml
+# other targets
+linux = [ "python3", "launch.py" ]
+```
+Using this command the wrapper try to use the system's python3 executable to launch the FMU by invoking executing the launch.py script.
+Nautrally, the success of this relies on python3 being in the systems path.
+
+To make the FMU portable you could place a complete python interpreter inside resources folder of the FMU.
+Then you can invoke the local interpreter rather than the system interpreter, by modifying the `launch.toml` file:
+
+``` toml
+# other targets
+linux = [ "./interpreter_linux/python3", "launch.py" ]
+```
+This approach is applicable to any OS and runtime dependency. 
+For Python getting an complete interpreter is a bit trickier, but tools for creating bundeling interpreters and libraries exist such as [PyInstaller](https://pyinstaller.readthedocs.io/en/v4.1/index.html).
+
+
 ### Does an FMU need to support every feature of FMI?
 
 No, the FMI2 specification allows you set falgs that declare the capabilities of an FMU.
