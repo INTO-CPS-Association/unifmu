@@ -1,9 +1,12 @@
+from gui import md
 from os import makedirs
 from pathlib import Path
 from shutil import copy
 from tempfile import TemporaryDirectory
 import shutil
 from typing import List
+import zipfile
+from zipfile import ZipFile
 
 # import xml.etree.ElementTree as ET
 import pkg_resources
@@ -14,8 +17,7 @@ from unifmu.fmi2 import ModelDescription
 
 
 def generate_fmu(md: ModelDescription, output_path, backend: str):
-    """Creates new FMU archive based on the specified model description and backend.
-    """
+    """Creates new FMU archive based on the specified model description and backend."""
 
     with TemporaryDirectory() as tmpdir:
 
@@ -35,8 +37,7 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
         #
         cs = ET.SubElement(fmd, "CoSimulation")
         cs.set("modelIdentifier", md.co_simulation.model_identifier)
-        cs.set("needsExecutionTool", str(
-            md.co_simulation.needs_execution_tool))
+        cs.set("needsExecutionTool", str(md.co_simulation.needs_execution_tool))
         cs.set(
             "canNotUseMemoryManagementFunctions",
             str(md.co_simulation.can_not_use_memory_management_functions),
@@ -68,8 +69,7 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
             var.variability
             value_reference = str(var.value_reference)
 
-            idx_comment = ET.Comment(
-                f'Index of variable = "{variable_index + 1}"')
+            idx_comment = ET.Comment(f'Index of variable = "{variable_index + 1}"')
             mvs.append(idx_comment)
             sv = ET.SubElement(mvs, "ScalarVariable")
             sv.set("name", var.name)
@@ -107,13 +107,11 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
         if outputs:
             os = ET.SubElement(ms, "Outputs")
             for idx, o in outputs:
-                ET.SubElement(os, "Unknown", {
-                              "index": str(idx), "dependencies": ""})
+                ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
 
             os = ET.SubElement(ms, "InitialUnknowns")
             for idx, o in outputs:
-                ET.SubElement(os, "Unknown", {
-                              "index": str(idx), "dependencies": ""})
+                ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
 
         try:
             # FMI requires encoding to be encoded as UTF-8 and contain a header:
@@ -184,10 +182,11 @@ def list_resource_files(resource_name: str) -> List[str]:
 
 def get_backends() -> List[str]:
 
-    return toml.loads(
-        pkg_resources.resource_string(
-            __name__, "resources/backends.toml").decode()
-    )["backend"].keys()
+    return list(
+        toml.loads(
+            pkg_resources.resource_string(__name__, "resources/backends.toml").decode()
+        )["backend"].keys()
+    )
 
 
 def generate_fmu_from_backend(backend: str, output_path):
@@ -201,13 +200,11 @@ def generate_fmu_from_backend(backend: str, output_path):
     """
 
     backend_manifest = toml.loads(
-        pkg_resources.resource_string(
-            __name__, "resources/backends.toml").decode()
+        pkg_resources.resource_string(__name__, "resources/backends.toml").decode()
     )["backend"][backend]
 
     if "files" not in backend_manifest:
-        raise RuntimeError(
-            "'files' attribute is not defined in the configuration")
+        raise RuntimeError("'files' attribute is not defined in the configuration")
 
     # create phyiscal files in tmpdir, such that the copy/mv semantics can be implemented with function of standard lib
     with TemporaryDirectory() as tmpdir_resources, TemporaryDirectory() as tmpdir_fmu:
@@ -229,8 +226,7 @@ def generate_fmu_from_backend(backend: str, output_path):
             file_out = tmpdir_resources / src
             makedirs(file_out.parent, exist_ok=True)
 
-            stream = pkg_resources.resource_string(
-                __name__, f"resources/{src}")
+            stream = pkg_resources.resource_string(__name__, f"resources/{src}")
             with open(file_out, "wb") as f:
                 f.write(stream)
 
@@ -244,5 +240,48 @@ def generate_fmu_from_backend(backend: str, output_path):
         shutil.copytree(tmpdir_fmu, output_path)
 
 
-def import_fmu(path) -> ModelDescription:
-    raise NotImplementedError()
+def parse_model_description(xml_str: str) -> ModelDescription:
+
+    pass
+
+
+def import_fmu(archive_or_dir) -> ModelDescription:
+    """Reads an FMU archive and returns the parsed model description.
+
+    In case the path points to a file, its contents will be extracted into a temporary folder.
+
+    Note that this function assumes that model description is valid
+    """
+
+    archive_or_dir = Path(archive_or_dir)
+    model_description_xml = None
+
+    if archive_or_dir.is_file():
+        with TemporaryDirectory() as tmpdir, ZipFile(archive_or_dir) as zip_ref:
+
+            tmpdir = Path(tmpdir())
+            zip_ref.extractall(tmpdir)
+
+            model_description_path = tmpdir / "modelDescription.xml"
+
+            if not model_description_path.is_file():
+                raise FileNotFoundError(
+                    "No modelDescription.xml file was found inside the FMU archive"
+                )
+
+            with open(model_description_path, "r") as f:
+                model_description_xml = ET.parse(f)
+    else:
+        model_description_path = archive_or_dir / "modelDescription.xml"
+
+        if not model_description_path.is_file():
+            raise FileNotFoundError(
+                "No modelDescription.xml file was found inside the FMU directory"
+            )
+
+        with open(model_description_path, "r") as f:
+            model_description_xml = ET.parse(f)
+
+    print(model_description_xml)
+
+    md = ModelDescription()

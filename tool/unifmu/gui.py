@@ -1,20 +1,14 @@
-#!/usr/bin/env python
-"""
-Hello World, but with more meat.
-"""
-
-
 import datetime
 from os import close, spawnl
 from pathlib import Path
 from sys import flags
+
 import wx
 import wx.adv
 import wx.gizmos
+from wx.core import BoxSizer, NumberEntryDialog, PrintDialog, VERTICAL
 
-from wx.core import NumberEntryDialog, PrintDialog, VERTICAL
-
-from unifmu.generate import generate_fmu
+from unifmu.generate import generate_fmu_from_backend, get_backends, import_fmu
 from unifmu.fmi2 import ModelDescription, CoSimulation
 
 
@@ -40,35 +34,38 @@ class CreateFMUFrame(wx.Frame):
 
         # controls
 
-        name_label = wx.StaticText(panel, label="Name:")
-        self.name_field = wx.TextCtrl(panel, style=wx.TE_RICH2)
-        self.name_field.SetToolTip("Human-readable identifier assoicated with the FMU")
+        # name_label = wx.StaticText(panel, label="Name:")
+        # self.name_field = wx.TextCtrl(panel, style=wx.TE_RICH2)
+        # self.name_field.SetToolTip(
+        #     "Human-readable identifier assoicated with the FMU")
 
-        author_label = wx.StaticText(panel, label="Author:")
-        self.author_field = wx.TextCtrl(panel, style=wx.TE_RICH2)
-        self.author_field.SetToolTip("The author of the generated FMU")
+        # author_label = wx.StaticText(panel, label="Author:")
+        # self.author_field = wx.TextCtrl(panel, style=wx.TE_RICH2)
+        # self.author_field.SetToolTip("The author of the generated FMU")
 
-        description_label = wx.StaticText(panel, label="Description:")
-        self.description_field = wx.TextCtrl(panel, style=wx.TE_RICH2 | wx.TE_MULTILINE)
-        self.description_field.SetToolTip("A guide describing how to use the FMU")
+        # description_label = wx.StaticText(panel, label="Description:")
+        # self.description_field = wx.TextCtrl(
+        #     panel, style=wx.TE_RICH2 | wx.TE_MULTILINE)
+        # self.description_field.SetToolTip(
+        #     "A guide describing how to use the FMU")
 
-        self.fmi_selector = wx.RadioBox(
-            panel,
-            label="FMI version",
-            choices=["1.0", "2.0", "3.0"],
-            majorDimension=1,
-            style=wx.RA_SPECIFY_ROWS,
-        )
-        self.fmi_selector.SetSelection(1)
-        self.fmi_selector.SetToolTip(
-            "Which version of the Functional Mock-Up interface the FMU targets"
-        )
+        # self.fmi_selector = wx.RadioBox(
+        #     panel,
+        #     label="FMI version",
+        #     choices=["1.0", "2.0", "3.0"],
+        #     majorDimension=1,
+        #     style=wx.RA_SPECIFY_ROWS,
+        # )
+        # self.fmi_selector.SetSelection(1)
+        # self.fmi_selector.SetToolTip(
+        #     "Which version of the Functional Mock-Up interface the FMU targets"
+        # )
 
         backend_label = wx.StaticText(panel, label="Backend")
         self.backend_combo = wx.ComboBox(
             panel,
-            value="None",
-            choices=["None", "UniFMU->Python"],
+            value=get_backends()[0],
+            choices=get_backends(),
             style=wx.CB_READONLY,
         )
         self.backend_combo.SetToolTip(
@@ -84,34 +81,37 @@ class CreateFMUFrame(wx.Frame):
         # sizers
         border_size = 5
 
-        name_sizer = wx.BoxSizer()
-        name_sizer.Add(name_label, 0, wx.ALL, border_size)
-        name_sizer.Add(self.name_field, 1, wx.ALL, border_size)
+        # name_sizer = wx.BoxSizer()
+        # name_sizer.Add(name_label, 0, wx.ALL, border_size)
+        # name_sizer.Add(self.name_field, 1, wx.ALL, border_size)
 
-        author_sizer = wx.BoxSizer()
-        author_sizer.Add(author_label, 0, wx.ALL, border_size)
-        author_sizer.Add(self.author_field, 1, wx.ALL, border_size)
+        # author_sizer = wx.BoxSizer()
+        # author_sizer.Add(author_label, 0, wx.ALL, border_size)
+        # author_sizer.Add(self.author_field, 1, wx.ALL, border_size)
 
-        description_sizer = wx.GridBagSizer()
-        description_sizer.Add(
-            description_label, (0, 0), (1, 1), wx.ALL | wx.EXPAND, border_size
-        )
-        description_sizer.Add(
-            self.description_field, (0, 1), (1, 3), wx.ALL | wx.EXPAND, border_size,
-        )
-        description_sizer.AddGrowableRow(0)
-        description_sizer.AddGrowableCol(1)
+        # description_sizer = wx.GridBagSizer()
+        # description_sizer.Add(
+        #    description_label, (0, 0), (1, 1), wx.ALL | wx.EXPAND, border_size
+        # )
+        # description_sizer.Add(
+        #    self.description_field, (0, 1), (1,
+        #                                     3), wx.ALL | wx.EXPAND, border_size,
+        # )
+        # description_sizer.AddGrowableRow(0)
+        # description_sizer.AddGrowableCol(1)
 
         border_size = 5
         fmi_sizer = wx.BoxSizer()
-        fmi_sizer.Add(self.fmi_selector, 1, wx.ALL, border_size)
+        # fmi_sizer.Add(self.fmi_selector, 1, wx.ALL, border_size)
         fmi_sizer.Add(backend_label, 0, wx.ALL, border_size)
         fmi_sizer.Add(self.backend_combo, 1, wx.ALL, border_size)
 
         # ------------- export ------------------
 
         self.outdir_picker = wx.DirPickerCtrl(
-            panel, message="Select Base Directory", path=Path.cwd().__fspath__(),
+            panel,
+            message="Select Base Directory",
+            path=Path.cwd().__fspath__(),
         )
         self.outdir_picker.SetToolTip(
             "Select the directory in which the generated FMU will be written. Note that it will NOT be overwritten; a new directory or zip-archive is created."
@@ -146,9 +146,9 @@ class CreateFMUFrame(wx.Frame):
         button_sizer.Add(self.button_generate, 1, wx.ALL, border_size)
 
         main_sizer = wx.BoxSizer(orient=wx.VERTICAL)
-        main_sizer.Add(name_sizer, 0, wx.ALL | wx.EXPAND, border_size)
-        main_sizer.Add(author_sizer, 0, wx.ALL | wx.EXPAND, border_size)
-        main_sizer.Add(description_sizer, 1, wx.ALL | wx.EXPAND, border_size)
+        # main_sizer.Add(name_sizer, 0, wx.ALL | wx.EXPAND, border_size)
+        # main_sizer.Add(author_sizer, 0, wx.ALL | wx.EXPAND, border_size)
+        # main_sizer.Add(description_sizer, 1, wx.ALL | wx.EXPAND, border_size)
         main_sizer.Add(fmi_sizer, 0, wx.ALL | wx.EXPAND | wx.CENTER, border_size)
         main_sizer.Add(export_sizer, 1, wx.ALL | wx.EXPAND, border_size)
         main_sizer.Add(button_sizer, 0, wx.ALL | wx.CENTER, border_size)
@@ -160,115 +160,14 @@ class CreateFMUFrame(wx.Frame):
 
     def on_generate(self, event):
 
-        # --------------------- inference and defaults for missing information ----------------------
-
-        guid = "a"
-        version = "0.0.1"
-        copyright = ""
-        license = ""
-        copyright = ""
-
-        generation_tool = "unifmu"
-        variable_naming_convention = "flat"
-
-        # mapping is used to define defaults for variables which can be inferred from the choice of backend
-        # for example unifmu variants can instantiate multiple processes, but struggle to use memory management functions
-        (
-            model_identifier,
-            needs_execution_tool,
-            can_handle_variable_communication_step_size,
-            can_interpolate_inputs,
-            max_output_derivative_order,
-            can_run_asynchronously,
-            can_be_instantiated_only_once_per_process,
-            can_not_use_memory_management_functions,
-            can_get_and_set_fmu_state,
-            can_serialize_fmu_state,
-            provides_directional_derivatives,
-        ) = {
-            "None": (
-                "TODO",
-                False,
-                False,
-                False,
-                0,
-                False,
-                True,
-                True,
-                False,
-                False,
-                False,
-            ),
-            "UniFMU->Python": (
-                "unifmu",
-                True,
-                True,
-                False,
-                0,
-                False,
-                False,
-                True,
-                False,
-                False,
-                False,
-            ),
-        }[
-            self.backend_combo.Value
-        ]
-
-        # generation date and time must be some kind of xsd string
-        data_time_obj = datetime.datetime.now()
-        generation_date_and_time = datetime.datetime.strftime(
-            data_time_obj, "%Y-%m-%dT%H:%M:%SZ"
-        )
-
-        # ------------------------ end of inference ----------------------------
-
-        mdd = ModelDescription(
-            fmi_version=str(self.fmi_selector.GetSelection),
-            model_name=self.name_field.Value,
-            guid=guid,
-            description=self.description_field.Value,
-            author=self.author_field.Value,
-            version=version,
-            copyright=copyright,
-            license=license,
-            generation_tool=generation_tool,
-            variable_naming_convention=variable_naming_convention,
-            generation_date_and_time=generation_date_and_time,
-            model_variables=[],
-            model_structure=[],
-            co_simulation=CoSimulation(
-                model_identifier=model_identifier,
-                needs_execution_tool=needs_execution_tool,
-                can_handle_variable_communication_step_size=can_handle_variable_communication_step_size,
-                can_interpolate_inputs=can_interpolate_inputs,
-                max_output_derivative_order=max_output_derivative_order,
-                can_run_asynchronously=can_run_asynchronously,
-                can_be_instantiated_only_once_per_process=can_be_instantiated_only_once_per_process,
-                can_not_use_memory_management_functions=can_not_use_memory_management_functions,
-                can_get_and_set_fmu_state=can_get_and_set_fmu_state,
-                can_serialize_fmu_state=can_serialize_fmu_state,
-                provides_directional_derivatives=provides_directional_derivatives,
-            ),
-            model_exchange=None,
-            unit_definitions=None,
-            type_defintions=None,
-            log_categories=[],
-            default_experiment=None,
-            vendor_annotations=None,
-        )
-
         output_path = Path(self.outdir_picker.Path) / self.filename_field.Value
-        print(output_path)
 
-        from unifmu.generate import generate_fmu_from_backend
-
-        generate_fmu_from_backend("python", output_path)
+        generate_fmu_from_backend(self.backend_combo.Value, output_path)
 
         # generate_fmu(
         #     mdd, output_path=output_path, backend=self.backend_combo.Value,
         # )
+        self.Close()
 
     def on_cancel(self, event):
         self.Close()
@@ -285,6 +184,8 @@ class HomeScreenFrame(wx.Frame):
 
         # create a panel in the frame
         panel = wx.Panel(self)
+
+        border = 5
 
         # and create a sizer to manage the layout of child widgets
 
@@ -310,7 +211,8 @@ class HomeScreenFrame(wx.Frame):
             return box
 
         self.can_handle_variable_communication_step_size_box = create_box(
-            "variable step-size", "supports calls to fmi2DoStep step length",
+            "variable step-size",
+            "supports calls to fmi2DoStep step length",
         )
 
         self.can_be_instantiated_only_once_per_process_box = create_box(
@@ -347,6 +249,9 @@ class HomeScreenFrame(wx.Frame):
 
         # --------------- fields.scalar_variables ------------------------
 
+        # --------------- validate and save -----------------------
+        self.validate_button = wx.Button(panel, label="Validate")
+        self.save_button = wx.Button(panel, label="Save")
         # sizers
 
         basic_sizer = wx.FlexGridSizer(rows=3, cols=2, hgap=5, vgap=5)
@@ -381,6 +286,15 @@ class HomeScreenFrame(wx.Frame):
         main_sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND)
         main_sizer.Add(capabilities_sizer, 1, flag=wx.EXPAND)
 
+        buttons_sizer = BoxSizer()
+        buttons_sizer.AddMany(
+            [
+                (self.validate_button, 0, wx.ALL, border * 5),
+                (self.save_button, 0, wx.ALL, border * 5),
+            ]
+        )
+        main_sizer.Add(buttons_sizer, 0, wx.ALL | wx.CENTER, border)
+
         # create a menu bar
         self.makeMenuBar()
 
@@ -390,6 +304,15 @@ class HomeScreenFrame(wx.Frame):
 
         panel.SetSizer(main_sizer)
         main_sizer.Fit(self)
+        # panel.Hide()
+        self.panel = panel
+
+    def set_model(self, model_description: ModelDescription):
+
+        self.author_field.Value = model_description.author
+        self.name_field = model_description.model_name
+        self.model_identifier_field = model_description.co_simulation.model_identifier
+        self.panel.Show()
 
     def makeMenuBar(self):
         """
@@ -403,11 +326,24 @@ class HomeScreenFrame(wx.Frame):
         # The "\t..." syntax defines an accelerator key that also triggers
         # the same event
         create_item = fileMenu.Append(
-            -1, "&Create FMU...\tCtrl-H", "Generate a template for a new FMU",
+            -1,
+            "&Create FMU...\tCtrl-N",
+            "Generate a new FMU",
         )
+
         fileMenu.AppendSeparator()
 
-        edit_item = fileMenu.Append(-1, "&Edit FMU...\tCtrl-H", "Modify existing FMU",)
+        open_fmu_dir_archive = fileMenu.Append(
+            -1,
+            "&Open FMU archive...\tCtrl-O",
+            "Open compressed FMU",
+        )
+
+        open_fmu_dir_item = fileMenu.Append(
+            -1,
+            "&Open FMU directory...\tCtrl+Shift-O",
+            "Open uncompressed FMU",
+        )
 
         fileMenu.AppendSeparator()
 
@@ -434,7 +370,8 @@ class HomeScreenFrame(wx.Frame):
         # each of the menu items. That means that when that menu item is
         # activated then the associated handler function will be called.
         self.Bind(wx.EVT_MENU, self.on_create, create_item)
-        self.Bind(wx.EVT_MENU, self.on_edit, edit_item)
+        self.Bind(wx.EVT_MENU, self.on_edit_fmu_archive, open_fmu_dir_archive)
+        self.Bind(wx.EVT_MENU, self.on_edit_fmu_directory, open_fmu_dir_item)
         self.Bind(wx.EVT_MENU, self.on_exit, exit_item)
         self.Bind(wx.EVT_MENU, self.on_about, about_item)
 
@@ -451,15 +388,31 @@ class HomeScreenFrame(wx.Frame):
         # dummy data
         global md
 
-    def on_edit(self, event):
+    def on_edit_fmu_archive(self, event):
+        with wx.FileDialog(
+            self,
+            "Select a FMU archive to open",
+            wildcard="fmu archives (*.fmu)|*.fmu|all files|*",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        ) as fileDialog:
+
+            if fileDialog.ShowModal() != wx.ID_CANCEL:
+                try:
+                    self.set_model(import_fmu(fileDialog.GetPath()))
+                except Exception as e:
+                    wx.MessageBox(f"Unable to open FMU: {e}", style=wx.ICON_ERROR)
+
+    def on_edit_fmu_directory(self, event):
 
         with wx.DirDialog(
-            self, "Select a directory to place the generated FMU inside"
+            self, "Select a FMU directory to open", style=wx.DD_DIR_MUST_EXIST
         ) as dirDialog:
 
             if dirDialog.ShowModal() != wx.ID_CANCEL:
-                pathname = dirDialog.GetPath()
-                print(f"path is {pathname}")
+                try:
+                    self.set_model(import_fmu(dirDialog.GetPath()))
+                except Exception as e:
+                    wx.MessageBox(f"Unable to open FMU: {e}", style=wx.ICON_ERROR)
 
     def on_about(self, event):
         """Display an About Dialog"""
@@ -473,10 +426,22 @@ class HomeScreenFrame(wx.Frame):
 md = None
 
 
+class SetupToolsArtProvider:
+    pass
+
+
 def show_gui():
+    """Show a gui that can be used to create FMUs and modify existing FMU's model description in a user friendly manner.
+    The gui is build on wxpython, a cross-platform gui library that uses native widgets.
+
+    Note that this the function that serves as a entrypoint when invoking "unifmu gui", see tool/unifmu/cli.py and setup.py.
+    """
     app = wx.App()
-    frm = HomeScreenFrame(title="FMU Builder")
-    frm.Show()
+    frame = HomeScreenFrame(title="FMU Builder")
+
+    # https://wxpython.org/Phoenix/docs/html/stock_items.html
+    icon = wx.ArtProvider.GetIcon(wx.ART_REPORT_VIEW)
+    frame.SetIcon(icon)
+    frame.Show()
 
     app.MainLoop()
-
