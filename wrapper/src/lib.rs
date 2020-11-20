@@ -1,6 +1,5 @@
 #![allow(non_snake_case)]
 use crate::config::FullConfig;
-use crate::config::LaunchConfig;
 use crate::fmi2::Fmi2Status;
 use libc::c_double;
 use libc::size_t;
@@ -789,27 +788,63 @@ pub extern "C" fn fmi2FreeFMUstate(c: *const c_int, state: *mut *mut c_void) -> 
 }
 
 #[no_mangle]
-#[allow(non_snake_case, unused_variables)]
+#[allow(non_snake_case)]
+/// Copies the state of a slave into a buffer provided by the environment
+///
+/// Oddly, the length of the buffer is also provided,
+/// as i would expect the environment to have enquired about the state size by calling fmi2SerializedFMUstateSize.
+/// We assume that the buffer is sufficiently large
 pub extern "C" fn fmi2SerializeFMUstate(
-    c: *const c_int,
-    state: *mut c_void,
-    data: *const c_char,
-    size: usize,
+    slave_handle: *const c_int,
+    state_handle: *mut c_int,
+    data: *mut u8,
+    _size: usize,
 ) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+    match catch_unwind(|| {
+        let slave_handle = unsafe { *slave_handle };
+        let state_handle = unsafe { *state_handle };
+
+        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
+        let state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+
+        let bytes = state_lock.get(&state_handle).unwrap();
+
+        unsafe { std::ptr::copy(bytes.as_ptr(), data, bytes.len()) };
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
 pub extern "C" fn fmi2DeSerializeFMUstate(
-    c: *const c_int,
-    serialized_state: *const c_char,
+    slave_handle: *const c_int,
+    serialized_state: *const u8,
     size: usize,
-    state: *mut c_void,
+    state: *mut *mut c_int,
 ) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+    match catch_unwind(|| {
+        let slave_handle = unsafe { *slave_handle };
+
+        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
+        let mut state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+
+        let bytes = unsafe {
+            std::ptr::slice_from_raw_parts(serialized_state, size)
+                .as_ref()
+                .unwrap()
+                .to_vec()
+        };
+
+        let state_handle = state_lock.insert_next(bytes).unwrap();
+        unsafe {
+            *state = Box::into_raw(Box::new(state_handle));
+        };
+    }) {
+        Ok(_) => Fmi2Status::Fmi2OK as i32,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 #[no_mangle]
@@ -846,19 +881,35 @@ pub extern "C" fn fmi2GetRealStatus(
     status_kind: c_int,
     value: *mut c_double,
 ) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+    match catch_unwind(|| {
+        let (status_value, status) = execute_fmi_command_return::<_, (f64, i32)>(
+            c,
+            (FMI2FunctionCode::GetXXXStatus, status_kind),
+        )
+        .unwrap();
+        unsafe { *value = status_value };
+        status
+    }) {
+        Ok(s) => s,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetStatus(
-    c: *const c_int,
-    status_kind: c_int,
-    Fmi2Status: *mut c_int,
-) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+pub extern "C" fn fmi2GetStatus(c: *const c_int, status_kind: c_int, value: *mut c_int) -> c_int {
+    match catch_unwind(|| {
+        let (status_value, status) = execute_fmi_command_return::<_, (i32, i32)>(
+            c,
+            (FMI2FunctionCode::GetXXXStatus, status_kind),
+        )
+        .unwrap();
+        unsafe { *value = status_value };
+        status
+    }) {
+        Ok(s) => s,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 #[no_mangle]
@@ -868,8 +919,18 @@ pub extern "C" fn fmi2GetIntegerStatus(
     status_kind: c_int,
     value: *mut c_int,
 ) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+    match catch_unwind(|| {
+        let (status_value, status) = execute_fmi_command_return::<_, (i32, i32)>(
+            c,
+            (FMI2FunctionCode::GetXXXStatus, status_kind),
+        )
+        .unwrap();
+        unsafe { *value = status_value };
+        status
+    }) {
+        Ok(s) => s,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 #[no_mangle]
@@ -879,8 +940,18 @@ pub extern "C" fn fmi2GetBooleanStatus(
     status_kind: c_int,
     value: *mut c_int,
 ) -> c_int {
-    eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error.into()
+    match catch_unwind(|| {
+        let (status_value, status) = execute_fmi_command_return::<_, (bool, i32)>(
+            c,
+            (FMI2FunctionCode::GetXXXStatus, status_kind),
+        )
+        .unwrap();
+        unsafe { *value = status_value as i32 };
+        status
+    }) {
+        Ok(s) => s,
+        Err(_) => Fmi2Status::Fmi2Fatal as i32,
+    }
 }
 
 #[no_mangle]

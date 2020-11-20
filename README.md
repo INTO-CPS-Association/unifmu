@@ -1,11 +1,12 @@
 ![Build and update wrappers](https://github.com/INTO-CPS-Association/unifmu/workflows/Build%20and%20update%20wrappers/badge.svg)
+
 # Universal Functional Mock-Up Unit (UniFMU)
 
 A challenge of integrating FMI based co-simulation into a development process is that available modelling tools may not cover a modelling need.
 In these cases it may be necessary to implement af FMU from scratch.
 Unfortunately, this is a challenging task which requires a understanding of FMI inner workings.
 
-UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language. UniFMU also contains a provides a GUI and CLI tool for generating new FMUs from a selection of languages, see adapters. 
+UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language. UniFMU also contains a provides a GUI and CLI tool for generating new FMUs from a selection of languages, see adapters.
 
 <centering>
 <img src="docs/_static/gui_ubuntu.png">
@@ -15,8 +16,9 @@ UniFMU makes it possible to implement FMUs in any language, by writing a small a
 
 Recall, a fmu is an zip archive containing a static description of the models interface, `modelDescription.xml`, a set of platform shared object libraries defining the behavior of the model, and finally a set of option resource files that might be used during execution of the model.
 
-To make this more concrete we consider the example of how python may be integrated using UniFMU, as shown in the *python_fmu* example.
+To make this more concrete we consider the example of how python may be integrated using UniFMU, as shown in the _python_fmu_ example.
 Below is the file structure of a the concrete FMU:
+
 ```
 python_fmu
 ├── binaries
@@ -36,12 +38,12 @@ UniFMU provides a generic binary that can be dropped into any newly created FMUs
 
 ![how it works](docs/_static/how_it_works.drawio.svg)
 
-The first thing that happens during simulation is the creation of instances of the particular FMU, each referred to as a slave. 
+The first thing that happens during simulation is the creation of instances of the particular FMU, each referred to as a slave.
 UniFMU uses a simple configuration file `launch.toml`, located in the resources directory, to specify a command that is used to create new instances of the FMU.
 
 Below is a configuration for starting a python based FMU, see `examples/python_fmu`:
 
-``` toml
+```toml
 [command]
 windows = [ "python", "launch.py" ]
 linux = [ "python3.8", "launch.py" ]
@@ -53,14 +55,15 @@ command = 500
 ```
 
 For this specific launch.toml file the UniFMU starts a new process by invoking the specified command, in this case:
-``` bash
+
+```bash
 python3.8 launch.py --handshake-endpoint "tcp://localhost:5000"
 ```
 
-The  process reads the launch.py file located in the resource folder.
+The process reads the launch.py file located in the resource folder.
 The newly started script two sockets, a handshake socket used to establish the initial connection with the wrapper, and a command socket used by the wrapper to pass commands and results between the wrapper and the slave.
 
-``` python
+```python
 # initializing message queue
 context = zmq.Context()
 handshake_socket = context.socket(zmq.PUSH)
@@ -70,7 +73,8 @@ command_port = command_socket.bind_to_random_port("tcp://127.0.0.1")
 ```
 
 Following this the script awaits and executes commands sent to the slave:
-``` python
+
+```python
  # event loop
     while True:
 
@@ -91,24 +95,24 @@ Following this the script awaits and executes commands sent to the slave:
             sys.exit(0)
 ```
 
-
-
 ## How do i install it?
 
 The easiest way to install the tool is using pip.
 
-``` bash
+```bash
 pip install unifmu
 ```
 
 After installing verify the installation by inspecting the output from the following command:
-``` bash
+
+```bash
 unifmu --help
 ```
 
 ### Linux Additional Steps
 
 You may need to install the following dependencies:
+
 ```
 libgtk-3-dev
 libsdl2-dev
@@ -118,46 +122,48 @@ For unix based platforms it is recommended to use the [prebuilt binaries](https:
 
 Install wxpython for your distribution by invoking the following command, where the 'ubuntu-20.04'-part is replaced with your distro:
 
-``` bash
+```bash
 pip3 install -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-20.04 wxPython
 ```
-
 
 ## Building and Running Tests
 
 Building the project requires the following programs:
-* python3
-* cargo
-* cmake
+
+- python3
+- cargo
+- cmake
 
 A utility script, `build.py`, is located in the root of the repository.
 
 To build the and update the wrapper in the examples use:
-``` bash
+
+```bash
 python build.py --update-wrapper
 ```
 
 To run the C integration tests run:
-``` bash
+
+```bash
 python build.py --test-c
 ```
 
-## Adapters
-An adapter is responsible for translating commands sent over a socket, into appropriate actions on the model. 
+## Backends
 
-Generic adapters are provided out of the box for the following languages:
+An backend is responsible for translating commands sent over a socket, into appropriate actions on the model.
+
+Generic backends are provided out of the box for the following languages:
+
 1. Python
 
 ### Python
 
-### Writing an adapter
-
+### Writing an backend
 
 The following functions are implemented exclusively by the wrapper:
-*. fmi2GetTypesPlatform
-*. fmi2GetVersion
-*. fmi2Instantiate
-
+_. fmi2GetTypesPlatform
+_. fmi2GetVersion
+\*. fmi2Instantiate
 
 The table depeicts the commands, their associated id's, the expected paramters, and finally, the values they return to the wrapper.
 
@@ -174,29 +180,33 @@ The table depeicts the commands, their associated id's, the expected paramters, 
 | fmi2DoStep                  | 8   | current : float, step_size : float, no_prior: bool         | status:int                      |
 | fmi2FreeInstance            | 9   | None                                                       | status:int                      |
 
+<img src="docs/_static/FMI2 Functions.png">
+
 ## Frequently Asked Questions
 
 ### How do execute the launch command though a shell?
+
 The command specified in the launch.toml are executed without the use of a shell.
 This means that functionality provided by the shell such as wildcards, per session environment variables, and aliases, are not evaluated.
 Specifically, the process is launched using a popen-like api with shell=False, see [subprocess](https://docs.rs/subprocess/latest/subprocess/) for information on the differences.
 
-There are several reasons for not launching directly through the shell by default. First, it may simply not be necessary if no functionality form the shell is needed. 
+There are several reasons for not launching directly through the shell by default. First, it may simply not be necessary if no functionality form the shell is needed.
 In this case launching through the shell simply adds more complexity and reduces transparency.
 Secondly, a system may have multiple shells and not all platforms have a consistent way to locate the shell.
 
-If you want to invoke the launch command though the shell, you can specify the shell executable as the first argument as shown below: 
+If you want to invoke the launch command though the shell, you can specify the shell executable as the first argument as shown below:
 
-``` toml
+```toml
 # launch.toml
 [command]
 windows = [ "powershell.exe", "launch.ps1" ]
 linux = [ "/bin/sh","launch.sh"]
 macos = ["zsh","launch.sh"]
 ```
+
 The example shows how an platform specific helper script would be invoked:
 
-``` bash
+```bash
 # launch.sh
 python3.8 --version         # other steps, logging, etc.
 EXPORT FOO=BAR              # set environment variable
@@ -204,9 +214,54 @@ python3.8 launch.py $1 $2   # last arguments are --handshake-endpoint and its va
 ```
 
 ### Do i need Python to run my FMU?
-No, not in the general case. The FMUs generated by unifmu depend ONLY on the commands specified in the launch.toml file.
-In the case of the *python_fmu* example the command launches python, which is where the confusion may arise.
 
+No, not in the general case. The FMUs generated by unifmu depend ONLY on the commands specified in the launch.toml file.
+In the case of the _python_fmu_ example the command launches python, which is where the confusion may arise.
 
 In addition to this the commandline tool is implemented itself is implemented in Python.
 To summarize Python is required to use the tool that generates and packages the FMUs, but it is not required during their execution.
+
+### Does an FMU need to support every feature of FMI?
+
+No, the FMI2 specification allows you set falgs that declare the capabilities of an FMU.
+
+For example you may declare that the FMU supports serialization by setting `canGetAndSetFMUstate` and `canSerializeFMUstate` attributes in the modelDescription.xml, see specification p.25 for more info.
+The simulation tool should check these flags during simulation and ensure that only supported operations are executed.
+
+Naturally, the capabilities declared in the model description should also be implemented by the FMU.
+The specifics of this depends on the particular backend being used.
+For example, using the python backend implmenting the capabilities `canGetAndSetFMUstate` and `canSerializeFMUstate` requires that the 2 following methods are defined:
+
+```python
+def serialize(self):
+
+    bytes = pickle.dumps(
+        (
+            self.real_a
+            # other attributes
+        )
+    )
+    return bytes, Fmi2Status.ok
+
+def deserialize(self, bytes) -> int:
+    (
+        real_a
+        # other attributes
+    ) = pickle.loads(bytes)
+    self.real_a = real_a
+
+    return Fmi2Status.ok
+```
+
+## Technical Design
+
+### Wrapper
+
+The wrapper is implemented in Rust. The source code can be in `wrapper/src` directory.
+
+#### Serialization
+
+### GUI
+
+The GUI is implemented in python using the wxpython framework.
+The source code for this can be found in the `tool/unifmu` directory.
