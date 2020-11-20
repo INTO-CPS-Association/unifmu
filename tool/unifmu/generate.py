@@ -1,3 +1,4 @@
+from fmi2 import CoSimulation
 from os import makedirs
 from pathlib import Path
 from shutil import copy
@@ -9,7 +10,7 @@ from zipfile import ZipFile
 
 # import xml.etree.ElementTree as ET
 import pkg_resources
-import lxml.etree as ET
+import xml.etree.ElementTree as ET
 import toml
 
 from unifmu.fmi2 import ModelDescription
@@ -116,6 +117,7 @@ def generate_fmu(md: ModelDescription, output_path, backend: str):
             # FMI requires encoding to be encoded as UTF-8 and contain a header:
             #
             # See 2.2 p.28
+            raise NotImplementedError("FIX lxml compatability")
             md_xml: bytes = ET.tostring(
                 fmd, pretty_print=True, encoding="utf-8", xml_declaration=True
             )
@@ -239,7 +241,109 @@ def generate_fmu_from_backend(backend: str, output_path):
         shutil.copytree(tmpdir_fmu, output_path)
 
 
-def parse_model_description(xml_str: str) -> ModelDescription:
+def parse_model_description(model_description_xml: ET.ElementTree) -> ModelDescription:
+    """Parse the contents of the xml tree and return an in memory representation
+
+    Uses xsd type conversion defined at p.28-29
+    """
+    root = model_description_xml.getroot()
+
+    md = root.attrib
+
+    # mandatory p.32
+    fmi_version = md["fmiVersion"]
+    model_name = md["modelName"]
+    guid = md["guid"]
+    # optional
+    description = root.get("description")
+    author = root.get("author")
+    copyright = root.get("copyright")
+    version = root.get("version")
+    license = root.get("license")
+    generation_tool = root.get("generationTool")
+    generation_date_and_time = root.get("generationDateAndTime")
+    variable_naming_convention = root.get("variableNamingConvention")
+    variable_naming_convention = root.get("numberOfEventIndicators")
+
+    # cosimulation
+    co_simulation = None
+    if "CoSimulation" in root.attrib:
+        co_simulation = root.attrib["CoSimulation"]
+        model_identifier = root.attrib["modelIdentifier"]
+        needs_execution_tool = root.get("needsExecutionTool")
+        can_handle_variable_communication_step_size = root.get(
+            "canHandleVariableCommunicationStepSize"
+        )
+        can_interpolate_inputs = root.get("canInterpolateInputs")
+        max_output_derivative_order = root.get("maxOutputDerivativeOrder")
+        can_run_asynchronuously = root.get("canRunAsynchronuously")
+        can_be_instantiated_only_once_per_process = root.get(
+            "canBeInstantiatedOnlyOncePerProcess"
+        )
+        can_not_use_memory_management_functions = root.get(
+            "canNotUseMemoryManagementFunctions"
+        )
+        can_get_and_set_fmu_state = root.get("canGetAndSetFMUstate")
+        can_serialize_fmu_state = root.get("canSerializeFMUstate")
+        provides_directional_derivative = root.get("providesDirectionalDerivative")
+
+        def xs_boolean(s):
+            if s is None:
+                return None
+            if s in {"false","0"}:
+                return False
+            elif s in {"true","1"}:
+                return True
+            else:
+                raise ValueError(f"Unable to convert {} to xsd boolean")
+        
+        def xs_normalized_string(s: str):
+            if s is None:
+                return None
+            if not s.isprintable():
+                raise ValueError(r"normalized string can not contain: \n, \t or \r")
+            return s
+
+        def xs_unsigned_int(s: str):
+            if s is None:
+                return None
+            value = int(s)
+            if(value > 4294967295):
+                raise ValueError("xs:unsingedInt cannot exceed the value 4294967295")
+            return value
+
+
+
+
+        co_simulation = CoSimulation(
+            model_identifier=xs_normalized_string(model_identifier),
+            needs_execution_tool=xs_boolean(needs_execution_tool),
+            can_handle_variable_communication_step_size=xs_boolean(can_handle_variable_communication_step_size),
+            can_interpolate_inputs=xs_boolean(can_interpolate_inputs),
+            max_output_derivative_order=xs_unsigned_int(max_output_derivative_order),
+            can_run_asynchronuously=xs_boolean(can_run_asynchronously),
+            can_be_instantiated_only_once_per_process=xs_boolean(can_be_instantiated_only_once_per_process),
+            can_not_use_memory_management_functions=can_not_use_memory_management_functions,
+            can_get_and_set_fmu_state=can_get_and_set_fmu_state,
+            can_serialize_fmu_state=can_serialize_fmu_state,
+            provides_directional_derivative=provides_directional_derivative,
+        )
+
+    return ModelDescription(
+        fmi_version=fmi_version,
+        model_name=model_name,
+        guid=guid,
+        author=author,
+        description=description,
+        version=version,
+        copyright=copyright,
+        license=license,
+        generation_tool=generation_tool,
+        generation_date_and_time=generation_date_and_time,
+        variable_naming_convention=variable_naming_convention,
+        number_of_event_indicators=number_of_event_indicators,
+        co_simulation=co_simulation,
+    )
 
     pass
 
@@ -283,4 +387,4 @@ def import_fmu(archive_or_dir) -> ModelDescription:
 
     print(model_description_xml)
 
-    md = ModelDescription()
+    parse_model_description(model_description_xml)

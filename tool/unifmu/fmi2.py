@@ -40,12 +40,12 @@ class CoSimulation:
         can_handle_variable_communication_step_size: bool,
         can_interpolate_inputs: bool,
         max_output_derivative_order: int,
-        can_run_asynchronously: bool,
+        can_run_asynchronuously: bool,
         can_be_instantiated_only_once_per_process: bool,
         can_not_use_memory_management_functions: bool,
         can_get_and_set_fmu_state: bool,
         can_serialize_fmu_state: bool,
-        provides_directional_derivatives: bool,
+        provides_directional_derivative: bool,
     ) -> None:
 
         self.model_identifier = model_identifier
@@ -55,7 +55,7 @@ class CoSimulation:
         )
         self.can_interpolate_inputs = can_interpolate_inputs
         self.max_output_derivative_order = max_output_derivative_order
-        self.can_run_asynchronously = can_run_asynchronously
+        self.can_run_asynchronously = can_run_asynchronuously
         self.can_be_instantiated_only_once_per_process = (
             can_be_instantiated_only_once_per_process
         )
@@ -64,7 +64,7 @@ class CoSimulation:
         )
         self.can_get_and_set_fmu_state = can_get_and_set_fmu_state
         self.can_serialize_fmu_state = can_serialize_fmu_state
-        self.provides_directional_derivatives = provides_directional_derivatives
+        self.provides_directional_derivatives = provides_directional_derivative
 
 
 class Unit:
