@@ -1,8 +1,11 @@
 from pathlib import Path
 import random
+from typing import Any
+import pubsub
 
 import wx
 import wx.adv
+from wx.core import BoxSizer
 import wx.lib.agw.aui as aui
 import wx.gizmos
 from pubsub import pub
@@ -13,7 +16,7 @@ from unifmu.generate import (
     generate_fmu_from_backend,
     get_backends,
     import_fmu,
-    parse_model_description,
+    export_model_description,
 )
 
 
@@ -202,28 +205,29 @@ class FMI2BasicPanel(wx.Panel):
 
         self.SetSizer(sizer)
 
-        self.model_identifier_field.Bind(wx.EVT_TEXT, self.notify_name_changed)
+        self.model_identifier_field.Bind(
+            wx.EVT_TEXT, self.notify_model_identifier_changed
+        )
         self.name_field.Bind(wx.EVT_TEXT, self.notify_name_changed)
-        self.author_field.Bind(wx.EVT_TEXT, self.notify_name_changed)
+        self.author_field.Bind(wx.EVT_TEXT, self.notify_author_changed)
+        self.description_field.Bind(wx.EVT_TEXT, self.notify_description_changed)
 
-        pub.subscribe(self.on_model_identifier_changed, "model_identifier_changed")
-        pub.subscribe(self.on_name_changed, "name_changed")
-        pub.subscribe(self.on_author_changed, "author_changed")
-        pub.subscribe(self.on_description_changed, "description_changed")
+        pub.subscribe(self.on_model_identifier_changed, "md.model_identifier")
+        pub.subscribe(self.on_name_changed, "md.name")
+        pub.subscribe(self.on_author_changed, "md.author")
+        pub.subscribe(self.on_description_changed, "md.description")
 
     def notify_model_identifier_changed(self, event):
-        pub.sendMessage(
-            "model_identifier_changed", name=self.model_identifier_field.Value
-        )
+        pub.sendMessage("md.model_identifier", value=self.model_identifier_field.Value)
 
     def notify_name_changed(self, event):
-        pub.sendMessage("name_changed", value=self.name_field.Value)
+        pub.sendMessage("md.name", value=self.name_field.Value)
 
     def notify_author_changed(self, event):
-        pub.sendMessage("author_changed", value=self.author_field.Value)
+        pub.sendMessage("md.author", value=self.author_field.Value)
 
     def notify_description_changed(self, event):
-        pub.sendMessage("description_changed", value=self.author_field.Value)
+        pub.sendMessage("md.description", value=self.description_field.Value)
 
     def on_model_identifier_changed(self, value):
         self.model_identifier_field.ChangeValue(value)
@@ -297,6 +301,37 @@ class FMI2CapabilitiesPanel(wx.Panel):
         self.SetSizer(sizer)
 
 
+class ModelDescriptionPreviewPanel(wx.Panel):
+    """ Panel that shows a live-preview of the model description
+    """
+
+    def __init__(self, parent) -> None:
+
+        wx.Panel.__init__(self, parent=parent)
+
+        sizer = BoxSizer()
+        # self.md = None
+        self.preview_text = wx.TextCtrl(
+            self,
+            -1,
+            "COMING SOON!",
+            wx.DefaultPosition,
+            wx.Size(200, 150),
+            wx.NO_BORDER
+            | wx.EXPAND
+            | wx.TE_READONLY
+            | wx.TE_MULTILINE
+            | wx.TE_DONTWRAP,
+        )
+
+        sizer.Add(self.preview_text, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
+    def set_preview(self, model: ModelDescription):
+        xml = export_model_description(model).decode("utf-8")
+        self.preview_text.SetValue(xml)
+
+
 ########################################################################
 class TabPanel(wx.Panel):
     # ----------------------------------------------------------------------
@@ -332,17 +367,9 @@ class HomeScreenFrame(wx.Frame):
         self.mgr = aui.AuiManager()
         self.mgr.SetManagedWindow(self)
 
-        self.model_description_preview = wx.TextCtrl(
-            self,
-            -1,
-            "COMING SOON!",
-            wx.DefaultPosition,
-            wx.Size(200, 150),
-            wx.NO_BORDER | wx.TE_MULTILINE,
-        )
-
-        self.model = ModelDescription()
-
+        self.live_preview_active = True
+        self.model_description_preview = ModelDescriptionPreviewPanel(self)
+        self.model = None
         # create a panel in the frame
 
         edit_panel = wx.Panel(self)
@@ -360,12 +387,10 @@ class HomeScreenFrame(wx.Frame):
         edit_panel.SetSizerAndFit(sizer)
         edit_panel.Hide()
 
-        #
+        # signals
+        pub.subscribe(self.on_name_change, "md.name")
 
-        def author_changed(value):
-            self.model.author = value
-
-        pub.subscribe(author_changed, "author_changed")
+        # pub.sendMessage("md.author", value="johnny")
 
         # create a menu bar
         self.makeMenuBar()
@@ -389,17 +414,16 @@ class HomeScreenFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
-    def set_model(self, model_description: ModelDescription):
-
-        pub.sendMessage("model_selected")
-        pub.sendMessage("author_changed", value=model_description.author)
-        pub.sendMessage("name_changed", value=model_description.model_name)
+    def set_model(self, model: ModelDescription):
+        self.model = model
+        pub.sendMessage("model_set", model=model)
+        pub.sendMessage("md.author", value=model.author)
+        pub.sendMessage("md.name", value=model.model_name)
         pub.sendMessage(
-            "model_identifier_changed",
-            value=model_description.co_simulation.model_identifier,
+            "md.model_identifier", value=model.co_simulation.model_identifier,
         )
-        # TODO
 
+        self.model_description_preview.Enable()
         self.edit_panel.Enable()
 
     def makeMenuBar(self):
@@ -485,6 +509,7 @@ class HomeScreenFrame(wx.Frame):
                     self.set_model(import_fmu(fileDialog.GetPath()))
                 except Exception as e:
                     wx.MessageBox(f"Unable to open FMU: {e}", style=wx.ICON_ERROR)
+                    raise e
 
     def on_edit_fmu_directory(self, event):
 
@@ -497,6 +522,7 @@ class HomeScreenFrame(wx.Frame):
                     self.set_model(import_fmu(dirDialog.GetPath()))
                 except Exception as e:
                     wx.MessageBox(f"Unable to open FMU: {e}", style=wx.ICON_ERROR)
+                    raise e
 
     def on_about(self, event):
         """Display an About Dialog"""
@@ -506,6 +532,14 @@ class HomeScreenFrame(wx.Frame):
             wx.OK | wx.ICON_INFORMATION,
         )
 
+    def on_name_change(self, value: Any):
+        self.model.model_name = value
+        self.update_preview()
+
+    def update_preview(self):
+        """Updatet the xml preview to relect the current state of the model"""
+        self.model_description_preview.set_preview(self.model)
+
 
 def show_gui():
     """Show a gui that can be used to create FMUs and modify existing FMU's model description in a user friendly manner.
@@ -513,8 +547,29 @@ def show_gui():
 
     Note that this the function that serves as a entrypoint when invoking "unifmu gui", see tool/unifmu/cli.py and setup.py.
 
-    https://wxpython.org/Phoenix/docs/html/stock_items.html
+    The gui implements an MVC pattern built on top of PyPubSub:
+    https://pypubsub.readthedocs.io/en/latest/index.html
     """
+
+    # declare topics to ease debugging, this avoids runtime inference of topic types
+    # https://pypubsub.readthedocs.io/en/v4.0.3/usage/usage_advanced_maintain.html
+    def on_set_model_description(model: ModelDescription):
+        """ signal that the model has been set, e.g. a new FMU has been loaded"""
+        pass
+
+    def on_update_preview():
+        """ signal that xml preview should be updated
+        """
+        pass
+
+    def on_md_modified(value: Any):
+        """ signal that an attribute of an element has been changed, for example the name of the FMU or the causality of a variable.
+        """
+        pass
+
+    pub.subscribe(on_set_model_description, "model_set")
+    # pub.subscribe(on_update_preview, "update_preview")
+    pub.subscribe(on_md_modified, "md")
 
     app = wx.App(0)
 
@@ -525,6 +580,14 @@ def show_gui():
 
     app.SetTopWindow(frame)
     frame.Show()
+
+    from pubsub.utils import printTreeDocs
+
+    def snoop(topicObj=pub.AUTO_TOPIC, **mesgData):
+        print(f'topic "{topicObj.getName()}": {mesgData}')
+
+    pub.subscribe(snoop, pub.ALL_TOPICS)
+    printTreeDocs()
 
     app.MainLoop()
 

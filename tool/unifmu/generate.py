@@ -9,137 +9,12 @@ from zipfile import ZipFile
 
 # import xml.etree.ElementTree as ET
 import pkg_resources
-import xml.etree.ElementTree as ET
+
+# import xml.etree.ElementTree as ET
+import lxml.etree as ET
 import toml
 
 from unifmu.fmi2 import ModelDescription, CoSimulation, ScalarVariable
-
-
-def generate_fmu(md: ModelDescription, output_path, backend: str):
-    """Creates new FMU archive based on the specified model description and backend."""
-
-    with TemporaryDirectory() as tmpdir:
-
-        fmu_dir_tmp = Path(tmpdir)
-
-        # ---------------- write model description -------------------
-
-        fmd = ET.Element("fmiModelDescription")
-        fmd.set("fmiVersion", "2.0")
-        fmd.set("modelName", md.model_name)
-        fmd.set("guid", md.guid)
-        fmd.set("author", md.author)
-        fmd.set("generationDateAndTime", md.generation_date_and_time)
-        fmd.set("variableNamingConvention", md.variable_naming_convention)
-        fmd.set("generationTool", md.generation_tool)
-
-        #
-        cs = ET.SubElement(fmd, "CoSimulation")
-        cs.set("modelIdentifier", md.co_simulation.model_identifier)
-        cs.set("needsExecutionTool", str(md.co_simulation.needs_execution_tool))
-        cs.set(
-            "canNotUseMemoryManagementFunctions",
-            str(md.co_simulation.can_not_use_memory_management_functions),
-        )
-        cs.set(
-            "canHandleVariableCommunicationStepSize",
-            str(md.co_simulation.can_handle_variable_communication_step_size),
-        )
-
-        # 2.2.4 p.42) Log categories:
-        cs = ET.SubElement(fmd, "LogCategories")
-        for ac in md.log_categories:
-            c = ET.SubElement(cs, "Category")
-            c.set("name", ac)
-
-        # 2.2.7 p.47) ModelVariables
-        mvs = ET.SubElement(fmd, "ModelVariables")
-
-        variable_index = 0
-
-        type_to_fmitype = {
-            "real": "Real",
-            "integer": "Integer",
-            "boolean": "Boolean",
-            "string": "String",
-        }
-
-        for var in md.model_variables:
-            var.variability
-            value_reference = str(var.value_reference)
-
-            idx_comment = ET.Comment(f'Index of variable = "{variable_index + 1}"')
-            mvs.append(idx_comment)
-            sv = ET.SubElement(mvs, "ScalarVariable")
-            sv.set("name", var.name)
-            sv.set("valueReference", value_reference)
-            sv.set("variability", var.variability)
-            sv.set("causality", var.causality)
-
-            if var.description:
-                sv.set("description", var.description)
-
-            if var.initial:
-                i = var.initial
-                sv.set("initial", i)
-
-            val = ET.SubElement(sv, type_to_fmitype[var.data_type])
-
-            # 2.2.7. p.48) start values
-            if var.initial in {"exact", "approx"} or var.causality == "input":
-                assert (
-                    var.start != None
-                ), "a start value must be defined for intial ∈ {exact, approx}"
-                val.set("start", var.start)
-
-            variable_index += 1
-
-        ms = ET.SubElement(fmd, "ModelStructure")
-
-        # 2.2.8) For each output we must declare 'Outputs' and 'InitialUnknowns'
-        outputs = [
-            (idx + 1, o)
-            for idx, o in enumerate(md.model_variables)
-            if o.causality == "output"
-        ]
-
-        if outputs:
-            os = ET.SubElement(ms, "Outputs")
-            for idx, o in outputs:
-                ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
-
-            os = ET.SubElement(ms, "InitialUnknowns")
-            for idx, o in outputs:
-                ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
-
-        try:
-            # FMI requires encoding to be encoded as UTF-8 and contain a header:
-            #
-            # See 2.2 p.28
-            raise NotImplementedError("FIX lxml compatability")
-            md_xml: bytes = ET.tostring(
-                fmd, pretty_print=True, encoding="utf-8", xml_declaration=True
-            )
-
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to parse model description. Write resulted in error: {e}"
-            ) from e
-
-        md_out_path = fmu_dir_tmp / "modelDescription.xml"
-
-        with open(md_out_path, "wb") as f:
-            f.write(md_xml)
-
-        # ------------------- copy backend ----------------------------
-
-        binaries_dir = [
-            fmu_dir_tmp / "binareis" / ext for ext in ["linux64", "win64", "darwin64"]
-        ]
-
-        # ------------------ copy to output directory ----------------
-        assert fmu_dir_tmp.exists()
-        shutil.copytree(fmu_dir_tmp, output_path)
 
 
 def list_resource_files(resource_name: str) -> List[str]:
@@ -354,16 +229,22 @@ def parse_model_description(model_description: str) -> ModelDescription:
         start = var.get("start", default=None)
         data_type = var.tag
 
-        ScalarVariable(
-            name=scalar_variable.get("name"),
-            value_reference=scalar_variable.get("valueReference"),
-            variability=variability,
-            causality=causality,
-            description=scalar_variable.get("description", default=None),
-            initial=initial,
-            start=start,
-            data_type=data_type,
+        model_variables.append(
+            ScalarVariable(
+                name=scalar_variable.get("name"),
+                value_reference=scalar_variable.get("valueReference"),
+                variability=variability,
+                causality=causality,
+                description=scalar_variable.get("description", default=None),
+                initial=initial,
+                start=start,
+                data_type=data_type,
+            )
         )
+
+    log_categories = []
+    for category in root.iter("Category"):
+        log_categories.append(category.get("name"))
 
     model_structure = []
 
@@ -459,6 +340,7 @@ def parse_model_description(model_description: str) -> ModelDescription:
         description=description,
         version=version,
         copyright=copyright,
+        log_categories=log_categories,
         license=license,
         generation_tool=generation_tool,
         generation_date_and_time=generation_date_and_time,
@@ -468,6 +350,100 @@ def parse_model_description(model_description: str) -> ModelDescription:
         model_variables=model_variables,
         model_structure=model_structure,
     )
+
+
+def export_model_description(md: ModelDescription) -> bytes:
+    """Converts in memory representation of the model description into its XML representation"""
+
+    # ---------------- write model description -------------------
+
+    fmd = ET.Element("fmiModelDescription")
+    fmd.set("fmiVersion", "2.0")
+    fmd.set("modelName", md.model_name)
+    fmd.set("guid", md.guid)
+    fmd.set("author", md.author)
+    fmd.set("generationDateAndTime", md.generation_date_and_time)
+    fmd.set("variableNamingConvention", md.variable_naming_convention)
+    fmd.set("generationTool", md.generation_tool)
+
+    #
+    cs = ET.SubElement(fmd, "CoSimulation")
+    cs.set("modelIdentifier", md.co_simulation.model_identifier)
+    cs.set(
+        "needsExecutionTool", str(md.co_simulation.needs_execution_tool),
+    )
+    cs.set(
+        "canNotUseMemoryManagementFunctions",
+        str(md.co_simulation.can_not_use_memory_management_functions),
+    )
+    cs.set(
+        "canHandleVariableCommunicationStepSize",
+        str(md.co_simulation.can_handle_variable_communication_step_size),
+    )
+
+    # 2.2.4 p.42) Log categories:
+    cs = ET.SubElement(fmd, "LogCategories")
+    for ac in md.log_categories:
+        c = ET.SubElement(cs, "Category")
+        c.set("name", ac)
+
+    # 2.2.7 p.47) ModelVariables
+    mvs = ET.SubElement(fmd, "ModelVariables")
+
+    variable_index = 0
+
+    for var in md.model_variables:
+        var.variability
+        value_reference = str(var.value_reference)
+
+        idx_comment = ET.Comment(f'Index of variable = "{variable_index + 1}"')
+        mvs.append(idx_comment)
+        sv = ET.SubElement(mvs, "ScalarVariable")
+        sv.set("name", var.name)
+        sv.set("valueReference", value_reference)
+        sv.set("variability", var.variability)
+        sv.set("causality", var.causality)
+
+        if var.description:
+            sv.set("description", var.description)
+
+        if var.initial:
+            i = var.initial
+            sv.set("initial", i)
+
+        val = ET.SubElement(sv, var.data_type)
+
+        # 2.2.7. p.48) start values
+        if var.initial in {"exact", "approx"} or var.causality == "input":
+            assert (
+                var.start != None
+            ), "a start value must be defined for intial ∈ {exact, approx}"
+            val.set("start", var.start)
+
+        variable_index += 1
+
+    ms = ET.SubElement(fmd, "ModelStructure")
+
+    # 2.2.8) For each output we must declare 'Outputs' and 'InitialUnknowns'
+    outputs = [
+        (idx + 1, o)
+        for idx, o in enumerate(md.model_variables)
+        if o.causality == "output"
+    ]
+
+    if outputs:
+        os = ET.SubElement(ms, "Outputs")
+        for idx, o in outputs:
+            ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
+
+        os = ET.SubElement(ms, "InitialUnknowns")
+        for idx, o in outputs:
+            ET.SubElement(os, "Unknown", {"index": str(idx), "dependencies": ""})
+
+    # FMI requires encoding to be encoded as UTF-8 and contain a header:
+    #
+    # See 2.2 p.28
+    return ET.tostring(fmd, pretty_print=True, encoding="utf-8", xml_declaration=True)
 
 
 def import_fmu(archive_or_dir) -> ModelDescription:
@@ -504,7 +480,7 @@ def import_fmu(archive_or_dir) -> ModelDescription:
                 "No modelDescription.xml file was found inside the FMU directory"
             )
 
-        with open(model_description_path, "r", encoding="utf-8") as f:
+        with open(model_description_path, "rb") as f:
             model_description_str = f.read()
 
     return parse_model_description(model_description_str)
