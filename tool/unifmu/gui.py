@@ -8,8 +8,13 @@ import wx.adv
 import wx.gizmos
 from wx.core import BoxSizer, NumberEntryDialog, PrintDialog, VERTICAL
 
-from unifmu.generate import generate_fmu_from_backend, get_backends, import_fmu
 from unifmu.fmi2 import ModelDescription, CoSimulation
+from unifmu.generate import (
+    generate_fmu_from_backend,
+    get_backends,
+    import_fmu,
+    parse_model_description,
+)
 
 
 class FMI2Tooltips:
@@ -109,9 +114,7 @@ class CreateFMUFrame(wx.Frame):
         # ------------- export ------------------
 
         self.outdir_picker = wx.DirPickerCtrl(
-            panel,
-            message="Select Base Directory",
-            path=Path.cwd().__fspath__(),
+            panel, message="Select Base Directory", path=Path.cwd().__fspath__(),
         )
         self.outdir_picker.SetToolTip(
             "Select the directory in which the generated FMU will be written. Note that it will NOT be overwritten; a new directory or zip-archive is created."
@@ -211,8 +214,7 @@ class HomeScreenFrame(wx.Frame):
             return box
 
         self.can_handle_variable_communication_step_size_box = create_box(
-            "variable step-size",
-            "supports calls to fmi2DoStep step length",
+            "variable step-size", "supports calls to fmi2DoStep step length",
         )
 
         self.can_be_instantiated_only_once_per_process_box = create_box(
@@ -310,8 +312,38 @@ class HomeScreenFrame(wx.Frame):
     def set_model(self, model_description: ModelDescription):
 
         self.author_field.Value = model_description.author
-        self.name_field = model_description.model_name
-        self.model_identifier_field = model_description.co_simulation.model_identifier
+        self.name_field.Value = model_description.model_name
+        self.model_identifier_field.Value = (
+            model_description.co_simulation.model_identifier
+        )
+        self.can_handle_variable_communication_step_size_box.Value = (
+            model_description.co_simulation.can_handle_variable_communication_step_size
+        )
+        self.can_handle_variable_communication_step_size_box.Value = (
+            model_description.co_simulation.can_handle_variable_communication_step_size
+        )
+        self.can_be_instantiated_only_once_per_process_box.Value = (
+            model_description.co_simulation.can_be_instantiated_only_once_per_process
+        )
+        self.can_interpolate_inputs_box.Value = (
+            model_description.co_simulation.can_interpolate_inputs
+        )
+        self.can_run_asynchronously_box.Value = (
+            model_description.co_simulation.can_run_asynchronously
+        )
+        self.can_not_use_memory_management_functions_box.Value = (
+            model_description.co_simulation.can_not_use_memory_management_functions
+        )
+        self.can_get_and_set_fmu_state_box.Value = (
+            model_description.co_simulation.can_get_and_set_fmu_state
+        )
+        self.can_serialize_fmu_state_box.Value = (
+            model_description.co_simulation.can_serialize_fmu_state
+        )
+        self.provides_directional_derivatives_box = (
+            model_description.co_simulation.provides_directional_derivatives
+        )
+
         self.panel.Show()
 
     def makeMenuBar(self):
@@ -326,23 +358,17 @@ class HomeScreenFrame(wx.Frame):
         # The "\t..." syntax defines an accelerator key that also triggers
         # the same event
         create_item = fileMenu.Append(
-            -1,
-            "&Create FMU...\tCtrl-N",
-            "Generate a new FMU",
+            -1, "&Create FMU...\tCtrl-N", "Generate a new FMU",
         )
 
         fileMenu.AppendSeparator()
 
         open_fmu_dir_archive = fileMenu.Append(
-            -1,
-            "&Open FMU archive...\tCtrl-O",
-            "Open compressed FMU",
+            -1, "&Open FMU archive...\tCtrl-O", "Open compressed FMU",
         )
 
         open_fmu_dir_item = fileMenu.Append(
-            -1,
-            "&Open FMU directory...\tCtrl+Shift-O",
-            "Open uncompressed FMU",
+            -1, "&Open FMU directory...\tCtrl+Shift-O", "Open uncompressed FMU",
         )
 
         fileMenu.AppendSeparator()
@@ -423,19 +449,13 @@ class HomeScreenFrame(wx.Frame):
         )
 
 
-md = None
-
-
-class SetupToolsArtProvider:
-    pass
-
-
 def show_gui():
     """Show a gui that can be used to create FMUs and modify existing FMU's model description in a user friendly manner.
     The gui is build on wxpython, a cross-platform gui library that uses native widgets.
 
     Note that this the function that serves as a entrypoint when invoking "unifmu gui", see tool/unifmu/cli.py and setup.py.
     """
+
     app = wx.App()
     frame = HomeScreenFrame(title="FMU Builder")
 

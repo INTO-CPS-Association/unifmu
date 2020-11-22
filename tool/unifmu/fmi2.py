@@ -1,20 +1,27 @@
-"""Contains definitions of concepts related to FMI 2.0.x"""
+"""
+Contains definitions of concepts related to FMI 2.0.x
+
+"""
 
 
 from typing import Any, List, Optional
+from enum import Enum
 
 
 class ScalarVariable:
+    """input, output or parameter of a model, p.46"""
+
     def __init__(
         self,
         name: str,
         value_reference: str,
         data_type: str,
-        variability: str,
-        causality: str,
-        initial: str,
-        description: str,
-        start: Optional[Any],
+        description: str = None,
+        causality: str = "local",
+        variability: str = "continuous",
+        initial: str = None,
+        start: Optional[Any] = None,
+        can_handle_multiple_set_per_time_instant=None,
     ):
         self.name = name
         self.value_reference = value_reference
@@ -24,6 +31,9 @@ class ScalarVariable:
         self.initial = initial
         self.description = description
         self.start = start
+        self.can_handle_multiple_set_per_time_instant = (
+            can_handle_multiple_set_per_time_instant
+        )
 
 
 class ModelExchange:
@@ -36,17 +46,17 @@ class CoSimulation:
     def __init__(
         self,
         model_identifier: str,
-        needs_execution_tool: bool,
-        can_handle_variable_communication_step_size: bool,
-        can_interpolate_inputs: bool,
-        max_output_derivative_order: int,
-        can_run_asynchronuously: bool,
-        can_be_instantiated_only_once_per_process: bool,
-        can_not_use_memory_management_functions: bool,
-        can_get_and_set_fmu_state: bool,
-        can_serialize_fmu_state: bool,
-        provides_directional_derivative: bool,
-    ) -> None:
+        needs_execution_tool: bool = None,
+        can_handle_variable_communication_step_size: bool = None,
+        can_interpolate_inputs: bool = None,
+        max_output_derivative_order: int = None,
+        can_run_asynchronuously: bool = None,
+        can_be_instantiated_only_once_per_process: bool = None,
+        can_not_use_memory_management_functions: bool = None,
+        can_get_and_set_fmu_state: bool = None,
+        can_serialize_fmu_state: bool = None,
+        provides_directional_derivative: bool = None,
+    ):
 
         self.model_identifier = model_identifier
         self.needs_execution_tool = needs_execution_tool
@@ -83,23 +93,24 @@ class ModelDescription:
         fmi_version: str,
         model_name: str,
         guid: str,
-        description: str,
-        author: str,
-        version: str,
-        copyright: str,
-        license: str,
-        generation_tool: str,
-        generation_date_and_time: str,
-        variable_naming_convention: str,
         model_variables: List[ScalarVariable],
         model_structure,
-        co_simulation: CoSimulation,
-        model_exchange: Optional[ModelExchange],
-        unit_definitions,
-        type_defintions,
-        log_categories: List[str],
-        default_experiment,
-        vendor_annotations,
+        description: str = None,
+        author: str = None,
+        version: str = None,
+        copyright: str = None,
+        license: str = None,
+        generation_tool: str = None,
+        generation_date_and_time: str = None,
+        variable_naming_convention: str = None,
+        co_simulation: CoSimulation = None,
+        model_exchange: ModelExchange = None,
+        unit_definitions=None,
+        type_defintions=None,
+        log_categories: List[str] = None,
+        default_experiment=None,
+        vendor_annotations=None,
+        number_of_event_indicators=None,
     ):
         self.fmi_version = fmi_version
         self.model_name = model_name
@@ -121,4 +132,5 @@ class ModelDescription:
         self.log_categories = log_categories
         self.default_experiment = default_experiment
         self.vendor_annotations = vendor_annotations
+        self.number_of_event_indicators = number_of_event_indicators
 

@@ -1,4 +1,3 @@
-from fmi2 import CoSimulation
 from os import makedirs
 from pathlib import Path
 from shutil import copy
@@ -13,7 +12,7 @@ import pkg_resources
 import xml.etree.ElementTree as ET
 import toml
 
-from unifmu.fmi2 import ModelDescription
+from unifmu.fmi2 import ModelDescription, CoSimulation, ScalarVariable
 
 
 def generate_fmu(md: ModelDescription, output_path, backend: str):
@@ -241,93 +240,216 @@ def generate_fmu_from_backend(backend: str, output_path):
         shutil.copytree(tmpdir_fmu, output_path)
 
 
-def parse_model_description(model_description_xml: ET.ElementTree) -> ModelDescription:
-    """Parse the contents of the xml tree and return an in memory representation
+def _get_attribute_default_values():
+    return {
+        # ModelDescription
+        "variableNamingConvention": "flat",
+        # CoSimulation
+        "needsExecutionTool": "false",
+        "canHandleVariableCommunicationStepSize": "false",
+        "canInterpolateInputs": "false",
+        "maxOutputDerivativeOrder": "0",
+        "canRunAsynchronuously": "false",
+        "canBeInstantiatedOnlyOncePerProcess": "false",
+        "canNotUseMemoryManagementFunctions": "false",
+        "canGetAndSetFMUstate": "false",
+        "canSerializeFMUstate": "false",
+        "providesDirectionalDerivative": "false",
+    }
 
-    Uses xsd type conversion defined at p.28-29
+
+def validate_model_description(model_description: ModelDescription):
+    raise NotImplementedError()
+    if causality not in {
+        "parameter",
+        "calculatedParameter",
+        "input",
+        "output",
+        "local",
+        "independent",
+    }:
+        raise ValueError("invalid causality")
+
+    if variability not in {
+        "constant",
+        "fixed",
+        "tunable",
+        "discrete",
+        "continuous",
+    }:
+        raise ValueError("invalid variability")
+
+    err_a = "The combinations “constant / parameter”, “constant / calculatedParameter” and “constant / input” do not make sense, since parameters and inputs are set from the environment, whereas a constant has always a value."
+    err_b = "The combinations “discrete / parameter”, “discrete / calculatedParameter”, “continuous / parameter” and continuous / calculatedParameter do not make sense, since causality = “parameter” and “calculatedParameter” define variables that do not depend on time, whereas “discrete” and “continuous” define variables where the values can change during simulation."
+    err_c = "For an “independent” variable only variability = “continuous” makes sense."
+    err_d = "A fixed or tunable “input” has exactly the same properties as a fixed or tunable parameter. For simplicity, only fixed and tunable parameters shall be defined."
+    err_d = "A fixed or tunable “output” has exactly the same properties as a fixed or tunable calculatedParameter. For simplicity, only fixed and tunable calculatedParameters shall be defined."
+
+
+def _get_default_initial_for(variability: str, causality: str):
+    # case (A)
+    if (variability == "constant" and causality in {"output", "local"}) or (
+        variability in {"fixed", "tunable"} and causality == "parameter"
+    ):
+        initial = "exact"
+    # case (B)
+    elif variability in {"fixed", "tunable"} and causality in {
+        "calculatedParameter",
+        "local",
+    }:
+        initial = "calculated"
+    # case (C)
+    elif variability in {"discrete", "continuous"} and causality in {"output", "local"}:
+        initial = "calculated"
+    # case (D)
+    elif variability in {"discrete", "continuous"} and causality == "input":
+        initial = None
+    elif variability == "continuous" and causality == "independent":
+        intial = None
+    else:
+        raise ValueError("invalid combination of variability and causality")
+
+
+def parse_model_description(model_description: str) -> ModelDescription:
+    """Parse the contents of the xml tree and return an in memory representation.
     """
-    root = model_description_xml.getroot()
+    root = ET.fromstring(model_description)
 
-    md = root.attrib
+    defaults = _get_attribute_default_values()
 
     # mandatory p.32
-    fmi_version = md["fmiVersion"]
-    model_name = md["modelName"]
-    guid = md["guid"]
+    fmi_version = root.get("fmiVersion")
+    model_name = root.get("modelName")
+    guid = root.get("guid")
     # optional
-    description = root.get("description")
-    author = root.get("author")
-    copyright = root.get("copyright")
-    version = root.get("version")
-    license = root.get("license")
-    generation_tool = root.get("generationTool")
-    generation_date_and_time = root.get("generationDateAndTime")
-    variable_naming_convention = root.get("variableNamingConvention")
-    variable_naming_convention = root.get("numberOfEventIndicators")
+    description = root.get("description", default="")
+    author = root.get("author", default="")
+    copyright = root.get("copyright", default="")
+    version = root.get("version", default="")
+    license = root.get("license", default="")
+    generation_tool = root.get("generationTool", default="")
+    generation_date_and_time = root.get("generationDateAndTime", default="")
+    variable_naming_convention = root.get("variableNamingConvention", default="flat")
+    number_of_event_indicators = root.get("numberOfEventIndicators", default=0)
+
+    model_variables = []
+
+    """ Iterate over model variables:
+    <ScalarVariable name="real_a" valueReference="0" variability="continuous" causality="input">
+        <Real start="0.0" />
+    </ScalarVariable>
+    """
+    for scalar_variable in root.iter("ScalarVariable"):
+
+        causality = scalar_variable.get("causality", default="local")
+        variability = scalar_variable.get("variability", default="continuous")
+
+        initial = scalar_variable.get("initial", default=None)
+        # defaults of initial depend on causality and variablilty
+        # the combinations lead to 5 different cases denoted A-E on p.50
+        if initial is None:
+            initial = _get_default_initial_for(variability, causality)
+
+        var = list(scalar_variable)[0]
+        start = var.get("start", default=None)
+        data_type = var.tag
+
+        ScalarVariable(
+            name=scalar_variable.get("name"),
+            value_reference=scalar_variable.get("valueReference"),
+            variability=variability,
+            causality=causality,
+            description=scalar_variable.get("description", default=None),
+            initial=initial,
+            start=start,
+            data_type=data_type,
+        )
+
+    model_structure = []
 
     # cosimulation
-    co_simulation = None
-    if "CoSimulation" in root.attrib:
-        co_simulation = root.attrib["CoSimulation"]
-        model_identifier = root.attrib["modelIdentifier"]
-        needs_execution_tool = root.get("needsExecutionTool")
-        can_handle_variable_communication_step_size = root.get(
-            "canHandleVariableCommunicationStepSize"
-        )
-        can_interpolate_inputs = root.get("canInterpolateInputs")
-        max_output_derivative_order = root.get("maxOutputDerivativeOrder")
-        can_run_asynchronuously = root.get("canRunAsynchronuously")
-        can_be_instantiated_only_once_per_process = root.get(
-            "canBeInstantiatedOnlyOncePerProcess"
-        )
-        can_not_use_memory_management_functions = root.get(
-            "canNotUseMemoryManagementFunctions"
-        )
-        can_get_and_set_fmu_state = root.get("canGetAndSetFMUstate")
-        can_serialize_fmu_state = root.get("canSerializeFMUstate")
-        provides_directional_derivative = root.get("providesDirectionalDerivative")
+    co_simulation = root.find("CoSimulation")
 
-        def xs_boolean(s):
-            if s is None:
-                return None
-            if s in {"false","0"}:
-                return False
-            elif s in {"true","1"}:
-                return True
-            else:
-                raise ValueError(f"Unable to convert {} to xsd boolean")
-        
-        def xs_normalized_string(s: str):
-            if s is None:
-                return None
-            if not s.isprintable():
-                raise ValueError(r"normalized string can not contain: \n, \t or \r")
-            return s
+    model_identifier = co_simulation.get("modelIdentifier")
+    needs_execution_tool = co_simulation.get(
+        "needsExecutionTool", default=defaults["needsExecutionTool"]
+    )
+    can_handle_variable_communication_step_size = co_simulation.get(
+        "canHandleVariableCommunicationStepSize",
+        default=defaults["canHandleVariableCommunicationStepSize"],
+    )
+    can_interpolate_inputs = co_simulation.get(
+        "canInterpolateInputs", default=defaults["canInterpolateInputs"]
+    )
+    max_output_derivative_order = co_simulation.get(
+        "maxOutputDerivativeOrder", default=defaults["maxOutputDerivativeOrder"]
+    )
+    can_run_asynchronuously = co_simulation.get(
+        "canRunAsynchronuously", default=defaults["canRunAsynchronuously"]
+    )
+    can_be_instantiated_only_once_per_process = co_simulation.get(
+        "canBeInstantiatedOnlyOncePerProcess",
+        default=defaults["canBeInstantiatedOnlyOncePerProcess"],
+    )
+    can_not_use_memory_management_functions = co_simulation.get(
+        "canNotUseMemoryManagementFunctions",
+        default=defaults["canNotUseMemoryManagementFunctions"],
+    )
+    can_get_and_set_fmu_state = co_simulation.get(
+        "canGetAndSetFMUstate", default=defaults["canGetAndSetFMUstate"]
+    )
+    can_serialize_fmu_state = co_simulation.get(
+        "canSerializeFMUstate", default=defaults["canSerializeFMUstate"]
+    )
+    provides_directional_derivative = co_simulation.get(
+        "providesDirectionalDerivative",
+        default=defaults["providesDirectionalDerivative"],
+    )
 
-        def xs_unsigned_int(s: str):
-            if s is None:
-                return None
-            value = int(s)
-            if(value > 4294967295):
-                raise ValueError("xs:unsingedInt cannot exceed the value 4294967295")
-            return value
+    def xs_boolean(s):
+        if s is None:
+            return None
+        if s in {"false", "0"}:
+            return False
+        elif s in {"true", "1"}:
+            return True
+        else:
+            raise ValueError(f"Unable to convert {s} to xsd boolean")
 
+    def xs_normalized_string(s: str):
+        if s is None:
+            return None
+        if not s.isprintable():
+            raise ValueError(r"normalized string can not contain: \n, \t or \r")
+        return s
 
+    def xs_unsigned_int(s: str):
+        if s is None:
+            return None
+        value = int(s)
+        if value > 4294967295:
+            raise ValueError("xs:unsingedInt cannot exceed the value 4294967295")
+        return value
 
-
-        co_simulation = CoSimulation(
-            model_identifier=xs_normalized_string(model_identifier),
-            needs_execution_tool=xs_boolean(needs_execution_tool),
-            can_handle_variable_communication_step_size=xs_boolean(can_handle_variable_communication_step_size),
-            can_interpolate_inputs=xs_boolean(can_interpolate_inputs),
-            max_output_derivative_order=xs_unsigned_int(max_output_derivative_order),
-            can_run_asynchronuously=xs_boolean(can_run_asynchronously),
-            can_be_instantiated_only_once_per_process=xs_boolean(can_be_instantiated_only_once_per_process),
-            can_not_use_memory_management_functions=can_not_use_memory_management_functions,
-            can_get_and_set_fmu_state=can_get_and_set_fmu_state,
-            can_serialize_fmu_state=can_serialize_fmu_state,
-            provides_directional_derivative=provides_directional_derivative,
-        )
+    co_simulation = CoSimulation(
+        model_identifier=model_identifier,
+        needs_execution_tool=xs_boolean(needs_execution_tool),
+        can_handle_variable_communication_step_size=xs_boolean(
+            can_handle_variable_communication_step_size
+        ),
+        can_interpolate_inputs=xs_boolean(can_interpolate_inputs),
+        max_output_derivative_order=xs_unsigned_int(max_output_derivative_order),
+        can_run_asynchronuously=xs_boolean(can_run_asynchronuously),
+        can_be_instantiated_only_once_per_process=xs_boolean(
+            can_be_instantiated_only_once_per_process
+        ),
+        can_not_use_memory_management_functions=xs_boolean(
+            can_not_use_memory_management_functions
+        ),
+        can_get_and_set_fmu_state=xs_boolean(can_get_and_set_fmu_state),
+        can_serialize_fmu_state=xs_boolean(can_serialize_fmu_state),
+        provides_directional_derivative=xs_boolean(provides_directional_derivative),
+    )
 
     return ModelDescription(
         fmi_version=fmi_version,
@@ -343,9 +465,9 @@ def parse_model_description(model_description_xml: ET.ElementTree) -> ModelDescr
         variable_naming_convention=variable_naming_convention,
         number_of_event_indicators=number_of_event_indicators,
         co_simulation=co_simulation,
+        model_variables=model_variables,
+        model_structure=model_structure,
     )
-
-    pass
 
 
 def import_fmu(archive_or_dir) -> ModelDescription:
@@ -357,7 +479,7 @@ def import_fmu(archive_or_dir) -> ModelDescription:
     """
 
     archive_or_dir = Path(archive_or_dir)
-    model_description_xml = None
+    model_description_str = None
 
     if archive_or_dir.is_file():
         with TemporaryDirectory() as tmpdir, ZipFile(archive_or_dir) as zip_ref:
@@ -373,7 +495,7 @@ def import_fmu(archive_or_dir) -> ModelDescription:
                 )
 
             with open(model_description_path, "r") as f:
-                model_description_xml = ET.parse(f)
+                model_description_str = f.read()
     else:
         model_description_path = archive_or_dir / "modelDescription.xml"
 
@@ -382,9 +504,10 @@ def import_fmu(archive_or_dir) -> ModelDescription:
                 "No modelDescription.xml file was found inside the FMU directory"
             )
 
-        with open(model_description_path, "r") as f:
-            model_description_xml = ET.parse(f)
+        with open(model_description_path, "r", encoding="utf-8") as f:
+            model_description_str = f.read()
 
-    print(model_description_xml)
+    print(model_description_str)
 
-    parse_model_description(model_description_xml)
+    return parse_model_description(model_description_str)
+
