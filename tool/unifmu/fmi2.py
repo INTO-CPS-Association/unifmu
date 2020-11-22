@@ -90,11 +90,11 @@ class ModelDescription:
 
     def __init__(
         self,
-        fmi_version: str,
-        model_name: str,
-        guid: str,
-        model_variables: List[ScalarVariable],
-        model_structure,
+        fmi_version: str = None,
+        model_name: str = None,
+        guid: str = None,
+        model_variables: List[ScalarVariable] = None,
+        model_structure=None,
         description: str = None,
         author: str = None,
         version: str = None,

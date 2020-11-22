@@ -1,12 +1,12 @@
-import datetime
-from os import close, spawnl
 from pathlib import Path
-from sys import flags
+import random
 
 import wx
 import wx.adv
+import wx.lib.agw.aui as aui
 import wx.gizmos
-from wx.core import BoxSizer, NumberEntryDialog, PrintDialog, VERTICAL
+from pubsub import pub
+
 
 from unifmu.fmi2 import ModelDescription, CoSimulation
 from unifmu.generate import (
@@ -15,20 +15,6 @@ from unifmu.generate import (
     import_fmu,
     parse_model_description,
 )
-
-
-class FMI2Tooltips:
-
-    model_identifier = "name of the shared/dynamic library located loaded by the simulation environment. The library must be located in the binaries directory of the FMU"
-    model_name = (
-        "human readable name of the model, typically displayed by the envrionment"
-    )
-    author = "creator(s) of the FMU, may be displayerd by the envrionment"
-    needs_execution_tool = "Flag used to indicate that the FMU depends on at least one external tool to function correctly. The name of the tools can be retrieved from the 'generationTool' attribute"
-    can_handle_variable_communication_step_size = (
-        "If set, indicate that FMU supports time-steps of varying lengths"
-    )
-    can_be_instantiated_only_once_per_process = "Flag used to indicate that the shared library does NOT support instantiating multiple slaves"
 
 
 class CreateFMUFrame(wx.Frame):
@@ -176,40 +162,89 @@ class CreateFMUFrame(wx.Frame):
         self.Close()
 
 
-class HomeScreenFrame(wx.Frame):
-    """
-    A Frame that says Hello World
-    """
+class FMI2BasicPanel(wx.Panel):
+    def __init__(self, parent) -> None:
 
-    def __init__(self, title: str):
-        # ensure the parent's __init__ is called
-        super().__init__(None, title="FMU Builder")
+        wx.Panel.__init__(self, parent=parent)
 
-        # create a panel in the frame
-        panel = wx.Panel(self)
+        self.author_field = wx.TextCtrl(self, style=wx.TE_RICH2)
+        self.author_field.SetToolTip("Author of the FMU.")
+        author_label = wx.StaticText(self, label="Author")
 
-        border = 5
+        self.model_identifier_field = wx.TextCtrl(self, style=wx.TE_RICH2)
+        self.model_identifier_field.SetToolTip(
+            "Name of the shared library (omitting the file name extension), located in the binaries folder of the FMU."
+        )
+        model_identifier_label = wx.StaticText(self, label="Model Identifier")
 
-        # and create a sizer to manage the layout of child widgets
+        self.name_field = wx.TextCtrl(self, style=wx.TE_RICH2)
+        self.name_field.SetToolTip(
+            "Name of the FMU typically displayed by the simulation environment."
+        )
+        name_label = wx.StaticText(self, label="Name")
 
-        # fields
-        # --------------- fields.basic -------------------------
-        self.author_field = wx.TextCtrl(panel, style=wx.TE_RICH2)
-        self.author_field.SetToolTip(FMI2Tooltips.author)
-        author_label = wx.StaticText(panel, label="Author")
+        description_label = wx.StaticText(self, label="Description")
+        self.description_field = wx.TextCtrl(
+            self, style=wx.TE_RICH2 | wx.TE_MULTILINE | wx.EXPAND
+        )
 
-        self.model_identifier_field = wx.TextCtrl(panel, style=wx.TE_RICH2)
-        self.model_identifier_field.SetToolTip(FMI2Tooltips.model_identifier)
-        model_identifier_label = wx.StaticText(panel, label="Model Identifier")
+        sizer = wx.FlexGridSizer(rows=4, cols=2, hgap=5, vgap=5)
+        sizer.AddGrowableCol(1)
+        sizer.AddGrowableRow(3)
+        sizer.Add(name_label)
+        sizer.Add(self.name_field, flag=wx.EXPAND)
+        sizer.Add(model_identifier_label)
+        sizer.Add(self.model_identifier_field, flag=wx.EXPAND)
+        sizer.Add(author_label)
+        sizer.Add(self.author_field, flag=wx.EXPAND)
+        sizer.Add(description_label)
+        sizer.Add(self.description_field, flag=wx.EXPAND)
 
-        self.name_field = wx.TextCtrl(panel, style=wx.TE_RICH2)
-        self.name_field.SetToolTip(FMI2Tooltips.model_name)
-        name_label = wx.StaticText(panel, label="Name")
+        self.SetSizer(sizer)
 
-        # ---------------- fields.capabilities ---------------------
+        self.model_identifier_field.Bind(wx.EVT_TEXT, self.notify_name_changed)
+        self.name_field.Bind(wx.EVT_TEXT, self.notify_name_changed)
+        self.author_field.Bind(wx.EVT_TEXT, self.notify_name_changed)
+
+        pub.subscribe(self.on_model_identifier_changed, "model_identifier_changed")
+        pub.subscribe(self.on_name_changed, "name_changed")
+        pub.subscribe(self.on_author_changed, "author_changed")
+        pub.subscribe(self.on_description_changed, "description_changed")
+
+    def notify_model_identifier_changed(self, event):
+        pub.sendMessage(
+            "model_identifier_changed", name=self.model_identifier_field.Value
+        )
+
+    def notify_name_changed(self, event):
+        pub.sendMessage("name_changed", value=self.name_field.Value)
+
+    def notify_author_changed(self, event):
+        pub.sendMessage("author_changed", value=self.author_field.Value)
+
+    def notify_description_changed(self, event):
+        pub.sendMessage("description_changed", value=self.author_field.Value)
+
+    def on_model_identifier_changed(self, value):
+        self.model_identifier_field.ChangeValue(value)
+
+    def on_name_changed(self, value):
+        self.name_field.ChangeValue(value)
+
+    def on_author_changed(self, value):
+        self.author_field.ChangeValue(value)
+
+    def on_description_changed(self, value):
+        self.description_field.ChangeValue(value)
+
+
+class FMI2CapabilitiesPanel(wx.Panel):
+    def __init__(self, parent, id=-1) -> None:
+
+        wx.Panel.__init__(self, parent=parent)
 
         def create_box(label, tooltip):
-            box = wx.CheckBox(panel, label=label)
+            box = wx.CheckBox(self, label=label)
             box.SetToolTip(tooltip)
             return box
 
@@ -241,110 +276,131 @@ class HomeScreenFrame(wx.Frame):
         )
 
         derivatives_sizer = wx.BoxSizer()
-        derivatives_label = wx.StaticText(panel, label="max derivative order")
-        self.derivatives_spin = wx.SpinCtrl(panel)
+        derivatives_label = wx.StaticText(self, label="max derivative order")
+        self.derivatives_spin = wx.SpinCtrl(self)
         self.derivatives_spin.SetToolTip(
             "the highest order of the directional derivatives provided by the FMU"
         )
         derivatives_sizer.Add(self.derivatives_spin)
         derivatives_sizer.Add(derivatives_label)
 
-        # --------------- fields.scalar_variables ------------------------
+        sizer = wx.FlexGridSizer(cols=3)
+        sizer.Add(self.can_handle_variable_communication_step_size_box)
+        sizer.Add(self.can_be_instantiated_only_once_per_process_box)
+        sizer.Add(self.can_interpolate_inputs_box)
+        sizer.Add(self.can_run_asynchronously_box)
+        sizer.Add(self.can_not_use_memory_management_functions_box)
+        sizer.Add(self.can_get_and_set_fmu_state_box)
+        sizer.Add(self.can_serialize_fmu_state_box)
+        sizer.Add(self.provides_directional_derivatives_box)
+        sizer.Add(derivatives_sizer)
+        self.SetSizer(sizer)
 
-        # --------------- validate and save -----------------------
-        self.validate_button = wx.Button(panel, label="Validate")
-        self.save_button = wx.Button(panel, label="Save")
-        # sizers
 
-        basic_sizer = wx.FlexGridSizer(rows=3, cols=2, hgap=5, vgap=5)
-        basic_sizer.AddGrowableCol(1)
+########################################################################
+class TabPanel(wx.Panel):
+    # ----------------------------------------------------------------------
+    def __init__(self, parent):
+        """"""
+        wx.Panel.__init__(self, parent=parent)
 
-        basic_sizer.Add(author_label)
-        basic_sizer.Add(self.author_field, flag=wx.EXPAND)
+        colors = ["red", "blue", "gray", "yellow", "green"]
+        self.SetBackgroundColour(random.choice(colors))
 
-        basic_sizer.Add(model_identifier_label)
-        basic_sizer.Add(self.model_identifier_field, flag=wx.EXPAND)
+        btn = wx.Button(self, label="Press Me")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(btn, 0, wx.ALL, 10)
+        self.SetSizer(sizer)
 
-        basic_sizer.Add(name_label)
-        basic_sizer.Add(self.name_field, flag=wx.EXPAND)
 
-        capabilities_sizer = wx.FlexGridSizer(cols=3)
-        capabilities_sizer.Add(self.can_handle_variable_communication_step_size_box)
-        capabilities_sizer.Add(self.can_be_instantiated_only_once_per_process_box)
-        capabilities_sizer.Add(self.can_interpolate_inputs_box)
-        capabilities_sizer.Add(self.can_run_asynchronously_box)
-        capabilities_sizer.Add(self.can_not_use_memory_management_functions_box)
-        capabilities_sizer.Add(self.can_get_and_set_fmu_state_box)
-        capabilities_sizer.Add(self.can_serialize_fmu_state_box)
-        capabilities_sizer.Add(self.provides_directional_derivatives_box)
-        capabilities_sizer.Add(derivatives_sizer)
+class HomeScreenFrame(wx.Frame):
+    """
+    A Frame that says Hello World
+    """
 
-        main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(wx.StaticText(panel, label="Basic"), flag=wx.CENTER)
-        main_sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND)
-        main_sizer.Add(basic_sizer, flag=wx.EXPAND)
+    def __init__(
+        self,
+        parent,
+        id=-1,
+        title="FMU Builder",
+        pos=wx.DefaultPosition,
+        size=(800, 600),
+        style=wx.DEFAULT_FRAME_STYLE,
+    ):
 
-        main_sizer.Add(wx.StaticText(panel, label="Capabilities"), flag=wx.CENTER)
-        main_sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND)
-        main_sizer.Add(capabilities_sizer, 1, flag=wx.EXPAND)
+        wx.Frame.__init__(self, parent, id, title, pos, size, style)
+        self.mgr = aui.AuiManager()
+        self.mgr.SetManagedWindow(self)
 
-        buttons_sizer = BoxSizer()
-        buttons_sizer.AddMany(
-            [
-                (self.validate_button, 0, wx.ALL, border * 5),
-                (self.save_button, 0, wx.ALL, border * 5),
-            ]
+        self.model_description_preview = wx.TextCtrl(
+            self,
+            -1,
+            "COMING SOON!",
+            wx.DefaultPosition,
+            wx.Size(200, 150),
+            wx.NO_BORDER | wx.TE_MULTILINE,
         )
-        main_sizer.Add(buttons_sizer, 0, wx.ALL | wx.CENTER, border)
+
+        self.model = ModelDescription()
+
+        # create a panel in the frame
+
+        edit_panel = wx.Panel(self)
+        treebook = wx.Treebook(edit_panel)
+        treebook.AddPage(FMI2BasicPanel(treebook), "Info")
+        treebook.AddPage(FMI2CapabilitiesPanel(treebook), "Capabilities")
+
+        treebook.AddPage(None, "Variables")
+        treebook.AddSubPage(TabPanel(treebook), "Inputs")
+        treebook.AddSubPage(TabPanel(treebook), "Outputs")
+        treebook.AddSubPage(TabPanel(treebook), "Parameters")
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(treebook, 1, wx.ALL | wx.EXPAND, 5)
+        edit_panel.SetSizerAndFit(sizer)
+        edit_panel.Hide()
+
+        #
+
+        def author_changed(value):
+            self.model.author = value
+
+        pub.subscribe(author_changed, "author_changed")
 
         # create a menu bar
         self.makeMenuBar()
 
         # and a status bar
         self.CreateStatusBar()
-        self.SetStatusText("Waiting for user")
+        self.SetStatusText("Waiting for user to open an FMU")
 
-        panel.SetSizer(main_sizer)
-        main_sizer.Fit(self)
-        # panel.Hide()
-        self.panel = panel
+        # dockable panels
+        self.mgr.AddPane(
+            self.model_description_preview,
+            aui.AuiPaneInfo().Right().Caption("model description preview"),
+        )
+        self.mgr.AddPane(
+            edit_panel, aui.AuiPaneInfo().CenterPane(),
+        )
+        self.mgr.Update()
+        edit_panel.Disable()
+        self.model_description_preview.Disable()
+        self.edit_panel = edit_panel
+
+        self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def set_model(self, model_description: ModelDescription):
 
-        self.author_field.Value = model_description.author
-        self.name_field.Value = model_description.model_name
-        self.model_identifier_field.Value = (
-            model_description.co_simulation.model_identifier
+        pub.sendMessage("model_selected")
+        pub.sendMessage("author_changed", value=model_description.author)
+        pub.sendMessage("name_changed", value=model_description.model_name)
+        pub.sendMessage(
+            "model_identifier_changed",
+            value=model_description.co_simulation.model_identifier,
         )
-        self.can_handle_variable_communication_step_size_box.Value = (
-            model_description.co_simulation.can_handle_variable_communication_step_size
-        )
-        self.can_handle_variable_communication_step_size_box.Value = (
-            model_description.co_simulation.can_handle_variable_communication_step_size
-        )
-        self.can_be_instantiated_only_once_per_process_box.Value = (
-            model_description.co_simulation.can_be_instantiated_only_once_per_process
-        )
-        self.can_interpolate_inputs_box.Value = (
-            model_description.co_simulation.can_interpolate_inputs
-        )
-        self.can_run_asynchronously_box.Value = (
-            model_description.co_simulation.can_run_asynchronously
-        )
-        self.can_not_use_memory_management_functions_box.Value = (
-            model_description.co_simulation.can_not_use_memory_management_functions
-        )
-        self.can_get_and_set_fmu_state_box.Value = (
-            model_description.co_simulation.can_get_and_set_fmu_state
-        )
-        self.can_serialize_fmu_state_box.Value = (
-            model_description.co_simulation.can_serialize_fmu_state
-        )
-        self.provides_directional_derivatives_box = (
-            model_description.co_simulation.provides_directional_derivatives
-        )
+        # TODO
 
-        self.panel.Show()
+        self.edit_panel.Enable()
 
     def makeMenuBar(self):
         """
@@ -405,14 +461,16 @@ class HomeScreenFrame(wx.Frame):
         """Close the frame, terminating the application."""
         self.Close(True)
 
+    def on_close(self, event):
+        # deinitialize the frame manager
+        self.mgr.UnInit()
+        event.Skip()
+
     def on_create(self, event):
         """Say hello to the user."""
 
         frame = CreateFMUFrame(None)
         frame.Show()
-
-        # dummy data
-        global md
 
     def on_edit_fmu_archive(self, event):
         with wx.FileDialog(
@@ -454,14 +512,22 @@ def show_gui():
     The gui is build on wxpython, a cross-platform gui library that uses native widgets.
 
     Note that this the function that serves as a entrypoint when invoking "unifmu gui", see tool/unifmu/cli.py and setup.py.
+
+    https://wxpython.org/Phoenix/docs/html/stock_items.html
     """
 
-    app = wx.App()
-    frame = HomeScreenFrame(title="FMU Builder")
+    app = wx.App(0)
 
-    # https://wxpython.org/Phoenix/docs/html/stock_items.html
+    frame = HomeScreenFrame(None)
+
     icon = wx.ArtProvider.GetIcon(wx.ART_REPORT_VIEW)
     frame.SetIcon(icon)
+
+    app.SetTopWindow(frame)
     frame.Show()
 
     app.MainLoop()
+
+
+if __name__ == "__main__":
+    show_gui()

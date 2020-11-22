@@ -33,7 +33,7 @@ _extras_require = {
         "sphinxcontrib-programoutput",
     ],
     "tests": [],
-    "gui": ["wxpython"]
+    "gui": ["wxpython", "PyPubSub"],
 }
 _extras_require["dev"] = _extras_require["docs"] + _extras_require["tests"]
 

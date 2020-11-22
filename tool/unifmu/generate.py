@@ -507,7 +507,5 @@ def import_fmu(archive_or_dir) -> ModelDescription:
         with open(model_description_path, "r", encoding="utf-8") as f:
             model_description_str = f.read()
 
-    print(model_description_str)
-
     return parse_model_description(model_description_str)
 
