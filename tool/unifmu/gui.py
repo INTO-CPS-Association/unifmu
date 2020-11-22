@@ -212,22 +212,28 @@ class FMI2BasicPanel(wx.Panel):
         self.author_field.Bind(wx.EVT_TEXT, self.notify_author_changed)
         self.description_field.Bind(wx.EVT_TEXT, self.notify_description_changed)
 
-        pub.subscribe(self.on_model_identifier_changed, "md.model_identifier")
-        pub.subscribe(self.on_name_changed, "md.name")
-        pub.subscribe(self.on_author_changed, "md.author")
-        pub.subscribe(self.on_description_changed, "md.description")
+        pub.subscribe(
+            self.on_model_identifier_changed, "model.modified.model_identifier"
+        )
+        pub.subscribe(self.on_name_changed, "model.modified.model_name")
+        pub.subscribe(self.on_author_changed, "model.modified.author")
+        pub.subscribe(self.on_description_changed, "model.modified.description")
 
     def notify_model_identifier_changed(self, event):
-        pub.sendMessage("md.model_identifier", value=self.model_identifier_field.Value)
+        pub.sendMessage(
+            "model.modified.model_identifier", value=self.model_identifier_field.Value,
+        )
 
     def notify_name_changed(self, event):
-        pub.sendMessage("md.name", value=self.name_field.Value)
+        pub.sendMessage("model.modified.model_name", value=self.name_field.Value)
 
     def notify_author_changed(self, event):
-        pub.sendMessage("md.author", value=self.author_field.Value)
+        pub.sendMessage("model.modified.author", value=self.author_field.Value)
 
     def notify_description_changed(self, event):
-        pub.sendMessage("md.description", value=self.description_field.Value)
+        pub.sendMessage(
+            "model.modified.description", value=self.description_field.Value
+        )
 
     def on_model_identifier_changed(self, value):
         self.model_identifier_field.ChangeValue(value)
@@ -350,7 +356,11 @@ class TabPanel(wx.Panel):
 
 class HomeScreenFrame(wx.Frame):
     """
-    A Frame that says Hello World
+    Main frame of the application that allows the user to modify and create FMUs.
+
+    The class acts as the controller in a MVC pattern. 
+    Specifically it provides an interface which the view can use to set attributes of the model (concretely an in memory representation of the model description).
+    In addition to providing access, the controller determines the visibility and "enabledness" of its children frames.
     """
 
     def __init__(
@@ -388,7 +398,13 @@ class HomeScreenFrame(wx.Frame):
         edit_panel.Hide()
 
         # signals
-        pub.subscribe(self.on_name_change, "md.name")
+        for func, subj in [
+            (self.on_author_changed, "model.modified.author"),
+            (self.on_model_identifier_changed, "model.modified.model_identifier"),
+            (self.on_model_name_changed, "model.modified.model_name"),
+            (self.on_description_changed, "model.modified.description"),
+        ]:
+            pub.subscribe(func, subj)
 
         # pub.sendMessage("md.author", value="johnny")
 
@@ -416,11 +432,16 @@ class HomeScreenFrame(wx.Frame):
 
     def set_model(self, model: ModelDescription):
         self.model = model
-        pub.sendMessage("model_set", model=model)
-        pub.sendMessage("md.author", value=model.author)
-        pub.sendMessage("md.name", value=model.model_name)
+        pub.sendMessage("model.set", model=model)
+        pub.sendMessage("model.modified.author", value=model.author)
+        pub.sendMessage("model.modified.model_name", value=model.model_name)
         pub.sendMessage(
-            "md.model_identifier", value=model.co_simulation.model_identifier,
+            "model.modified.model_identifier",
+            value=model.co_simulation.model_identifier,
+        )
+        pub.sendMessage(
+            "model.modified.model_identifier",
+            value=model.co_simulation.model_identifier,
         )
 
         self.model_description_preview.Enable()
@@ -532,7 +553,19 @@ class HomeScreenFrame(wx.Frame):
             wx.OK | wx.ICON_INFORMATION,
         )
 
-    def on_name_change(self, value: Any):
+    def on_author_changed(self, value: str):
+        self.model.author = value
+        self.update_preview()
+
+    def on_model_identifier_changed(self, value: str):
+        self.model.co_simulation.model_identifier = value
+        self.update_preview()
+
+    def on_description_changed(self, value: str):
+        self.model.description = value
+        self.update_preview()
+
+    def on_model_name_changed(self, value: str):
         self.model.model_name = value
         self.update_preview()
 
@@ -553,23 +586,17 @@ def show_gui():
 
     # declare topics to ease debugging, this avoids runtime inference of topic types
     # https://pypubsub.readthedocs.io/en/v4.0.3/usage/usage_advanced_maintain.html
-    def on_set_model_description(model: ModelDescription):
+    def on_model_set(model: ModelDescription):
         """ signal that the model has been set, e.g. a new FMU has been loaded"""
         pass
 
-    def on_update_preview():
-        """ signal that xml preview should be updated
+    def on_model_modified(value: int):
+        """ signal that an attribute of the model has been modified
         """
         pass
 
-    def on_md_modified(value: Any):
-        """ signal that an attribute of an element has been changed, for example the name of the FMU or the causality of a variable.
-        """
-        pass
-
-    pub.subscribe(on_set_model_description, "model_set")
-    # pub.subscribe(on_update_preview, "update_preview")
-    pub.subscribe(on_md_modified, "md")
+    pub.subscribe(on_model_set, "model.set")
+    pub.subscribe(on_model_modified, "model.modified")
 
     app = wx.App(0)
 

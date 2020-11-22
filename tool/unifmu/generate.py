@@ -365,20 +365,45 @@ def export_model_description(md: ModelDescription) -> bytes:
     fmd.set("generationDateAndTime", md.generation_date_and_time)
     fmd.set("variableNamingConvention", md.variable_naming_convention)
     fmd.set("generationTool", md.generation_tool)
+    fmd.set("description", md.description)
 
-    #
+    # CoSimulation
     cs = ET.SubElement(fmd, "CoSimulation")
     cs.set("modelIdentifier", md.co_simulation.model_identifier)
     cs.set(
-        "needsExecutionTool", str(md.co_simulation.needs_execution_tool),
-    )
-    cs.set(
-        "canNotUseMemoryManagementFunctions",
-        str(md.co_simulation.can_not_use_memory_management_functions),
+        "needsExecutionTool", str(md.co_simulation.needs_execution_tool).lower(),
     )
     cs.set(
         "canHandleVariableCommunicationStepSize",
-        str(md.co_simulation.can_handle_variable_communication_step_size),
+        str(md.co_simulation.can_handle_variable_communication_step_size).lower(),
+    )
+    cs.set(
+        "canInterpolateInputs", str(md.co_simulation.can_interpolate_inputs).lower(),
+    )
+
+    cs.set(
+        "maxOutputDerivativeOrder", str(md.co_simulation.max_output_derivative_order),
+    )
+    cs.set(
+        "canRunAsynchronuously", str(md.co_simulation.can_run_asynchronously).lower(),
+    )
+    cs.set(
+        "canBeInstantiatedOnlyOncePerProcess",
+        str(md.co_simulation.can_be_instantiated_only_once_per_process).lower(),
+    )
+    cs.set(
+        "canNotUseMemoryManagementFunctions",
+        str(md.co_simulation.can_not_use_memory_management_functions).lower(),
+    )
+    cs.set(
+        "canGetAndSetFMUstate", str(md.co_simulation.can_get_and_set_fmu_state).lower(),
+    )
+    cs.set(
+        "canSerializeFMUstate", str(md.co_simulation.can_serialize_fmu_state).lower(),
+    )
+    cs.set(
+        "providesDirectionalDerivative",
+        str(md.co_simulation.provides_directional_derivatives).lower(),
     )
 
     # 2.2.4 p.42) Log categories:
