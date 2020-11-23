@@ -1,17 +1,23 @@
 from pathlib import Path
-import random
-from typing import Any
-import pubsub
+from typing import List
+from pubsub.pub import validate
 
 import wx
 import wx.adv
-from wx.core import BoxSizer
+from wx.core import BoxSizer, FlexGridSizer, GridSizer
 import wx.lib.agw.aui as aui
 import wx.gizmos
 from pubsub import pub
 
 
-from unifmu.fmi2 import ModelDescription, CoSimulation
+from unifmu.fmi2 import (
+    ModelDescription,
+    CoSimulation,
+    ScalarVariable,
+    get_causality_to_variability_choices,
+    get_intitial_choices_and_default,
+    get_should_define_start,
+)
 from unifmu.generate import (
     generate_fmu_from_backend,
     get_backends,
@@ -206,11 +212,30 @@ class FMI2BasicPanel(wx.Panel):
         self.SetSizer(sizer)
 
         self.model_identifier_field.Bind(
-            wx.EVT_TEXT, self.notify_model_identifier_changed
+            wx.EVT_TEXT,
+            lambda _: pub.sendMessage(
+                "model.modified.model_identifier",
+                value=self.model_identifier_field.Value,
+            ),
         )
-        self.name_field.Bind(wx.EVT_TEXT, self.notify_name_changed)
-        self.author_field.Bind(wx.EVT_TEXT, self.notify_author_changed)
-        self.description_field.Bind(wx.EVT_TEXT, self.notify_description_changed)
+        self.name_field.Bind(
+            wx.EVT_TEXT,
+            lambda _: pub.sendMessage(
+                "model.modified.model_name", value=self.name_field.Value
+            ),
+        )
+        self.author_field.Bind(
+            wx.EVT_TEXT,
+            lambda _: pub.sendMessage(
+                "model.modified.author", value=self.author_field.Value
+            ),
+        )
+        self.description_field.Bind(
+            wx.EVT_TEXT,
+            lambda _: pub.sendMessage(
+                "model.modified.model_name", value=self.description_field.Value
+            ),
+        )
 
         pub.subscribe(
             self.on_model_identifier_changed, "model.modified.model_identifier"
@@ -218,22 +243,6 @@ class FMI2BasicPanel(wx.Panel):
         pub.subscribe(self.on_name_changed, "model.modified.model_name")
         pub.subscribe(self.on_author_changed, "model.modified.author")
         pub.subscribe(self.on_description_changed, "model.modified.description")
-
-    def notify_model_identifier_changed(self, event):
-        pub.sendMessage(
-            "model.modified.model_identifier", value=self.model_identifier_field.Value,
-        )
-
-    def notify_name_changed(self, event):
-        pub.sendMessage("model.modified.model_name", value=self.name_field.Value)
-
-    def notify_author_changed(self, event):
-        pub.sendMessage("model.modified.author", value=self.author_field.Value)
-
-    def notify_description_changed(self, event):
-        pub.sendMessage(
-            "model.modified.description", value=self.description_field.Value
-        )
 
     def on_model_identifier_changed(self, value):
         self.model_identifier_field.ChangeValue(value)
@@ -306,6 +315,63 @@ class FMI2CapabilitiesPanel(wx.Panel):
         sizer.Add(derivatives_sizer)
         self.SetSizer(sizer)
 
+        self.can_handle_variable_communication_step_size_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.can_handle_variable_step_size",
+                value=self.can_handle_variable_communication_step_size_box.Value,
+            ),
+        )
+        self.can_be_instantiated_only_once_per_process_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.can_be_instantiated_only_once_per_process",
+                value=self.can_be_instantiated_only_once_per_process_box.Value,
+            ),
+        )
+        self.can_interpolate_inputs_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.can_interpolate_inputs",
+                value=self.can_interpolate_inputs_box.Value,
+            ),
+        )
+        self.can_run_asynchronously_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.can_run_asynchronously",
+                value=self.can_run_asynchronously_box.Value,
+            ),
+        )
+        self.can_not_use_memory_management_functions_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.can_run_asynchronously",
+                value=self.can_not_use_memory_management_functions_box.Value,
+            ),
+        )
+        self.can_get_and_set_fmu_state_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.can_get_and_set_fmu_state",
+                value=self.can_get_and_set_fmu_state_box.Value,
+            ),
+        )
+        self.can_serialize_fmu_state_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.can_serialize_fmu_state",
+                value=self.can_serialize_fmu_state_box.Value,
+            ),
+        )
+        self.provides_directional_derivatives_box.Bind(
+            wx.EVT_CHECKBOX,
+            lambda _: pub.sendMessage(
+                "model.modified.provides_directional_derivatives",
+                value=self.provides_directional_derivatives_box.Value,
+            ),
+        )
+
 
 class ModelDescriptionPreviewPanel(wx.Panel):
     """ Panel that shows a live-preview of the model description
@@ -338,19 +404,212 @@ class ModelDescriptionPreviewPanel(wx.Panel):
         self.preview_text.SetValue(xml)
 
 
+class FMI2VariableEditorPanel(wx.Panel):
+    """ Panel that allows editing of all types of scalar variables, e.g. inputs, outputs, parameters, etc.
+
+        Based on the variables causality the panel restricts the combinations to include only those that are
+        valid for the particular choice of causality.
+    """
+
+    def __init__(self, parent, variable: ScalarVariable) -> None:
+
+        wx.Panel.__init__(self, parent=parent)
+
+        sizer = BoxSizer()
+        self.SetSizerAndFit(sizer)
+
+        self.variable = variable
+
+        sizer = FlexGridSizer(2)
+
+        # data type
+        self.type_combo = wx.ComboBox(
+            self,
+            choices=["Real", "Integer", "Boolean", "String"],
+            value=self.variable.data_type,
+        )
+        sizer.Add(wx.StaticText(self, label="Data-Type:"))
+        sizer.Add(self.type_combo)
+
+        # variability
+        self.variability_combo = wx.ComboBox(
+            self,
+            choices=get_causality_to_variability_choices(self.variable.causality),
+            value=self.variable.variability,
+        )
+        sizer.Add(wx.StaticText(self, label="Variability:"))
+        sizer.Add(self.variability_combo)
+
+        # initial
+
+        self.initial_label = wx.StaticText(self, label="Initial:")
+        self.initial_combo = wx.ComboBox(self)
+        sizer.Add(self.initial_label)
+        sizer.Add(self.initial_combo)
+
+        # start
+        self.start_label = wx.StaticText(self, label="Start:")
+        self.start_field = wx.TextCtrl(self)
+        sizer.Add(self.start_label)
+        sizer.Add(self.start_field)
+
+        # min
+        self.min_field = wx.TextCtrl(self)
+        self.min_label = wx.StaticText(self, label="Min:")
+        sizer.Add(self.min_label)
+        sizer.Add(self.min_field)
+
+        # max
+        self.max_field = wx.TextCtrl(self)
+        self.max_label = wx.StaticText(self, label="Max:")
+        sizer.Add(self.max_label)
+        sizer.Add(self.max_field)
+
+        # nominal:
+        self.nominal_label = wx.StaticText(self, label="Nominal:")
+        self.nominal_field = wx.TextCtrl(self)
+        sizer.Add(self.nominal_label)
+        sizer.Add(self.nominal_field)
+
+        # description
+        description_field = wx.TextCtrl(self, value=self.variable.description)
+        sizer.Add(wx.StaticText(self, label="Description:"))
+        sizer.Add(description_field)
+
+        self.SetSizer(sizer)
+
+        # events
+
+        self.type_combo.Bind(
+            wx.EVT_COMBOBOX,
+            lambda _: self.on_variable_modified("data_type", self.type_combo.Value),
+        )
+        self.variability_combo.Bind(
+            wx.EVT_COMBOBOX,
+            lambda _: self.on_variable_modified(
+                "variability", self.variability_combo.Value
+            ),
+        )
+        self.initial_combo.Bind(
+            wx.EVT_COMBOBOX,
+            lambda _: self.on_variable_modified("initial", self.initial_combo.Value),
+        )
+
+        self.start_field.Bind(
+            wx.EVT_TEXT,
+            lambda _: self.on_variable_modified("start", self.start_field.Value),
+        )
+
+        self._update_choices()
+
+    def _update_choices(self):
+        """Update the possible choices of the controls and hide fields that should not be accessed"""
+
+        def update_choices(combo, choices):
+            combo.Clear()
+            for c in choices:
+                combo.Append(c)
+
+        # initial
+        _, initial_choices = get_intitial_choices_and_default(
+            self.variable.causality, variability=self.variable.variability
+        )
+        update_choices(self.initial_combo, initial_choices)
+
+        if initial_choices != []:
+            self.initial_combo.ChangeValue(self.variable.initial)
+            self.initial_label.Show()
+            self.initial_combo.Show()
+        else:
+            self.initial_label.Hide()
+            self.initial_combo.Hide()
+
+        # start
+        if get_should_define_start(self.variable.initial):
+            self.start_field.ChangeValue(self.variable.start)
+            self.start_label.Show()
+            self.start_field.Show()
+
+        else:
+            self.start_label.Hide()
+            self.start_field.Hide()
+
+        # nominal, min, max
+        if self.variable.data_type != "Real":
+
+            self.nominal_label.Hide()
+            self.nominal_field.Hide()
+            self.min_label.Hide()
+            self.min_field.Hide()
+            self.max_label.Hide()
+            self.max_field.Hide()
+        else:
+            self.nominal_label.Show()
+            self.nominal_field.Show()
+            self.min_label.Show()
+            self.min_field.Show()
+            self.max_label.Show()
+            self.max_field.Show()
+
+        self.Fit()
+
+    def on_variable_modified(self, key: str, value):
+        print(f"key: {key} value: {value}")
+        setattr(self.variable, key, value)
+        self._update_choices()
+
+
+class FMI2VariableBook(wx.Panel):
+    def __init__(self, parent, causality: str) -> None:
+
+        wx.Panel.__init__(self, parent=parent)
+        self.causality = causality
+        self.book = wx.Listbook(self, style=wx.LC_EDIT_LABELS, name=causality)
+
+        # you should never see the page before select
+
+        sizer = BoxSizer()
+        sizer.Add(self.book, 1, wx.ALL | wx.EXPAND, 5)
+        self.SetSizerAndFit(sizer)
+
+        pub.subscribe(self.on_scalar_variable_modifed, "scalar_variable.modified")
+        self.inputs: List[ScalarVariable] = []
+
+        self.book.Bind(
+            wx.EVT_LIST_BEGIN_DRAG, lambda evt: print(f"delete event: {evt}")
+        )
+
+    def on_scalar_variable_modifed(self, variable: ScalarVariable):
+        if variable.causality != self.causality:
+            return
+
+        match = next(
+            (
+                idx
+                for idx, input in enumerate(self.inputs)
+                if variable.name == input.name
+            ),
+            None,
+        )
+
+        if match is None:
+            self.inputs.append(variable)
+        else:
+            self.inputs[match] = variable
+
+        self.book.AddPage(FMI2VariableEditorPanel(self.book, variable), variable.name)
+
+
 ########################################################################
-class TabPanel(wx.Panel):
-    # ----------------------------------------------------------------------
-    def __init__(self, parent):
+class EmptyPanel(wx.Panel):
+    """Placeholder panel with text"""
+
+    def __init__(self, parent, text: str):
         """"""
         wx.Panel.__init__(self, parent=parent)
 
-        colors = ["red", "blue", "gray", "yellow", "green"]
-        self.SetBackgroundColour(random.choice(colors))
-
-        btn = wx.Button(self, label="Press Me")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(btn, 0, wx.ALL, 10)
+        sizer.Add(wx.StaticText(self, label=text))
         self.SetSizer(sizer)
 
 
@@ -387,17 +646,16 @@ class HomeScreenFrame(wx.Frame):
         treebook.AddPage(FMI2BasicPanel(treebook), "Info")
         treebook.AddPage(FMI2CapabilitiesPanel(treebook), "Capabilities")
 
-        treebook.AddPage(None, "Variables")
-        treebook.AddSubPage(TabPanel(treebook), "Inputs")
-        treebook.AddSubPage(TabPanel(treebook), "Outputs")
-        treebook.AddSubPage(TabPanel(treebook), "Parameters")
+        treebook.AddPage(FMI2VariableBook(treebook, "input"), "Inputs")
+        treebook.AddPage(FMI2VariableBook(treebook, "output"), "Outputs")
+        treebook.AddPage(FMI2VariableBook(treebook, "parameter"), "Parameters")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(treebook, 1, wx.ALL | wx.EXPAND, 5)
         edit_panel.SetSizerAndFit(sizer)
         edit_panel.Hide()
 
-        # signals
+        # bind events generated by views to the model
         for func, subj in [
             (self.on_author_changed, "model.modified.author"),
             (self.on_model_identifier_changed, "model.modified.model_identifier"),
@@ -405,8 +663,6 @@ class HomeScreenFrame(wx.Frame):
             (self.on_description_changed, "model.modified.description"),
         ]:
             pub.subscribe(func, subj)
-
-        # pub.sendMessage("md.author", value="johnny")
 
         # create a menu bar
         self.makeMenuBar()
@@ -443,6 +699,9 @@ class HomeScreenFrame(wx.Frame):
             "model.modified.model_identifier",
             value=model.co_simulation.model_identifier,
         )
+
+        for sv in model.model_variables:
+            pub.sendMessage("scalar_variable.modified", variable=sv)
 
         self.model_description_preview.Enable()
         self.edit_panel.Enable()
@@ -571,6 +830,9 @@ class HomeScreenFrame(wx.Frame):
 
     def update_preview(self):
         """Updatet the xml preview to relect the current state of the model"""
+        assert (
+            self.model is not None
+        ), "preview should only be updated after the model is set"
         self.model_description_preview.set_preview(self.model)
 
 
@@ -595,8 +857,19 @@ def show_gui():
         """
         pass
 
+    def on_scalar_variable_modified_or_added(variable: ScalarVariable):
+        """ Scalar variable created or modified.
+        """
+        pass
+
+    def on_scalar_variable_removed(variable: ScalarVariable):
+        """ Scalar variable removed """
+        pass
+
     pub.subscribe(on_model_set, "model.set")
     pub.subscribe(on_model_modified, "model.modified")
+    pub.subscribe(on_scalar_variable_modified_or_added, "scalar_variable.modified")
+    pub.subscribe(on_scalar_variable_removed, "scalar_variable.removed")
 
     app = wx.App(0)
 

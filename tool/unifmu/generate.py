@@ -14,7 +14,12 @@ import pkg_resources
 import lxml.etree as ET
 import toml
 
-from unifmu.fmi2 import ModelDescription, CoSimulation, ScalarVariable
+from unifmu.fmi2 import (
+    ModelDescription,
+    CoSimulation,
+    ScalarVariable,
+    get_intitial_choices_and_default,
+)
 
 
 def list_resource_files(resource_name: str) -> List[str]:
@@ -161,30 +166,6 @@ def validate_model_description(model_description: ModelDescription):
     err_d = "A fixed or tunable “output” has exactly the same properties as a fixed or tunable calculatedParameter. For simplicity, only fixed and tunable calculatedParameters shall be defined."
 
 
-def _get_default_initial_for(variability: str, causality: str):
-    # case (A)
-    if (variability == "constant" and causality in {"output", "local"}) or (
-        variability in {"fixed", "tunable"} and causality == "parameter"
-    ):
-        initial = "exact"
-    # case (B)
-    elif variability in {"fixed", "tunable"} and causality in {
-        "calculatedParameter",
-        "local",
-    }:
-        initial = "calculated"
-    # case (C)
-    elif variability in {"discrete", "continuous"} and causality in {"output", "local"}:
-        initial = "calculated"
-    # case (D)
-    elif variability in {"discrete", "continuous"} and causality == "input":
-        initial = None
-    elif variability == "continuous" and causality == "independent":
-        intial = None
-    else:
-        raise ValueError("invalid combination of variability and causality")
-
-
 def parse_model_description(model_description: str) -> ModelDescription:
     """Parse the contents of the xml tree and return an in memory representation.
     """
@@ -223,7 +204,7 @@ def parse_model_description(model_description: str) -> ModelDescription:
         # defaults of initial depend on causality and variablilty
         # the combinations lead to 5 different cases denoted A-E on p.50
         if initial is None:
-            initial = _get_default_initial_for(variability, causality)
+            initial, _ = get_intitial_choices_and_default(causality, variability)
 
         var = list(scalar_variable)[0]
         start = var.get("start", default=None)
@@ -235,7 +216,7 @@ def parse_model_description(model_description: str) -> ModelDescription:
                 value_reference=scalar_variable.get("valueReference"),
                 variability=variability,
                 causality=causality,
-                description=scalar_variable.get("description", default=None),
+                description=scalar_variable.get("description", default=""),
                 initial=initial,
                 start=start,
                 data_type=data_type,

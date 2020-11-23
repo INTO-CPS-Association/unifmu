@@ -1,10 +1,11 @@
 """
-Contains definitions of concepts related to FMI 2.0.x
+Contains definitions of data structures mapping the XML schema defined FMI 2.0.x to python class.
 
+Additionally, the module defines functions for determining the allowed combinations of attributes.
 """
 
 
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 
 
@@ -16,7 +17,7 @@ class ScalarVariable:
         name: str,
         value_reference: str,
         data_type: str,
-        description: str = None,
+        description: str,
         causality: str = "local",
         variability: str = "continuous",
         initial: str = None,
@@ -134,3 +135,83 @@ class ModelDescription:
         self.vendor_annotations = vendor_annotations
         self.number_of_event_indicators = number_of_event_indicators
 
+
+def get_causality_to_variability_choices(causality: str) -> List[str]:
+    """Returns the possible choices of variability for the specified causality, see p.50."""
+
+    if causality not in {
+        "parameter",
+        "calculatedParameter",
+        "input",
+        "output",
+        "local",
+        "independent",
+    }:
+        raise ValueError(f"Unrecognized value of causality: '{causality}'")
+
+    return {
+        "parameter": ["fixed", "tunable"],
+        "calculatedParameter": ["fixed", "tunable"],
+        "input": ["discrete", "continuous"],
+        "output": ["constant", "discrete", "continuous"],
+        "local": ["constant", "fixed", "tunable", "discrete", "continuous"],
+        "independent": ["continuous"],
+    }[causality]
+
+
+def get_intitial_choices_and_default(
+    causality: str, variability: str
+) -> Tuple[Optional[str], List[str]]:
+    """
+    Returns the possible default and possible choices of initial for the specified combination of causality and variability, see p.50.
+    
+    In cases where initial MUST NOT be defined (None, []) is returned. 
+    If an illegal combination of causality and variability is defined an execption is raised.
+    """
+
+    # case (A)
+    if (variability == "constant" and causality in {"output", "local"}) or (
+        variability in {"fixed", "tunable"} and causality == "parameter"
+    ):
+        return "exact", ["exact"]
+    # case (B)
+    elif variability in {"fixed", "tunable"} and causality in {
+        "calculatedParameter",
+        "local",
+    }:
+        return "calculated", ["approx", "calculated"]
+    # case (C)
+    elif variability in {"discrete", "continuous"} and causality in {"output", "local"}:
+        return "calculated", ["exact", "approx", "calculated"]
+    # case (D)
+    elif variability in {"discrete", "continuous"} and causality == "input":
+        return None, []
+    elif variability == "continuous" and causality == "independent":
+        return None, []
+    else:
+        raise ValueError(
+            f"invalid combination of causality: '{causality}' and variability: '{variability}'"
+        )
+
+
+def get_should_define_start(initial: str) -> bool:
+    return initial in {"exact", "approx"}
+
+
+def get_default_attribute_values() -> Dict[str, str]:
+    """Returns the default values for various attributes defined by the model description"""
+    return {
+        # ModelDescription
+        "variableNamingConvention": "flat",
+        # CoSimulation
+        "needsExecutionTool": "false",
+        "canHandleVariableCommunicationStepSize": "false",
+        "canInterpolateInputs": "false",
+        "maxOutputDerivativeOrder": "0",
+        "canRunAsynchronuously": "false",
+        "canBeInstantiatedOnlyOncePerProcess": "false",
+        "canNotUseMemoryManagementFunctions": "false",
+        "canGetAndSetFMUstate": "false",
+        "canSerializeFMUstate": "false",
+        "providesDirectionalDerivative": "false",
+    }
