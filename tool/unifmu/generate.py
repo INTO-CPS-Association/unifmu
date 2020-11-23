@@ -10,8 +10,9 @@ from zipfile import ZipFile
 # import xml.etree.ElementTree as ET
 import pkg_resources
 
-# import xml.etree.ElementTree as ET
-import lxml.etree as ET
+import xml.etree.ElementTree as ET
+
+# import lxml.etree as ET
 import toml
 
 from unifmu.fmi2 import (
@@ -186,7 +187,7 @@ def parse_model_description(model_description: str) -> ModelDescription:
     generation_tool = root.get("generationTool", default="")
     generation_date_and_time = root.get("generationDateAndTime", default="")
     variable_naming_convention = root.get("variableNamingConvention", default="flat")
-    number_of_event_indicators = root.get("numberOfEventIndicators", default=0)
+    numberOfEventIndicators = root.get("numberOfEventIndicators", default=0)
 
     model_variables = []
 
@@ -195,31 +196,31 @@ def parse_model_description(model_description: str) -> ModelDescription:
         <Real start="0.0" />
     </ScalarVariable>
     """
-    for scalar_variable in root.iter("ScalarVariable"):
+    for scalarVariable in root.iter("ScalarVariable"):
 
-        causality = scalar_variable.get("causality", default="local")
-        variability = scalar_variable.get("variability", default="continuous")
+        causality = scalarVariable.get("causality", default="local")
+        variability = scalarVariable.get("variability", default="continuous")
 
-        initial = scalar_variable.get("initial", default=None)
+        initial = scalarVariable.get("initial", default=None)
         # defaults of initial depend on causality and variablilty
         # the combinations lead to 5 different cases denoted A-E on p.50
         if initial is None:
             initial, _ = get_intitial_choices_and_default(causality, variability)
 
-        var = list(scalar_variable)[0]
+        var = list(scalarVariable)[0]
         start = var.get("start", default=None)
-        data_type = var.tag
+        dataType = var.tag
 
         model_variables.append(
             ScalarVariable(
-                name=scalar_variable.get("name"),
-                value_reference=scalar_variable.get("valueReference"),
+                name=scalarVariable.get("name"),
+                valueReference=scalarVariable.get("valueReference"),
                 variability=variability,
                 causality=causality,
-                description=scalar_variable.get("description", default=""),
+                description=scalarVariable.get("description", default=""),
                 initial=initial,
                 start=start,
-                data_type=data_type,
+                dataType=dataType,
             )
         )
 
@@ -230,40 +231,40 @@ def parse_model_description(model_description: str) -> ModelDescription:
     model_structure = []
 
     # cosimulation
-    co_simulation = root.find("CoSimulation")
+    cosim_element = root.find("CoSimulation")
 
-    model_identifier = co_simulation.get("modelIdentifier")
-    needs_execution_tool = co_simulation.get(
+    modelIdentifier = cosim_element.get("modelIdentifier")
+    needsExecutionTool = cosim_element.get(
         "needsExecutionTool", default=defaults["needsExecutionTool"]
     )
-    can_handle_variable_communication_step_size = co_simulation.get(
+    canHandleVariableCommunicationStepSize = cosim_element.get(
         "canHandleVariableCommunicationStepSize",
         default=defaults["canHandleVariableCommunicationStepSize"],
     )
-    can_interpolate_inputs = co_simulation.get(
+    canInterpolateInputs = cosim_element.get(
         "canInterpolateInputs", default=defaults["canInterpolateInputs"]
     )
-    max_output_derivative_order = co_simulation.get(
+    maxOutputDerivativeOrder = cosim_element.get(
         "maxOutputDerivativeOrder", default=defaults["maxOutputDerivativeOrder"]
     )
-    can_run_asynchronuously = co_simulation.get(
+    canRunAsynchronuously = cosim_element.get(
         "canRunAsynchronuously", default=defaults["canRunAsynchronuously"]
     )
-    can_be_instantiated_only_once_per_process = co_simulation.get(
+    canBeInstantiatedOnlyOncePerProcess = cosim_element.get(
         "canBeInstantiatedOnlyOncePerProcess",
         default=defaults["canBeInstantiatedOnlyOncePerProcess"],
     )
-    can_not_use_memory_management_functions = co_simulation.get(
+    canNotUseMemoryManagementFunctions = cosim_element.get(
         "canNotUseMemoryManagementFunctions",
         default=defaults["canNotUseMemoryManagementFunctions"],
     )
-    can_get_and_set_fmu_state = co_simulation.get(
+    canGetAndSetFMUstate = cosim_element.get(
         "canGetAndSetFMUstate", default=defaults["canGetAndSetFMUstate"]
     )
-    can_serialize_fmu_state = co_simulation.get(
+    canSerializeFMUstate = cosim_element.get(
         "canSerializeFMUstate", default=defaults["canSerializeFMUstate"]
     )
-    provides_directional_derivative = co_simulation.get(
+    providesDirectionalDerivative = cosim_element.get(
         "providesDirectionalDerivative",
         default=defaults["providesDirectionalDerivative"],
     )
@@ -293,43 +294,43 @@ def parse_model_description(model_description: str) -> ModelDescription:
             raise ValueError("xs:unsingedInt cannot exceed the value 4294967295")
         return value
 
-    co_simulation = CoSimulation(
-        model_identifier=model_identifier,
-        needs_execution_tool=xs_boolean(needs_execution_tool),
-        can_handle_variable_communication_step_size=xs_boolean(
-            can_handle_variable_communication_step_size
+    cosimulation = CoSimulation(
+        modelIdentifier=modelIdentifier,
+        needsExecutionTool=xs_boolean(needsExecutionTool),
+        canHandleVariableCommunicationStepSize=xs_boolean(
+            canHandleVariableCommunicationStepSize
         ),
-        can_interpolate_inputs=xs_boolean(can_interpolate_inputs),
-        max_output_derivative_order=xs_unsigned_int(max_output_derivative_order),
-        can_run_asynchronuously=xs_boolean(can_run_asynchronuously),
-        can_be_instantiated_only_once_per_process=xs_boolean(
-            can_be_instantiated_only_once_per_process
+        canInterpolateInputs=xs_boolean(canInterpolateInputs),
+        maxOutputDerivativeOrder=xs_unsigned_int(maxOutputDerivativeOrder),
+        canRunAsynchronuously=xs_boolean(canRunAsynchronuously),
+        canBeInstantiatedOnlyOncePerProcess=xs_boolean(
+            canBeInstantiatedOnlyOncePerProcess
         ),
-        can_not_use_memory_management_functions=xs_boolean(
-            can_not_use_memory_management_functions
+        canNotUseMemoryManagementFunctions=xs_boolean(
+            canNotUseMemoryManagementFunctions
         ),
-        can_get_and_set_fmu_state=xs_boolean(can_get_and_set_fmu_state),
-        can_serialize_fmu_state=xs_boolean(can_serialize_fmu_state),
-        provides_directional_derivative=xs_boolean(provides_directional_derivative),
+        canGetAndSetFMUstate=xs_boolean(canGetAndSetFMUstate),
+        canSerializeFMUstate=xs_boolean(canSerializeFMUstate),
+        providesDirectionalDerivative=xs_boolean(providesDirectionalDerivative),
     )
 
     return ModelDescription(
-        fmi_version=fmi_version,
-        model_name=model_name,
+        fmiVersion=fmi_version,
+        modelName=model_name,
         guid=guid,
         author=author,
         description=description,
         version=version,
         copyright=copyright,
-        log_categories=log_categories,
+        logCategories=log_categories,
         license=license,
-        generation_tool=generation_tool,
-        generation_date_and_time=generation_date_and_time,
-        variable_naming_convention=variable_naming_convention,
-        number_of_event_indicators=number_of_event_indicators,
-        co_simulation=co_simulation,
-        model_variables=model_variables,
-        model_structure=model_structure,
+        generationTool=generation_tool,
+        generationDateAndTime=generation_date_and_time,
+        variableNamingConvention=variable_naming_convention,
+        numberOfEventIndicators=numberOfEventIndicators,
+        CoSimulation=cosimulation,
+        modelVariables=model_variables,
+        modelStructure=model_structure,
     )
 
 
@@ -340,56 +341,56 @@ def export_model_description(md: ModelDescription) -> bytes:
 
     fmd = ET.Element("fmiModelDescription")
     fmd.set("fmiVersion", "2.0")
-    fmd.set("modelName", md.model_name)
+    fmd.set("modelName", md.modelName)
     fmd.set("guid", md.guid)
     fmd.set("author", md.author)
-    fmd.set("generationDateAndTime", md.generation_date_and_time)
-    fmd.set("variableNamingConvention", md.variable_naming_convention)
-    fmd.set("generationTool", md.generation_tool)
+    fmd.set("generationDateAndTime", md.generationDateAndTime)
+    fmd.set("variableNamingConvention", md.variableNamingConvention)
+    fmd.set("generationTool", md.generationTool)
     fmd.set("description", md.description)
 
     # CoSimulation
     cs = ET.SubElement(fmd, "CoSimulation")
-    cs.set("modelIdentifier", md.co_simulation.model_identifier)
+    cs.set("modelIdentifier", md.CoSimulation.modelIdentifier)
     cs.set(
-        "needsExecutionTool", str(md.co_simulation.needs_execution_tool).lower(),
+        "needsExecutionTool", str(md.CoSimulation.needsExecutionTool).lower(),
     )
     cs.set(
         "canHandleVariableCommunicationStepSize",
-        str(md.co_simulation.can_handle_variable_communication_step_size).lower(),
+        str(md.CoSimulation.canHandleVariableCommunicationStepSize).lower(),
     )
     cs.set(
-        "canInterpolateInputs", str(md.co_simulation.can_interpolate_inputs).lower(),
+        "canInterpolateInputs", str(md.CoSimulation.canInterpolateInputs).lower(),
     )
 
     cs.set(
-        "maxOutputDerivativeOrder", str(md.co_simulation.max_output_derivative_order),
+        "maxOutputDerivativeOrder", str(md.CoSimulation.maxOutputDerivativeOrder),
     )
     cs.set(
-        "canRunAsynchronuously", str(md.co_simulation.can_run_asynchronously).lower(),
+        "canRunAsynchronuously", str(md.CoSimulation.canRunAsynchronuously).lower(),
     )
     cs.set(
         "canBeInstantiatedOnlyOncePerProcess",
-        str(md.co_simulation.can_be_instantiated_only_once_per_process).lower(),
+        str(md.CoSimulation.canBeInstantiatedOnlyOncePerProcess).lower(),
     )
     cs.set(
         "canNotUseMemoryManagementFunctions",
-        str(md.co_simulation.can_not_use_memory_management_functions).lower(),
+        str(md.CoSimulation.canNotUseMemoryManagementFunctions).lower(),
     )
     cs.set(
-        "canGetAndSetFMUstate", str(md.co_simulation.can_get_and_set_fmu_state).lower(),
+        "canGetAndSetFMUstate", str(md.CoSimulation.canGetAndSetFMUstate).lower(),
     )
     cs.set(
-        "canSerializeFMUstate", str(md.co_simulation.can_serialize_fmu_state).lower(),
+        "canSerializeFMUstate", str(md.CoSimulation.canSerializeFMUstate).lower(),
     )
     cs.set(
         "providesDirectionalDerivative",
-        str(md.co_simulation.provides_directional_derivatives).lower(),
+        str(md.CoSimulation.providesDirectionalDerivative).lower(),
     )
 
     # 2.2.4 p.42) Log categories:
     cs = ET.SubElement(fmd, "LogCategories")
-    for ac in md.log_categories:
+    for ac in md.logCategories:
         c = ET.SubElement(cs, "Category")
         c.set("name", ac)
 
@@ -398,7 +399,7 @@ def export_model_description(md: ModelDescription) -> bytes:
 
     variable_index = 0
 
-    for var in md.model_variables:
+    for var in md.modelVariables:
         var.variability
         value_reference = str(var.value_reference)
 
@@ -417,7 +418,7 @@ def export_model_description(md: ModelDescription) -> bytes:
             i = var.initial
             sv.set("initial", i)
 
-        val = ET.SubElement(sv, var.data_type)
+        val = ET.SubElement(sv, var.dataType)
 
         # 2.2.7. p.48) start values
         if var.initial in {"exact", "approx"} or var.causality == "input":
@@ -433,7 +434,7 @@ def export_model_description(md: ModelDescription) -> bytes:
     # 2.2.8) For each output we must declare 'Outputs' and 'InitialUnknowns'
     outputs = [
         (idx + 1, o)
-        for idx, o in enumerate(md.model_variables)
+        for idx, o in enumerate(md.modelVariables)
         if o.causality == "output"
     ]
 

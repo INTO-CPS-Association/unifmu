@@ -15,26 +15,24 @@ class ScalarVariable:
     def __init__(
         self,
         name: str,
-        value_reference: str,
-        data_type: str,
+        valueReference: str,
+        dataType: str,
         description: str,
         causality: str = "local",
         variability: str = "continuous",
         initial: str = None,
         start: Optional[Any] = None,
-        can_handle_multiple_set_per_time_instant=None,
+        canHandleMultipleSetPerTimeInstant=None,
     ):
         self.name = name
-        self.value_reference = value_reference
-        self.data_type = data_type
+        self.value_reference = valueReference
+        self.dataType = dataType
         self.variability = variability
         self.causality = causality
         self.initial = initial
         self.description = description
         self.start = start
-        self.can_handle_multiple_set_per_time_instant = (
-            can_handle_multiple_set_per_time_instant
-        )
+        self.canHandleMultipleSetPerTimeInstant = canHandleMultipleSetPerTimeInstant
 
 
 class ModelExchange:
@@ -46,36 +44,32 @@ class CoSimulation:
 
     def __init__(
         self,
-        model_identifier: str,
-        needs_execution_tool: bool = None,
-        can_handle_variable_communication_step_size: bool = None,
-        can_interpolate_inputs: bool = None,
-        max_output_derivative_order: int = None,
-        can_run_asynchronuously: bool = None,
-        can_be_instantiated_only_once_per_process: bool = None,
-        can_not_use_memory_management_functions: bool = None,
-        can_get_and_set_fmu_state: bool = None,
-        can_serialize_fmu_state: bool = None,
-        provides_directional_derivative: bool = None,
+        modelIdentifier: str,
+        needsExecutionTool: bool = None,
+        canHandleVariableCommunicationStepSize: bool = None,
+        canInterpolateInputs: bool = None,
+        maxOutputDerivativeOrder: int = None,
+        canRunAsynchronuously: bool = None,
+        canBeInstantiatedOnlyOncePerProcess: bool = None,
+        canNotUseMemoryManagementFunctions: bool = None,
+        canGetAndSetFMUstate: bool = None,
+        canSerializeFMUstate: bool = None,
+        providesDirectionalDerivative: bool = None,
     ):
 
-        self.model_identifier = model_identifier
-        self.needs_execution_tool = needs_execution_tool
-        self.can_handle_variable_communication_step_size = (
-            can_handle_variable_communication_step_size
+        self.modelIdentifier = modelIdentifier
+        self.needsExecutionTool = needsExecutionTool
+        self.canHandleVariableCommunicationStepSize = (
+            canHandleVariableCommunicationStepSize
         )
-        self.can_interpolate_inputs = can_interpolate_inputs
-        self.max_output_derivative_order = max_output_derivative_order
-        self.can_run_asynchronously = can_run_asynchronuously
-        self.can_be_instantiated_only_once_per_process = (
-            can_be_instantiated_only_once_per_process
-        )
-        self.can_not_use_memory_management_functions = (
-            can_not_use_memory_management_functions
-        )
-        self.can_get_and_set_fmu_state = can_get_and_set_fmu_state
-        self.can_serialize_fmu_state = can_serialize_fmu_state
-        self.provides_directional_derivatives = provides_directional_derivative
+        self.canInterpolateInputs = canInterpolateInputs
+        self.maxOutputDerivativeOrder = maxOutputDerivativeOrder
+        self.canRunAsynchronuously = canRunAsynchronuously
+        self.canBeInstantiatedOnlyOncePerProcess = canBeInstantiatedOnlyOncePerProcess
+        self.canNotUseMemoryManagementFunctions = canNotUseMemoryManagementFunctions
+        self.canGetAndSetFMUstate = canGetAndSetFMUstate
+        self.canSerializeFMUstate = canSerializeFMUstate
+        self.providesDirectionalDerivative = providesDirectionalDerivative
 
 
 class Unit:
@@ -91,49 +85,49 @@ class ModelDescription:
 
     def __init__(
         self,
-        fmi_version: str = None,
-        model_name: str = None,
-        guid: str = None,
-        model_variables: List[ScalarVariable] = None,
-        model_structure=None,
+        fmiVersion: str,
+        modelName: str,
+        guid: str,
+        modelVariables: List[ScalarVariable] = [],
+        modelStructure=[],
         description: str = None,
         author: str = None,
         version: str = None,
         copyright: str = None,
         license: str = None,
-        generation_tool: str = None,
-        generation_date_and_time: str = None,
-        variable_naming_convention: str = None,
-        co_simulation: CoSimulation = None,
-        model_exchange: ModelExchange = None,
-        unit_definitions=None,
-        type_defintions=None,
-        log_categories: List[str] = None,
-        default_experiment=None,
-        vendor_annotations=None,
-        number_of_event_indicators=None,
+        generationTool: str = None,
+        generationDateAndTime: str = None,
+        variableNamingConvention: str = None,
+        CoSimulation: CoSimulation = None,
+        ModelExchange: ModelExchange = None,
+        unitDefinitions=None,
+        typeDefintions=None,
+        logCategories: List[str] = None,
+        defaultExperiment=None,
+        vendorAnnotations=None,
+        numberOfEventIndicators=None,
     ):
-        self.fmi_version = fmi_version
-        self.model_name = model_name
+        self.fmiVersion = fmiVersion
+        self.modelName = modelName
         self.guid = guid
         self.description = description
         self.author = author
         self.version = version
         self.copyright = copyright
         self.license = license
-        self.generation_tool = generation_tool
-        self.generation_date_and_time = generation_date_and_time
-        self.variable_naming_convention = variable_naming_convention
-        self.model_variables = model_variables
-        self.model_structure = model_structure
-        self.co_simulation = co_simulation
-        self.model_exchange = model_exchange
-        self.unit_definitions = unit_definitions
-        self.type_defintions = type_defintions
-        self.log_categories = log_categories
-        self.default_experiment = default_experiment
-        self.vendor_annotations = vendor_annotations
-        self.number_of_event_indicators = number_of_event_indicators
+        self.generationTool = generationTool
+        self.generationDateAndTime = generationDateAndTime
+        self.variableNamingConvention = variableNamingConvention
+        self.modelVariables = modelVariables
+        self.modelStructure = modelStructure
+        self.CoSimulation = CoSimulation
+        self.ModelExchange = ModelExchange
+        self.unitDefinitions = unitDefinitions
+        self.typeDefintions = typeDefintions
+        self.logCategories = logCategories
+        self.defaultExperiment = defaultExperiment
+        self.vendorAnnotations = vendorAnnotations
+        self.numberOfEventIndicators = numberOfEventIndicators
 
 
 def get_causality_to_variability_choices(causality: str) -> List[str]:

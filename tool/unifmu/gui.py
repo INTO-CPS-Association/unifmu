@@ -1,4 +1,6 @@
+from os import mkdir, name
 from pathlib import Path
+from sys import settrace
 from typing import List
 from pubsub.pub import validate
 
@@ -214,47 +216,47 @@ class FMI2BasicPanel(wx.Panel):
         self.model_identifier_field.Bind(
             wx.EVT_TEXT,
             lambda _: pub.sendMessage(
-                "model.modified.model_identifier",
+                "model.attr_modified",
+                key="modelIdentifier",
                 value=self.model_identifier_field.Value,
             ),
         )
         self.name_field.Bind(
             wx.EVT_TEXT,
             lambda _: pub.sendMessage(
-                "model.modified.model_name", value=self.name_field.Value
+                "model.attr_modified", key="modelName", value=self.name_field.Value
             ),
         )
         self.author_field.Bind(
             wx.EVT_TEXT,
             lambda _: pub.sendMessage(
-                "model.modified.author", value=self.author_field.Value
+                "model.attr_modified", key="author", value=self.author_field.Value
             ),
         )
         self.description_field.Bind(
             wx.EVT_TEXT,
             lambda _: pub.sendMessage(
-                "model.modified.model_name", value=self.description_field.Value
+                "model.attr_modified",
+                key="description",
+                value=self.description_field.Value,
             ),
         )
 
-        pub.subscribe(
-            self.on_model_identifier_changed, "model.modified.model_identifier"
-        )
-        pub.subscribe(self.on_name_changed, "model.modified.model_name")
-        pub.subscribe(self.on_author_changed, "model.modified.author")
-        pub.subscribe(self.on_description_changed, "model.modified.description")
+        pub.subscribe(self.on_model_attr_modified, "model.attr_modified")
 
-    def on_model_identifier_changed(self, value):
-        self.model_identifier_field.ChangeValue(value)
+    def on_model_attr_modified(self, key, value, sender=None):
+        if sender is self:
+            return
 
-    def on_name_changed(self, value):
-        self.name_field.ChangeValue(value)
+        key_to_field = {
+            "modelName": self.name_field,
+            "modelIdentifier": self.model_identifier_field,
+            "description": self.description_field,
+            "author": self.author_field,
+        }
 
-    def on_author_changed(self, value):
-        self.author_field.ChangeValue(value)
-
-    def on_description_changed(self, value):
-        self.description_field.ChangeValue(value)
+        if key in key_to_field:
+            key_to_field[key].ChangeValue(value)
 
 
 class FMI2CapabilitiesPanel(wx.Panel):
@@ -318,56 +320,56 @@ class FMI2CapabilitiesPanel(wx.Panel):
         self.can_handle_variable_communication_step_size_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.can_handle_variable_step_size",
+                "model.attr_modified.can_handle_variable_step_size",
                 value=self.can_handle_variable_communication_step_size_box.Value,
             ),
         )
         self.can_be_instantiated_only_once_per_process_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.can_be_instantiated_only_once_per_process",
+                "model.attr_modified.can_be_instantiated_only_once_per_process",
                 value=self.can_be_instantiated_only_once_per_process_box.Value,
             ),
         )
         self.can_interpolate_inputs_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.can_interpolate_inputs",
+                "model.attr_modified.can_interpolate_inputs",
                 value=self.can_interpolate_inputs_box.Value,
             ),
         )
         self.can_run_asynchronously_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.can_run_asynchronously",
+                "model.attr_modified.can_run_asynchronously",
                 value=self.can_run_asynchronously_box.Value,
             ),
         )
         self.can_not_use_memory_management_functions_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.can_run_asynchronously",
+                "model.attr_modified.can_run_asynchronously",
                 value=self.can_not_use_memory_management_functions_box.Value,
             ),
         )
         self.can_get_and_set_fmu_state_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.can_get_and_set_fmu_state",
+                "model.attr_modified.can_get_and_set_fmu_state",
                 value=self.can_get_and_set_fmu_state_box.Value,
             ),
         )
         self.can_serialize_fmu_state_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.can_serialize_fmu_state",
+                "model.attr_modified.can_serialize_fmu_state",
                 value=self.can_serialize_fmu_state_box.Value,
             ),
         )
         self.provides_directional_derivatives_box.Bind(
             wx.EVT_CHECKBOX,
             lambda _: pub.sendMessage(
-                "model.modified.provides_directional_derivatives",
+                "model.attr_modified.provides_directional_derivatives",
                 value=self.provides_directional_derivatives_box.Value,
             ),
         )
@@ -426,7 +428,7 @@ class FMI2VariableEditorPanel(wx.Panel):
         self.type_combo = wx.ComboBox(
             self,
             choices=["Real", "Integer", "Boolean", "String"],
-            value=self.variable.data_type,
+            value=self.variable.dataType,
         )
         sizer.Add(wx.StaticText(self, label="Data-Type:"))
         sizer.Add(self.type_combo)
@@ -535,7 +537,7 @@ class FMI2VariableEditorPanel(wx.Panel):
             self.start_field.Hide()
 
         # nominal, min, max
-        if self.variable.data_type != "Real":
+        if self.variable.dataType != "Real":
 
             self.nominal_label.Hide()
             self.nominal_field.Hide()
@@ -554,9 +556,10 @@ class FMI2VariableEditorPanel(wx.Panel):
         self.Fit()
 
     def on_variable_modified(self, key: str, value):
-        print(f"key: {key} value: {value}")
         setattr(self.variable, key, value)
-        self._update_choices()
+        pub.sendMessage("scalar_variable.modified", variable=self.variable)
+
+        # self._update_choices()
 
 
 class FMI2VariableBook(wx.Panel):
@@ -572,45 +575,32 @@ class FMI2VariableBook(wx.Panel):
         sizer.Add(self.book, 1, wx.ALL | wx.EXPAND, 5)
         self.SetSizerAndFit(sizer)
 
-        pub.subscribe(self.on_scalar_variable_modifed, "scalar_variable.modified")
-        self.inputs: List[ScalarVariable] = []
+        pub.subscribe(self.on_scalar_variable_added, "scalar_variable.added")
+        pub.subscribe(self.on_scalar_variable_removed, "scalar_variable.removed")
+        self.name_to_page = {}
 
         self.book.Bind(
             wx.EVT_LIST_BEGIN_DRAG, lambda evt: print(f"delete event: {evt}")
         )
 
-    def on_scalar_variable_modifed(self, variable: ScalarVariable):
+    def on_scalar_variable_removed(self, variable: ScalarVariable, sender=None):
+
+        if variable.name in self.name_to_page:
+            self.book.RemovePage(self.name_to_page[variable.name])
+
+    def on_scalar_variable_modified(self, variable: ScalarVariable, sender=None):
         if variable.causality != self.causality:
             return
 
-        match = next(
-            (
-                idx
-                for idx, input in enumerate(self.inputs)
-                if variable.name == input.name
-            ),
-            None,
-        )
-
-        if match is None:
-            self.inputs.append(variable)
-        else:
-            self.inputs[match] = variable
-
+        self.name_to_page[variable.name] = variable
         self.book.AddPage(FMI2VariableEditorPanel(self.book, variable), variable.name)
 
+    def on_scalar_variable_added(self, variable: ScalarVariable, sender=None):
+        if variable.causality != self.causality:
+            return
 
-########################################################################
-class EmptyPanel(wx.Panel):
-    """Placeholder panel with text"""
-
-    def __init__(self, parent, text: str):
-        """"""
-        wx.Panel.__init__(self, parent=parent)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(wx.StaticText(self, label=text))
-        self.SetSizer(sizer)
+        self.name_to_page[variable.name] = variable
+        self.book.AddPage(FMI2VariableEditorPanel(self.book, variable), variable.name)
 
 
 class HomeScreenFrame(wx.Frame):
@@ -656,13 +646,10 @@ class HomeScreenFrame(wx.Frame):
         edit_panel.Hide()
 
         # bind events generated by views to the model
-        for func, subj in [
-            (self.on_author_changed, "model.modified.author"),
-            (self.on_model_identifier_changed, "model.modified.model_identifier"),
-            (self.on_model_name_changed, "model.modified.model_name"),
-            (self.on_description_changed, "model.modified.description"),
-        ]:
-            pub.subscribe(func, subj)
+        pub.subscribe(self.on_model_attr_modified, "model.attr_modified")
+        pub.subscribe(self.on_scalar_variable_added, "scalar_variable.added")
+        pub.subscribe(self.on_scalar_variable_modified, "scalar_variable.modified")
+        pub.subscribe(self.on_scalar_variable_removed, "scalar_variable.removed")
 
         # create a menu bar
         self.makeMenuBar()
@@ -686,22 +673,47 @@ class HomeScreenFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
+    def on_scalar_variable_added(self, variable: ScalarVariable, sender=None):
+        if sender is self:
+            return
+        raise NotImplementedError()
+
+    def on_scalar_variable_modified(self, variable: ScalarVariable, sender=None):
+        if sender is self:
+            return
+        pass
+
+    def on_scalar_variable_removed(self, variable: ScalarVariable, sender=None):
+        if sender is self:
+            return
+        raise NotImplementedError()
+
     def set_model(self, model: ModelDescription):
         self.model = model
-        pub.sendMessage("model.set", model=model)
-        pub.sendMessage("model.modified.author", value=model.author)
-        pub.sendMessage("model.modified.model_name", value=model.model_name)
+        pub.sendMessage("model.set", model=model, sender=self)
         pub.sendMessage(
-            "model.modified.model_identifier",
-            value=model.co_simulation.model_identifier,
+            "model.attr_modified", key="author", value=model.author, sender=self
         )
         pub.sendMessage(
-            "model.modified.model_identifier",
-            value=model.co_simulation.model_identifier,
+            "model.attr_modified", key="modelName", value=model.modelName, sender=self
+        )
+        pub.sendMessage(
+            "model.attr_modified",
+            key="modelIdentifier",
+            value=model.CoSimulation.modelIdentifier,
+            sender=self,
+        )
+        pub.sendMessage(
+            "model.attr_modified",
+            key="description",
+            value=model.description,
+            sender=self,
         )
 
-        for sv in model.model_variables:
-            pub.sendMessage("scalar_variable.modified", variable=sv)
+        for sv in model.modelVariables:
+            pub.sendMessage("scalar_variable.added", variable=sv, sender=self)
+
+        pub.subscribe(self.on_model_attr_modified, "model.attr_modified")
 
         self.model_description_preview.Enable()
         self.edit_panel.Enable()
@@ -812,21 +824,21 @@ class HomeScreenFrame(wx.Frame):
             wx.OK | wx.ICON_INFORMATION,
         )
 
-    def on_author_changed(self, value: str):
-        self.model.author = value
-        self.update_preview()
+    def on_model_attr_modified(self, key: str, value, sender=None):
 
-    def on_model_identifier_changed(self, value: str):
-        self.model.co_simulation.model_identifier = value
-        self.update_preview()
+        if sender is self:
+            return
 
-    def on_description_changed(self, value: str):
-        self.model.description = value
-        self.update_preview()
+        assert self.model is not None
 
-    def on_model_name_changed(self, value: str):
-        self.model.model_name = value
-        self.update_preview()
+        if key in self.model.__dict__:
+            setattr(self.model, key, value)
+        elif key in self.model.CoSimulation.__dict__:
+            setattr(self.model.CoSimulation, key, value)
+        else:
+            raise KeyError(f"Unrecognized model attribute: '{key}'")
+
+        self.model_description_preview.set_preview(self.model)
 
     def update_preview(self):
         """Updatet the xml preview to relect the current state of the model"""
@@ -848,28 +860,36 @@ def show_gui():
 
     # declare topics to ease debugging, this avoids runtime inference of topic types
     # https://pypubsub.readthedocs.io/en/v4.0.3/usage/usage_advanced_maintain.html
-    def on_model_set(model: ModelDescription):
+    def on_model_set(model: ModelDescription, sender=None):
         """ signal that the model has been set, e.g. a new FMU has been loaded"""
         pass
 
-    def on_model_modified(value: int):
+    def on_model_attr_modified(key: str, value, sender=None):
         """ signal that an attribute of the model has been modified
         """
         pass
 
-    def on_scalar_variable_modified_or_added(variable: ScalarVariable):
-        """ Scalar variable created or modified.
+    def on_scalar_variable_modified(variable: ScalarVariable, sender=None):
+        """ Scalar variable modified.
         """
         pass
 
-    def on_scalar_variable_removed(variable: ScalarVariable):
+    def on_scalar_variable_added(variable: ScalarVariable, sender=None):
+        pass
+
+    def on_scalar_variable_removed(variable: ScalarVariable, sender=None):
         """ Scalar variable removed """
         pass
 
+    def on_scalar_variable_renamed(old_name: str, new_name: str, sender=None):
+        pass
+
     pub.subscribe(on_model_set, "model.set")
-    pub.subscribe(on_model_modified, "model.modified")
-    pub.subscribe(on_scalar_variable_modified_or_added, "scalar_variable.modified")
+    pub.subscribe(on_model_attr_modified, "model.attr_modified")
+    pub.subscribe(on_scalar_variable_modified, "scalar_variable.modified")
+    pub.subscribe(on_scalar_variable_added, "scalar_variable.added")
     pub.subscribe(on_scalar_variable_removed, "scalar_variable.removed")
+    pub.subscribe(on_scalar_variable_renamed, "scalar_variable.renamed")
 
     app = wx.App(0)
 
@@ -888,6 +908,7 @@ def show_gui():
 
     pub.subscribe(snoop, pub.ALL_TOPICS)
     printTreeDocs()
+    print("")
 
     app.MainLoop()
 
