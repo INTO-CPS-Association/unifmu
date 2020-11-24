@@ -177,9 +177,10 @@ Following this the script awaits and executes commands sent to the slave:
 ## How do i install it?
 
 The easiest way to install the tool is using pip.
+Clone the repository and invoke the following command the root:
 
 ```bash
-pip install unifmu
+pip install .
 ```
 
 After installing verify the installation by inspecting the output from the following command:
