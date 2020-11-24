@@ -13,23 +13,15 @@ A consequence of FMI being a C-based standard is that a FMU must, generally, be 
 UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language.
 UniFMU also provides a GUI and CLI tool for generating new FMUs from a selection of languages, see backends.
 
-<centering>
-<img src="docs/_static/gui_windows_create_fmu.png">
-</centering>
-
 A challenge of creating an FMU is defining it's interface and which features of the FMI specification it supports.
 Traditionally, this is done by manually editing a xml-file referred to as the model description; a process that is laden with pitfalls.
 
 The GUI allows the FMU author to modify the underlying xml document is a more user-friendly manner and ensures that the xml file is consistent.
 
-<centering>
-<img src="docs/_static/gui_windows.png">
-</centering>
-
 ## How do i use the tool?
 
 After the tool has been installed it can be accessed by typing `unifmu` in a shell.
-Using the `--help` flag prints the usage options.
+To display the synopsis use the `--help` flag.
 
 ```bash
 > unifmu --help
@@ -45,6 +37,59 @@ positional arguments:
 optional arguments:
   -h, --help      show this help message and exit
 ```
+
+The command uses _git-style_ subcommands such as `generate` and `gui`.
+Help for the individual commands can be inquired by appending the `--help` after the name of the subcommand.
+
+#### Creating an FMU
+
+The generate command can be used to create a new FMU:
+
+```bash
+unifmu generate python FMUS/python_fmu
+```
+
+The file structure of the generated FMU will look like the following:
+
+```
+python_fmu
+├── binaries
+│   ├── linux64
+│   │   └── unifmu.so
+│   └── win64
+│       └── unifmu.dll
+├── modelDescription.xml
+└── resources
+    ├── adder.py
+    ├── fmi2.py
+    ├── launch.py
+    └── launch.toml
+```
+
+Alternativly, the same functionality can be accessed by launching the GUI
+
+```bash
+unifmu gui
+```
+
+<centering>
+<img src="docs/_static/gui_windows_file_menu.png">
+</centering>
+
+And then using the `File->Create FMU` command:
+
+<centering>
+<img src="docs/_static/gui_windows_create_fmu.png">
+</centering>
+
+### Modifying an existing FMU
+
+The GUI makes it possible to edit an existing FMU.
+Depending on whether the FMU is compressed or a directory use the `File->Open FMU archive` or `File->Open FMU directory` command.
+
+<centering>
+<img src="docs/_static/gui_windows_open_fmu.png">
+</centering>
 
 ## How does it work?
 
