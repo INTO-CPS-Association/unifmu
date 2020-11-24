@@ -2,15 +2,28 @@
 
 # Universal Functional Mock-Up Unit (UniFMU)
 
-A challenge of integrating FMI based co-simulation into a development process is that available modelling tools may not cover a modelling need.
-In these cases it may be necessary to implement af FMU from scratch.
-Unfortunately, this is a challenging task that requires a deep understanding of FMI inner workings.
+To succesfully integrate FMI based co-simulation into a development process a model should be easy to create and modify.
+In some cases a modelling tool may be available that provide the exact modelling capabilities needed.
+However, there may be cases where existing tools are not suitable, or their cost prohibitive, in case of commercial tools.
 
-UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language. 
+In these cases it may be necessary to implement af FMU from scratch.
+Correctly, implementing a FMU from scratch requires a deep technical knowledge og the FMI specification and the technologies it is built upon.
+A consequence of FMI being a C-based standard is that a FMU must, generally, be implemented in C or a compiled language that offers binary-compatible with C such as C++, Rust, or Fortran.
+
+UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language.
 UniFMU also provides a GUI and CLI tool for generating new FMUs from a selection of languages, see backends.
 
 <centering>
-<img src="docs/_static/gui_ubuntu.png">
+<img src="docs/_static/gui_windows_create_fmu.png">
+</centering>
+
+A challenge of creating an FMU is defining it's interface and which features of the FMI specification it supports.
+Traditionally, this is done by manually editing a xml-file referred to as the model description; a process that is laden with pitfalls.
+
+The GUI allows the FMU author to modify the underlying xml document is a more user-friendly manner and ensures that the xml file is consistent.
+
+<centering>
+<img src="docs/_static/gui_windows.png">
 </centering>
 
 ## How does it work?
@@ -152,11 +165,10 @@ python build.py --test-c
 ## Backends
 
 An backend is a piece of code that is responsible for communicating with the wrapper to execute commands on the proxy-fmu.
-It does so by implementing a application-layer protocol called *unifmu-protocol* which is built on top of [ZeroMQ](https://zeromq.org/).
+It does so by implementing a application-layer protocol called _unifmu-protocol_ which is built on top of [ZeroMQ](https://zeromq.org/).
 
-Note that several backends for popular languages are provided by the tool out of the box. 
-These can be be exported using the GUI or located manually inside the resources folder in the `tool/unifmu/resources`. 
-
+Note that several backends for popular languages are provided by the tool out of the box.
+These can be be exported using the GUI or located manually inside the resources folder in the `tool/unifmu/resources`.
 
 ### Protocol
 
@@ -165,8 +177,9 @@ This is done by implementing a request-response protocol where the wrapper sends
 
 The process is described by the psudo code below, which shows the wrapper and the backend code:
 
-__Wrapper__
-``` python
+**Wrapper**
+
+```python
 def fmi2Instantiate(...):
     # create sockets, execute launch command, and establish connection
 
@@ -174,8 +187,10 @@ def fmi2DoStep(current_time, step_size, ...):
     data = serialize(DO_STEP_ID, current_time, step_size, ...)
     status = send_and_get_response(data)
 ```
-__Backend__
-``` python
+
+**Backend**
+
+```python
 # setup zeroMQ sockets and perform handshake with wrapper
 while(true)
 
@@ -198,35 +213,32 @@ These functions are marked with a red lock icon in the figure below.
 
 Each of the blue tags corresponds to a command that must be implemented by the backend.
 
-
-
-| Function                     | Id  | Parameters                                                 | Return                          |
-| ---------------------------- | --- | ---------------------------------------------------------- | ------------------------------- |
-| set_debug_logging            | 0   | categories: list[str], logging_on: bool                    | status : int                    |
-| setup_experiment             | 1   | start_time: float, tolerance: float?, stop_time: float?    | status: int                     |
-| enter_initialization_mode    | 2   | None                                                       | status: int                     |
-| exit_initialization_mode     | 3   | None                                                       | status: int                     |
-| terminate                    | 4   | None                                                       | status: int                     |
-| reset                        | 5   | None                                                       | status:int                      |
-| set_xxx                      | 6   | references: list[int], values: list[float\|int\|bool\|str] | status:int                      |
-| get_xxx                      | 7   | references: list[int]                                      | values: [float\|int\|bool\|str] |
-| do_step                      | 8   | current : float, step_size : float, no_prior: bool         | status:int                      |
-| serialize*                   | 9   | None                                                       | state: bytes, status : int      |
-| deserialize*                 | 10  | data: bytes                                                | status: int                     |
-| get_directional_derivative** | 11  | TODO                                                       | TODO                            |
-| set_input_derivatives        | 12  | TODO                                                       | TODO                            |
-| get_output_derivatives       | 13  | TODO                                                       | TODO                            |
-| do_step                      | 14  | TODO                                                       | TODO                            |
-| cancel_step                  | 15  | TODO                                                       | TODO                            |
-| get_xxx_status               | 16  | TODO                                                       | TODO                            |
+| Function                       | Id  | Parameters                                                 | Return                          |
+| ------------------------------ | --- | ---------------------------------------------------------- | ------------------------------- |
+| set_debug_logging              | 0   | categories: list[str], logging_on: bool                    | status : int                    |
+| setup_experiment               | 1   | start_time: float, tolerance: float?, stop_time: float?    | status: int                     |
+| enter_initialization_mode      | 2   | None                                                       | status: int                     |
+| exit_initialization_mode       | 3   | None                                                       | status: int                     |
+| terminate                      | 4   | None                                                       | status: int                     |
+| reset                          | 5   | None                                                       | status:int                      |
+| set_xxx                        | 6   | references: list[int], values: list[float\|int\|bool\|str] | status:int                      |
+| get_xxx                        | 7   | references: list[int]                                      | values: [float\|int\|bool\|str] |
+| do_step                        | 8   | current : float, step_size : float, no_prior: bool         | status:int                      |
+| serialize\*                    | 9   | None                                                       | state: bytes, status : int      |
+| deserialize\*                  | 10  | data: bytes                                                | status: int                     |
+| get_directional_derivative\*\* | 11  | TODO                                                       | TODO                            |
+| set_input_derivatives          | 12  | TODO                                                       | TODO                            |
+| get_output_derivatives         | 13  | TODO                                                       | TODO                            |
+| do_step                        | 14  | TODO                                                       | TODO                            |
+| cancel_step                    | 15  | TODO                                                       | TODO                            |
+| get_xxx_status                 | 16  | TODO                                                       | TODO                            |
 
 There are some exceptions, functions marked with asterisks in the table below are only required if the FMU using it sets
 specific flags in their model description.
 
-*. required if "canGetAndSetFMUstate"
+\*. required if "canGetAndSetFMUstate"
 
-**. required if "providesDirectionalDerivatives" 
-
+\*\*. required if "providesDirectionalDerivatives"
 
 ## Frequently Asked Questions
 
@@ -270,23 +282,25 @@ To summarize Python is required to use the tool that generates and packages the 
 ### How can i make my FMU portable?
 
 Suppose that your FMU is written in python and that your launch.toml looks like:
-``` toml
+
+```toml
 # other targets
 linux = [ "python3", "launch.py" ]
 ```
+
 Using this command the wrapper try to use the system's python3 executable to launch the FMU by invoking executing the launch.py script.
 Nautrally, the success of this relies on python3 being in the systems path.
 
 To make the FMU portable you could place a complete python interpreter inside resources folder of the FMU.
 Then you can invoke the local interpreter rather than the system interpreter, by modifying the `launch.toml` file:
 
-``` toml
+```toml
 # other targets
 linux = [ "./interpreter_linux/python3", "launch.py" ]
 ```
-This approach is applicable to any OS and runtime dependency. 
-For Python getting an complete interpreter is a bit trickier, but tools for creating bundeling interpreters and libraries exist such as [PyInstaller](https://pyinstaller.readthedocs.io/en/v4.1/index.html).
 
+This approach is applicable to any OS and runtime dependency.
+For Python getting an complete interpreter is a bit trickier, but tools for creating bundeling interpreters and libraries exist such as [PyInstaller](https://pyinstaller.readthedocs.io/en/v4.1/index.html).
 
 ### Does an FMU need to support every feature of FMI?
 

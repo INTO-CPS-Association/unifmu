@@ -269,29 +269,29 @@ class FMI2CapabilitiesPanel(wx.Panel):
             box.SetToolTip(tooltip)
             return box
 
-        self.can_handle_variable_communication_step_size_box = create_box(
+        self.canHandleVariableCommunicationStepSizeBox = create_box(
             "variable step-size", "supports calls to fmi2DoStep step length",
         )
 
-        self.can_be_instantiated_only_once_per_process_box = create_box(
+        self.canBeInstantiatedOnlyOncePerProcessBox = create_box(
             "multiple slave instances",
             "supports the creation of several slaves by calling fmi2Instantiate multiple times",
         )
 
-        self.can_interpolate_inputs_box = create_box("input interpolation", "todo")
+        self.canInterpolateInputsBox = create_box("input interpolation", "todo")
 
-        self.can_run_asynchronously_box = create_box("async support", "todo")
+        self.canRunAsynchronuouslyBox = create_box("async support", "todo")
 
-        self.can_not_use_memory_management_functions_box = create_box(
+        self.canNotUseMemoryManagementFunctionsBox = create_box(
             "can use memory management function",
             "supports the use of tool defined functions for allocating and de-allocating memory",
         )
-        self.can_get_and_set_fmu_state_box = create_box("get/set state", "todo")
-        self.can_serialize_fmu_state_box = create_box(
+        self.canGetAndSetFmuStateBox = create_box("get/set state", "todo")
+        self.canSerializeFmuStateBox = create_box(
             "serialization",
             "supports serialization of the FMUs state, allowing a snapshot of the FMU to be captured and resumed at a later stage",
         )
-        self.provides_directional_derivatives_box = create_box(
+        self.providesDirectionalDerivativeBox = create_box(
             "directional derivatives",
             "provides change of the outputs as a reuslt of a change of inputs corresponding to moving along a line in the statespace",
         )
@@ -306,73 +306,45 @@ class FMI2CapabilitiesPanel(wx.Panel):
         derivatives_sizer.Add(derivatives_label)
 
         sizer = wx.FlexGridSizer(cols=3)
-        sizer.Add(self.can_handle_variable_communication_step_size_box)
-        sizer.Add(self.can_be_instantiated_only_once_per_process_box)
-        sizer.Add(self.can_interpolate_inputs_box)
-        sizer.Add(self.can_run_asynchronously_box)
-        sizer.Add(self.can_not_use_memory_management_functions_box)
-        sizer.Add(self.can_get_and_set_fmu_state_box)
-        sizer.Add(self.can_serialize_fmu_state_box)
-        sizer.Add(self.provides_directional_derivatives_box)
+        sizer.Add(self.canHandleVariableCommunicationStepSizeBox)
+        sizer.Add(self.canBeInstantiatedOnlyOncePerProcessBox)
+        sizer.Add(self.canInterpolateInputsBox)
+        sizer.Add(self.canRunAsynchronuouslyBox)
+        sizer.Add(self.canNotUseMemoryManagementFunctionsBox)
+        sizer.Add(self.canGetAndSetFmuStateBox)
+        sizer.Add(self.canSerializeFmuStateBox)
+        sizer.Add(self.providesDirectionalDerivativeBox)
         sizer.Add(derivatives_sizer)
         self.SetSizer(sizer)
 
-        self.can_handle_variable_communication_step_size_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.can_handle_variable_step_size",
-                value=self.can_handle_variable_communication_step_size_box.Value,
+        def bind_box(box, attr_name: str):
+            box.Bind(
+                wx.EVT_CHECKBOX,
+                lambda _: pub.sendMessage(
+                    "model.attr_modified", key=attr_name, value=box.Value, sender=self
+                ),
+            )
+
+        for box, attr_name in [
+            (
+                self.canHandleVariableCommunicationStepSizeBox,
+                "canHandleVariableCommunicationStepSize",
             ),
-        )
-        self.can_be_instantiated_only_once_per_process_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.can_be_instantiated_only_once_per_process",
-                value=self.can_be_instantiated_only_once_per_process_box.Value,
+            (
+                self.canBeInstantiatedOnlyOncePerProcessBox,
+                "canBeInstantiatedOnlyOncePerProcess",
             ),
-        )
-        self.can_interpolate_inputs_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.can_interpolate_inputs",
-                value=self.can_interpolate_inputs_box.Value,
+            (self.canInterpolateInputsBox, "canInterpolateInputs",),
+            (self.canRunAsynchronuouslyBox, "canRunAsynchronuously",),
+            (
+                self.canNotUseMemoryManagementFunctionsBox,
+                "canNotUseMemoryManagementFunctions",
             ),
-        )
-        self.can_run_asynchronously_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.can_run_asynchronously",
-                value=self.can_run_asynchronously_box.Value,
-            ),
-        )
-        self.can_not_use_memory_management_functions_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.can_run_asynchronously",
-                value=self.can_not_use_memory_management_functions_box.Value,
-            ),
-        )
-        self.can_get_and_set_fmu_state_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.can_get_and_set_fmu_state",
-                value=self.can_get_and_set_fmu_state_box.Value,
-            ),
-        )
-        self.can_serialize_fmu_state_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.can_serialize_fmu_state",
-                value=self.can_serialize_fmu_state_box.Value,
-            ),
-        )
-        self.provides_directional_derivatives_box.Bind(
-            wx.EVT_CHECKBOX,
-            lambda _: pub.sendMessage(
-                "model.attr_modified.provides_directional_derivatives",
-                value=self.provides_directional_derivatives_box.Value,
-            ),
-        )
+            (self.canGetAndSetFmuStateBox, "canGetAndSetFMUstate",),
+            (self.canSerializeFmuStateBox, "canSerializeFMUstate",),
+            (self.providesDirectionalDerivativeBox, "providesDirectionalDerivative",),
+        ]:
+            bind_box(box, attr_name)
 
 
 class ModelDescriptionPreviewPanel(wx.Panel):
@@ -482,27 +454,21 @@ class FMI2VariableEditorPanel(wx.Panel):
 
         # events
 
-        self.type_combo.Bind(
-            wx.EVT_COMBOBOX,
-            lambda _: self.on_variable_modified("data_type", self.type_combo.Value),
-        )
-        self.variability_combo.Bind(
-            wx.EVT_COMBOBOX,
-            lambda _: self.on_variable_modified(
-                "variability", self.variability_combo.Value
-            ),
-        )
-        self.initial_combo.Bind(
-            wx.EVT_COMBOBOX,
-            lambda _: self.on_variable_modified("initial", self.initial_combo.Value),
+        self.Bind(
+            wx.EVT_COMBOBOX, self.on_controls_modified,
         )
 
-        self.start_field.Bind(
-            wx.EVT_TEXT,
-            lambda _: self.on_variable_modified("start", self.start_field.Value),
-        )
-
+        pub.subscribe(self.on_variable_modified, "scalar_variable.modified")
         self._update_choices()
+
+    def on_controls_modified(self, _):
+
+        self.variable.initial = self.initial_combo.Value
+        self.variable.dataType = self.type_combo.Value
+        self.variable.variability = self.variability_combo.Value
+        # self.variable.nominal = self.initial_combo.Value
+
+        pub.sendMessage("scalar_variable.modified", variable=self.variable, sender=self)
 
     def _update_choices(self):
         """Update the possible choices of the controls and hide fields that should not be accessed"""
@@ -555,11 +521,13 @@ class FMI2VariableEditorPanel(wx.Panel):
 
         self.Fit()
 
-    def on_variable_modified(self, key: str, value):
-        setattr(self.variable, key, value)
-        pub.sendMessage("scalar_variable.modified", variable=self.variable)
+    def on_variable_modified(self, variable: ScalarVariable, sender=None):
 
-        # self._update_choices()
+        if sender is self or variable.name != self.variable.name:
+            return
+
+        self.variable = variable
+        self._update_choices()
 
 
 class FMI2VariableBook(wx.Panel):
@@ -584,18 +552,14 @@ class FMI2VariableBook(wx.Panel):
         )
 
     def on_scalar_variable_removed(self, variable: ScalarVariable, sender=None):
-
+        if sender is self:
+            return
         if variable.name in self.name_to_page:
             self.book.RemovePage(self.name_to_page[variable.name])
 
-    def on_scalar_variable_modified(self, variable: ScalarVariable, sender=None):
-        if variable.causality != self.causality:
-            return
-
-        self.name_to_page[variable.name] = variable
-        self.book.AddPage(FMI2VariableEditorPanel(self.book, variable), variable.name)
-
     def on_scalar_variable_added(self, variable: ScalarVariable, sender=None):
+        if sender is self:
+            return
         if variable.causality != self.causality:
             return
 
@@ -681,7 +645,22 @@ class HomeScreenFrame(wx.Frame):
     def on_scalar_variable_modified(self, variable: ScalarVariable, sender=None):
         if sender is self:
             return
-        pass
+
+        idx = next(
+            idx
+            for idx, v in enumerate(self.model.modelVariables)
+            if v.name == variable.name
+        )
+
+        self.model.modelVariables[idx] = variable
+
+        # if need start value
+        if get_should_define_start(variable.initial) and variable.start is None:
+            variable.start = "INFERRED BY controller"
+
+        pub.sendMessage("scalar_variable.modified", variable=variable, sender=self)
+
+        self.model_description_preview.set_preview(self.model)
 
     def on_scalar_variable_removed(self, variable: ScalarVariable, sender=None):
         if sender is self:
@@ -717,6 +696,7 @@ class HomeScreenFrame(wx.Frame):
 
         self.model_description_preview.Enable()
         self.edit_panel.Enable()
+        self.model_description_preview.set_preview(self.model)
 
     def makeMenuBar(self):
         """
@@ -838,13 +818,6 @@ class HomeScreenFrame(wx.Frame):
         else:
             raise KeyError(f"Unrecognized model attribute: '{key}'")
 
-        self.model_description_preview.set_preview(self.model)
-
-    def update_preview(self):
-        """Updatet the xml preview to relect the current state of the model"""
-        assert (
-            self.model is not None
-        ), "preview should only be updated after the model is set"
         self.model_description_preview.set_preview(self.model)
 
 

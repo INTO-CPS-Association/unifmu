@@ -10,9 +10,9 @@ from zipfile import ZipFile
 # import xml.etree.ElementTree as ET
 import pkg_resources
 
-import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as ET
 
-# import lxml.etree as ET
+import lxml.etree as ET
 import toml
 
 from unifmu.fmi2 import (
