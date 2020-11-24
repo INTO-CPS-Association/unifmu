@@ -1,6 +1,7 @@
 import argparse
 
 from unifmu.gui import show_gui
+from unifmu.generate import get_backends, generate_fmu_from_backend
 
 # this is the function invoked when "unifmu" is invoked from the command line
 # this is defined in the setup.py file in the root of the project
@@ -12,9 +13,26 @@ def main():
 
     subparsers = parser.add_subparsers(dest="subprogram", required=True)
 
-    subparsers.add_parser("gui")
+    subparsers.add_parser("gui", help="open graphical user interface")
+
+    generate_parser = subparsers.add_parser(
+        "generate", help="create a new FMU using a specified language-backend"
+    )
+    generate_parser.add_argument(
+        "backend",
+        choices=get_backends(),
+        help="the language adapter copied into the FMU",
+    )
+    generate_parser.add_argument(
+        "outdir",
+        type=str,
+        help="directory into which the FMU's resources are written (new directories will be created if needed)",
+    )
 
     args = parser.parse_args()
+
+    if args.subprogram == "generate":
+        generate_fmu_from_backend(args.backend, args.outdir)
 
     if args.subprogram == "gui":
         show_gui()

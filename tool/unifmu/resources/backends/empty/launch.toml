@@ -1,0 +1,8 @@
+[command]
+windows = [ "my_command.exe","arg1","arg2" ]
+linux = [ "my_command","arg1","arg2" ]
+macos = [ "my_command","arg1","arg2" ]
+
+[timeout]
+launch = 500
+command = 500

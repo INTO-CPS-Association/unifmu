@@ -6,8 +6,12 @@
 # ALL files in the tool/unifmu/resources are available as the "source" side of the command.
 # source paths are relative to this directory, whereas destionation paths are relative to the FMU's root
 
-[backend.blank]
-files = []
+[backend.empty]
+files = [
+    ["common/unifmu_binaries/win64/unifmu.dll","binaries/win64/unifmu.dll"],
+    ["common/unifmu_binaries/linux64/unifmu.so","binaries/linux64/unifmu.so"],
+    ["backends/empty/launch.toml","resources/launch.toml"],
+]
 
 [backend.python]
 

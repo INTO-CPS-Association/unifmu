@@ -26,6 +26,26 @@ The GUI allows the FMU author to modify the underlying xml document is a more us
 <img src="docs/_static/gui_windows.png">
 </centering>
 
+## How do i use the tool?
+
+After the tool has been installed it can be accessed by typing `unifmu` in a shell.
+Using the `--help` flag prints the usage options.
+
+```bash
+> unifmu --help
+usage: unifmu [-h] {gui,generate} ...
+
+Utility tool for creating and editing FMUs for FMI based co-simulation
+
+positional arguments:
+  {gui,generate}
+    gui           open graphical user interface
+    generate      create a new FMU using a specified language-backend
+
+optional arguments:
+  -h, --help      show this help message and exit
+```
+
 ## How does it work?
 
 Recall, a fmu is an zip archive containing a static description of the models interface, `modelDescription.xml`, a set of platform shared object libraries defining the behavior of the model, and finally a set of option resource files that might be used during execution of the model.
