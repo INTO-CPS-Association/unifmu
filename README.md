@@ -306,6 +306,129 @@ specific flags in their model description.
 
 \*\*. required if "providesDirectionalDerivatives"
 
+### The Specific Backends
+
+#### Python
+
+This backend allow an FMU to be implemented in Python 3.
+When a new FMU is generated it includes 3 Python scripts in the `resources` folder.
+
+The role of the respective files are:
+
+1. fmi2.py : Provides FMI specific base class that provides functionality commonly used for a FMU
+
+2. adder.py : Concerte implementation of an FMU in Python
+
+3. launch.py : Instatinates slave and implement communication with wrapper.
+
+**How do i declare and access variables of the FMU?**
+
+Variables defined in the model description are mapped directly to attributes with identical names on the python slave.
+
+For example when the simulation tool sets the `real_a` declared in the `modelDescription.xml` file, this will result in the attribute `real_a` being set on the python slave:
+
+```xml
+<!--Index of variable = "1"-->
+<ScalarVariable name="real_a" valueReference="0" variability="continuous" causality="input">
+    <Real start="0.0" />
+</ScalarVariable>
+```
+
+```python
+class Adder(Fmi2FMU):
+    def __init__(self):
+
+        self.real_a = 0.0
+        # other variables
+```
+
+Likewise, whenever an output, `real_b` is read by the simulation tool, the attribute `real_b` is read from the object.
+
+Concretely, it is launch.py that does a translation from value refence to attribute name by reading the modelDescription.xml file and determining the mapping.
+Subsequently, variables are read and written from the slave by invoking [getattr](https://docs.python.org/3/library/functions.html?highlight=setattr#setattr) and [setattr](https://docs.python.org/3/library/functions.html?highlight=getattr#getattr) methods of the slave object.
+
+An effect of this is that properties work out of the box like they would in native python and that this logic is easy to extend. Properties are a great way to peform validation of inputs:
+
+```python
+# in adder.py
+@property
+def weight(self):
+    return self.value
+
+@weight.setter
+def weight(self,value):
+    if(value < 0):
+        raise Exception("Weight must be greater than 0.0)
+```
+
+In addition to properties, python allows the programmer to overwrite the an objects setattr and getattr methods. For example, suppose that you want a number of inputs [x1,...,x10] to go into a single array inside the slave. In this case you could define a setattr method that recognices this particular set of inputs and writes them to an array in the slave object, rather than 10 individual attributes.
+
+**How do i implement FMI methods?**
+
+To implement a FMI specific method, take a look at the Fmi2FMU in fmi2.py, the parameters and return types are declared there.
+
+```python
+def do_step(
+    self, current_time: float, step_size: float, no_step_prior: bool) -> int:
+    # do some computation, set outputs, etc
+    return Fmi2Status.ok
+```
+
+**How do i change the name of the slave?**
+
+To change the name of the slave being instantiated you can modify the launch.py file to use the name of the class you want to instantiate:
+
+```python
+def get_slave_instance():
+    return Adder()
+```
+
+**How do i test a slave?**
+
+Remember your slave is valid python code, so not why test it in python, where you have good debugging tools.
+
+A small test program can be written and placed in the file defining the slave as seen below:
+
+```python
+# definition of the FMU above ^^^^^
+
+if __name__ == "__main__": # <--- ensures that test-code is not run if module is imported
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # create time stamps
+    n_steps = 100
+    ts, step_size = np.linspace(0, 10, n_steps, retstep=True)
+
+    # create FMU
+    generator = SineGenerator()
+    generator.amplitude = 10
+    generator.std = 1
+    generator.setup_experiment(0)
+
+    # outputs
+    ys = np.zeros(n_steps)
+
+    for idx, t in enumerate(ts):
+        ys[idx] = generator.y
+        generator.do_step(t, step_size, False)
+
+    plt.plot(ts, ys)
+    plt.ylabel("y(t)")
+    plt.xlabel("t")
+    plt.show()
+```
+
+A more complex FMU may warrant multiple test cases, each testing a distinct piece of functionality. For these cases a proper testing framework like [pytest](https://docs.pytest.org/en/stable/) is recommended.
+
+**How can i modify the backend?**
+
+While the three files: launch.py, fmi2.py, and adder.py, implement a object oriented method for implementing a FMU, it entirely possible to modify or even replace these files.
+
+For example you could implement the FMU functions inside the launch.py, rather than in a seperate file, or you could add logging calls to the definition of the Fmi2FMU class defined in the fmi2.py script.
+
+As with any other backend the only requirement is that the running the launch command results in a connection being established between the wrapper and some process (this is what 'python launch.py' does). Inspecting the code of launch.py and comparing it with the unifmu protocol should hopefully clarify the interaction between the wrapper and the particular backend.
+
 ## Frequently Asked Questions
 
 ### How do execute the launch command though a shell?
