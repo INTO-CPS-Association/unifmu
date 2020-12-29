@@ -1,0 +1,83 @@
+namespace unifmu.flatbuffers.fmi2;
+
+
+table Fmi2RealVariables 
+{
+  values:[double];
+}
+
+table Fmi2IntegerVariables 
+{
+  values:[int];
+}
+
+table Fmi2BooleanVariables 
+{
+  values:[bool];
+}
+
+table Fmi2StringVariables 
+{
+  values:[string];
+}
+
+union Fmi2Variablevector { Fmi2RealVariables, Fmi2IntegerVariables, Fmi2BooleanVariables, Fmi2StringVariables }
+
+table SetDebugLoggingArgs
+{
+  categories: [string];
+  loggingOn: bool; 
+}
+
+table SetupExperimentArgs
+{
+  startTime: double;
+  stopTime: double;
+  tolerance: double;
+}
+
+table SetXXXArgs
+{
+  references:[int] (required);
+  values:Fmi2Variablevector (required);
+}
+
+table GetXXXArgs
+{
+  references: [int] (required);
+}
+
+// Id associated with every FMI2 that is implemented by the slave
+// I.e. the commands implemented by the wrapper are not listed here 
+enum Fmi2CommandKind: int {
+  // common 
+  SetDebugLogging=0,
+  SetupExperimentArgs=1,
+  FreeInstance=2,
+  EnterInitialization=3,
+  ExitInitialization=4,
+  Terminate=5,
+  Reset=6,
+  SetXXX=7,
+  GetXXX=8,
+  Serialize=9,
+  Deserialize=10,
+  GetDirectionDerivatives=11,
+  // cosim
+  SetInputDerivatives=12,
+  GetOutputDerivitives=13,
+  DoStep=14,
+  CancelStep=15,
+  GetXXXStatus=16,
+}
+
+union Fmi2CommandArg {SetDebugLoggingArgs, SetupExperimentArgs, SetXXXArgs, GetXXXArgs}
+
+// An FMI2 command is identified by its id 
+table FMI2Command
+{
+  kind : Fmi2CommandKind;
+  args : Fmi2CommandArg;
+}
+
+root_type FMI2Command;

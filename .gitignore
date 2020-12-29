@@ -1,5 +1,6 @@
 # auto-exported examples
 examples/
+tmp/
 
 /.vscode
 **.pyc

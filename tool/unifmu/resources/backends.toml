@@ -31,3 +31,14 @@ files = [
   ["backends/csharp_fmu/launch.toml", "resources/launch.toml"],
   ["backends/csharp_fmu/modelDescription.xml", "modelDescription.xml"],
 ]
+
+[backend.java]
+
+files = [
+  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
+  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+  ["backends/java_fmu/launch.toml", "resources/launch.toml"],
+  ["backends/java_fmu/pom.xml", "resources/pom.xml"],
+  ["backends/java_fmu/build.ps1", "resources/build.ps1"],
+  ["backends/java_fmu/build.sh", "resources/build.sh"],
+]

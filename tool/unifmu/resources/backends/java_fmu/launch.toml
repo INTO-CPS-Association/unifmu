@@ -1,0 +1,8 @@
+[command]
+linux = ["java", "--jar", "target/unifmu-0.0.1-jar-with-dependencies.jar"]
+macos = ["java", "--jar", "target/unifmu-0.0.1-jar-with-dependencies.jar"]
+windows = ["java", "--jar", "target/unifmu-0.0.1-jar-with-dependencies.jar"]
+
+[timeout]
+command = 500
+launch = 500
