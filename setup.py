@@ -35,7 +35,9 @@ _extras_require = {
     "tests": [],
     "gui": ["wxpython", "PyPubSub"],
 }
-_extras_require["dev"] = _extras_require["docs"] + _extras_require["tests"]
+_extras_require["dev"] = (
+    _extras_require["docs"] + _extras_require["tests"] + _extras_require["gui"]
+)
 
 setup(
     name="unifmu",
