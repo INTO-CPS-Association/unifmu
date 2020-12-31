@@ -64,7 +64,8 @@ if __name__ == "__main__":
 
     wrapper_in = Path(f"wrapper/target/debug/{input}").absolute().__fspath__()
     wrapper_out = Path(
-        f"tool/unifmu/resources/common/unifmu_binaries/{output}").absolute()
+        f"tool/unifmu/resources/common/unifmu_binaries/{output}"
+    ).absolute()
     makedirs(wrapper_out.parent, exist_ok=True)
     wrapper_out = wrapper_out.__fspath__()
 
@@ -90,7 +91,17 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--export-examples", dest="export_examples", action="store_true", help="copy example FMUs to the examples directory"
+        "--export-examples",
+        dest="export_examples",
+        action="store_true",
+        help="copy example FMUs to the examples directory",
+    )
+
+    parser.add_argument(
+        "--update-schemas",
+        dest="update_schemas",
+        action="store_true",
+        help="update resource files generated based on FlatBuffer schemas",
     )
 
     args = parser.parse_args()
@@ -115,6 +126,45 @@ if __name__ == "__main__":
             pass
 
         logger.info("wrapper updated")
+
+    if args.update_schemas:
+
+        try:
+            targets = [
+                ("java", "tool/unifmu/resources/backends/java_fmu/src/main/java", []),
+                (
+                    "python",
+                    "tool/unifmu/resources/backends/python_fmu/flatbuffers",
+                    ["--gen-onefile"],
+                ),
+                (
+                    "csharp",
+                    "tool/unifmu/resources/backends/csharp_fmu/",
+                    ["--gen-onefile"],
+                ),
+            ]
+            for lang, outdir, kwargs in targets:
+                res = subprocess.Popen(
+                    [
+                        "tmp/flatc",
+                        f"--{lang}",
+                        "-o",
+                        outdir,
+                        "schemas/unifmu_fmi2.fbs",
+                        *kwargs,
+                    ]
+                ).wait()
+
+                if res != 0:
+                    logger.error(
+                        f"Failed compile flatbuffer schemas, for target language: {lang}"
+                    )
+
+        except Exception:
+            logger.error(
+                f"FlatBuffer could failed to execute. Ensure that it is installed and available in the systems path",
+                exc_info=True,
+            )
 
     if args.export_examples:
 
@@ -163,8 +213,7 @@ if __name__ == "__main__":
 
             logger.info("running C integration tests")
             res = subprocess.Popen(
-                args=[integration_tests_executable,
-                      wrapper_out, resources_uri]
+                args=[integration_tests_executable, wrapper_out, resources_uri]
             ).wait()
 
             if res != 0:
