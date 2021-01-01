@@ -25,6 +25,10 @@ files = [
   ["backends/python_fmu/modelDescription.xml", "modelDescription.xml"],
 ]
 
+dirs = [
+  ["backends/python_fmu/flatbuffers", "resources/flatbuffers"],
+]
+
 [backend.csharp]
 
 files = [
@@ -41,4 +45,8 @@ files = [
   ["backends/java_fmu/pom.xml", "resources/pom.xml"],
   ["backends/java_fmu/build.ps1", "resources/build.ps1"],
   ["backends/java_fmu/build.sh", "resources/build.sh"],
+]
+
+dirs = [
+  ["backends/java_fmu/src", "resources/src"],
 ]

@@ -56,13 +56,13 @@ public class Adder extends FMI2FMU {
     }
 
     @Override
-    public List<Byte> serialize() throws RuntimeException {
+    public byte[] serialize() throws RuntimeException {
         // TODO Auto-generated method stub
         return super.serialize();
     }
 
     @Override
-    public FMI2Status deserialize(List<Byte> state) throws RuntimeException {
+    public FMI2Status deserialize(byte[] state) throws RuntimeException {
         // TODO Auto-generated method stub
         return super.deserialize(state);
     }

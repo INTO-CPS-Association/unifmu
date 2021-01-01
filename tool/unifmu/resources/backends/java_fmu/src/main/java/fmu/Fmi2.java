@@ -1,10 +1,7 @@
 package fmu;
 
-import java.util.List;
-import java.util.OptionalDouble;
-
 enum FMI2Status {
-    OK, WARNING, ERROR, FATAL, PENDING,
+    OK, WARNING, DISCARD, ERROR, FATAL, PENDING,
 }
 
 class FMI2FMU {
@@ -15,11 +12,11 @@ class FMI2FMU {
         return FMI2Status.OK;
     }
 
-    public FMI2Status setupExperiment(double startTime, OptionalDouble stopTime, OptionalDouble tolerance) {
+    public FMI2Status setupExperiment(double startTime, Double stopTime, Double tolerance) {
         return FMI2Status.OK;
     }
 
-    public FMI2Status setDebugLogging(List<String> categories, boolean loggingOn) {
+    public FMI2Status setDebugLogging(String[] categories, boolean loggingOn) {
         return FMI2Status.OK;
     }
 
@@ -43,12 +40,12 @@ class FMI2FMU {
         return FMI2Status.OK;
     }
 
-    public List<Byte> serialize() throws RuntimeException {
+    public byte[] serialize() throws RuntimeException {
         throw new RuntimeException(
                 "the serialization method is not defined. Either define this method in the subclass, or set the 'canGetAndSetFMUstate' and 'canGetAndSetFMUstate' to false in the modelDescription.xml to indicate that the FMU does not support this functionality");
     }
 
-    public FMI2Status deserialize(List<Byte> state) throws RuntimeException {
+    public FMI2Status deserialize(byte[] state) throws RuntimeException {
         throw new RuntimeException(
                 "the deserialization method is not defined. Either define this method in the subclass, or set the 'canGetAndSetFMUstate' and 'canGetAndSetFMUstate' to false in the modelDescription.xml to indicate that the FMU does not support this functionality");
     }
