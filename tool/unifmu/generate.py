@@ -1,6 +1,6 @@
 from os import makedirs
 from pathlib import Path
-from shutil import copy
+from shutil import copy, copytree
 from tempfile import TemporaryDirectory
 import shutil
 from typing import List
@@ -92,31 +92,58 @@ def generate_fmu_from_backend(backend: str, output_path):
         tmpdir_resources = Path(tmpdir_resources)
         tmpdir_fmu = Path(tmpdir_fmu)
 
-        # apply glob expressions from manifest to identify files and directories to copy to the FMU archive
-        resource_to_output = {}
+        dirs_to_output = {}
+        files_to_output = {}
 
-        for src, dst in backend_manifest["files"]:
-            resource_to_output = {
-                **resource_to_output,
-                **{src: dst},
-            }
-
-        # dump all needed into a temporary directory
-        # this should ensures a file structure identical to the resources directory
-        for src in resource_to_output:
+        # dump all resources into a temporary directory
+        # while this is not very effective, it ensures a file structure identical to the resources directory.
+        # concretely it makes it easier to check which paths refer to directories or files
+        for src in list_resource_files("resources"):
             file_out = tmpdir_resources / src
             makedirs(file_out.parent, exist_ok=True)
 
-            stream = pkg_resources.resource_string(__name__, f"resources/{src}")
+            stream = pkg_resources.resource_string(__name__, f"{src}")
             with open(file_out, "wb") as f:
                 f.write(stream)
 
-        for src, dst in resource_to_output.items():
+        # copy the files needed for the particular backend
 
-            src = tmpdir_resources / src
+        if "files" in backend_manifest:
+            for src, dst in backend_manifest["files"]:
+                files_to_output = {
+                    **files_to_output,
+                    **{src: dst},
+                }
+
+        if "dirs" in backend_manifest:
+            for src, dst in backend_manifest["dirs"]:
+                dirs_to_output = {
+                    **dirs_to_output,
+                    **{src: dst},
+                }
+
+        for src, dst in files_to_output.items():
+
+            src = tmpdir_resources / "resources" / src
+
+            if not src.exists():
+                raise FileNotFoundError(f"The file {src} does not any known resource")
+
+            if not src.is_file():
+                raise FileNotFoundError(
+                    f"The path {src} exists, but does not refer to a file"
+                )
+
             dst = tmpdir_fmu / dst
             makedirs(dst.parent, exist_ok=True)
             copy(src, dst)
+
+        for src, dst in dirs_to_output.items():
+
+            src = tmpdir_resources / "resources" / src
+            dst = tmpdir_fmu / dst
+            makedirs(dst.parent, exist_ok=True)
+            copytree(src, dst)
 
         shutil.copytree(tmpdir_fmu, output_path)
 

@@ -2,8 +2,9 @@ import argparse
 from os import popen, system
 from pathlib import Path
 import logging
+import pathlib
 import shutil
-from shutil import SameFileError
+from shutil import SameFileError, rmtree
 import subprocess
 import os
 import sys
@@ -170,6 +171,8 @@ if __name__ == "__main__":
 
         for b in get_backends():
             outdir = Path(f"examples/{b}_fmu")
+            if outdir.is_dir():
+                rmtree(outdir)
             generate_fmu_from_backend(b, outdir)
 
     if args.test_rust:
