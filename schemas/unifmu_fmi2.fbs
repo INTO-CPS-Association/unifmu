@@ -1,87 +1,196 @@
-namespace unifmu.flatbuffers.fmi2;
+namespace flatbuffers;
 
 
-table Fmi2RealVariables 
-{
-  values:[double];
-}
 
-table Fmi2IntegerVariables 
-{
-  values:[int];
-}
 
-table Fmi2BooleanVariables 
-{
-  values:[bool];
-}
-
-table Fmi2StringVariables 
-{
-  values:[string];
-}
-
-union Fmi2Variablevector { Fmi2RealVariables, Fmi2IntegerVariables, Fmi2BooleanVariables, Fmi2StringVariables }
-
+// Argument types
+// i.e. messages sent from wrapper to slave
 table SetDebugLoggingArgs
 {
   categories: [string];
-  loggingOn: bool; 
+  logging_on: bool; 
 }
+
+table FreeInstanceArgs {}
+
+table EnterInitializationModeArgs {}
+
+table ExitInitializationModeArgs {}
+
+table TerminateArgs {}
+
+table ResetArgs {}
 
 table SetupExperimentArgs
 {
-  startTime: double;
-  stopTime: double;
+  start_time: double;
+
+  // currently optional scalars are not supported by python
+  // until supported we will use extra bool fields
+  // stop_time: double=null;
+  // tolerance: double=null;
+  
+  stop_time: double;
   tolerance: double;
+  has_stop_time: bool;
+  has_tolerance: bool;
 }
 
-
-
-table SetXXXArgs
+table SetRealArgs
 {
   references:[int] (required);
-  values:Fmi2Variablevector (required);
+  values: [double] (required);
 }
 
+table SetIntegerArgs
+{
+  references:[int] (required);
+  values: [int] (required);
+}
 
+table SetBooleanArgs
+{
+  references:[int] (required);
+  values: [bool] (required);
+}
 
-table GetXXXArgs
+table SetStringArgs
+{
+  references:[int] (required);
+  values: [string] (required);
+}
+
+table GetRealArgs
+{
+  references: [int] (required);
+}
+table GetIntegerArgs
+{
+  references: [int] (required);
+}
+table GetBooleanArgs
+{
+  references: [int] (required);
+}
+table GetStringArgs
 {
   references: [int] (required);
 }
 
-// Id associated with every FMI2 that is implemented by the slave
-// I.e. the commands implemented by the wrapper are not listed here 
-enum Fmi2CommandKind: int {
-  // common 
-  SetDebugLogging=0,
-  SetupExperimentArgs=1,
-  FreeInstance=2,
-  EnterInitialization=3,
-  ExitInitialization=4,
-  Terminate=5,
-  Reset=6,
-  SetXXX=7,
-  GetXXX=8,
-  Serialize=9,
-  Deserialize=10,
-  GetDirectionDerivatives=11,
-  // cosim
-  SetInputDerivatives=12,
-  GetOutputDerivitives=13,
-  DoStep=14,
-  CancelStep=15,
-  GetXXXStatus=16,
+table SerializeArgs {}
+
+table DeserializeArgs {
+  state: [byte] (required);
 }
 
-union Fmi2CommandArg {SetDebugLoggingArgs, SetupExperimentArgs, SetXXXArgs, GetXXXArgs}
+table GetDirectionalDerivativesArgs {}
+
+table SetInputDerivativesArgs {}
+
+table GetOutputDerivitivesArgs {}
+
+table DoStepArgs {
+  current_time : double;
+  step_size : double;
+  no_step_prior: bool;
+}
+
+table CancelStepArgs {}
+
+table GetXXXStatusArgs {}
+
+union Fmi2CommandArg 
+{
+  // common
+  SetDebugLoggingArgs, 
+  SetupExperimentArgs, 
+  FreeInstanceArgs,
+  EnterInitializationModeArgs,
+  ExitInitializationModeArgs,
+  TerminateArgs,
+  ResetArgs,
+  SetRealArgs,
+  SetIntegerArgs,
+  SetBooleanArgs,
+  SetStringArgs,
+  GetRealArgs,
+  GetIntegerArgs,
+  GetBooleanArgs,
+  GetStringArgs,
+  SerializeArgs,
+  DeserializeArgs,
+  // cosim
+  GetDirectionalDerivativesArgs,
+  SetInputDerivativesArgs,
+  GetOutputDerivitivesArgs,
+  DoStepArgs,
+  CancelStepArgs,
+  GetXXXStatusArgs,
+}
 
 // An FMI2 command is identified by its id 
 table FMI2Command
 {
-  kind : Fmi2CommandKind;
   args : Fmi2CommandArg;
 }
+
+// return values
+// i.e. messages sent from slave to wrapper
+
+// several FMI2 operations simply return a status
+// this is used as a common return type
+
+enum Fmi2Status : int32
+{
+  Ok=0,
+  Warning=1,
+  Discard=2,
+  Error=3,
+  Fatal=4,
+  Pending=5,
+}
+
+struct StatusReturn
+{
+  status: Fmi2Status;
+}
+
+table GetRealReturn
+{
+  status: Fmi2Status;
+  values: [double];
+}
+
+table GetIntegerReturn
+{
+  status: Fmi2Status;
+  values: [int32];
+}
+table GetBooleanReturn
+{
+  status: Fmi2Status;
+  values: [bool];
+}
+table GetStringReturn
+{
+  status: Fmi2Status;
+  values: [string];
+}
+
+table SerializeReturn
+{
+  state : [byte];
+}
+
+// union Fmi2CommandReturnValue
+// {
+//   StatusReturn,
+//   GetRealReturn,
+//   GetIntegerReturn,
+//   GetBooleanReturn,
+//   GetStringReturn,
+//   SerializeReturn
+// }
+
 
 root_type FMI2Command;
