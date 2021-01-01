@@ -1,27 +1,26 @@
-using System.Collections.Generic;
 using System.Reflection;
 using System;
 using flatbuffers;
 
 
-// /// <summary> Enum <c>Fmi2StatusKind</c>
-// /// Defines the different types of statuses the master can inquire the slave about, see p.104
-// /// These are used for async related functionality of FMI2.
-// /// Values:
-// ///     * do_step_status: request the status of the step function. If not completed fmi2Pending is returned,
-// ///                     if complete the status of the step function is returned. 
-// ///     * pending_status: request a string description of describing the progress of the step function.
-// ///     * last_successfull_time: returns the simulation time of the last successfull simulation step.
-// ///     * terminated: ask the slave if it wants to terminate the simulation. This can be called after the 
-// ///                    step function returns the discard status.
-// /// </summary>
-// public enum Fmi2StatusKind : ushort
-// {
-//     do_step_status = 0,
-//     pending_status = 1,
-//     last_successfull_time = 2,
-//     terminated = 3
-// }
+/// <summary> Enum <c>Fmi2StatusKind</c>
+/// Defines the different types of statuses the master can inquire the slave about, see p.104
+/// These are used for async related functionality of FMI2.
+/// Values:
+///     * do_step_status: request the status of the step function. If not completed fmi2Pending is returned,
+///                     if complete the status of the step function is returned. 
+///     * pending_status: request a string description of describing the progress of the step function.
+///     * last_successfull_time: returns the simulation time of the last successfull simulation step.
+///     * terminated: ask the slave if it wants to terminate the simulation. This can be called after the 
+///                    step function returns the discard status.
+/// </summary>
+public enum Fmi2StatusKind : ushort
+{
+    do_step_status = 0,
+    pending_status = 1,
+    last_successfull_time = 2,
+    terminated = 3
+}
 
 
 /// <summary> Class <c>Fmi2FMU</c>
@@ -118,8 +117,8 @@ public abstract class Fmi2FMU
     /// <summary>
     /// Convert the state of the FMU into a sequences of bytes which can later be used to roll-back the state of the FMU to that point
     /// </summary>
-    /// <returns>string</returns>
-    public virtual (string, Fmi2Status) Serialize()
+    /// <returns></returns>
+    public virtual (byte[], Fmi2Status) Serialize()
     {
         throw new NotImplementedException();
     }
@@ -128,7 +127,7 @@ public abstract class Fmi2FMU
     /// Restore a FMU to the state recoreded by the serialize method.
     /// </summary>
     /// <returns>Fmi2Status</returns>
-    public virtual Fmi2Status Deserialize(string state)
+    public virtual Fmi2Status Deserialize(byte[] state)
     {
         throw new NotImplementedException();
     }
@@ -161,7 +160,7 @@ public abstract class Fmi2FMU
     /// </summary>
     /// <param name="kind"></param>
     /// <returns>Tuple of Fmi2StatusKind and object which can be of the types: Fmi2Status, string, double, bool</returns>
-    public virtual (Fmi2CommandArg, object) GetDoStepStatus(Fmi2CommandArg kind)
+    public virtual (Fmi2StatusKind, object) GetXXXStatus(Fmi2StatusKind kind)
     {
         throw new NotImplementedException();
     }

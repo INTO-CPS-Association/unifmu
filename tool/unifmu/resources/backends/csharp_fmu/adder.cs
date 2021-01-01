@@ -29,13 +29,13 @@ public class Adder : Fmi2FMU
     }
 
     // TODO: implement correctly
-    public override (string, Fmi2Status) Serialize()
+    public override (byte[], Fmi2Status) Serialize()
     {
-        return ("", Fmi2Status.Ok);
+        return (null, Fmi2Status.Ok);
     }
 
     // TODO: implement correctly
-    public override Fmi2Status Deserialize(string state)
+    public override Fmi2Status Deserialize(byte[] state)
     {
         return base.Deserialize(state);
     }
