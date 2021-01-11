@@ -1,6 +1,6 @@
 import argparse
 
-from unifmu.gui import show_gui
+
 from unifmu.generate import get_backends, generate_fmu_from_backend
 
 # this is the function invoked when "unifmu" is invoked from the command line
@@ -35,5 +35,16 @@ def main():
         generate_fmu_from_backend(args.backend, args.outdir)
 
     if args.subprogram == "gui":
-        show_gui()
+
+        try:
+            from unifmu.gui import (
+                show_gui,
+            )  # this requires additional dependencies installed by 'pip install .[gui]'
+
+            show_gui()
+        except ModuleNotFoundError as e:
+            print(
+                "Unable to start gui due to missing dependencies. The missing dependencies can be added by installing unifmu using: 'pip install .[gui]'."
+                " For more info see, the documentation: https://github.com/INTO-CPS-Association/unifmu"
+            )
 
