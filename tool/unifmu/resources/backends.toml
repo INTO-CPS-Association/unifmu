@@ -10,6 +10,7 @@
 files = [
   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
   ["backends/empty/launch.toml", "resources/launch.toml"],
 ]
 
@@ -18,6 +19,7 @@ files = [
 files = [
   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
   ["backends/python_fmu/adder.py", "resources/adder.py"],
   ["backends/python_fmu/fmi2.py", "resources/fmi2.py"],
   ["backends/python_fmu/launch.py", "resources/launch.py"],
@@ -37,6 +39,7 @@ files = [
 # files = [
 #   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
 #   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+#   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
 #   ["backends/java_fmu/launch.toml", "resources/launch.toml"],
 #   ["backends/java_fmu/pom.xml", "resources/pom.xml"],
 #   ["backends/java_fmu/build.ps1", "resources/build.ps1"],
