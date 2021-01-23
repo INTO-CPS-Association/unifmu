@@ -74,7 +74,7 @@ struct Fmi2Api {
         c: *const SlaveHandle,
         vr: *const c_uint,
         nvr: usize,
-        values: *mut *const c_char,
+        values: *const *mut c_char,
     ) -> c_int,
 
     fmi2SetReal: extern "C" fn(
@@ -171,6 +171,74 @@ fn test_adder() {
                 refs[0] = 2;
                 assert!(f.fmi2GetReal(handle, refs.as_ptr(), 1, vals.as_mut_ptr()) == 0);
                 assert_eq!(vals[0], 2.0);
+            }
+            // integer
+            {
+                let mut vals: [c_int; 2] = [-1, -1];
+                let mut refs: [c_uint; 2] = [3, 4];
+
+                assert_eq!(
+                    f.fmi2GetInteger(handle, refs.as_ptr(), 2, vals.as_mut_ptr()),
+                    0
+                );
+                assert!(vals[0] == 0 && vals[1] == 0); // 0.0 is default
+                vals[0] = 1;
+                vals[1] = 1;
+                assert!(f.fmi2SetInteger(handle, refs.as_ptr(), 2, vals.as_ptr()) == 0);
+                refs[0] = 5;
+                assert!(f.fmi2GetInteger(handle, refs.as_ptr(), 1, vals.as_mut_ptr()) == 0);
+                assert_eq!(vals[0], 2);
+            }
+            // boolean
+            {
+                let mut vals: [c_int; 2] = [-1, -1];
+                let mut refs: [c_uint; 2] = [6, 7];
+
+                assert_eq!(
+                    f.fmi2GetBoolean(handle, refs.as_ptr(), 2, vals.as_mut_ptr()),
+                    0
+                );
+                assert!(vals[0] == 0 && vals[1] == 0); // 0.0 is default
+                vals[0] = 1;
+                vals[1] = 1;
+                assert!(f.fmi2SetBoolean(handle, refs.as_ptr(), 2, vals.as_ptr()) == 0);
+                refs[0] = 8;
+                assert!(f.fmi2GetBoolean(handle, refs.as_ptr(), 1, vals.as_mut_ptr()) == 0);
+                assert_eq!(vals[0], 1);
+            }
+
+            // strings
+            {
+                let mut vals: [*mut c_char; 3] = [null_mut(), null_mut(), null_mut()];
+                let mut refs: [c_uint; 3] = [9, 10, 11];
+
+                assert_eq!(
+                    f.fmi2GetString(handle, refs.as_ptr(), 3, vals.as_ptr().cast()),
+                    0
+                );
+
+                let streq = |a: *const c_char, b: *const c_char| -> bool {
+                    let a_cstr = CStr::from_ptr(a);
+                    let b_cstr = CStr::from_ptr(b);
+                    a_cstr == b_cstr
+                };
+
+                let expected = b"\0";
+                assert!(streq(expected.as_ptr().cast(), vals[0]));
+                assert!(streq(expected.as_ptr().cast(), vals[1]));
+                assert!(streq(expected.as_ptr().cast(), vals[2]));
+
+                let abc = b"abc\0";
+                let def = b"def\0";
+                let vals: [*const c_char; 2] = [abc.as_ptr().cast(), def.as_ptr().cast()];
+
+                assert!(f.fmi2SetString(handle, refs.as_ptr(), 2, vals.as_ptr()) == 0);
+                refs[0] = 11;
+
+                let mut vals: [*mut c_char; 2] = [null_mut(), null_mut()];
+                assert!(f.fmi2GetString(handle, refs.as_ptr(), 1, vals.as_mut_ptr()) == 0);
+                let expected = b"abcdef\0";
+                streq(expected.as_ptr().cast(), vals[0]);
             }
         };
 

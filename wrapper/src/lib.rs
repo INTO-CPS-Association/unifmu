@@ -110,32 +110,27 @@ static WRAPPER_CONFIG: OnceCell<config::FullConfig> = OnceCell::new();
 
 // --------------------------- Utilities functions for communicating with slave ------------------------------
 
-fn execute_fmi_command_status<T>(handle_ptr: *const c_int, value: T) -> i32
+fn execute_fmi_command_status<T>(slave: &Slave, value: T) -> i32
 where
     T: serde::ser::Serialize + std::panic::UnwindSafe,
 {
-    match execute_fmi_command_return::<_, i32>(handle_ptr, value) {
+    match execute_fmi_command_return::<_, i32>(slave, value) {
         Ok(status) => status as i32,
         Err(_) => Fmi2Status::Fmi2Error as i32,
     }
 }
 
-fn execute_fmi_command_return<T, V>(handle_ptr: *const c_int, value: T) -> Result<V, ()>
+fn execute_fmi_command_return<T, V>(slave: &Slave, value: T) -> Result<V, ()>
 where
     T: serde::ser::Serialize + std::panic::UnwindSafe,
     V: serde::de::DeserializeOwned,
 {
     let result_or_panic = catch_unwind(|| {
-        let handle = unsafe { *handle_ptr };
-
         let format = WRAPPER_CONFIG
             .get()
             .expect("the configuration is not ready. do not invoke this function prior to setting configuration")
             .handshake_info
             .serialization_format;
-
-        let slaves = SLAVES.lock().unwrap();
-        let slave = slaves.get(&handle).unwrap();
 
         slave.socket.send_as_object(value, format, None).unwrap();
 
@@ -342,9 +337,12 @@ pub extern "C" fn fmi2Instantiate(
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
     match catch_unwind(|| {
         let handle = unsafe { *c };
-        execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
+        let mut slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
 
-        SLAVES.lock().unwrap().remove(&handle).unwrap();
+        execute_fmi_command_status(&slave, (FMI2FunctionCode::FreeInstance,));
+
+        slaves.remove(&handle).unwrap();
 
         unsafe { Box::from_raw(c) }; // Free handle allocated to the heap by fmi2Instantiate
     }) {
@@ -361,13 +359,17 @@ pub extern "C" fn fmi2SetDebugLogging(
     n_categories: usize,
     categories: *const *const c_char,
 ) -> c_int {
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+
     let mut categories_vec: Vec<&str> = vec![];
     for i in 0..(n_categories as isize) {
         let cat = unsafe { CStr::from_ptr(*categories.offset(i)).to_str().unwrap() };
         categories_vec.push(cat);
     }
     execute_fmi_command_status(
-        c,
+        &slave,
         (
             FMI2FunctionCode::SetDebugLogging,
             categories_vec,
@@ -402,8 +404,12 @@ pub extern "C" fn fmi2SetupExperiment(
         }
     };
 
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+
     execute_fmi_command_status(
-        c,
+        slave,
         (
             FMI2FunctionCode::SetupExperiement,
             tolerance,
@@ -416,25 +422,37 @@ pub extern "C" fn fmi2SetupExperiment(
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn fmi2EnterInitializationMode(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command_status(c, (FMI2FunctionCode::EnterInitializationMode,)) as i32
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    execute_fmi_command_status(slave, (FMI2FunctionCode::EnterInitializationMode,)) as i32
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn fmi2ExitInitializationMode(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command_status(c, (FMI2FunctionCode::ExitInitializationMode,)) as i32
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    execute_fmi_command_status(slave, (FMI2FunctionCode::ExitInitializationMode,)) as i32
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn fmi2Terminate(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command_status(c, (FMI2FunctionCode::Terminate,)) as i32
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    execute_fmi_command_status(slave, (FMI2FunctionCode::Terminate,)) as i32
 }
 
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn fmi2Reset(c: *const SlaveHandle) -> c_int {
-    execute_fmi_command_status(c, (FMI2FunctionCode::Reset,)) as i32
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    execute_fmi_command_status(slave, (FMI2FunctionCode::Reset,)) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
@@ -447,8 +465,12 @@ pub extern "C" fn fmi2DoStep(
     step_size: c_double,
     no_set_prior: c_int,
 ) -> c_int {
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+
     execute_fmi_command_status(
-        c,
+        slave,
         (
             FMI2FunctionCode::DoStep,
             current,
@@ -461,19 +483,23 @@ pub extern "C" fn fmi2DoStep(
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn fmi2CancelStep(c: *const c_int) -> c_int {
-    execute_fmi_command_status(c, (FMI2FunctionCode::CancelStep,)) as i32
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    execute_fmi_command_status(slave, (FMI2FunctionCode::CancelStep,)) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
 
-fn fmi2GetXXX<T>(c: *const SlaveHandle, vr: *const c_uint, nvr: usize, values: *mut T) -> c_int
+fn fmi2GetXXX<T>(slave: &Slave, vr: *const c_uint, nvr: usize, values: *mut T) -> c_int
 where
     T: serde::de::DeserializeOwned,
 {
     let result_or_panic = catch_unwind(|| {
         let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
 
-        execute_fmi_command_return::<_, Vec<T>>(c, (FMI2FunctionCode::GetXXX, references)).unwrap()
+        execute_fmi_command_return::<_, Vec<T>>(slave, (FMI2FunctionCode::GetXXX, references))
+            .unwrap()
     });
 
     match result_or_panic {
@@ -495,7 +521,10 @@ pub extern "C" fn fmi2GetReal(
     nvr: usize,
     values: *mut c_double,
 ) -> c_int {
-    fmi2GetXXX(c, vr, nvr, values)
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    fmi2GetXXX(&slave, vr, nvr, values)
 }
 
 #[no_mangle]
@@ -506,7 +535,10 @@ pub extern "C" fn fmi2GetInteger(
     nvr: usize,
     values: *mut c_int,
 ) -> c_int {
-    fmi2GetXXX(c, vr, nvr, values)
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    fmi2GetXXX(&slave, vr, nvr, values)
 }
 
 #[no_mangle]
@@ -519,9 +551,15 @@ pub extern "C" fn fmi2GetBoolean(
 ) -> c_int {
     match catch_unwind(|| {
         let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-        let bools =
-            execute_fmi_command_return::<_, Vec<bool>>(c, (FMI2FunctionCode::GetXXX, references))
-                .unwrap();
+        let handle = unsafe { *c };
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
+
+        let bools = execute_fmi_command_return::<_, Vec<bool>>(
+            &slave,
+            (FMI2FunctionCode::GetXXX, references),
+        )
+        .unwrap();
 
         for i in 0..nvr {
             unsafe {
@@ -554,9 +592,11 @@ pub extern "C" fn fmi2GetString(
         let slave = slaves.get_mut(&handle).unwrap();
 
         let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-        let strings =
-            execute_fmi_command_return::<_, Vec<String>>(c, (FMI2FunctionCode::GetXXX, references))
-                .unwrap();
+        let strings = execute_fmi_command_return::<_, Vec<String>>(
+            slave,
+            (FMI2FunctionCode::GetXXX, references),
+        )
+        .unwrap();
 
         slave.string_buffer.array = strings
             .into_iter()
@@ -576,7 +616,7 @@ pub extern "C" fn fmi2GetString(
 
 // ------------------------------------- FMI FUNCTIONS (Setters) --------------------------------
 
-fn fmi2SetXXX<T>(c: *const c_int, vr: *const c_uint, nvr: usize, values: *const T) -> c_int
+fn fmi2SetXXX<T>(slave: &Slave, vr: *const c_uint, nvr: usize, values: *const T) -> c_int
 where
     T: serde::ser::Serialize + std::panic::RefUnwindSafe,
 {
@@ -584,7 +624,7 @@ where
         let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
         let values = unsafe { std::slice::from_raw_parts(values, nvr) };
 
-        execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, references, values)) as i32
+        execute_fmi_command_status(slave, (FMI2FunctionCode::SetXXX, references, values)) as i32
     });
 
     match result_or_panic {
@@ -600,7 +640,11 @@ pub extern "C" fn fmi2SetReal(
     nvr: usize,
     values: *const c_double,
 ) -> c_int {
-    fmi2SetXXX(c, vr, nvr, values)
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+
+    fmi2SetXXX(slave, vr, nvr, values)
 }
 
 #[no_mangle]
@@ -611,7 +655,11 @@ pub extern "C" fn fmi2SetInteger(
     nvr: usize,
     values: *const c_int,
 ) -> c_int {
-    fmi2SetXXX(c, vr, nvr, values)
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+
+    fmi2SetXXX(slave, vr, nvr, values)
 }
 
 #[no_mangle]
@@ -627,9 +675,13 @@ pub extern "C" fn fmi2SetBoolean(
     values: *const c_int,
 ) -> c_int {
     match catch_unwind(|| {
+        let handle = unsafe { *c };
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
         let integers = unsafe { std::slice::from_raw_parts(values, nvr) };
         let bools = integers.iter().map(|&x| x == 1).collect::<Vec<bool>>();
-        fmi2SetXXX(c, vr, nvr, bools.as_ptr())
+
+        fmi2SetXXX(slave, vr, nvr, bools.as_ptr())
     }) {
         Ok(status) => status,
         Err(_) => Fmi2Status::Fmi2Error as i32,
@@ -657,7 +709,10 @@ pub extern "C" fn fmi2SetString(
         };
     }
 
-    execute_fmi_command_status(c, (FMI2FunctionCode::SetXXX, references, vec)) as i32
+    let handle = unsafe { *c };
+    let slaves = SLAVES.lock().unwrap();
+    let slave = slaves.get(&handle).unwrap();
+    execute_fmi_command_status(slave, (FMI2FunctionCode::SetXXX, references, vec)) as i32
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
@@ -699,14 +754,13 @@ pub extern "C" fn fmi2SetFMUstate(c: *const c_int, state: *const c_int) -> c_int
     match catch_unwind(|| {
         let slave_handle: i32 = unsafe { *c };
         let state_handle: i32 = unsafe { *state };
-
         let slaves = SLAVES.lock().unwrap();
         let slave = slaves.get(&slave_handle).unwrap();
 
         let bytes = slave.serialization_buffer.get(&state_handle).unwrap();
 
         let status = execute_fmi_command_return::<_, i32>(
-            c,
+            slave,
             (FMI2FunctionCode::Deserialize, Bytes::new(bytes)),
         )
         .unwrap();
@@ -724,11 +778,13 @@ pub extern "C" fn fmi2SetFMUstate(c: *const c_int, state: *const c_int) -> c_int
 /// * state points to previously state: overwrite that buffer with current state
 pub extern "C" fn fmi2GetFMUstate(slave_handle: *const c_int, state: *mut *mut c_int) -> c_int {
     match catch_unwind(|| {
-        let (bytes, status) = execute_fmi_command_return::<_, (ByteBuf, i32)>(
-            slave_handle,
-            (FMI2FunctionCode::Serialize,),
-        )
-        .unwrap();
+        let handle = unsafe { *slave_handle };
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
+
+        let (bytes, status) =
+            execute_fmi_command_return::<_, (ByteBuf, i32)>(slave, (FMI2FunctionCode::Serialize,))
+                .unwrap();
 
         let slave_handle: i32 = unsafe { *slave_handle };
         let mut slaves = SLAVES.lock().unwrap();
@@ -876,13 +932,17 @@ pub extern "C" fn fmi2SerializedFMUstateSize(
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
 pub extern "C" fn fmi2GetRealStatus(
-    c: *const c_int,
+    slave_handle: *const SlaveHandle,
     status_kind: c_int,
     value: *mut c_double,
 ) -> c_int {
     match catch_unwind(|| {
+        let handle = unsafe { *slave_handle };
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
+
         let (status_value, status) = execute_fmi_command_return::<_, (f64, i32)>(
-            c,
+            slave,
             (FMI2FunctionCode::GetXXXStatus, status_kind),
         )
         .unwrap();
@@ -896,10 +956,18 @@ pub extern "C" fn fmi2GetRealStatus(
 
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetStatus(c: *const c_int, status_kind: c_int, value: *mut c_int) -> c_int {
+pub extern "C" fn fmi2GetStatus(
+    slave_handle: *const c_int,
+    status_kind: c_int,
+    value: *mut c_int,
+) -> c_int {
     match catch_unwind(|| {
+        let handle = unsafe { *slave_handle };
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
+
         let (status_value, status) = execute_fmi_command_return::<_, (i32, i32)>(
-            c,
+            slave,
             (FMI2FunctionCode::GetXXXStatus, status_kind),
         )
         .unwrap();
@@ -919,8 +987,12 @@ pub extern "C" fn fmi2GetIntegerStatus(
     value: *mut c_int,
 ) -> c_int {
     match catch_unwind(|| {
+        let handle = unsafe { *c };
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
+
         let (status_value, status) = execute_fmi_command_return::<_, (i32, i32)>(
-            c,
+            slave,
             (FMI2FunctionCode::GetXXXStatus, status_kind),
         )
         .unwrap();
@@ -940,8 +1012,12 @@ pub extern "C" fn fmi2GetBooleanStatus(
     value: *mut c_int,
 ) -> c_int {
     match catch_unwind(|| {
+        let handle = unsafe { *c };
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
+
         let (status_value, status) = execute_fmi_command_return::<_, (bool, i32)>(
-            c,
+            slave,
             (FMI2FunctionCode::GetXXXStatus, status_kind),
         )
         .unwrap();
