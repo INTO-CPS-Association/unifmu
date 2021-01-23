@@ -225,7 +225,7 @@ python build.py --update-wrapper
 To run the C integration tests run:
 
 ```bash
-python build.py --test-c
+python build.py --test-integration
 ```
 
 ## Backends

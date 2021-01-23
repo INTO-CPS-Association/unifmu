@@ -1,5 +1,5 @@
 import argparse
-from os import popen, system
+from os import mkdir, popen, system
 from pathlib import Path
 import logging
 import pathlib
@@ -64,11 +64,11 @@ if __name__ == "__main__":
     }[s]
 
     wrapper_in = Path(f"wrapper/target/debug/{input}").absolute().__fspath__()
-    wrapper_out = Path(
+    wrapper_lib = Path(
         f"tool/unifmu/resources/common/unifmu_binaries/{output}"
     ).absolute()
-    makedirs(wrapper_out.parent, exist_ok=True)
-    wrapper_out = wrapper_out.__fspath__()
+    makedirs(wrapper_lib.parent, exist_ok=True)
+    wrapper_lib = wrapper_lib.__fspath__()
 
     # -------------- parse args -------------------------
 
@@ -85,10 +85,6 @@ if __name__ == "__main__":
         dest="test_rust",
         action="store_true",
         help="run rust integration tests",
-    )
-
-    parser.add_argument(
-        "--test-c", dest="test_c", action="store_true", help="run C integration tests"
     )
 
     parser.add_argument(
@@ -118,11 +114,11 @@ if __name__ == "__main__":
             sys.exit(-1)
 
         logger.info(
-            f"wrapper was build, copying from '{wrapper_in}' to '{wrapper_out}'"
+            f"wrapper was build, copying from '{wrapper_in}' to '{wrapper_lib}'"
         )
 
         try:
-            shutil.copy(src=wrapper_in, dst=wrapper_out)
+            shutil.copy(src=wrapper_in, dst=wrapper_lib)
         except SameFileError:
             pass
 
@@ -176,51 +172,38 @@ if __name__ == "__main__":
             generate_fmu_from_backend(b, outdir)
 
     if args.test_rust:
-        res = subprocess.Popen(["cargo", "test"]).wait()
 
-        if res != 0:
-            logger.error("Rust test failed")
-            sys.exit(-1)
-
-    if args.test_c:
-
-        # build tests
-        build_dir = Path("tests/c_tests/build")
-        build_dir.mkdir(exist_ok=True)
-
-        with Chdir(build_dir):
-            logger.info("configuring cmake")
-            res = subprocess.Popen(
-                args=["cmake", "-DCMAKE_BUILD_TYPE=Debug", ".."]
-            ).wait()
-
-            if res != 0:
-                logger.error("unable to configure cmake")
-                sys.exit(-1)
-
-            logger.info("building tests")
-            res = subprocess.Popen(args=["cmake", "--build", "."]).wait()
-
-            if res != 0:
-                logger.error("unable to compile C integration tests")
-                sys.exit(-1)
+        if not args.update_wrapper:
+            logger.warn(
+                "program was called without --update-wrapper. Integration tests will use the existing wrapper in the resources directory."
+            )
 
         # export test examples into tmp directory and execute tests
-        with TemporaryDirectory() as tmpdir:
-            tmpdir = Path(tmpdir)
+        from tempfile import mkdtemp
 
-            fmu_path = tmpdir / "python_fmu"
-            generate_fmu_from_backend("python", fmu_path)
+        # with TemporaryDirectory() as tmpdir:
+        tmpdir = Path(mkdtemp())
 
-            resources_uri = (fmu_path / "resources").absolute().as_uri()
+        fmu_path = tmpdir / "python_fmu"
+        generate_fmu_from_backend("python", fmu_path)
 
-            logger.info("running C integration tests")
-            res = subprocess.Popen(
-                args=[integration_tests_executable, wrapper_out, resources_uri]
-            ).wait()
+        # while not fmu_path.is_dir():
+        #     print("wait")
+
+        resources_uri = (fmu_path / "resources").absolute().as_uri()
+        os.environ["UNIFMU_ADDER_RESOURCES_URI"] = resources_uri
+        os.environ["UNIFMU_ADDER_LIBRARY"] = wrapper_lib
+        logger.info(
+            f"running integration tests, with resource-uri: {resources_uri} and library: {wrapper_lib}"
+        )
+
+        with Chdir("Wrapper"):
+
+            res = subprocess.Popen(args=["cargo", "test", "--", "--show-output"]).wait()
 
             if res != 0:
-                logger.error("C integration tests failed")
+                logger.error("integration tests failed")
                 sys.exit(-1)
 
-            logger.info("C integration tests successful")
+        logger.info("C integration tests successful")
+

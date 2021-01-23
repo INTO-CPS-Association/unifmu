@@ -6,7 +6,6 @@ use libc::size_t;
 use once_cell::sync::OnceCell;
 use serde_bytes::ByteBuf;
 use serde_bytes::Bytes;
-use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::read_to_string;
@@ -18,6 +17,7 @@ use std::panic::catch_unwind;
 use std::ptr::null_mut;
 use std::result::Result;
 use std::sync::Mutex;
+use std::{collections::HashMap, ptr::null};
 
 use lazy_static::lazy_static;
 use subprocess::Popen;
@@ -246,20 +246,29 @@ pub extern "C" fn fmi2Instantiate(
     _logging_on: c_int,
 ) -> *mut i32 {
     let panic_result: Result<i32, _> = catch_unwind(|| {
-        let resource_location = unsafe { CStr::from_ptr(fmu_resource_location) }
-            .to_str()
-            .expect("Unable to convert resource location to a string");
+        let resource_location_cstr = unsafe { CStr::from_ptr(fmu_resource_location) };
+        let resource_location_utf8 = resource_location_cstr.to_str().expect(&format!(
+            "Unable to convert resource uri c-string to utf8, got {:?}",
+            &resource_location_cstr
+        ));
 
         // locate resource directory
-        let resources_dir = Url::parse(resource_location)
-            .expect("unable to parse uri")
-            .to_file_path()
-            .expect("unable to map URI to path");
+        let resource_uri = Url::parse(&resource_location_utf8).expect(&format!(
+            "Unable to parse the specified file URI, got: {:?}.",
+            resource_location_utf8,
+        ));
+
+        let resources_dir = resource_uri.to_file_path().expect(&format!(
+            "URI was parsed but could not be converted into a file path, got: {:?}",
+            resource_uri
+        ));
 
         let config_path = resources_dir.join("launch.toml");
 
-        assert!(config_path.is_file());
-        let config = read_to_string(config_path).expect("unable to read configuration file");
+        let config = read_to_string(&config_path).expect(&format!(
+            "unable to read configuration file stored at path: {:?}",
+            config_path
+        ));
 
         let config: config::LaunchConfig = toml::from_str(config.as_str())
             .expect("configuration file was opened, but contents were not valid toml");

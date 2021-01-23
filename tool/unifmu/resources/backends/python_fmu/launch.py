@@ -58,9 +58,11 @@ if __name__ == "__main__":
     def get_xxx(references):
         attributes = [reference_to_attr[vref] for vref in references]
         values = [getattr(slave, a) for a in attributes]
+        print(f"read vref: {references} with value: {values}")
         return values
 
     def set_xxx(references, values):
+        print(f"setting {references} to {values}")
         attributes = [reference_to_attr[vref] for vref in references]
         for a, v in zip(attributes, values):
             setattr(slave, a, v)
