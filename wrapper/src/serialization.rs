@@ -119,3 +119,7 @@ where
         std::result::Result::Ok(value)
     }
 }
+
+pub struct FlatbufferSerializer {}
+
+pub trait Fmi2CommandSerializer {}

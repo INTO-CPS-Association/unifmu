@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 use crate::config::FullConfig;
 use crate::fmi2::Fmi2Status;
-use core::ptr::null;
 use libc::c_double;
 use libc::size_t;
 use once_cell::sync::OnceCell;
@@ -19,7 +18,6 @@ use std::panic::catch_unwind;
 use std::ptr::null_mut;
 use std::result::Result;
 use std::sync::Mutex;
-use std::sync::MutexGuard;
 
 use lazy_static::lazy_static;
 use subprocess::Popen;
@@ -36,40 +34,74 @@ use crate::fmi2::Fmi2CallbackFunctions;
 use crate::serialization::BindToRandom;
 use crate::serialization::JsonReceiver;
 use crate::serialization::ObjectSender;
-use crate::serialization::PickleReceiver;
 
 // ----------------------- Library instantiation and cleanup ---------------------------
-
-struct LibraryContext {
-    zmq_context: zmq::Context,
-    handle_to_socket: Mutex<HashMap<SlaveHandle, zmq::Socket>>,
-    handle_to_process: Mutex<HashMap<SlaveHandle, Popen>>,
-}
 
 /// An identifier that can be used to uniquely identify a slave within the context of a specific backend.
 pub type SlaveHandle = i32;
 
-lazy_static! {
-    static ref CONTEXT: Mutex<Option<LibraryContext>> = Mutex::new(None);
+// https://users.rust-lang.org/t/share-mut-t-between-threads-wrapped-in-mutex/19621/2
+struct StringBuffer {
+    array: Vec<CString>,
+}
+unsafe impl Send for StringBuffer {}
+unsafe impl Sync for StringBuffer {}
+
+struct Slave {
+    socket: zmq::Socket,
+
+    popen: Popen,
+
+    /// Buffer storing the c-strings returned by `fmi2GetStrings`.
+    /// The specs states that the caller should copy the strings to its own memory immidiately after the call has been made.
+    /// The reason for this recommendation is that a FMU is allowed to  free or overwrite the memory as soon as another call is made to the FMI interface.
+    string_buffer: StringBuffer,
+
+    /// Buffer storing 0 or more past state of the slave.
+    serialization_buffer: HashMap<i32, Vec<u8>>,
 }
 
-/// Initialize static variables if necessary.
-///
-/// The issue is a result of the FMI2 specifications lack of a function that marks the end of a simulation.
-/// As a result we have to free resources, opportunistically whenever the number of active slaves are 0, e.g all handles are freed.
-/// However, there is nothing stopping the envrionment from creating new instances of FMUs following this.
-fn ensure_context_initialized() {
-    if CONTEXT.lock().unwrap().is_none() {
-        *CONTEXT.lock().unwrap() = Some(LibraryContext {
-            zmq_context: zmq::Context::new(),
-            handle_to_socket: Mutex::new(HashMap::new()),
-            handle_to_process: Mutex::new(HashMap::new()),
-        });
+impl Slave {
+    fn new(socket: zmq::Socket, popen: Popen) -> Self {
+        Self {
+            socket,
+            popen,
+            string_buffer: StringBuffer { array: Vec::new() },
+            serialization_buffer: HashMap::new(),
+        }
     }
 }
 
-fn free_context() {
-    *CONTEXT.lock().unwrap() = None;
+lazy_static! {
+    static ref ZMQ_CONTEXT: zmq::Context = zmq::Context::new();
+
+    static ref SLAVES: Mutex<HashMap<SlaveHandle, Slave>> = Mutex::new(HashMap::new());
+    // static ref HANDLE_TO_SOCKET: Mutex<HashMap<SlaveHandle, zmq::Socket>> =
+    //     Mutex::new(HashMap::new());
+    // static ref HANDLE_TO_PROCESS: Mutex<HashMap<SlaveHandle, Popen>> = Mutex::new(HashMap::new());
+    // static ref STRING_BUFFER: Mutex<StringBuffer> = Mutex::new(StringBuffer { array: Vec::new() });
+
+    // /// Stores 0 or more snapshots of the individual slaves that support serialization
+    // static ref SERIALIZATION_BUFFER: Mutex<HashMap<SlaveHandle, Mutex<HashMap<i32,Vec<u8>>>>> =
+    //     Mutex::new(HashMap::new());
+}
+
+trait InsertNext<V> {
+    /// Insert value into map at the next available entry and return a handle to the element
+    fn insert_next(&mut self, value: V) -> Result<i32, String>;
+}
+
+impl<V> InsertNext<V> for HashMap<i32, V> {
+    fn insert_next(&mut self, value: V) -> Result<i32, String> {
+        for i in 0..std::i32::MAX {
+            if !self.contains_key(&i) {
+                self.insert(i, value);
+                return Ok(i);
+            }
+        }
+
+        Err(String::from("No free keys available"))
+    }
 }
 
 // -------------------------- ZMQ -----------------------------------
@@ -96,30 +128,18 @@ where
     let result_or_panic = catch_unwind(|| {
         let handle = unsafe { *handle_ptr };
 
-        let context_lock = CONTEXT.lock().unwrap();
-        let context = context_lock.as_ref().unwrap();
-
         let format = WRAPPER_CONFIG
             .get()
             .expect("the configuration is not ready. do not invoke this function prior to setting configuration")
             .handshake_info
             .serialization_format;
-        context
-            .handle_to_socket
-            .lock()
-            .unwrap()
-            .get(&handle)
-            .unwrap()
-            .send_as_object(value, format, None)
-            .unwrap();
-        let bytes = context
-            .handle_to_socket
-            .lock()
-            .unwrap()
-            .get(&handle)
-            .unwrap()
-            .recv_bytes(0)
-            .unwrap();
+
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&handle).unwrap();
+
+        slave.socket.send_as_object(value, format, None).unwrap();
+
+        let bytes = slave.socket.recv_bytes(0).unwrap();
         let res: V = match format {
             SerializationFormat::Pickle => {
                 serde_pickle::from_slice(&bytes).expect("unable to un-pickle object")
@@ -174,11 +194,13 @@ enum FMI2FunctionCode {
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
     b"default\0".as_ptr() as *const i8
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2GetVersion() -> *const c_char {
     b"2.0\0".as_ptr() as *const i8
 }
@@ -213,6 +235,7 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 ///     * serialization format (Json, FlexBuffers, Pickle, etc)
 ///
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2Instantiate(
     _instance_name: *const c_char,
     _fmu_type: c_int,
@@ -223,8 +246,6 @@ pub extern "C" fn fmi2Instantiate(
     _logging_on: c_int,
 ) -> *mut i32 {
     let panic_result: Result<i32, _> = catch_unwind(|| {
-        ensure_context_initialized();
-
         let resource_location = unsafe { CStr::from_ptr(fmu_resource_location) }
             .to_str()
             .expect("Unable to convert resource location to a string");
@@ -245,13 +266,10 @@ pub extern "C" fn fmi2Instantiate(
 
         // creating a handshake-socket which is used by the slave-process to pass connection strings back to the wrapper
 
-        let context_lock = CONTEXT.lock().unwrap();
-        let context = context_lock.as_ref().unwrap();
-        let handshake_socket = context
-            .zmq_context
+        let handshake_socket = ZMQ_CONTEXT
             .socket(zmq::PULL)
             .expect("Unable to create handshake");
-        let command_socket = context.zmq_context.socket(zmq::REQ).unwrap();
+        let command_socket = ZMQ_CONTEXT.socket(zmq::REQ).unwrap();
         // command_socket.set_linger().unwrap();
         let handshake_port = handshake_socket.bind_to_random_port("*").unwrap();
 
@@ -268,7 +286,7 @@ pub extern "C" fn fmi2Instantiate(
         let endpoint = format!("tcp://localhost:{:?}", handshake_port);
         command.push(endpoint.to_string());
 
-        let res = Popen::create(
+        let popen = Popen::create(
             &command,
             PopenConfig {
                 cwd: Some(resources_dir.as_os_str().to_owned()),
@@ -294,22 +312,13 @@ pub extern "C" fn fmi2Instantiate(
         // associate a numerical id with each slave and its corresponding socket(s)
 
         let mut handle: SlaveHandle = 0;
-        let mut handle_to_socket = context.handle_to_socket.lock().unwrap();
-        while handle_to_socket.contains_key(&handle) {
+        let mut slaves = SLAVES.lock().unwrap();
+        while slaves.contains_key(&handle) {
             handle += 1;
         }
 
-        handle_to_socket.insert(handle, command_socket);
-        context
-            .handle_to_process
-            .lock()
-            .unwrap()
-            .insert(handle, res);
+        slaves.insert(handle, Slave::new(command_socket, popen));
 
-        SERIALIZATION_BUFFER
-            .lock()
-            .unwrap()
-            .insert(handle, Mutex::new(HashMap::new()));
         handle
     });
 
@@ -320,36 +329,15 @@ pub extern "C" fn fmi2Instantiate(
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
     match catch_unwind(|| {
         let handle = unsafe { *c };
         execute_fmi_command_status(c, (FMI2FunctionCode::FreeInstance,));
 
-        // ensure that process is terminated
-        {
-            let context_lock = CONTEXT.lock().unwrap();
-            let context = context_lock.as_ref().unwrap();
-            context.handle_to_process.lock().unwrap().remove(&handle)
-            .expect("the process associated with the slave appears to be missing. Potential causes are double free or that the slave was never instantiated");
+        SLAVES.lock().unwrap().remove(&handle).unwrap();
 
-            context.handle_to_socket.lock().unwrap().remove(&handle)
-            .expect("the process associated with the slave appears to be missing. Potential causes are double free or that the slave was never instantiated");
-        }
-
-        if CONTEXT
-            .lock()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .handle_to_socket
-            .lock()
-            .unwrap()
-            .is_empty()
-        {
-            free_context();
-        }
-
-        unsafe { Box::from_raw(c) };
+        unsafe { Box::from_raw(c) }; // Free handle allocated to the heap by fmi2Instantiate
     }) {
         Ok(_) => (),
         Err(_) => eprintln!("Failed freeing slave"),
@@ -357,6 +345,7 @@ pub extern "C" fn fmi2FreeInstance(c: *mut c_int) {
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2SetDebugLogging(
     c: *const SlaveHandle,
     logging_on: c_int,
@@ -364,8 +353,7 @@ pub extern "C" fn fmi2SetDebugLogging(
     categories: *const *const c_char,
 ) -> c_int {
     let mut categories_vec: Vec<&str> = vec![];
-    let n_categories = n_categories as isize;
-    for i in 0..n_categories {
+    for i in 0..(n_categories as isize) {
         let cat = unsafe { CStr::from_ptr(*categories.offset(i)).to_str().unwrap() };
         categories_vec.push(cat);
     }
@@ -380,6 +368,7 @@ pub extern "C" fn fmi2SetDebugLogging(
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2SetupExperiment(
     c: *const SlaveHandle,
     tolerance_defined: c_int,
@@ -416,21 +405,25 @@ pub extern "C" fn fmi2SetupExperiment(
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2EnterInitializationMode(c: *const SlaveHandle) -> c_int {
     execute_fmi_command_status(c, (FMI2FunctionCode::EnterInitializationMode,)) as i32
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2ExitInitializationMode(c: *const SlaveHandle) -> c_int {
     execute_fmi_command_status(c, (FMI2FunctionCode::ExitInitializationMode,)) as i32
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2Terminate(c: *const SlaveHandle) -> c_int {
     execute_fmi_command_status(c, (FMI2FunctionCode::Terminate,)) as i32
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2Reset(c: *const SlaveHandle) -> c_int {
     execute_fmi_command_status(c, (FMI2FunctionCode::Reset,)) as i32
 }
@@ -438,6 +431,7 @@ pub extern "C" fn fmi2Reset(c: *const SlaveHandle) -> c_int {
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2DoStep(
     c: *const SlaveHandle,
     current: c_double,
@@ -456,6 +450,7 @@ pub extern "C" fn fmi2DoStep(
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2CancelStep(c: *const c_int) -> c_int {
     execute_fmi_command_status(c, (FMI2FunctionCode::CancelStep,)) as i32
 }
@@ -484,6 +479,7 @@ where
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2GetReal(
     c: *const SlaveHandle,
     vr: *const c_uint,
@@ -494,6 +490,7 @@ pub extern "C" fn fmi2GetReal(
 }
 
 #[no_mangle]
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2GetInteger(
     c: *const SlaveHandle,
     vr: *const c_uint,
@@ -504,7 +501,7 @@ pub extern "C" fn fmi2GetInteger(
 }
 
 #[no_mangle]
-
+#[allow(non_snake_case)]
 pub extern "C" fn fmi2GetBoolean(
     c: *const SlaveHandle,
     vr: *const c_uint,
@@ -528,16 +525,6 @@ pub extern "C" fn fmi2GetBoolean(
     }
 }
 
-struct StringBuffer {
-    array: Vec<CString>,
-}
-unsafe impl Send for StringBuffer {}
-unsafe impl Sync for StringBuffer {}
-
-// https://users.rust-lang.org/t/share-mut-t-between-threads-wrapped-in-mutex/19621/2
-lazy_static! {
-    static ref STRING_BUFFER: Mutex<StringBuffer> = Mutex::new(StringBuffer { array: Vec::new() });
-}
 /// Reads strings from FMU
 ///
 /// Note:
@@ -546,26 +533,29 @@ lazy_static! {
 /// We chose to do it on an instance basis, e.g. each instance has its own string buffer.
 #[no_mangle]
 pub extern "C" fn fmi2GetString(
-    c: *const c_int,
+    c: *const SlaveHandle,
     vr: *const c_uint,
     nvr: usize,
     values: *mut *const c_char,
 ) -> c_int {
     match catch_unwind(|| {
+        let handle = unsafe { *c };
+
+        let mut slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get_mut(&handle).unwrap();
+
         let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
         let strings =
             execute_fmi_command_return::<_, Vec<String>>(c, (FMI2FunctionCode::GetXXX, references))
                 .unwrap();
 
-        let mut string_buffer = STRING_BUFFER.lock().unwrap();
-
-        string_buffer.array = strings
+        slave.string_buffer.array = strings
             .into_iter()
             .map(|s| CString::new(s).unwrap())
             .collect::<Vec<_>>();
 
         unsafe {
-            for (idx, cstr) in string_buffer.array.iter().enumerate() {
+            for (idx, cstr) in slave.string_buffer.array.iter().enumerate() {
                 std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
             }
         }
@@ -694,39 +684,17 @@ pub extern "C" fn fmi2GetRealOutputDerivatives(c: *const c_int) -> c_int {
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
 
-lazy_static! {
-    /// Stores 0 or more snapshots of the individual slaves that support serialization
-    static ref SERIALIZATION_BUFFER: Mutex<HashMap<SlaveHandle, Mutex<HashMap<i32,Vec<u8>>>>> =
-        Mutex::new(HashMap::new());
-}
-
-trait InsertNext<V> {
-    /// Insert value into map at the next available entry and return a handle to the element
-    fn insert_next(&mut self, value: V) -> Result<i32, String>;
-}
-
-impl<V> InsertNext<V> for MutexGuard<'_, HashMap<i32, V>> {
-    fn insert_next(&mut self, value: V) -> Result<i32, String> {
-        for i in 0..std::i32::MAX {
-            if !self.contains_key(&i) {
-                self.insert(i, value);
-                return Ok(i);
-            }
-        }
-
-        Err(String::from("No free keys available"))
-    }
-}
-
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
 pub extern "C" fn fmi2SetFMUstate(c: *const c_int, state: *const c_int) -> c_int {
     match catch_unwind(|| {
         let slave_handle: i32 = unsafe { *c };
         let state_handle: i32 = unsafe { *state };
-        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
-        let state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
-        let bytes = state_lock.get(&state_handle).unwrap();
+
+        let slaves = SLAVES.lock().unwrap();
+        let slave = slaves.get(&slave_handle).unwrap();
+
+        let bytes = slave.serialization_buffer.get(&state_handle).unwrap();
 
         let status = execute_fmi_command_return::<_, i32>(
             c,
@@ -745,19 +713,24 @@ pub extern "C" fn fmi2SetFMUstate(c: *const c_int, state: *const c_int) -> c_int
 /// Whether a new buffer should be allocated depends on state's value:
 /// * state points to null: allocate a new buffer and return a pointer to this
 /// * state points to previously state: overwrite that buffer with current state
-pub extern "C" fn fmi2GetFMUstate(c: *const c_int, state: *mut *mut c_int) -> c_int {
+pub extern "C" fn fmi2GetFMUstate(slave_handle: *const c_int, state: *mut *mut c_int) -> c_int {
     match catch_unwind(|| {
-        let (bytes, status) =
-            execute_fmi_command_return::<_, (ByteBuf, i32)>(c, (FMI2FunctionCode::Serialize,))
-                .unwrap();
+        let (bytes, status) = execute_fmi_command_return::<_, (ByteBuf, i32)>(
+            slave_handle,
+            (FMI2FunctionCode::Serialize,),
+        )
+        .unwrap();
 
-        let slave_handle: i32 = unsafe { *c };
-        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
-        let mut state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+        let slave_handle: i32 = unsafe { *slave_handle };
+        let mut slaves = SLAVES.lock().unwrap();
 
-        let state_handle = state_lock
+        let state_handle = slaves
+            .get_mut(&slave_handle)
+            .unwrap()
+            .serialization_buffer
             .insert_next(bytes.to_vec())
-            .expect("unable to insert serialized state into buffer");
+            .unwrap();
+
         unsafe { std::ptr::write(state, Box::into_raw(Box::new(state_handle))) }
     }) {
         Ok(_) => Fmi2Status::Fmi2OK as i32,
@@ -775,13 +748,18 @@ pub extern "C" fn fmi2FreeFMUstate(c: *const c_int, state: *mut *mut c_void) -> 
         Some(s) => {
             let slave_handle = unsafe { *c };
             let state_handle = unsafe { *(*s as *mut i32) };
+            let mut slaves = SLAVES.lock().unwrap();
 
-            let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
-            let mut state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
+            let buffer_lock = slaves
+                .get_mut(&slave_handle)
+                .unwrap()
+                .serialization_buffer
+                .remove(&state_handle);
 
-            state_lock.remove(&state_handle).unwrap();
-            unsafe { Box::from_raw(*state) };
-            unsafe { *state = null_mut() };
+            unsafe {
+                Box::from_raw(*state);
+                *state = null_mut()
+            };
         }
     }) {
         Ok(_) => Fmi2Status::Fmi2OK as i32,
@@ -803,13 +781,16 @@ pub extern "C" fn fmi2SerializeFMUstate(
     _size: usize,
 ) -> c_int {
     match catch_unwind(|| {
-        let slave_handle = unsafe { *slave_handle };
-        let state_handle = unsafe { *state_handle };
+        let slave_handle: i32 = unsafe { *slave_handle };
+        let state_handle: i32 = unsafe { *state_handle };
+        let slaves = SLAVES.lock().unwrap();
 
-        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
-        let state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
-
-        let bytes = state_lock.get(&state_handle).unwrap();
+        let bytes = slaves
+            .get(&slave_handle)
+            .unwrap()
+            .serialization_buffer
+            .get(&state_handle)
+            .unwrap();
 
         unsafe { std::ptr::copy(bytes.as_ptr(), data, bytes.len()) };
     }) {
@@ -827,11 +808,6 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     state: *mut *mut c_int,
 ) -> c_int {
     match catch_unwind(|| {
-        let slave_handle = unsafe { *slave_handle };
-
-        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
-        let mut state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
-
         let bytes = unsafe {
             std::ptr::slice_from_raw_parts(serialized_state, size)
                 .as_ref()
@@ -839,7 +815,15 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
                 .to_vec()
         };
 
-        let state_handle = state_lock.insert_next(bytes).unwrap();
+        let slave_handle: i32 = unsafe { *slave_handle };
+        let mut slaves = SLAVES.lock().unwrap();
+
+        let state_handle = slaves
+            .get_mut(&slave_handle)
+            .unwrap()
+            .serialization_buffer
+            .insert_next(bytes)
+            .unwrap();
         unsafe {
             *state = Box::into_raw(Box::new(state_handle));
         };
@@ -852,21 +836,25 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
 pub extern "C" fn fmi2SerializedFMUstateSize(
-    c: *const c_int,
-    state: *const c_int,
+    slave_handle: *const c_int,
+    state_handle: *const c_int,
     size: *mut size_t,
 ) -> c_int {
     match catch_unwind(|| {
-        let slave_handle = unsafe { *c };
-        let state_handle = unsafe { *state };
+        let slave_handle: i32 = unsafe { *slave_handle };
+        let state_handle: i32 = unsafe { *state_handle };
+        let slaves = SLAVES.lock().unwrap();
 
-        let buffer_lock = SERIALIZATION_BUFFER.lock().unwrap();
-        let state_lock = buffer_lock.get(&slave_handle).unwrap().lock().unwrap();
-
-        let test = state_lock.get(&state_handle).unwrap().len();
+        let state_size = slaves
+            .get(&slave_handle)
+            .unwrap()
+            .serialization_buffer
+            .get(&state_handle)
+            .unwrap()
+            .len();
 
         unsafe {
-            *size = test;
+            *size = state_size;
         }
     }) {
         Ok(_) => Fmi2Status::Fmi2OK as i32,
