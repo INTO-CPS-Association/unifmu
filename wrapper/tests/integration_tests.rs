@@ -10,6 +10,7 @@ use std::{
     collections::HashMap,
     ffi::{CStr, CString},
     ptr::null_mut,
+    vec,
 };
 use unifmu::{fmi2::Fmi2CallbackFunctions, SlaveHandle};
 
@@ -42,11 +43,29 @@ struct Fmi2Api {
     fmi2ExitInitializationMode: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
     fmi2Terminate: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
     fmi2Reset: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
+
     fmi2GetFMUstate: extern "C" fn(slave_handle: *const c_int, state: *mut *mut c_int) -> c_int,
     fmi2SerializedFMUstateSize: extern "C" fn(
         slave_handle: *const c_int,
         state_handle: *const c_int,
         size: *mut size_t,
+    ) -> c_int,
+
+    fmi2DeSerializeFMUstate: extern "C" fn(
+        slave_handle: *const c_int,
+        serialized_state: *const c_char,
+        size: size_t,
+        state: *mut *mut c_int,
+    ) -> c_int,
+
+    fmi2FreeFMUstate:
+        extern "C" fn(slave_handle: *const c_int, state_handle: *mut *mut c_int) -> c_int,
+
+    fmi2SerializeFMUstate: extern "C" fn(
+        slave_handle: *const c_int,
+        state_handle: *mut c_int,
+        data: *mut c_char,
+        _size: size_t,
     ) -> c_int,
 
     fmi2SetFMUstate: extern "C" fn(c: *const c_int, state: *const c_int) -> c_int,
@@ -209,7 +228,8 @@ fn test_adder() {
                     f.fmi2GetBoolean(handle, refs.as_ptr(), 2, vals.as_mut_ptr()),
                     0
                 );
-                assert!(vals[0] == 0 && vals[1] == 0); // 0.0 is default
+                assert_eq!(vals[0], 0);
+                assert_eq!(vals[1], 0); // 0.0 is default
                 vals[0] = 1;
                 vals[1] = 1;
                 assert!(f.fmi2SetBoolean(handle, refs.as_ptr(), 2, vals.as_ptr()) == 0);
@@ -266,24 +286,57 @@ fn test_adder() {
         assert_eq!(f.fmi2GetFMUstate(handle, state_ptr.as_mut_ptr()), 0);
         assert_ne!(state_ptr[0], null_mut());
 
-        // let state_size: *mut size_t = [0].as_mut_ptr();
+        check_input_outputs();
 
-        // assert!(f.fmi2SerializedFMUstateSize(handle, *state_ptr.as_mut_ptr(), state_size) == 0);
-        // assert!(state_size != null_mut());
-        // assert!(*state_size > 0); // not required by spec, but is reasonable assumption
+        let mut cur_time: c_double = t_start;
 
-        // check_input_outputs();
+        for _ in 0..100 {
+            assert_eq!(f.fmi2DoStep(handle, cur_time, step_size, 0), 0);
+            cur_time += step_size;
+        }
 
-        // let mut cur_time: c_double = t_start;
+        // roll back to initial state, then check if it behaves as newly intialized
+        assert_eq!(f.fmi2SetFMUstate(handle, state_ptr[0]), 0);
+        check_input_outputs();
 
-        // for _ in 0..100 {
-        //     assert_eq!(f.fmi2DoStep(handle, cur_time, step_size, 0), 0);
-        //     cur_time += step_size;
-        // }
+        let state_size: *mut size_t = [0].as_mut_ptr();
 
-        // // roll back to initial state, then check if it behaves as newly intialized
-        // assert_eq!(f.fmi2SetFMUstate(handle, state_ptr[0]), 0);
-        // check_input_outputs();
+        assert!(f.fmi2SerializedFMUstateSize(handle, *state_ptr.as_mut_ptr(), state_size) == 0);
+        assert!(state_size != null_mut());
+        assert!(*state_size > 0); // not required by spec, but is reasonable assumption
+
+        let mut state_buffer: Vec<i8> = Vec::with_capacity(*state_size);
+
+        assert_eq!(
+            f.fmi2SerializeFMUstate(
+                handle,
+                *state_ptr.as_mut_ptr(),
+                state_buffer.as_mut_ptr(),
+                *state_size
+            ),
+            0,
+        );
+
+        assert_ne!(*state_ptr.as_mut_ptr(), null_mut());
+        assert_eq!(f.fmi2FreeFMUstate(handle, state_ptr.as_mut_ptr()), 0);
+        assert_eq!(*state_ptr.as_mut_ptr(), null_mut());
+        assert_eq!(
+            f.fmi2DeSerializeFMUstate(
+                handle,
+                state_buffer.as_ptr(),
+                *state_size,
+                state_ptr.as_mut_ptr()
+            ),
+            0,
+        );
+        assert_ne!(*state_ptr.as_mut_ptr(), null_mut());
+        assert_eq!(f.fmi2SetFMUstate(handle, state_ptr[0]), 0);
+        check_input_outputs();
+        assert_eq!(f.fmi2FreeFMUstate(handle, state_ptr.as_mut_ptr()), 0);
+        assert_eq!(*state_ptr.as_mut_ptr(), null_mut());
+
+        f.fmi2Terminate(handle);
+        f.fmi2Reset(handle);
 
         // No way to check if actually freed
         f.fmi2FreeInstance(handle);

@@ -510,9 +510,11 @@ pub extern "C" fn fmi2GetBoolean(
 
     // copy if status is less severe than discard "discard"
     if status < 2 {
-        unsafe {
-            std::ptr::copy(values_recv.unwrap().as_ptr(), values.cast(), nvr);
-        };
+        for (idx, v) in values_recv.unwrap().iter().enumerate() {
+            unsafe {
+                std::ptr::write(values.offset(idx as isize), *v as c_int);
+            }
+        }
     }
 
     status
@@ -631,9 +633,11 @@ pub extern "C" fn fmi2SetBoolean(
     let mut slaves = SLAVES.lock().unwrap();
     let slave = slaves.get_mut(&handle).unwrap();
     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-    let values: &[bool] = unsafe { std::slice::from_raw_parts(values.cast(), nvr) };
+    let values = unsafe { std::slice::from_raw_parts(values, nvr) };
 
-    slave.rpc.fmi2SetBoolean(references, values)
+    let values: Vec<bool> = values.iter().map(|v| *v != 0).collect();
+
+    slave.rpc.fmi2SetBoolean(references, &values)
 }
 
 #[no_mangle]
@@ -735,11 +739,9 @@ pub extern "C" fn fmi2GetFMUstate(
     unsafe {
         match (*state_handle_or_none).as_ref() {
             Some(h) => {
-                println!("A");
                 slave.serialization_buffer.insert(*h, bytes);
             }
             None => {
-                println!("B");
                 let state_handle = slave.serialization_buffer.insert_next(bytes).unwrap();
                 std::ptr::write(state_handle_or_none, Box::into_raw(Box::new(state_handle)));
             }
@@ -754,7 +756,7 @@ pub extern "C" fn fmi2GetFMUstate(
 /// If state points to null the call is ignored as defined by the specification
 pub extern "C" fn fmi2FreeFMUstate(
     slave_handle: *const SlaveHandle,
-    state: *mut *mut c_void,
+    state: *mut *mut StateHandle,
 ) -> Fmi2StatusT {
     match catch_unwind(|| match unsafe { state.as_ref() } {
         None => (),
@@ -816,8 +818,6 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     size: size_t,
     state: *mut *mut StateHandle,
 ) -> Fmi2StatusT {
-    todo!();
-
     match catch_unwind(|| {
         let bytes: Vec<u8> = unsafe {
             std::ptr::slice_from_raw_parts(serialized_state.cast(), size)
@@ -847,8 +847,6 @@ pub extern "C" fn fmi2SerializedFMUstateSize(
     state_handle: *const StateHandle,
     size: *mut size_t,
 ) -> Fmi2StatusT {
-    todo!();
-
     match catch_unwind(|| {
         let slave_handle: i32 = unsafe { *slave_handle };
         let state_handle: i32 = unsafe { *state_handle };

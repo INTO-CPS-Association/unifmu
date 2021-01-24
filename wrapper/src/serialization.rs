@@ -323,7 +323,7 @@ impl Fmi2CommandRPC for PickleRPC {
     }
 
     fn deserialize(&mut self, bytes: &[u8]) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::Deserialize, bytes))
+        self.send_and_recv((Fmi2SchemalessCommandId::Deserialize, Bytes::new(bytes)))
             .unwrap()
     }
 
