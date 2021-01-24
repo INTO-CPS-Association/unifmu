@@ -41,19 +41,6 @@ if __name__ == "__main__":
 
     s = platform.system()
 
-    integration_tests_executable = (
-        (
-            Path("tests/c_tests/build")
-            / {
-                "Windows": "Debug/integration_tests.exe",
-                "Linux": "integration_tests",
-                "Darwin": "integration_tests",
-            }[s]
-        )
-        .absolute()
-        .__fspath__()
-    )
-    print(integration_tests_executable)
     binary_basename = "unifmu"
 
     # note that lib prefix is removed

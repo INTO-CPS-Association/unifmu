@@ -1,52 +1,18 @@
-use anyhow::Error;
 use serde::de::DeserializeOwned;
 
 use serde_bytes::{ByteBuf, Bytes};
 use serde_repr::Serialize_repr;
-// ----------------------------- Serialization -----------------------------------------------------
-
-// pub trait ObjectSender<T> {
-//     fn send_as_object(
-//         &self,
-//         value: T,
-//         serialization: SerializationFormat,
-//         timeout: Option<i32>,
-//     ) -> Result<(), zmq::Error>;
-// }
-
-// impl<T> ObjectSender<T> for zmq::Socket
-// where
-//     T: serde::ser::Serialize,
-// {
-//     fn send_as_object(
-//         &self,
-//         value: T,
-//         serialization: SerializationFormat,
-//         timeout: Option<i32>,
-//     ) -> Result<(), zmq::Error> {
-//         let data = match serialization {
-//             SerializationFormat::Pickle => {
-//                 serde_pickle::to_vec(&value, true).expect("unable to pickle object")
-//             }
-//             SerializationFormat::Json => {
-//                 serde_json::to_vec(&value).expect("unable to convert object to json")
-//             }
-//         };
-
-//         self.send(&data, 0)
-//     }
-// }
 
 // ---------------------------- Binding ---------------------------
 
 pub trait BindToRandom {
     /// Quality of life function inspired by
     /// https://pyzmq.readthedocs.io/en/latest/api/zmq.html?highlight=bind_random#zmq.Socket.bind_to_random_port
-    fn bind_to_random_port(&self, addr: &str) -> Result<i32, Error>;
+    fn bind_to_random_port(&self, addr: &str) -> Result<i32, String>;
 }
 
 impl BindToRandom for zmq::Socket {
-    fn bind_to_random_port(&self, addr: &str) -> Result<i32, Error> {
+    fn bind_to_random_port(&self, addr: &str) -> Result<i32, String> {
         let connection_str = format!("tcp://{}:*", addr);
         self.bind(&connection_str).unwrap();
 
@@ -56,38 +22,6 @@ impl BindToRandom for zmq::Socket {
         return Ok(port);
     }
 }
-
-// // --------------------- Pickling Traits --------------------------
-
-// pub trait PickleSender<T> {
-//     fn send_as_pickle(&self, value: T) -> Result<(), zmq::Error>;
-// }
-
-// pub trait PickleReceiver<T> {
-//     fn recv_from_pickle(&self) -> Result<T, zmq::Error>;
-// }
-
-// impl<T> PickleSender<T> for zmq::Socket
-// where
-//     T: serde::ser::Serialize,
-// {
-//     fn send_as_pickle(&self, value: T) -> Result<(), zmq::Error> {
-//         let pickle = serde_pickle::to_vec(&value, true).expect("unable to pickle object");
-//         self.send(&pickle, 0)
-//     }
-// }
-
-// impl<'a, T> PickleReceiver<T> for zmq::Socket
-// where
-//     T: serde::de::Deserialize<'a>,
-// {
-//     fn recv_from_pickle(&self) -> Result<T, zmq::Error> {
-//         let bytes = self.recv_bytes(0)?;
-
-//         let value: T = serde_pickle::from_slice(&bytes).expect("unable to un-pickle object");
-//         std::result::Result::Ok(value)
-//     }
-// }
 
 // // -------------------- JSON Traits ------------------------------------
 pub trait JsonSender<T> {
@@ -122,6 +56,7 @@ where
     }
 }
 
+/// Trait implemented by objects that provide a way to communicate with FMUs using 'Remote Procedure Call' (RPC)
 pub trait Fmi2CommandRPC {
     fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32;
     fn fmi2CancelStep(&mut self) -> i32;

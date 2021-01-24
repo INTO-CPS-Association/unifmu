@@ -1,17 +1,18 @@
 #![allow(non_snake_case)]
 #![allow(unreachable_code)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
 use libc::c_double;
 use libc::size_t;
 use once_cell::sync::OnceCell;
 
-use serialization::{Fmi2CommandRPC, PickleRPC};
+use rpc::{Fmi2CommandRPC, PickleRPC};
 use std::ffi::CString;
 use std::fs::read_to_string;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
 use std::os::raw::c_uint;
-use std::os::raw::c_void;
 use std::panic::catch_unwind;
 use std::ptr::null_mut;
 use std::result::Result;
@@ -27,14 +28,14 @@ use url::Url;
 
 pub mod config;
 pub mod fmi2;
-pub mod serialization;
+pub mod rpc;
 
 use crate::config::FullConfig;
 use crate::config::HandshakeInfo;
 use crate::fmi2::Fmi2CallbackFunctions;
 use crate::fmi2::Fmi2Status;
-use crate::serialization::BindToRandom;
-use crate::serialization::JsonReceiver;
+use crate::rpc::BindToRandom;
+use crate::rpc::JsonReceiver;
 
 // ----------------------- Library instantiation and cleanup ---------------------------
 
@@ -47,16 +48,16 @@ pub type Fmi2StatusT = c_int;
 struct StringBuffer {
     array: Vec<CString>,
 }
-unsafe impl Send for StringBuffer {}
-unsafe impl Sync for StringBuffer {}
+// unsafe impl Send for StringBuffer {}
+// unsafe impl Sync for StringBuffer {}
 
 struct Slave {
-    popen: Popen,
+    _popen: Popen,
 
     /// Buffer storing the c-strings returned by `fmi2GetStrings`.
     /// The specs states that the caller should copy the strings to its own memory immidiately after the call has been made.
     /// The reason for this recommendation is that a FMU is allowed to  free or overwrite the memory as soon as another call is made to the FMI interface.
-    string_buffer: StringBuffer,
+    string_buffer: Vec<CString>,
 
     /// Buffer storing 0 or more past state of the slave.
     serialization_buffer: HashMap<StateHandle, Vec<u8>>,
@@ -68,8 +69,8 @@ struct Slave {
 impl Slave {
     fn new(socket: zmq::Socket, popen: Popen) -> Self {
         Self {
-            popen,
-            string_buffer: StringBuffer { array: Vec::new() },
+            _popen: popen,
+            string_buffer: Vec::new(),
             serialization_buffer: HashMap::new(),
             rpc: Box::new(PickleRPC::new(socket)),
         }
@@ -102,53 +103,6 @@ impl<V> InsertNext<V> for HashMap<i32, V> {
         Err(String::from("No free keys available"))
     }
 }
-
-// --------------------------- Utilities functions for communicating with slave ------------------------------
-
-// fn execute_fmi_command_status<T>(slave: &Slave, value: T) -> i32
-// where
-//     T: serde::ser::Serialize + std::panic::UnwindSafe,
-// {
-//     match execute_fmi_command_return::<_, i32>(slave, value) {
-//         Ok(status) => status as i32,
-//         Err(_) => Fmi2Status::Fmi2Error as i32,
-//     }
-// }
-
-// fn execute_fmi_command_return<T, V>(slave: &Slave, value: T) -> Result<V, ()>
-// where
-//     T: serde::ser::Serialize + std::panic::UnwindSafe,
-//     V: serde::de::DeserializeOwned,
-// {
-//     let result_or_panic = catch_unwind(|| {
-//         let format = WRAPPER_CONFIG
-//             .get()
-//             .expect("the configuration is not ready. do not invoke this function prior to setting configuration")
-//             .handshake_info
-//             .serialization_format;
-
-//         slave.socket.send_as_object(value, format, None).unwrap();
-
-//         let bytes = slave.socket.recv_bytes(0).unwrap();
-//         let res: V = match format {
-//             SerializationFormat::Pickle => {
-//                 serde_pickle::from_slice(&bytes).expect("unable to un-pickle object")
-//             }
-//             SerializationFormat::Json => {
-//                 serde_json::from_slice(&bytes).expect("unable to decode json object")
-//             }
-//         };
-//         res
-//     });
-
-//     match result_or_panic {
-//         Ok(value) => Ok(value),
-//         Err(_panic) => {
-//             eprintln!("Failed sending command to slave. a panic was raised during the call");
-//             Err(())
-//         }
-//     }
-// }
 
 // -------------------------------------------------------------------------------------------------------------
 
@@ -420,29 +374,6 @@ pub extern "C" fn fmi2CancelStep(slave_handle: *const SlaveHandle) -> Fmi2Status
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
 
-// fn fmi2GetXXX<T>(slave: &Slave, vr: *const c_uint, nvr: size_t, values: *mut T) -> Fmi2StatusT
-// where
-//     T: serde::de::DeserializeOwned,
-// {
-//     todo!();
-//     // let result_or_panic = catch_unwind(|| {
-//     //     let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-
-//     //     execute_fmi_command_return::<_, Vec<T>>(slave, (FMI2FunctionCode::GetXXX, references))
-//     //         .unwrap()
-//     // });
-
-//     // match result_or_panic {
-//     //     Ok(values_slave) => {
-//     //         unsafe {
-//     //             std::ptr::copy(values_slave.as_ptr(), values, nvr);
-//     //         }
-//     //         Fmi2Status::Fmi2OK as i32
-//     //     }
-//     //     Err(_) => Fmi2Status::Fmi2Error as i32,
-//     // }
-// }
-
 #[no_mangle]
 pub extern "C" fn fmi2GetReal(
     slave_handle: *const SlaveHandle,
@@ -546,7 +477,7 @@ pub extern "C" fn fmi2GetString(
     }
 
     // Convert rust strings to owned c-strings and store in a buffer
-    slave.string_buffer.array = values_recv
+    slave.string_buffer = values_recv
         .unwrap()
         .into_iter()
         .map(|s| CString::new(s).unwrap())
@@ -554,35 +485,13 @@ pub extern "C" fn fmi2GetString(
 
     // write pointers to the newly allocated strings into the buffer allocated above
     unsafe {
-        for (idx, cstr) in slave.string_buffer.array.iter().enumerate() {
+        for (idx, cstr) in slave.string_buffer.iter().enumerate() {
             std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
         }
     }
 
     status
 }
-
-// ------------------------------------- FMI FUNCTIONS (Setters) --------------------------------
-
-/// Generic implementation for `fmi2SetReal`, `fmi2SetInteger`, and `fmi2SetBoolean`, i.e this function is not part of the FMI API
-// fn fmi2SetXXX<T>(slave: &Slave, vr: *const c_uint, nvr: size_t, values: *const T) -> Fmi2StatusT
-// where
-//     T: serde::ser::Serialize + std::panic::RefUnwindSafe,
-// {
-//     todo!();
-
-//     let result_or_panic = catch_unwind(|| {
-//         let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-//         let values = unsafe { std::slice::from_raw_parts(values, nvr) };
-
-//         execute_fmi_command_status(slave, (FMI2FunctionCode::SetXXX, references, values)) as i32
-//     });
-
-//     match result_or_panic {
-//         Ok(status) => status,
-//         Err(_) => Fmi2Status::Fmi2Error as i32,
-//     }
-// }
 
 #[no_mangle]
 pub extern "C" fn fmi2SetReal(
