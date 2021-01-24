@@ -36,12 +36,12 @@ struct Fmi2Api {
         stop_time: c_double,
     ) -> c_int,
 
-    fmi2FreeInstance: extern "C" fn(c: *mut c_int),
+    fmi2FreeInstance: extern "C" fn(slave_handle: *mut c_int),
 
-    fmi2EnterInitializationMode: extern "C" fn(c: *const SlaveHandle) -> c_int,
-    fmi2ExitInitializationMode: extern "C" fn(c: *const SlaveHandle) -> c_int,
-    fmi2Terminate: extern "C" fn(c: *const SlaveHandle) -> c_int,
-    fmi2Reset: extern "C" fn(c: *const SlaveHandle) -> c_int,
+    fmi2EnterInitializationMode: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
+    fmi2ExitInitializationMode: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
+    fmi2Terminate: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
+    fmi2Reset: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
     fmi2GetFMUstate: extern "C" fn(slave_handle: *const c_int, state: *mut *mut c_int) -> c_int,
     fmi2SerializedFMUstateSize: extern "C" fn(
         slave_handle: *const c_int,
@@ -49,60 +49,69 @@ struct Fmi2Api {
         size: *mut size_t,
     ) -> c_int,
 
+    fmi2SetFMUstate: extern "C" fn(c: *const c_int, state: *const c_int) -> c_int,
+
     fmi2GetReal: extern "C" fn(
-        c: *const SlaveHandle,
+        slave_handle: *const SlaveHandle,
         vr: *const c_uint,
         nvr: usize,
         values: *mut c_double,
     ) -> c_int,
 
     fmi2GetInteger: extern "C" fn(
-        c: *const SlaveHandle,
+        slave_handle: *const SlaveHandle,
         vr: *const c_uint,
         nvr: usize,
         values: *mut c_int,
     ) -> c_int,
 
     fmi2GetBoolean: extern "C" fn(
-        c: *const SlaveHandle,
+        slave_handle: *const SlaveHandle,
         vr: *const c_uint,
         nvr: usize,
         values: *mut c_int,
     ) -> c_int,
 
     fmi2GetString: extern "C" fn(
-        c: *const SlaveHandle,
+        slave_handle: *const SlaveHandle,
         vr: *const c_uint,
         nvr: usize,
         values: *const *mut c_char,
     ) -> c_int,
 
     fmi2SetReal: extern "C" fn(
-        c: *const c_int,
+        slave_handle: *const c_int,
         vr: *const c_uint,
         nvr: usize,
         values: *const c_double,
     ) -> c_int,
 
     fmi2SetInteger: extern "C" fn(
-        c: *const c_int,
+        slave_handle: *const c_int,
         vr: *const c_uint,
         nvr: usize,
         values: *const c_int,
     ) -> c_int,
 
     fmi2SetBoolean: extern "C" fn(
-        c: *const c_int,
+        slave_handle: *const c_int,
         vr: *const c_uint,
         nvr: usize,
         values: *const c_int,
     ) -> c_int,
 
     fmi2SetString: extern "C" fn(
-        c: *const c_int,
+        slave_handle: *const c_int,
         vr: *const c_uint,
         nvr: usize,
         values: *const *const c_char,
+    ) -> c_int,
+
+    fmi2DoStep: extern "C" fn(
+        slave_handle: *const SlaveHandle,
+        current: c_double,
+        step_size: c_double,
+        no_set_prior: c_int,
     ) -> c_int,
 }
 
@@ -154,7 +163,9 @@ fn test_adder() {
         let handle = f.fmi2Instantiate(name.cast(), 1, guid.cast(), ptr, None, 0, 0);
         assert_ne!(handle, std::ptr::null_mut());
 
-        let get_and_set = || {
+        // Adder has two inputs and a single output for each data type
+        // for real and integers the output is the sum, for booleans it they are logic AND'ed and strings are concatenated
+        let check_input_outputs = || {
             // reals
             {
                 let mut vals: [c_double; 2] = [-1.0, -1.0];
@@ -244,23 +255,35 @@ fn test_adder() {
 
         let t_start: c_double = 0.0;
         let t_end: c_double = 1.0;
-        assert!(f.fmi2SetupExperiment(handle, 0, 0.0, t_start, 1, t_end) == 0);
-        assert!(f.fmi2EnterInitializationMode(handle) == 0);
-        assert!(f.fmi2ExitInitializationMode(handle) == 0);
+        let step_size: c_double = 0.01;
+        assert_eq!(f.fmi2SetupExperiment(handle, 0, 0.0, t_start, 1, t_end), 0);
+        assert_eq!(f.fmi2EnterInitializationMode(handle), 0);
+        assert_eq!(f.fmi2ExitInitializationMode(handle), 0);
 
-        get_and_set();
+        let mut state_ptr: [*mut i32; 1] = [null_mut()];
 
-        // let mut state_ptr = [null_mut()];
-
-        // assert!(state_ptr[0] == null_mut());
-        // assert!(f.fmi2GetFMUstate(handle, state_ptr.as_mut_ptr()) == 0);
-        // assert!(state_ptr[0] != null_mut());
+        assert_eq!(state_ptr[0], null_mut());
+        assert_eq!(f.fmi2GetFMUstate(handle, state_ptr.as_mut_ptr()), 0);
+        assert_ne!(state_ptr[0], null_mut());
 
         // let state_size: *mut size_t = [0].as_mut_ptr();
 
         // assert!(f.fmi2SerializedFMUstateSize(handle, *state_ptr.as_mut_ptr(), state_size) == 0);
         // assert!(state_size != null_mut());
         // assert!(*state_size > 0); // not required by spec, but is reasonable assumption
+
+        // check_input_outputs();
+
+        // let mut cur_time: c_double = t_start;
+
+        // for _ in 0..100 {
+        //     assert_eq!(f.fmi2DoStep(handle, cur_time, step_size, 0), 0);
+        //     cur_time += step_size;
+        // }
+
+        // // roll back to initial state, then check if it behaves as newly intialized
+        // assert_eq!(f.fmi2SetFMUstate(handle, state_ptr[0]), 0);
+        // check_input_outputs();
 
         // No way to check if actually freed
         f.fmi2FreeInstance(handle);
