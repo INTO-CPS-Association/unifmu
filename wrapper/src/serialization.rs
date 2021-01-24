@@ -1,7 +1,7 @@
 use anyhow::Error;
 use serde::de::DeserializeOwned;
 
-use serde_bytes::Bytes;
+use serde_bytes::{ByteBuf, Bytes};
 use serde_repr::Serialize_repr;
 // ----------------------------- Serialization -----------------------------------------------------
 
@@ -315,12 +315,14 @@ impl Fmi2CommandRPC for PickleRPC {
     }
 
     fn serialize(&mut self) -> (i32, Option<Vec<u8>>) {
-        self.send_and_recv((Fmi2SchemalessCommandId::Serialize,))
-            .unwrap()
+        // wrap in ByteBuf to serialize bytes as bytes rather than sequence
+        let (status, bytes): (i32, Option<ByteBuf>) = self
+            .send_and_recv((Fmi2SchemalessCommandId::Serialize,))
+            .unwrap();
+        (status, bytes.and_then(|bb| Some(bb.to_vec())))
     }
 
     fn deserialize(&mut self, bytes: &[u8]) -> i32 {
-        let bytes = Bytes::new(bytes);
         self.send_and_recv((Fmi2SchemalessCommandId::Deserialize, bytes))
             .unwrap()
     }

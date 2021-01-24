@@ -122,5 +122,5 @@ if __name__ == "__main__":
 
         elif kind == 2:
 
-            command_socket.send_pyobj(Fmi2Status.ok)
+            command_socket.send_pyobj(None)
             sys.exit(0)

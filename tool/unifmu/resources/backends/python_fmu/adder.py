@@ -33,7 +33,7 @@ class Adder(Fmi2FMU):
                 self.string_b,
             )
         )
-        return bytes, Fmi2Status.ok
+        return Fmi2Status.ok, bytes
 
     def deserialize(self, bytes) -> int:
         (
