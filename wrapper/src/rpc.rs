@@ -7,6 +7,8 @@ use config::zmq::SerializationFormat::{Pickle, Protobuf};
 use flatbuffers::FlatBufferBuilder;
 use serde::de::DeserializeOwned;
 
+use crate::Fmi2Status;
+
 use self::config::{
     zmq::{HandshakeInfo, SerializationFormat},
     RpcConfig, RpcConfigType,
@@ -122,33 +124,33 @@ where
 
 /// Trait implemented by objects that provide a way to communicate with FMUs using 'Remote Procedure Call' (RPC)
 pub trait Fmi2CommandRPC {
-    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32;
-    fn fmi2CancelStep(&mut self) -> i32;
-    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> i32;
+    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> Fmi2Status;
+    fn fmi2CancelStep(&mut self) -> Fmi2Status;
+    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> Fmi2Status;
     fn fmi2SetupExperiment(
         &mut self,
         start_time: f64,
         stop_time: Option<f64>,
         tolerance: Option<f64>,
-    ) -> i32;
-    fn fmi2EnterInitializationMode(&mut self) -> i32;
-    fn fmi2ExitInitializationMode(&mut self) -> i32;
-    fn fmi2Terminate(&mut self) -> i32;
-    fn fmi2Reset(&mut self) -> i32;
+    ) -> Fmi2Status;
+    fn fmi2EnterInitializationMode(&mut self) -> Fmi2Status;
+    fn fmi2ExitInitializationMode(&mut self) -> Fmi2Status;
+    fn fmi2Terminate(&mut self) -> Fmi2Status;
+    fn fmi2Reset(&mut self) -> Fmi2Status;
 
-    fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> i32;
-    fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> i32;
-    fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> i32;
-    fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> i32;
+    fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> Fmi2Status;
+    fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> Fmi2Status;
+    fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> Fmi2Status;
+    fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> Fmi2Status;
 
     // TODO add status to return
-    fn fmi2GetReal(&mut self, references: &[u32]) -> (i32, Option<Vec<f64>>);
-    fn fmi2GetInteger(&mut self, references: &[u32]) -> (i32, Option<Vec<i32>>);
-    fn fmi2GetBoolean(&mut self, references: &[u32]) -> (i32, Option<Vec<bool>>);
-    fn fmi2GetString(&mut self, references: &[u32]) -> (i32, Option<Vec<String>>);
+    fn fmi2GetReal(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<f64>>);
+    fn fmi2GetInteger(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<i32>>);
+    fn fmi2GetBoolean(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<bool>>);
+    fn fmi2GetString(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<String>>);
 
-    fn serialize(&mut self) -> (i32, Option<Vec<u8>>);
-    fn deserialize(&mut self, bytes: &[u8]) -> i32;
+    fn serialize(&mut self) -> (Fmi2Status, Option<Vec<u8>>);
+    fn deserialize(&mut self, bytes: &[u8]) -> Fmi2Status;
 
     fn fmi2FreeInstance(&mut self);
 }
@@ -198,15 +200,15 @@ impl ProtobufRPC {
 }
 
 impl Fmi2CommandRPC for ProtobufRPC {
-    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32 {
+    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2CancelStep(&mut self) -> i32 {
+    fn fmi2CancelStep(&mut self) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> i32 {
+    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> Fmi2Status {
         todo!()
     }
 
@@ -215,63 +217,63 @@ impl Fmi2CommandRPC for ProtobufRPC {
         start_time: f64,
         stop_time: Option<f64>,
         tolerance: Option<f64>,
-    ) -> i32 {
+    ) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2EnterInitializationMode(&mut self) -> i32 {
+    fn fmi2EnterInitializationMode(&mut self) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2ExitInitializationMode(&mut self) -> i32 {
+    fn fmi2ExitInitializationMode(&mut self) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2Terminate(&mut self) -> i32 {
+    fn fmi2Terminate(&mut self) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2Reset(&mut self) -> i32 {
+    fn fmi2Reset(&mut self) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> i32 {
+    fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> i32 {
+    fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> i32 {
+    fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> i32 {
+    fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2GetReal(&mut self, references: &[u32]) -> (i32, Option<Vec<f64>>) {
+    fn fmi2GetReal(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<f64>>) {
         todo!()
     }
 
-    fn fmi2GetInteger(&mut self, references: &[u32]) -> (i32, Option<Vec<i32>>) {
+    fn fmi2GetInteger(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<i32>>) {
         todo!()
     }
 
-    fn fmi2GetBoolean(&mut self, references: &[u32]) -> (i32, Option<Vec<bool>>) {
+    fn fmi2GetBoolean(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<bool>>) {
         todo!()
     }
 
-    fn fmi2GetString(&mut self, references: &[u32]) -> (i32, Option<Vec<String>>) {
+    fn fmi2GetString(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<String>>) {
         todo!()
     }
 
-    fn serialize(&mut self) -> (i32, Option<Vec<u8>>) {
+    fn serialize(&mut self) -> (Fmi2Status, Option<Vec<u8>>) {
         todo!()
     }
 
-    fn deserialize(&mut self, bytes: &[u8]) -> i32 {
+    fn deserialize(&mut self, bytes: &[u8]) -> Fmi2Status {
         todo!()
     }
 
@@ -320,27 +322,29 @@ impl ZMQSchemalessRPC {
 }
 
 impl Fmi2CommandRPC for ZMQSchemalessRPC {
-    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32 {
-        self.send_and_recv((
+    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((
             Fmi2SchemalessCommandId::DoStep,
             current_time,
             step_size,
             no_step_prior,
         ))
         .unwrap()
+        .into()
     }
 
-    fn fmi2CancelStep(&mut self) -> i32 {
+    fn fmi2CancelStep(&mut self) -> Fmi2Status {
         todo!()
     }
 
-    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> i32 {
-        self.send_and_recv((
+    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((
             Fmi2SchemalessCommandId::SetDebugLogging,
             categories,
             logging_on,
         ))
         .unwrap()
+        .into()
     }
 
     fn fmi2SetupExperiment(
@@ -348,87 +352,105 @@ impl Fmi2CommandRPC for ZMQSchemalessRPC {
         start_time: f64,
         stop_time: Option<f64>,
         tolerance: Option<f64>,
-    ) -> i32 {
-        self.send_and_recv((
+    ) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((
             Fmi2SchemalessCommandId::SetupExperiement,
             start_time,
             stop_time,
             tolerance,
         ))
         .unwrap()
+        .into()
     }
 
-    fn fmi2EnterInitializationMode(&mut self) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::EnterInitializationMode,))
+    fn fmi2EnterInitializationMode(&mut self) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::EnterInitializationMode,))
             .unwrap()
+            .into()
     }
 
-    fn fmi2ExitInitializationMode(&mut self) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::ExitInitializationMode,))
+    fn fmi2ExitInitializationMode(&mut self) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::ExitInitializationMode,))
             .unwrap()
+            .into()
     }
 
-    fn fmi2Terminate(&mut self) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::Terminate,))
+    fn fmi2Terminate(&mut self) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::Terminate,))
             .unwrap()
+            .into()
     }
 
-    fn fmi2Reset(&mut self) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::Reset,))
+    fn fmi2Reset(&mut self) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::Reset,))
             .unwrap()
+            .into()
     }
 
-    fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::SetXXX, references, values))
+    fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
+            .into()
     }
 
-    fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::SetXXX, references, values))
+    fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
+            .into()
     }
 
-    fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::SetXXX, references, values))
+    fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
+            .into()
     }
 
-    fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::SetXXX, references, values))
+    fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
+            .into()
     }
 
-    fn fmi2GetReal(&mut self, references: &[u32]) -> (i32, Option<Vec<f64>>) {
-        self.send_and_recv((Fmi2SchemalessCommandId::GetXXX, references))
-            .unwrap()
-    }
-
-    fn fmi2GetInteger(&mut self, references: &[u32]) -> (i32, Option<Vec<i32>>) {
-        self.send_and_recv((Fmi2SchemalessCommandId::GetXXX, references))
-            .unwrap()
-    }
-
-    fn fmi2GetBoolean(&mut self, references: &[u32]) -> (i32, Option<Vec<bool>>) {
-        self.send_and_recv((Fmi2SchemalessCommandId::GetXXX, references))
-            .unwrap()
-    }
-
-    fn fmi2GetString(&mut self, references: &[u32]) -> (i32, Option<Vec<String>>) {
-        self.send_and_recv((Fmi2SchemalessCommandId::GetXXX, references))
-            .unwrap()
-    }
-
-    fn serialize(&mut self) -> (i32, Option<Vec<u8>>) {
-        // wrap in ByteBuf to serialize bytes as bytes rather than sequence
-        let (status, bytes): (i32, Option<ByteBuf>) = self
-            .send_and_recv((Fmi2SchemalessCommandId::Serialize,))
+    fn fmi2GetReal(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<f64>>) {
+        let (status, values) = self
+            .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
             .unwrap();
-        (status, bytes.and_then(|bb| Some(bb.to_vec())))
+        (status.into(), values)
     }
 
-    fn deserialize(&mut self, bytes: &[u8]) -> i32 {
-        self.send_and_recv((Fmi2SchemalessCommandId::Deserialize, Bytes::new(bytes)))
+    fn fmi2GetInteger(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<i32>>) {
+        let (status, values) = self
+            .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
+            .unwrap();
+        (status.into(), values)
+    }
+
+    fn fmi2GetBoolean(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<bool>>) {
+        let (status, values) = self
+            .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
+            .unwrap();
+        (status.into(), values)
+    }
+
+    fn fmi2GetString(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<String>>) {
+        let (status, values) = self
+            .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
+            .unwrap();
+        (status.into(), values)
+    }
+
+    fn serialize(&mut self) -> (Fmi2Status, Option<Vec<u8>>) {
+        // wrap in ByteBuf to serialize bytes as bytes rather than sequence
+        let (status, bytes) = self
+            .send_and_recv::<_, (i32, Option<ByteBuf>)>((Fmi2SchemalessCommandId::Serialize,))
+            .unwrap();
+        (status.into(), bytes.and_then(|bb| Some(bb.to_vec())))
+    }
+
+    fn deserialize(&mut self, bytes: &[u8]) -> Fmi2Status {
+        self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::Deserialize, Bytes::new(bytes)))
             .unwrap()
+            .into()
     }
 
     fn fmi2FreeInstance(&mut self) {

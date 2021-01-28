@@ -21,6 +21,7 @@ lazy_static = "*"
 libc = "*"
 num_enum = "*"
 once_cell = "*"
+safer-ffi = {version = "*", features = ["proc_macros"]}
 serde = {version = "*", features = ["derive"]}
 serde-pickle = "*"
 serde_bytes = "*"

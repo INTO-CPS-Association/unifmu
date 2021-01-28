@@ -11,7 +11,7 @@ use std::{
     ffi::{CStr, CString},
     ptr::null_mut,
 };
-use unifmu::{fmi2::Fmi2CallbackFunctions, SlaveHandle};
+use unifmu::{Fmi2CallbackFunctions, SlaveHandle};
 #[derive(WrapperApi)]
 struct Fmi2Api {
     fmi2GetTypesPlatform: extern "C" fn() -> *const c_char,
