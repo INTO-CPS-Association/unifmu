@@ -1,47 +1,70 @@
+use std::{
+    panic::{RefUnwindSafe, UnwindSafe},
+    path::PathBuf,
+};
+
+use config::zmq::SerializationFormat::{Pickle, Protobuf};
 use flatbuffers::FlatBufferBuilder;
 use serde::de::DeserializeOwned;
 
+use self::config::{
+    zmq::{HandshakeInfo, SerializationFormat},
+    RpcConfig, RpcConfigType,
+};
+use lazy_static::lazy_static;
 use serde_bytes::{ByteBuf, Bytes};
 use serde_repr::Serialize_repr;
+use subprocess::Popen;
+use subprocess::PopenConfig;
 
-use serde::Deserialize;
-
-#[derive(Deserialize, Debug, Clone, Copy)]
-pub enum SerializationFormat {
-    Pickle,
-    Protobuf,
-    Json,
+lazy_static! {
+    static ref ZMQ_CONTEXT: zmq::Context = zmq::Context::new();
 }
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct Command {
-    pub windows: Vec<String>,
-    pub linux: Vec<String>,
-    pub macos: Vec<String>,
-}
+pub mod config {
+    use serde::Deserialize;
 
-#[derive(Deserialize, Debug, Clone, Copy)]
-pub struct Timeout {
-    pub command: i32,
-    pub launch: i32,
-}
+    #[derive(Deserialize, Clone, Debug)]
+    pub enum RpcConfigType {
+        Zmq(zmq::ZMQConfig),
+        Grpc(grpc::GRPCConfig),
+    }
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct LaunchConfig {
-    pub command: Command,
-    pub timeout: Timeout,
-}
+    #[derive(Deserialize, Debug, Clone)]
+    pub struct RpcConfig {
+        pub command: RpcConfigType,
+    }
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct HandshakeInfo {
-    pub serialization_format: SerializationFormat,
-    pub command_endpoint: String,
-}
+    pub mod zmq {
 
-#[derive(Debug, Clone)]
-pub struct FullConfig {
-    pub launch_config: LaunchConfig,
-    pub handshake_info: HandshakeInfo,
+        #[derive(serde::Deserialize, Debug, Clone)]
+        pub struct ZMQConfig {
+            pub windows: Vec<String>,
+            pub linux: Vec<String>,
+            pub macos: Vec<String>,
+            pub serialization_format: SerializationFormat,
+        }
+
+        #[derive(serde::Deserialize, Debug, Clone, Copy)]
+        pub enum SerializationFormat {
+            Pickle,
+            Protobuf,
+            Json,
+        }
+
+        #[derive(serde::Deserialize, Debug, Clone)]
+        pub struct HandshakeInfo {
+            pub serialization_format: SerializationFormat,
+            pub command_endpoint: String,
+        }
+    }
+
+    mod grpc {
+        #[derive(serde::Deserialize, Debug, Clone)]
+        pub struct GRPCConfig {
+            pub dummy: String,
+        }
+    }
 }
 
 // ---------------------------- Binding ---------------------------
@@ -175,7 +198,9 @@ impl ProtobufRPC {
 }
 
 impl Fmi2CommandRPC for ProtobufRPC {
-    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32 {}
+    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32 {
+        todo!()
+    }
 
     fn fmi2CancelStep(&mut self) -> i32 {
         todo!()
@@ -260,13 +285,19 @@ impl Fmi2CommandRPC for ProtobufRPC {
 /// - serde: https://serde.rs/
 /// - serde_pickle: https://docs.rs/serde-pickle/
 /// - cpython docs: https://docs.python.org/3/library/pickle.html
-pub struct PickleRPC {
+pub struct ZMQSchemalessRPC {
     socket: zmq::Socket,
+    process: Popen,
+    serialization: SerializationFormat,
 }
 
-impl PickleRPC {
-    pub fn new(socket: zmq::Socket) -> Self {
-        Self { socket }
+impl ZMQSchemalessRPC {
+    pub fn new(socket: zmq::Socket, process: Popen, serialization: SerializationFormat) -> Self {
+        Self {
+            socket,
+            process,
+            serialization,
+        }
     }
 
     fn send_and_recv<T, V>(&self, value: T) -> Result<V, zmq::Error>
@@ -288,7 +319,7 @@ impl PickleRPC {
     }
 }
 
-impl Fmi2CommandRPC for PickleRPC {
+impl Fmi2CommandRPC for ZMQSchemalessRPC {
     fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32 {
         self.send_and_recv((
             Fmi2SchemalessCommandId::DoStep,
@@ -403,5 +434,65 @@ impl Fmi2CommandRPC for PickleRPC {
     fn fmi2FreeInstance(&mut self) {
         self.send_and_recv((Fmi2SchemalessCommandId::FreeInstance,))
             .unwrap()
+    }
+}
+
+/// Instantiate a slave using the procedure specified by the configuration.
+pub fn initialize_slave_from_config(
+    config: RpcConfig,
+    resources_dir: PathBuf,
+) -> Result<Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe>, String> {
+    match config.command {
+        RpcConfigType::Zmq(config) => {
+            let handshake_socket = ZMQ_CONTEXT
+                .socket(zmq::PULL)
+                .expect("Unable to create handshake");
+            let command_socket = ZMQ_CONTEXT.socket(zmq::REQ).unwrap();
+            let handshake_port = handshake_socket.bind_to_random_port("*").unwrap();
+
+            // to start the slave-process the os-specific launch command is read from the launch.toml file
+            // in addition to the manually specified arguments, the endpoint of the wrappers handshake socket is appended to the args
+            // specifically the argument appended is  "--handshake-endpoint tcp://..."
+            let mut command = match std::env::consts::OS {
+                "windows" => config.windows.clone(),
+                "macos" => config.macos.clone(),
+                _ => config.linux.clone(),
+            };
+
+            command.push("--handshake-endpoint".to_string());
+            let endpoint = format!("tcp://localhost:{:?}", handshake_port);
+            command.push(endpoint.to_string());
+
+            let popen = Popen::create(
+            &command,
+            PopenConfig {
+                cwd: Some(resources_dir.as_os_str().to_owned()),
+                ..Default::default()
+            },
+        )
+        .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", command));
+
+            let handshake_info: HandshakeInfo = handshake_socket
+                .recv_from_json()
+                .expect("Failed to read and parse handshake information sent by slave");
+
+            command_socket
+                .connect(&handshake_info.command_endpoint)
+                .expect(&format!(
+            "unable to establish a connection to the slave's command socket with endpoint '{:?}'",
+            handshake_info.command_endpoint
+        ));
+
+            // Choose rpc implementation based on handshake from slave
+            let rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe> = Box::new(
+                ZMQSchemalessRPC::new(command_socket, popen, config.serialization_format),
+            );
+
+            Ok(rpc)
+        }
+
+        RpcConfigType::Grpc(_) => {
+            todo!();
+        }
     }
 }

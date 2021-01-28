@@ -1,8 +1,5 @@
-[command]
-windows = [ "python", "launch.py" ]
-linux = [ "python3", "launch.py" ]
-macos = ["python3","launch.py"]
-
-[timeout]
-launch = 500
-command = 500
+[command.Zmq]
+linux = ["python3", "launch.py"]
+macos = ["python3", "launch.py"]
+serialization_format = "Pickle"
+windows = ["python", "launch.py"]

@@ -5,10 +5,9 @@
 
 use libc::c_double;
 use libc::size_t;
-use once_cell::sync::OnceCell;
-use rpc::{ProtobufRPC, LaunchConfig};
 
-use rpc::{Fmi2CommandRPC, PickleRPC};
+use rpc::{config::RpcConfig, initialize_slave_from_config, Fmi2CommandRPC};
+
 use std::ffi::CString;
 use std::fs::read_to_string;
 use std::os::raw::c_char;
@@ -22,8 +21,7 @@ use std::{collections::HashMap, panic::UnwindSafe};
 use std::{ffi::CStr, panic::RefUnwindSafe};
 
 use lazy_static::lazy_static;
-use subprocess::Popen;
-use subprocess::PopenConfig;
+
 use toml;
 use url::Url;
 
@@ -32,10 +30,6 @@ pub mod rpc;
 
 use crate::fmi2::Fmi2CallbackFunctions;
 use crate::fmi2::Fmi2Status;
-use crate::rpc::BindToRandom;
-use crate::rpc::FullConfig;
-use crate::rpc::HandshakeInfo;
-use crate::rpc::JsonReceiver;
 
 // ----------------------- Library instantiation and cleanup ---------------------------
 
@@ -44,16 +38,7 @@ pub type SlaveHandle = i32;
 pub type StateHandle = i32;
 pub type Fmi2StatusT = c_int;
 
-// https://users.rust-lang.org/t/share-mut-t-between-threads-wrapped-in-mutex/19621/2
-struct StringBuffer {
-    array: Vec<CString>,
-}
-// unsafe impl Send for StringBuffer {}
-// unsafe impl Sync for StringBuffer {}
-
 struct Slave {
-    _popen: Popen,
-
     /// Buffer storing the c-strings returned by `fmi2GetStrings`.
     /// The specs states that the caller should copy the strings to its own memory immidiately after the call has been made.
     /// The reason for this recommendation is that a FMU is allowed to  free or overwrite the memory as soon as another call is made to the FMI interface.
@@ -67,10 +52,9 @@ struct Slave {
 }
 
 impl Slave {
-    fn new(rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe>, popen: Popen) -> Self {
+    fn new(rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe>) -> Self {
         Self {
             rpc,
-            _popen: popen,
             string_buffer: Vec::new(),
             serialization_buffer: HashMap::new(),
         }
@@ -78,7 +62,6 @@ impl Slave {
 }
 
 lazy_static! {
-    static ref ZMQ_CONTEXT: zmq::Context = zmq::Context::new();
     static ref SLAVES: Mutex<HashMap<SlaveHandle, Slave>> = Mutex::new(HashMap::new());
 }
 
@@ -178,62 +161,17 @@ pub extern "C" fn fmi2Instantiate(
             config_path
         ));
 
-        let config: rpc::LaunchConfig = toml::from_str(config.as_str())
+        let config: RpcConfig = toml::from_str(config.as_str())
             .expect("configuration file was opened, but contents were not valid toml");
 
         // creating a handshake-socket which is used by the slave-process to pass connection strings back to the wrapper
 
-        let handshake_socket = ZMQ_CONTEXT
-            .socket(zmq::PULL)
-            .expect("Unable to create handshake");
-        let command_socket = ZMQ_CONTEXT.socket(zmq::REQ).unwrap();
-        let handshake_port = handshake_socket.bind_to_random_port("*").unwrap();
-
-        // to start the slave-process the os-specific launch command is read from the launch.toml file
-        // in addition to the manually specified arguments, the endpoint of the wrappers handshake socket is appended to the args
-        // specifically the argument appended is  "--handshake-endpoint tcp://..."
-        let mut command = match std::env::consts::OS {
-            "windows" => config.command.windows.clone(),
-            "macos" => config.command.macos.clone(),
-            _ => config.command.linux.clone(),
-        };
-
-        command.push("--handshake-endpoint".to_string());
-        let endpoint = format!("tcp://localhost:{:?}", handshake_port);
-        command.push(endpoint.to_string());
-
-        let popen = Popen::create(
-            &command,
-            PopenConfig {
-                cwd: Some(resources_dir.as_os_str().to_owned()),
-                ..Default::default()
-            },
-        )
-        .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", command));
-
-        let handshake_info: HandshakeInfo = handshake_socket
-            .recv_from_json()
-            .expect("Failed to read and parse handshake information sent by slave");
-
-        command_socket
-            .connect(&handshake_info.command_endpoint)
-            .expect(&format!(
-            "unable to establish a connection to the slave's command socket with endpoint '{:?}'",
-            handshake_info.command_endpoint
+        let rpc = initialize_slave_from_config(config, resources_dir).expect(&format!(
+            "Something went wrong during instantiation of the slave using the configuration defined in 'launch.toml' file. Common causes are missing runtime dependencies or incorrect paths."
         ));
 
-        // Choose rpc implementation based on handshake from slave
-        let rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe> =
-            match handshake_info.serialization_format {
-                rpc::SerializationFormat::Pickle => Box::new(PickleRPC::new(command_socket)),
-                rpc::SerializationFormat::Json => {
-                    todo!()
-                }
-                rpc::SerializationFormat::Protobuf => Box::new(ProtobufRPC::new(command_socket)),
-            };
-
         let mut slaves = SLAVES.lock().unwrap();
-        slaves.insert_next(Slave::new(rpc, popen)).unwrap()
+        slaves.insert_next(Slave::new(rpc)).unwrap()
     });
 
     match panic_result {
