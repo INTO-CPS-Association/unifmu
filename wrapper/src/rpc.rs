@@ -1,7 +1,48 @@
+use flatbuffers::FlatBufferBuilder;
 use serde::de::DeserializeOwned;
 
 use serde_bytes::{ByteBuf, Bytes};
 use serde_repr::Serialize_repr;
+
+use serde::Deserialize;
+
+#[derive(Deserialize, Debug, Clone, Copy)]
+pub enum SerializationFormat {
+    Pickle,
+    Protobuf,
+    Json,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct Command {
+    pub windows: Vec<String>,
+    pub linux: Vec<String>,
+    pub macos: Vec<String>,
+}
+
+#[derive(Deserialize, Debug, Clone, Copy)]
+pub struct Timeout {
+    pub command: i32,
+    pub launch: i32,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct LaunchConfig {
+    pub command: Command,
+    pub timeout: Timeout,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct HandshakeInfo {
+    pub serialization_format: SerializationFormat,
+    pub command_endpoint: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct FullConfig {
+    pub launch_config: LaunchConfig,
+    pub handshake_info: HandshakeInfo,
+}
 
 // ---------------------------- Binding ---------------------------
 
@@ -115,6 +156,103 @@ enum Fmi2SchemalessCommandId {
     DoStep = 14,
     CancelStep = 15,
     GetXXXStatus = 16,
+}
+
+/// Perform rpc using through zmq and flatbuffers, a schema based serialization format similar to protocol buffers.
+/// https://google.github.io/flatbuffers/
+pub struct ProtobufRPC {
+    socket: zmq::Socket,
+    builder: flatbuffers::FlatBufferBuilder<'static>,
+}
+
+impl ProtobufRPC {
+    pub fn new(socket: zmq::Socket) -> Self {
+        Self {
+            socket,
+            builder: FlatBufferBuilder::new(),
+        }
+    }
+}
+
+impl Fmi2CommandRPC for ProtobufRPC {
+    fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> i32 {}
+
+    fn fmi2CancelStep(&mut self) -> i32 {
+        todo!()
+    }
+
+    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> i32 {
+        todo!()
+    }
+
+    fn fmi2SetupExperiment(
+        &mut self,
+        start_time: f64,
+        stop_time: Option<f64>,
+        tolerance: Option<f64>,
+    ) -> i32 {
+        todo!()
+    }
+
+    fn fmi2EnterInitializationMode(&mut self) -> i32 {
+        todo!()
+    }
+
+    fn fmi2ExitInitializationMode(&mut self) -> i32 {
+        todo!()
+    }
+
+    fn fmi2Terminate(&mut self) -> i32 {
+        todo!()
+    }
+
+    fn fmi2Reset(&mut self) -> i32 {
+        todo!()
+    }
+
+    fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> i32 {
+        todo!()
+    }
+
+    fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> i32 {
+        todo!()
+    }
+
+    fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> i32 {
+        todo!()
+    }
+
+    fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> i32 {
+        todo!()
+    }
+
+    fn fmi2GetReal(&mut self, references: &[u32]) -> (i32, Option<Vec<f64>>) {
+        todo!()
+    }
+
+    fn fmi2GetInteger(&mut self, references: &[u32]) -> (i32, Option<Vec<i32>>) {
+        todo!()
+    }
+
+    fn fmi2GetBoolean(&mut self, references: &[u32]) -> (i32, Option<Vec<bool>>) {
+        todo!()
+    }
+
+    fn fmi2GetString(&mut self, references: &[u32]) -> (i32, Option<Vec<String>>) {
+        todo!()
+    }
+
+    fn serialize(&mut self) -> (i32, Option<Vec<u8>>) {
+        todo!()
+    }
+
+    fn deserialize(&mut self, bytes: &[u8]) -> i32 {
+        todo!()
+    }
+
+    fn fmi2FreeInstance(&mut self) {
+        todo!()
+    }
 }
 
 /// Perform remote procedure calls through using zmq and Python's pickle serialization format.

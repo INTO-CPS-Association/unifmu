@@ -212,7 +212,6 @@ Building the project requires the following programs:
 
 - python3
 - cargo
-- cmake
 
 A utility script, `build.py`, is located in the root of the repository.
 

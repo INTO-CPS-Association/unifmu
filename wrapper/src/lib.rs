@@ -6,6 +6,7 @@
 use libc::c_double;
 use libc::size_t;
 use once_cell::sync::OnceCell;
+use rpc::{ProtobufRPC, LaunchConfig};
 
 use rpc::{Fmi2CommandRPC, PickleRPC};
 use std::ffi::CString;
@@ -26,15 +27,14 @@ use subprocess::PopenConfig;
 use toml;
 use url::Url;
 
-pub mod config;
 pub mod fmi2;
 pub mod rpc;
 
-use crate::config::FullConfig;
-use crate::config::HandshakeInfo;
 use crate::fmi2::Fmi2CallbackFunctions;
 use crate::fmi2::Fmi2Status;
 use crate::rpc::BindToRandom;
+use crate::rpc::FullConfig;
+use crate::rpc::HandshakeInfo;
 use crate::rpc::JsonReceiver;
 
 // ----------------------- Library instantiation and cleanup ---------------------------
@@ -67,12 +67,12 @@ struct Slave {
 }
 
 impl Slave {
-    fn new(socket: zmq::Socket, popen: Popen) -> Self {
+    fn new(rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe>, popen: Popen) -> Self {
         Self {
+            rpc,
             _popen: popen,
             string_buffer: Vec::new(),
             serialization_buffer: HashMap::new(),
-            rpc: Box::new(PickleRPC::new(socket)),
         }
     }
 }
@@ -81,10 +81,6 @@ lazy_static! {
     static ref ZMQ_CONTEXT: zmq::Context = zmq::Context::new();
     static ref SLAVES: Mutex<HashMap<SlaveHandle, Slave>> = Mutex::new(HashMap::new());
 }
-
-/// Contents of configuration file located in resources directory are written into this variable
-/// This happens in the first call to `fmi2Instantiate`
-static WRAPPER_CONFIG: OnceCell<config::FullConfig> = OnceCell::new();
 
 trait InsertNext<V> {
     /// Insert value into map at the next available entry and return a handle to the element
@@ -159,14 +155,12 @@ pub extern "C" fn fmi2Instantiate(
 ) -> *const SlaveHandle {
     let panic_result: Result<i32, _> = catch_unwind(|| {
         // To load the fmu we need to extract the resources directory from the uri path to instantiate
-
         let resource_location_cstr = unsafe { CStr::from_ptr(fmu_resource_location) };
         let resource_location_utf8 = resource_location_cstr.to_str().expect(&format!(
             "Unable to convert resource uri c-string to utf8, got '{:?}'.",
             &resource_location_cstr
         ));
 
-        // locate resource directory
         let resource_uri = Url::parse(&resource_location_utf8).expect(&format!(
             "Unable to parse the specified file URI, got: '{:?}'.",
             resource_location_utf8,
@@ -184,7 +178,7 @@ pub extern "C" fn fmi2Instantiate(
             config_path
         ));
 
-        let config: config::LaunchConfig = toml::from_str(config.as_str())
+        let config: rpc::LaunchConfig = toml::from_str(config.as_str())
             .expect("configuration file was opened, but contents were not valid toml");
 
         // creating a handshake-socket which is used by the slave-process to pass connection strings back to the wrapper
@@ -221,12 +215,6 @@ pub extern "C" fn fmi2Instantiate(
             .recv_from_json()
             .expect("Failed to read and parse handshake information sent by slave");
 
-        // intialize configuration, in case it has not been done before.
-        // In practice just try to set it and ignore the potential error indicating that it was full
-        let _ = WRAPPER_CONFIG.set(FullConfig {
-            launch_config: config.clone(),
-            handshake_info: handshake_info.clone(),
-        });
         command_socket
             .connect(&handshake_info.command_endpoint)
             .expect(&format!(
@@ -234,15 +222,18 @@ pub extern "C" fn fmi2Instantiate(
             handshake_info.command_endpoint
         ));
 
-        // associate a numerical id with each slave and its corresponding socket(s)
+        // Choose rpc implementation based on handshake from slave
+        let rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe> =
+            match handshake_info.serialization_format {
+                rpc::SerializationFormat::Pickle => Box::new(PickleRPC::new(command_socket)),
+                rpc::SerializationFormat::Json => {
+                    todo!()
+                }
+                rpc::SerializationFormat::Protobuf => Box::new(ProtobufRPC::new(command_socket)),
+            };
 
         let mut slaves = SLAVES.lock().unwrap();
-
-        let handle = slaves
-            .insert_next(Slave::new(command_socket, popen))
-            .unwrap();
-
-        handle
+        slaves.insert_next(Slave::new(rpc, popen)).unwrap()
     });
 
     match panic_result {

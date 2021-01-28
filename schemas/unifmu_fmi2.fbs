@@ -1,27 +1,25 @@
-namespace flatbuffers;
-
-
+namespace unifmu_flatbuffers;
 
 
 // Argument types
 // i.e. messages sent from wrapper to slave
-table SetDebugLoggingArgs
+table SetDebugLogging
 {
   categories: [string];
   logging_on: bool; 
 }
 
-table FreeInstanceArgs {}
+table FreeInstance {}
 
-table EnterInitializationModeArgs {}
+table EnterInitializationMode {}
 
-table ExitInitializationModeArgs {}
+table ExitInitializationMode {}
 
-table TerminateArgs {}
+table Terminate {}
 
-table ResetArgs {}
+table Reset {}
 
-table SetupExperimentArgs
+table SetupExperiment
 {
   start_time: double;
 
@@ -36,102 +34,102 @@ table SetupExperimentArgs
   has_tolerance: bool;
 }
 
-table SetRealArgs
+table SetReal
 {
   references:[int] (required);
   values: [double] (required);
 }
 
-table SetIntegerArgs
+table SetInteger
 {
   references:[int] (required);
   values: [int] (required);
 }
 
-table SetBooleanArgs
+table SetBoolean
 {
   references:[int] (required);
   values: [bool] (required);
 }
 
-table SetStringArgs
+table SetString
 {
   references:[int] (required);
   values: [string] (required);
 }
 
-table GetRealArgs
+table GetReal
 {
   references: [int] (required);
 }
-table GetIntegerArgs
+table GetInteger
 {
   references: [int] (required);
 }
-table GetBooleanArgs
+table GetBoolean
 {
   references: [int] (required);
 }
-table GetStringArgs
+table GetString
 {
   references: [int] (required);
 }
 
-table SerializeArgs {}
+table Serialize {}
 
-table DeserializeArgs {
+table Deserialize {
   state: [byte] (required);
 }
 
-table GetDirectionalDerivativesArgs {}
+table GetDirectionalDerivatives {}
 
-table SetInputDerivativesArgs {}
+table SetInputDerivatives {}
 
-table GetOutputDerivitivesArgs {}
+table GetOutputDerivitives {}
 
-table DoStepArgs {
+table DoStep {
   current_time : double;
   step_size : double;
   no_step_prior: bool;
 }
 
-table CancelStepArgs {}
+table CancelStep {}
 
-table GetXXXStatusArgs {}
+table GetXXXStatus {}
 
-union Fmi2CommandArg 
+union Fmi2Command
 {
   // common
-  SetDebugLoggingArgs, 
-  SetupExperimentArgs, 
-  FreeInstanceArgs,
-  EnterInitializationModeArgs,
-  ExitInitializationModeArgs,
-  TerminateArgs,
-  ResetArgs,
-  SetRealArgs,
-  SetIntegerArgs,
-  SetBooleanArgs,
-  SetStringArgs,
-  GetRealArgs,
-  GetIntegerArgs,
-  GetBooleanArgs,
-  GetStringArgs,
-  SerializeArgs,
-  DeserializeArgs,
+  SetDebugLogging, 
+  SetupExperiment, 
+  FreeInstance,
+  EnterInitializationMode,
+  ExitInitializationMode,
+  Terminate,
+  Reset,
+  SetReal,
+  SetInteger,
+  SetBoolean,
+  SetString,
+  GetReal,
+  GetInteger,
+  GetBoolean,
+  GetString,
+  Serialize,
+  Deserialize,
   // cosim
-  GetDirectionalDerivativesArgs,
-  SetInputDerivativesArgs,
-  GetOutputDerivitivesArgs,
-  DoStepArgs,
-  CancelStepArgs,
-  GetXXXStatusArgs,
+  GetDirectionalDerivatives,
+  SetInputDerivatives,
+  GetOutputDerivitives,
+  DoStep,
+  CancelStep,
+  GetXXXStatus,
 }
 
 // An FMI2 command is identified by its id 
 table FMI2Command
 {
-  args : Fmi2CommandArg;
+  args : Fmi2Command;
 }
 
 // return values

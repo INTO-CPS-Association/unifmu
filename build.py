@@ -68,8 +68,8 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--test-rust",
-        dest="test_rust",
+        "--test-integration",
+        dest="test_integration",
         action="store_true",
         help="run rust integration tests",
     )
@@ -158,7 +158,7 @@ if __name__ == "__main__":
                 rmtree(outdir)
             generate_fmu_from_backend(b, outdir)
 
-    if args.test_rust:
+    if args.test_integration:
 
         if not args.update_wrapper:
             logger.warn(
@@ -192,5 +192,5 @@ if __name__ == "__main__":
                 logger.error("integration tests failed")
                 sys.exit(-1)
 
-        logger.info("C integration tests successful")
+        logger.info("integration tests successful")
 
