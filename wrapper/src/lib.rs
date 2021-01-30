@@ -7,8 +7,9 @@ use libc::c_double;
 use libc::size_t;
 
 use ::safer_ffi::prelude::*;
+use num_enum::TryFromPrimitive;
 use rpc::{config::RpcConfig, initialize_slave_from_config, Fmi2CommandRPC};
-use safer_ffi::char_p::char_p_ref;
+use safer_ffi::{c, char_p::char_p_ref, string::str_ref};
 
 use std::ffi::CString;
 use std::fs::read_to_string;
@@ -59,8 +60,10 @@ pub struct Fmi2CallbackFunctions {
 // ====================== config =======================
 
 /// Represents the possible status codes which are returned from the slave
+
 #[derive_ReprC]
 #[repr(i32)]
+#[derive(serde::Deserialize, TryFromPrimitive)]
 pub enum Fmi2Status {
     Fmi2OK,
     Fmi2Warning,
@@ -68,22 +71,6 @@ pub enum Fmi2Status {
     Fmi2Error,
     Fmi2Fatal,
     Fmi2Pending,
-}
-
-impl From<i32> for Fmi2Status {
-    fn from(value: i32) -> Self {
-        match value {
-            0 => Fmi2Status::Fmi2OK,
-            1 => Fmi2Status::Fmi2Warning,
-            2 => Fmi2Status::Fmi2Discard,
-            3 => Fmi2Status::Fmi2Error,
-            4 => Fmi2Status::Fmi2Fatal,
-            5 => Fmi2Status::Fmi2Pending,
-            _ => {
-                panic! {"This should never happen!"}
-            }
-        }
-    }
 }
 
 #[derive_ReprC]
@@ -156,15 +143,14 @@ impl<V> InsertNext<V> for HashMap<i32, V> {
 // -------------------------------------------------------------------------------------------------------------
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
-
-#[no_mangle]
-pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
-    b"default\0".as_ptr().cast()
+#[ffi_export]
+fn fmi2GetTypesPlatform() -> char_p_ref<'static> {
+    c!("default")
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2GetVersion() -> *const c_char {
-    b"2.0\0".as_ptr().cast()
+#[ffi_export]
+fn fmi2GetVersion() -> char_p_ref<'static> {
+    c!("2.0")
 }
 
 // ------------------------------------- FMI FUNCTIONS (Life-Cycle) --------------------------------
@@ -199,25 +185,18 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 
 #[ffi_export]
 fn fmi2Instantiate(
-    _instance_name: *const c_char, // not allowed to be null, also cannot be non-empty
+    _instance_name: char_p_ref, // not allowed to be null, also cannot be non-empty
     _fmu_type: Fmi2Type,
-    _fmu_guid: *const c_char, // not allowed to be null,
-    fmu_resource_location: *const c_char,
+    _fmu_guid: char_p_ref, // not allowed to be null,
+    fmu_resource_location: char_p_ref,
     _functions: &Fmi2CallbackFunctions,
     _visible: c_int,
     _logging_on: c_int,
 ) -> *const SlaveHandle {
     let panic_result: Result<i32, _> = catch_unwind(|| {
-        // To load the fmu we need to extract the resources directory from the uri path to instantiate
-        let resource_location_cstr = unsafe { CStr::from_ptr(fmu_resource_location) };
-        let resource_location_utf8 = resource_location_cstr.to_str().expect(&format!(
-            "Unable to convert resource uri c-string to utf8, got '{:?}'.",
-            &resource_location_cstr
-        ));
-
-        let resource_uri = Url::parse(&resource_location_utf8).expect(&format!(
+        let resource_uri = Url::parse(fmu_resource_location.to_str()).expect(&format!(
             "Unable to parse the specified file URI, got: '{:?}'.",
-            resource_location_utf8,
+            fmu_resource_location,
         ));
 
         let resources_dir = resource_uri.to_file_path().expect(&format!(
@@ -251,8 +230,8 @@ fn fmi2Instantiate(
     }
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2FreeInstance(slave_handle: *mut SlaveHandle) {
+#[ffi_export]
+fn fmi2FreeInstance(slave_handle: *mut SlaveHandle) {
     let handle = unsafe { *slave_handle };
     let mut slaves = SLAVES.lock().unwrap();
     let slave = slaves.get_mut(&handle).unwrap();
@@ -262,8 +241,8 @@ pub extern "C" fn fmi2FreeInstance(slave_handle: *mut SlaveHandle) {
     unsafe { Box::from_raw(slave_handle) }; // Free handle allocated to the heap by fmi2Instantiate
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2SetDebugLogging(
+#[ffi_export]
+fn fmi2SetDebugLogging(
     slave_handle: *const SlaveHandle,
     logging_on: c_int,
     n_categories: size_t,
@@ -317,32 +296,32 @@ fn fmi2SetupExperiment(
         .fmi2SetupExperiment(start_time, stop_time, tolerance)
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2EnterInitializationMode(slave_handle: *const SlaveHandle) -> Fmi2Status {
+#[ffi_export]
+fn fmi2EnterInitializationMode(slave_handle: *const SlaveHandle) -> Fmi2Status {
     let handle = unsafe { *slave_handle };
     let mut slaves = SLAVES.lock().unwrap();
     let slave = slaves.get_mut(&handle).unwrap();
     slave.rpc.fmi2EnterInitializationMode()
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2ExitInitializationMode(slave_handle: *const SlaveHandle) -> Fmi2Status {
+#[ffi_export]
+fn fmi2ExitInitializationMode(slave_handle: *const SlaveHandle) -> Fmi2Status {
     let handle = unsafe { *slave_handle };
     let mut slaves = SLAVES.lock().unwrap();
     let slave = slaves.get_mut(&handle).unwrap();
     slave.rpc.fmi2ExitInitializationMode()
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2Terminate(slave_handle: *const SlaveHandle) -> Fmi2Status {
+#[ffi_export]
+fn fmi2Terminate(slave_handle: *const SlaveHandle) -> Fmi2Status {
     let handle = unsafe { *slave_handle };
     let mut slaves = SLAVES.lock().unwrap();
     let slave = slaves.get_mut(&handle).unwrap();
     slave.rpc.fmi2Terminate()
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2Reset(slave_handle: *const SlaveHandle) -> Fmi2Status {
+#[ffi_export]
+fn fmi2Reset(slave_handle: *const SlaveHandle) -> Fmi2Status {
     let handle = unsafe { *slave_handle };
     let mut slaves = SLAVES.lock().unwrap();
     let slave = slaves.get_mut(&handle).unwrap();
@@ -351,8 +330,8 @@ pub extern "C" fn fmi2Reset(slave_handle: *const SlaveHandle) -> Fmi2Status {
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
 
-#[no_mangle]
-pub extern "C" fn fmi2DoStep(
+#[ffi_export]
+fn fmi2DoStep(
     slave_handle: *const SlaveHandle,
     current: c_double,
     step_size: c_double,
@@ -364,8 +343,8 @@ pub extern "C" fn fmi2DoStep(
     slave.rpc.fmi2DoStep(current, step_size, no_set_prior == 1)
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2CancelStep(slave_handle: *const SlaveHandle) -> Fmi2Status {
+#[ffi_export]
+fn fmi2CancelStep(slave_handle: *const SlaveHandle) -> Fmi2Status {
     let slave_handle = unsafe { *slave_handle };
     let mut slaves = SLAVES.lock().unwrap();
     let slave = slaves.get_mut(&slave_handle).unwrap();
@@ -374,8 +353,8 @@ pub extern "C" fn fmi2CancelStep(slave_handle: *const SlaveHandle) -> Fmi2Status
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
 
-#[no_mangle]
-pub extern "C" fn fmi2GetReal(
+#[ffi_export]
+fn fmi2GetReal(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -402,8 +381,8 @@ pub extern "C" fn fmi2GetReal(
     status
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2GetInteger(
+#[ffi_export]
+fn fmi2GetInteger(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -428,8 +407,8 @@ pub extern "C" fn fmi2GetInteger(
     status
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2GetBoolean(
+#[ffi_export]
+fn fmi2GetBoolean(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -461,8 +440,8 @@ pub extern "C" fn fmi2GetBoolean(
 /// To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
 /// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
 /// We choose to do it on an instance basis, i.e. each instance has its own string buffer.
-#[no_mangle]
-pub extern "C" fn fmi2GetString(
+#[ffi_export]
+fn fmi2GetString(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -498,8 +477,8 @@ pub extern "C" fn fmi2GetString(
     status
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2SetReal(
+#[ffi_export]
+fn fmi2SetReal(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -515,9 +494,9 @@ pub extern "C" fn fmi2SetReal(
     slave.rpc.fmi2SetReal(references, values)
 }
 
-#[no_mangle]
+#[ffi_export]
 
-pub extern "C" fn fmi2SetInteger(
+fn fmi2SetInteger(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -536,8 +515,8 @@ pub extern "C" fn fmi2SetInteger(
 ///
 /// Note: fmi2 uses C-int to represent booleans and NOT the boolean type defined by C99 in stdbool.h, _Bool.
 /// Rust's bool type is defined to have the same size as _Bool, as the values passed through the C-API must be converted.
-#[no_mangle]
-pub extern "C" fn fmi2SetBoolean(
+#[ffi_export]
+fn fmi2SetBoolean(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -554,8 +533,8 @@ pub extern "C" fn fmi2SetBoolean(
     slave.rpc.fmi2SetBoolean(references, &values)
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2SetString(
+#[ffi_export]
+fn fmi2SetString(
     slave_handle: *const SlaveHandle,
     vr: *const c_uint,
     nvr: size_t,
@@ -582,8 +561,8 @@ pub extern "C" fn fmi2SetString(
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
 
-#[no_mangle]
-pub extern "C" fn fmi2GetDirectionalDerivative(
+#[ffi_export]
+fn fmi2GetDirectionalDerivative(
     c: *const c_int,
     unknown_refs: *const c_int,
     nvr_unknown: size_t,
@@ -596,25 +575,22 @@ pub extern "C" fn fmi2GetDirectionalDerivative(
     Fmi2Status::Fmi2Error
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2SetRealInputDerivatives(
-    slave_handle: *const SlaveHandle,
-    vr: *const c_uint,
-) -> Fmi2Status {
+#[ffi_export]
+fn fmi2SetRealInputDerivatives(slave_handle: *const SlaveHandle, vr: *const c_uint) -> Fmi2Status {
     eprintln!("NOT IMPLEMENTED");
     Fmi2Status::Fmi2Error
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2GetRealOutputDerivatives(slave_handle: *const SlaveHandle) -> Fmi2Status {
+#[ffi_export]
+fn fmi2GetRealOutputDerivatives(slave_handle: *const SlaveHandle) -> Fmi2Status {
     eprintln!("NOT IMPLEMENTED");
     Fmi2Status::Fmi2Error
 }
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
 
-#[no_mangle]
-pub extern "C" fn fmi2SetFMUstate(
+#[ffi_export]
+fn fmi2SetFMUstate(
     slave_handle: *const SlaveHandle,
     state_handle: *const StateHandle,
 ) -> Fmi2Status {
@@ -629,10 +605,9 @@ pub extern "C" fn fmi2SetFMUstate(
     slave.rpc.deserialize(bytes)
 }
 
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
+#[ffi_export]
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
-pub extern "C" fn fmi2GetFMUstate(
+fn fmi2GetFMUstate(
     slave_handle: *const c_int,
     state_handle_or_none: *mut *mut SlaveHandle,
 ) -> Fmi2Status {
@@ -670,13 +645,10 @@ pub extern "C" fn fmi2GetFMUstate(
     status
 }
 
-#[no_mangle]
+#[ffi_export]
 /// Free previously recorded state of slave
 /// If state points to null the call is ignored as defined by the specification
-pub extern "C" fn fmi2FreeFMUstate(
-    slave_handle: *const SlaveHandle,
-    state: *mut *mut StateHandle,
-) -> Fmi2Status {
+fn fmi2FreeFMUstate(slave_handle: *const SlaveHandle, state: *mut *mut StateHandle) -> Fmi2Status {
     match catch_unwind(|| match unsafe { state.as_ref() } {
         None => (),
         Some(s) => {
@@ -699,13 +671,13 @@ pub extern "C" fn fmi2FreeFMUstate(
     }
 }
 
-#[no_mangle]
+#[ffi_export]
 /// Copies the state of a slave into a buffer provided by the environment
 ///
 /// Oddly, the length of the buffer is also provided,
 /// as i would expect the environment to have enquired about the state size by calling fmi2SerializedFMUstateSize.
 /// We assume that the buffer is sufficiently large
-pub extern "C" fn fmi2SerializeFMUstate(
+fn fmi2SerializeFMUstate(
     slave_handle: *const SlaveHandle,
     state_handle: *mut StateHandle,
     data: *mut c_char,
@@ -730,8 +702,8 @@ pub extern "C" fn fmi2SerializeFMUstate(
     }
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2DeSerializeFMUstate(
+#[ffi_export]
+fn fmi2DeSerializeFMUstate(
     slave_handle: *const SlaveHandle,
     serialized_state: *const c_char,
     size: size_t,
@@ -759,9 +731,8 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     }
 }
 
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2SerializedFMUstateSize(
+#[ffi_export]
+fn fmi2SerializedFMUstateSize(
     slave_handle: *const SlaveHandle,
     state_handle: *const StateHandle,
     size: *mut size_t,
@@ -790,9 +761,8 @@ pub extern "C" fn fmi2SerializedFMUstateSize(
 
 // ------------------------------------- FMI FUNCTIONS (Status) --------------------------------
 
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetRealStatus(
+#[ffi_export]
+fn fmi2GetRealStatus(
     slave_handle: *const SlaveHandle,
     status_kind: c_int,
     value: *mut c_double,
@@ -817,13 +787,8 @@ pub extern "C" fn fmi2GetRealStatus(
     // }
 }
 
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetStatus(
-    slave_handle: *const c_int,
-    status_kind: c_int,
-    value: *mut c_int,
-) -> Fmi2Status {
+#[ffi_export]
+fn fmi2GetStatus(slave_handle: *const c_int, status_kind: c_int, value: *mut c_int) -> Fmi2Status {
     todo!();
 
     // match catch_unwind(|| {
@@ -844,13 +809,8 @@ pub extern "C" fn fmi2GetStatus(
     // }
 }
 
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetIntegerStatus(
-    c: *const c_int,
-    status_kind: c_int,
-    value: *mut c_int,
-) -> Fmi2Status {
+#[ffi_export]
+fn fmi2GetIntegerStatus(c: *const c_int, status_kind: c_int, value: *mut c_int) -> Fmi2Status {
     todo!();
 
     // match catch_unwind(|| {
@@ -871,13 +831,8 @@ pub extern "C" fn fmi2GetIntegerStatus(
     // }
 }
 
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetBooleanStatus(
-    c: *const c_int,
-    status_kind: c_int,
-    value: *mut c_int,
-) -> Fmi2Status {
+#[ffi_export]
+fn fmi2GetBooleanStatus(c: *const c_int, status_kind: c_int, value: *mut c_int) -> Fmi2Status {
     todo!();
 
     // match catch_unwind(|| {
@@ -898,13 +853,8 @@ pub extern "C" fn fmi2GetBooleanStatus(
     // }
 }
 
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub extern "C" fn fmi2GetStringStatus(
-    c: *const c_int,
-    status_kind: c_int,
-    value: *mut c_char,
-) -> Fmi2Status {
+#[ffi_export]
+fn fmi2GetStringStatus(c: *const c_int, status_kind: c_int, value: *mut c_char) -> Fmi2Status {
     eprintln!("NOT IMPLEMENTED");
     Fmi2Status::Fmi2Error
 }

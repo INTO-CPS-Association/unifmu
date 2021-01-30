@@ -1,4 +1,5 @@
 use std::{
+    convert::TryInto,
     panic::{RefUnwindSafe, UnwindSafe},
     path::PathBuf,
 };
@@ -330,7 +331,8 @@ impl Fmi2CommandRPC for ZMQSchemalessRPC {
             no_step_prior,
         ))
         .unwrap()
-        .into()
+        .try_into()
+        .unwrap()
     }
 
     fn fmi2CancelStep(&mut self) -> Fmi2Status {
@@ -344,7 +346,8 @@ impl Fmi2CommandRPC for ZMQSchemalessRPC {
             logging_on,
         ))
         .unwrap()
-        .into()
+        .try_into()
+        .unwrap()
     }
 
     fn fmi2SetupExperiment(
@@ -360,83 +363,96 @@ impl Fmi2CommandRPC for ZMQSchemalessRPC {
             tolerance,
         ))
         .unwrap()
-        .into()
+        .try_into()
+        .unwrap()
     }
 
     fn fmi2EnterInitializationMode(&mut self) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::EnterInitializationMode,))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2ExitInitializationMode(&mut self) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::ExitInitializationMode,))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2Terminate(&mut self) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::Terminate,))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2Reset(&mut self) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::Reset,))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2SetReal(&mut self, references: &[u32], values: &[f64]) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2SetInteger(&mut self, references: &[u32], values: &[i32]) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2SetBoolean(&mut self, references: &[u32], values: &[bool]) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2SetString(&mut self, references: &[u32], values: &[&str]) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::SetXXX, references, values))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2GetReal(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<f64>>) {
         let (status, values) = self
             .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
             .unwrap();
-        (status.into(), values)
+
+        (status.try_into().unwrap(), values)
     }
 
     fn fmi2GetInteger(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<i32>>) {
         let (status, values) = self
             .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
             .unwrap();
-        (status.into(), values)
+
+        (status.try_into().unwrap(), values)
     }
 
     fn fmi2GetBoolean(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<bool>>) {
         let (status, values) = self
             .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
             .unwrap();
-        (status.into(), values)
+
+        (status.try_into().unwrap(), values)
     }
 
     fn fmi2GetString(&mut self, references: &[u32]) -> (Fmi2Status, Option<Vec<String>>) {
         let (status, values) = self
             .send_and_recv::<_, (i32, _)>((Fmi2SchemalessCommandId::GetXXX, references))
             .unwrap();
-        (status.into(), values)
+
+        (status.try_into().unwrap(), values)
     }
 
     fn serialize(&mut self) -> (Fmi2Status, Option<Vec<u8>>) {
@@ -444,13 +460,17 @@ impl Fmi2CommandRPC for ZMQSchemalessRPC {
         let (status, bytes) = self
             .send_and_recv::<_, (i32, Option<ByteBuf>)>((Fmi2SchemalessCommandId::Serialize,))
             .unwrap();
-        (status.into(), bytes.and_then(|bb| Some(bb.to_vec())))
+        (
+            status.try_into().unwrap(),
+            bytes.and_then(|bb| Some(bb.to_vec())),
+        )
     }
 
     fn deserialize(&mut self, bytes: &[u8]) -> Fmi2Status {
         self.send_and_recv::<_, i32>((Fmi2SchemalessCommandId::Deserialize, Bytes::new(bytes)))
             .unwrap()
-            .into()
+            .try_into()
+            .unwrap()
     }
 
     fn fmi2FreeInstance(&mut self) {
