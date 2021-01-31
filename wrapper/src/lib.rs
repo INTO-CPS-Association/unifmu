@@ -240,8 +240,9 @@ pub fn fmi2Instantiate(
     Some(repr_c::Box::new(Slave::new(rpc)))
 }
 
-// #[ffi_export] temporarily disabled macro, see issue: https://github.com/getditto/safer_ffi/issues/30
-pub fn fmi2FreeInstance(mut slave: Option<repr_c::Box<Slave>>) {
+#[ffi_export]
+pub extern "C" fn fmi2FreeInstance(slave: Option<repr_c::Box<Slave>>) {
+    let mut slave = slave; // see issue: https://github.com/getditto/safer_ffi/issues/30
     match slave.as_mut() {
         Some(s) => {
             s.rpc.fmi2FreeInstance();
