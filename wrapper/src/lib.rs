@@ -202,7 +202,7 @@ pub fn fmi2GetVersion() -> char_p_ref<'static> {
 ///
 
 #[ffi_export]
-pub fn fmi2Instantiate<'callback>(
+pub fn fmi2Instantiate(
     _instance_name: char_p_ref, // not allowed to be null, also cannot be non-empty
     _fmu_type: Fmi2Type,
     _fmu_guid: char_p_ref, // not allowed to be null,
@@ -252,7 +252,7 @@ pub fn fmi2FreeInstance(mut slave: Option<repr_c::Box<Slave>>) {
 }
 
 #[ffi_export]
-pub fn fmi2SetDebugLogging<'call>(
+pub fn fmi2SetDebugLogging(
     slave: &mut Slave,
     logging_on: c_int,
     n_categories: size_t,
@@ -411,7 +411,7 @@ pub fn fmi2GetBoolean(
 /// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
 /// We choose to do it on an instance basis, i.e. each instance has its own string buffer.
 #[ffi_export]
-pub fn fmi2GetString<'call>(
+pub fn fmi2GetString(
     slave: &mut Slave,
     references: *const c_uint,
     nvr: size_t,

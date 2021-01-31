@@ -1,10 +1,5 @@
 #![allow(non_snake_case)]
 
-#[macro_use]
-extern crate dlopen_derive;
-extern crate dlopen;
-
-use dlopen::wrapper::{Container, WrapperApi};
 use libc::{c_char, c_double, c_int, c_uint, size_t};
 use std::{
     collections::HashMap,
@@ -12,131 +7,10 @@ use std::{
     ptr::null_mut,
 };
 use unifmu::{Fmi2CallbackFunctions, *};
-// #[derive(WrapperApi)]
-// struct Fmi2Api {
-//     fmi2GetTypesPlatform: extern "C" fn() -> *const c_char,
-//     fmi2GetVersion: extern "C" fn() -> *const c_char,
-//     fmi2Instantiate: extern "C" fn(
-//         _instance_name: *const c_char,
-//         _fmu_type: c_int,
-//         _fmu_guid: *const c_char,
-//         fmu_resource_location: *const c_char,
-//         _functions: Fmi2CallbackFunctions,
-//         _visible: c_int,
-//         _logging_on: c_int,
-//     ) -> *mut SlaveHandle,
-
-//     fmi2SetupExperiment: extern "C" fn(
-//         slave_handle: *const SlaveHandle,
-//         tolerance_defined: c_int,
-//         tolerance: c_double,
-//         start_time: c_double,
-//         stop_time_defined: c_int,
-//         stop_time: c_double,
-//     ) -> c_int,
-
-//     fmi2FreeInstance: extern "C" fn(slave_handle: *mut c_int),
-
-//     fmi2EnterInitializationMode: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
-//     fmi2ExitInitializationMode: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
-//     fmi2Terminate: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
-//     fmi2Reset: extern "C" fn(slave_handle: *const SlaveHandle) -> c_int,
-
-//     fmi2GetFMUstate: extern "C" fn(slave_handle: *const c_int, state: *mut *mut c_int) -> c_int,
-//     fmi2SerializedFMUstateSize: extern "C" fn(
-//         slave_handle: *const c_int,
-//         state_handle: *const c_int,
-//         size: *mut size_t,
-//     ) -> c_int,
-
-//     fmi2DeSerializeFMUstate: extern "C" fn(
-//         slave_handle: *const c_int,
-//         serialized_state: *const c_char,
-//         size: size_t,
-//         state: *mut *mut c_int,
-//     ) -> c_int,
-
-//     fmi2FreeFMUstate:
-//         extern "C" fn(slave_handle: *const c_int, state_handle: *mut *mut c_int) -> c_int,
-
-//     fmi2SerializeFMUstate: extern "C" fn(
-//         slave_handle: *const c_int,
-//         state_handle: *mut c_int,
-//         data: *mut c_char,
-//         _size: size_t,
-//     ) -> c_int,
-
-//     fmi2SetFMUstate: extern "C" fn(c: *const c_int, state: *const c_int) -> c_int,
-
-//     fmi2GetReal: extern "C" fn(
-//         slave_handle: *const SlaveHandle,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *mut c_double,
-//     ) -> c_int,
-
-//     fmi2GetInteger: extern "C" fn(
-//         slave_handle: *const SlaveHandle,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *mut c_int,
-//     ) -> c_int,
-
-//     fmi2GetBoolean: extern "C" fn(
-//         slave_handle: *const SlaveHandle,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *mut c_int,
-//     ) -> c_int,
-
-//     fmi2GetString: extern "C" fn(
-//         slave_handle: *const SlaveHandle,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *const *mut c_char,
-//     ) -> c_int,
-
-//     fmi2SetReal: extern "C" fn(
-//         slave_handle: *const c_int,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *const c_double,
-//     ) -> c_int,
-
-//     fmi2SetInteger: extern "C" fn(
-//         slave_handle: *const c_int,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *const c_int,
-//     ) -> c_int,
-
-//     fmi2SetBoolean: extern "C" fn(
-//         slave_handle: *const c_int,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *const c_int,
-//     ) -> c_int,
-
-//     fmi2SetString: extern "C" fn(
-//         slave_handle: *const c_int,
-//         vr: *const c_uint,
-//         nvr: usize,
-//         values: *const *const c_char,
-//     ) -> c_int,
-
-//     fmi2DoStep: extern "C" fn(
-//         slave_handle: *const SlaveHandle,
-//         current: c_double,
-//         step_size: c_double,
-//         no_set_prior: c_int,
-//     ) -> c_int,
-// }
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Borrow;
 
-    use lazy_static::__Deref;
     use libc::c_void;
     use safer_ffi::{
         char_p::{char_p_raw, char_p_ref},
@@ -179,7 +53,7 @@ mod tests {
         assert_eq!(fmi2GetTypesPlatform(), c!("default")); // rust analyzer might flag c! as undefined macro
         assert_eq!(fmi2GetVersion(), c!("2.0"));
 
-        extern "C" fn step_finished(component_environment: *const c_void, status: i32) {}
+        extern "C" fn step_finished(_component_environment: *const c_void, _status: i32) {}
 
         extern "C" fn logger_func(
             _component_environment: *mut c_void,
@@ -189,17 +63,17 @@ mod tests {
             message: char_p_raw,
             // ... variadic functions support in rust seems to be unstable
         ) {
-            // let instance_name: char_p_ref = unsafe { std::mem::transmute(instance_name) };
-            // let message: char_p_ref = unsafe { std::mem::transmute(message) };
-            // let category: char_p_ref = unsafe { std::mem::transmute(category) };
+            let instance_name: char_p_ref = unsafe { std::mem::transmute(instance_name) };
+            let message: char_p_ref = unsafe { std::mem::transmute(message) };
+            let category: char_p_ref = unsafe { std::mem::transmute(category) };
 
-            // println!(
-            //     "slave: '{}' sent message: '{}' of category {} with severity: '{:?}'",
-            //     instance_name.to_str(),
-            //     message.to_str(),
-            //     category.to_str(),
-            //     status
-            // );
+            println!(
+                "slave: '{}' sent message: '{}' of category {} with severity: '{:?}'",
+                instance_name.to_str(),
+                message.to_str(),
+                category.to_str(),
+                status
+            );
         }
         let resource_uri = CString::new(resource_uri.to_owned()).unwrap();
         let resources_cstr = resource_uri.as_c_str();
@@ -209,7 +83,7 @@ mod tests {
             logger: logger_func,
             allocate_memory: None,
             free_memory: None,
-            step_finished: None,
+            step_finished: Some(step_finished),
             component_environment: &None,
         };
         let name = c!("adder");

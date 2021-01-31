@@ -4,7 +4,6 @@ use std::{
     path::PathBuf,
 };
 
-use config::zmq::SerializationFormat::{Pickle, Protobuf};
 use flatbuffers::FlatBufferBuilder;
 use serde::de::DeserializeOwned;
 
