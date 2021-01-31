@@ -127,7 +127,7 @@ where
 pub trait Fmi2CommandRPC {
     fn fmi2DoStep(&mut self, current_time: f64, step_size: f64, no_step_prior: bool) -> Fmi2Status;
     fn fmi2CancelStep(&mut self) -> Fmi2Status;
-    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> Fmi2Status;
+    fn fmi2SetDebugLogging(&mut self, categories: &[&str], logging_on: bool) -> Fmi2Status;
     fn fmi2SetupExperiment(
         &mut self,
         start_time: f64,
@@ -209,7 +209,7 @@ impl Fmi2CommandRPC for ProtobufRPC {
         todo!()
     }
 
-    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> Fmi2Status {
+    fn fmi2SetDebugLogging(&mut self, categories: &[&str], logging_on: bool) -> Fmi2Status {
         todo!()
     }
 
@@ -339,7 +339,7 @@ impl Fmi2CommandRPC for ZMQSchemalessRPC {
         todo!()
     }
 
-    fn fmi2SetDebugLogging(&mut self, categories: Vec<&str>, logging_on: bool) -> Fmi2Status {
+    fn fmi2SetDebugLogging(&mut self, categories: &[&str], logging_on: bool) -> Fmi2Status {
         self.send_and_recv::<_, i32>((
             Fmi2SchemalessCommandId::SetDebugLogging,
             categories,
