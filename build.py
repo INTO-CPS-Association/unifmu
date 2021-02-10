@@ -169,28 +169,27 @@ if __name__ == "__main__":
         from tempfile import mkdtemp
 
         # with TemporaryDirectory() as tmpdir:
-        tmpdir = Path(mkdtemp())
+        
 
-        fmu_path = tmpdir / "python_fmu"
-        generate_fmu_from_backend("python", fmu_path)
+        for backend in ["python_schemaless_rpc"]:
+            tmpdir = Path(mkdtemp())
+            fmu_path = tmpdir / "fmu"
+            generate_fmu_from_backend(backend, fmu_path)
 
-        # while not fmu_path.is_dir():
-        #     print("wait")
+            resources_uri = (fmu_path / "resources").absolute().as_uri()
+            os.environ["UNIFMU_ADDER_RESOURCES_URI"] = resources_uri
+            os.environ["UNIFMU_ADDER_LIBRARY"] = wrapper_lib
+            logger.info(
+                f"running integration tests, with resource-uri: {resources_uri} and library: {wrapper_lib}"
+            )
 
-        resources_uri = (fmu_path / "resources").absolute().as_uri()
-        os.environ["UNIFMU_ADDER_RESOURCES_URI"] = resources_uri
-        os.environ["UNIFMU_ADDER_LIBRARY"] = wrapper_lib
-        logger.info(
-            f"running integration tests, with resource-uri: {resources_uri} and library: {wrapper_lib}"
-        )
+            with Chdir("Wrapper"):
 
-        with Chdir("Wrapper"):
+                res = subprocess.Popen(args=["cargo", "test", "--", "--show-output"]).wait()
 
-            res = subprocess.Popen(args=["cargo", "test", "--", "--show-output"]).wait()
-
-            if res != 0:
-                logger.error("integration tests failed")
-                sys.exit(-1)
+                if res != 0:
+                    logger.error(f"integration tests failed for backend {backend}")
+                    sys.exit(-1)
 
         logger.info("integration tests successful")
 

@@ -123,6 +123,7 @@ mod tests {
                     fmi2SetReal(slave, refs.as_ptr(), 2, vals.as_ptr()),
                     Fmi2Status::Fmi2OK
                 );
+                fmi2DoStep(slave, 0.0, 0.0, 0);
                 refs[0] = 2;
                 assert_eq!(
                     fmi2GetReal(slave, refs.as_ptr(), 1, vals.as_mut_ptr()),
@@ -146,6 +147,7 @@ mod tests {
                     fmi2SetInteger(slave, refs.as_ptr(), 2, vals.as_ptr()),
                     Fmi2Status::Fmi2OK
                 );
+                fmi2DoStep(slave, 0.0, 0.0, 0);
                 refs[0] = 5;
                 assert_eq!(
                     fmi2GetInteger(slave, refs.as_ptr(), 1, vals.as_mut_ptr()),
@@ -170,6 +172,7 @@ mod tests {
                     fmi2SetBoolean(slave, refs.as_ptr(), 2, vals.as_ptr()),
                     Fmi2Status::Fmi2OK
                 );
+                fmi2DoStep(slave, 0.0, 0.0, 0);
                 refs[0] = 8;
                 assert_eq!(
                     fmi2GetBoolean(slave, refs.as_ptr(), 1, vals.as_mut_ptr()),
@@ -207,6 +210,7 @@ mod tests {
                     fmi2SetString(slave, refs.as_ptr(), 2, vals.as_ptr()),
                     Fmi2Status::Fmi2OK
                 );
+                fmi2DoStep(slave, 0.0, 0.0, 0);
                 refs[0] = 11;
 
                 let mut vals: [*mut c_char; 2] = [null_mut(), null_mut()];
