@@ -4,7 +4,6 @@ use std::{
     path::PathBuf,
 };
 
-use flatbuffers::FlatBufferBuilder;
 use serde::de::DeserializeOwned;
 
 use crate::Fmi2Status;
@@ -18,6 +17,11 @@ use serde_bytes::{ByteBuf, Bytes};
 use serde_repr::Serialize_repr;
 use subprocess::Popen;
 use subprocess::PopenConfig;
+
+use crate::fmi2_proto;
+use fmi2_proto::send_command_client::SendCommandClient;
+use num_enum::TryFromPrimitive;
+use tokio::runtime::{Builder, Runtime};
 
 lazy_static! {
     static ref ZMQ_CONTEXT: zmq::Context = zmq::Context::new();
@@ -185,17 +189,11 @@ enum Fmi2SchemalessCommandId {
 
 /// Perform rpc using through zmq and flatbuffers, a schema based serialization format similar to protocol buffers.
 /// https://google.github.io/flatbuffers/
-pub struct ProtobufRPC {
-    socket: zmq::Socket,
-    builder: flatbuffers::FlatBufferBuilder<'static>,
-}
+pub struct ProtobufRPC {}
 
 impl ProtobufRPC {
-    pub fn new(socket: zmq::Socket) -> Self {
-        Self {
-            socket,
-            builder: FlatBufferBuilder::new(),
-        }
+    pub fn new() -> Self {
+        Self {}
     }
 }
 

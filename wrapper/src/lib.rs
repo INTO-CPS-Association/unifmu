@@ -26,6 +26,7 @@ use std::{ffi::CStr, panic::RefUnwindSafe};
 
 use toml;
 use url::Url;
+pub mod fmi2_proto;
 pub mod rpc;
 
 ///

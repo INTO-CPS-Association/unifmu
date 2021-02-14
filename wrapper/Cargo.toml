@@ -16,7 +16,6 @@ vendored-zmq = ['zmq/vendored']
 [dependencies]
 dlopen = "*"
 dlopen_derive = "*"
-flatbuffers = "*"
 lazy_static = "*"
 libc = "*"
 num_enum = "*"
@@ -37,10 +36,6 @@ zmq = "0.9.2"
 
 [build-dependencies]
 tonic-build = "0.4"
-
-[dev-dependencies]
-dlopen = "*"
-dlopen_derive = "*"
 
 # ------------------ profiling ---------------------------
 # CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --tool=memcheck --leak-check=full --suppressions=./valgrind.supp"
