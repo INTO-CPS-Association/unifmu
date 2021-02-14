@@ -74,7 +74,7 @@ class CommandServicer(SendCommandServicer):
 if __name__ == "__main__":
 
     reference_to_attr = {}
-    path = Path.cwd().parent / "grpc_python/src/modelDescription.xml"
+    path = Path.cwd().parent / "python/src/modelDescription.xml"
     with open(path) as f:
         for v in ET.parse(f).find("ModelVariables"):
             reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]

@@ -1,14 +1,13 @@
 import argparse
-from os import mkdir, popen, system
+
 from pathlib import Path
 import logging
-import pathlib
 import shutil
 from shutil import SameFileError, rmtree
 import subprocess
 import os
 import sys
-from sys import executable, platform
+from sys import  platform
 import platform
 from tempfile import TemporaryDirectory
 from os import makedirs
@@ -85,7 +84,7 @@ if __name__ == "__main__":
         "--update-schemas",
         dest="update_schemas",
         action="store_true",
-        help="update resource files generated based on FlatBuffer schemas",
+        help="update resource files generated based on Protobuf schemas",
     )
 
     args = parser.parse_args()
@@ -94,9 +93,9 @@ if __name__ == "__main__":
 
         logger.info("building wrapper")
         with Chdir("wrapper"):
-            res = subprocess.Popen(args=["cargo", "build"]).wait()
+            res = subprocess.run(args=["cargo", "build"])
 
-        if res != 0:
+        if res.returncode != 0:
             logger.error("wrapper failed to build")
             sys.exit(-1)
 
@@ -112,41 +111,59 @@ if __name__ == "__main__":
         logger.info("wrapper updated")
 
     if args.update_schemas:
+        schema = "unifmu_fmi2.proto"
+        schema_include_dir = "schemas"
 
         try:
             targets = [
-                ("java", "tool/unifmu/resources/backends/java_fmu/src/main/java", []),
-                (
-                    "python",
-                    "tool/unifmu/resources/backends/python_fmu/flatbuffers",
-                    ["--gen-onefile"],
-                ),
+                ("java", "tool/unifmu/resources/backends/java_fmu/src/main/java/", []),  
                 (
                     "csharp",
                     "tool/unifmu/resources/backends/csharp_fmu/",
-                    ["--gen-onefile"],
+                    [],
                 ),
             ]
             for lang, outdir, kwargs in targets:
-                res = subprocess.Popen(
+
+                #makedirs(Path(outdir),exist_ok=True)
+
+                res = subprocess.run(
                     [
-                        "tmp/flatc",
-                        f"--{lang}",
-                        "-o",
-                        outdir,
-                        "schemas/unifmu_fmi2.fbs",
+                        "protoc",
+                        "-I",
+                        schema_include_dir,
+                        f"--{lang}_out={outdir}",
+                        schema,
                         *kwargs,
                     ]
-                ).wait()
+                )
 
-                if res != 0:
+                if res.returncode != 0:
                     logger.error(
-                        f"Failed compile flatbuffer schemas, for target language: {lang}"
+                        f"Failed compile protobuf schemas, for target language: {lang}"
                     )
+
+            from grpc_tools.protoc import _protoc_compiler
+            
+            # Generating rpc components requires a plugin for the protocol buffer compiler
+            # The recommended way is to get the compiler bundled with a plugin trough 'grpc_tools' package on PyPI.
+            # However, the bundled version of the protocol buffer compiler does not support other languages like Java and C#.
+            protoc_args = [
+                s.encode()
+                for s in [
+                    f"--proto_path={schema_include_dir}",
+                    "--python_out=tool/unifmu/resources/backends/python/",
+                    "--grpc_python_out=tool/unifmu/resources/backends/python/",
+                    (Path(schema_include_dir)/schema).__fspath__(), # unlike invoking protoc, it seems schema needs absolute path
+                    *kwargs
+                ]
+            ]
+            _protoc_compiler.run_main(protoc_args)
+
 
         except Exception:
             logger.error(
-                f"FlatBuffer could failed to execute. Ensure that it is installed and available in the systems path",
+                f"Proto failed to execute. Ensure that it is installed and available in the systems path",
                 exc_info=True,
             )
 
@@ -169,9 +186,8 @@ if __name__ == "__main__":
         from tempfile import mkdtemp
 
         # with TemporaryDirectory() as tmpdir:
-        
 
-        for backend in ["python_schemaless_rpc"]:
+        for backend in ["python_schemaless_rpc"]:  # "python_grpc"
             tmpdir = Path(mkdtemp())
             fmu_path = tmpdir / "fmu"
             generate_fmu_from_backend(backend, fmu_path)
@@ -185,11 +201,12 @@ if __name__ == "__main__":
 
             with Chdir("Wrapper"):
 
-                res = subprocess.Popen(args=["cargo", "test", "--", "--show-output"]).wait()
+                res = subprocess.run(
+                    args=["cargo", "test", "--", "--show-output"]
+                )
 
-                if res != 0:
+                if res.returncode != 0:
                     logger.error(f"integration tests failed for backend {backend}")
                     sys.exit(-1)
 
         logger.info("integration tests successful")
-

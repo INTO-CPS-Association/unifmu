@@ -1,4 +1,4 @@
 [command.Grpc]
-linux = ["python3", "backend_schemaless_rpc.py"]
-macos = ["python3", "backend_schemaless_rpc.py"]
-windows = ["python", "backend_schemaless_rpc.py"]
+linux = ["python3", "backend_grpc.py"]
+macos = ["python3", "backend_grpc.py"]
+windows = ["python", "backend_grpc.py"]

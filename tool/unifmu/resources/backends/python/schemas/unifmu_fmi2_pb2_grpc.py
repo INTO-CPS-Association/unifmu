@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import unifmu_fmi2_pb2 as unifmu__fmi2__pb2
+from schemas import unifmu_fmi2_pb2 as schemas_dot_unifmu__fmi2__pb2
 
 
 class SendCommandStub(object):
@@ -15,94 +15,94 @@ class SendCommandStub(object):
             channel: A grpc.Channel.
         """
         self.Fmi2SetReal = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2SetReal',
-                request_serializer=unifmu__fmi2__pb2.SetReal.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2SetReal',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.SetReal.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2GetReal = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2GetReal',
-                request_serializer=unifmu__fmi2__pb2.GetXXX.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.GetRealReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2GetReal',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.GetRealReturn.FromString,
                 )
         self.Fmi2SetInteger = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2SetInteger',
-                request_serializer=unifmu__fmi2__pb2.SetInteger.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2SetInteger',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.SetInteger.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2GetInteger = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2GetInteger',
-                request_serializer=unifmu__fmi2__pb2.GetXXX.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.GetIntegerReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2GetInteger',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.GetIntegerReturn.FromString,
                 )
         self.Fmi2SetBoolean = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2SetBoolean',
-                request_serializer=unifmu__fmi2__pb2.SetBoolean.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2SetBoolean',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.SetBoolean.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2GetBoolean = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2GetBoolean',
-                request_serializer=unifmu__fmi2__pb2.GetXXX.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.GetBooleanReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2GetBoolean',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.GetBooleanReturn.FromString,
                 )
         self.Fmi2SetString = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2SetString',
-                request_serializer=unifmu__fmi2__pb2.SetString.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2SetString',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.SetString.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2GetString = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2GetString',
-                request_serializer=unifmu__fmi2__pb2.GetXXX.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.GetStringReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2GetString',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.GetStringReturn.FromString,
                 )
         self.Fmi2EnterInitializationMode = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2EnterInitializationMode',
-                request_serializer=unifmu__fmi2__pb2.EnterInitializationMode.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2EnterInitializationMode',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.EnterInitializationMode.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2ExitInitializationMode = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2ExitInitializationMode',
-                request_serializer=unifmu__fmi2__pb2.ExitInitializationMode.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2ExitInitializationMode',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.ExitInitializationMode.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2Terminate = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2Terminate',
-                request_serializer=unifmu__fmi2__pb2.Terminate.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2Terminate',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.Terminate.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2Reset = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2Reset',
-                request_serializer=unifmu__fmi2__pb2.Reset.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2Reset',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.Reset.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2FreeInstance = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2FreeInstance',
-                request_serializer=unifmu__fmi2__pb2.FreeInstance.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.Void.FromString,
+                '/fmi2_proto.SendCommand/Fmi2FreeInstance',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.FreeInstance.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.Void.FromString,
                 )
         self.Fmi2SetDebugLogging = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2SetDebugLogging',
-                request_serializer=unifmu__fmi2__pb2.SetDebugLogging.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2SetDebugLogging',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.SetDebugLogging.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Serialize = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Serialize',
-                request_serializer=unifmu__fmi2__pb2.SerializeMessage.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Serialize',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.SerializeMessage.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Deserialize = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Deserialize',
-                request_serializer=unifmu__fmi2__pb2.DeserializeMessage.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Deserialize',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.DeserializeMessage.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2DoStep = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2DoStep',
-                request_serializer=unifmu__fmi2__pb2.DoStep.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2DoStep',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.DoStep.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2CancelStep = channel.unary_unary(
-                '/unifmu_fmi2_proto.SendCommand/Fmi2CancelStep',
-                request_serializer=unifmu__fmi2__pb2.CancelStep.SerializeToString,
-                response_deserializer=unifmu__fmi2__pb2.StatusReturn.FromString,
+                '/fmi2_proto.SendCommand/Fmi2CancelStep',
+                request_serializer=schemas_dot_unifmu__fmi2__pb2.CancelStep.SerializeToString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
 
 
@@ -235,97 +235,97 @@ def add_SendCommandServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Fmi2SetReal': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2SetReal,
-                    request_deserializer=unifmu__fmi2__pb2.SetReal.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.SetReal.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2GetReal': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2GetReal,
-                    request_deserializer=unifmu__fmi2__pb2.GetXXX.FromString,
-                    response_serializer=unifmu__fmi2__pb2.GetRealReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.GetRealReturn.SerializeToString,
             ),
             'Fmi2SetInteger': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2SetInteger,
-                    request_deserializer=unifmu__fmi2__pb2.SetInteger.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.SetInteger.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2GetInteger': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2GetInteger,
-                    request_deserializer=unifmu__fmi2__pb2.GetXXX.FromString,
-                    response_serializer=unifmu__fmi2__pb2.GetIntegerReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.GetIntegerReturn.SerializeToString,
             ),
             'Fmi2SetBoolean': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2SetBoolean,
-                    request_deserializer=unifmu__fmi2__pb2.SetBoolean.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.SetBoolean.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2GetBoolean': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2GetBoolean,
-                    request_deserializer=unifmu__fmi2__pb2.GetXXX.FromString,
-                    response_serializer=unifmu__fmi2__pb2.GetBooleanReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.GetBooleanReturn.SerializeToString,
             ),
             'Fmi2SetString': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2SetString,
-                    request_deserializer=unifmu__fmi2__pb2.SetString.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.SetString.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2GetString': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2GetString,
-                    request_deserializer=unifmu__fmi2__pb2.GetXXX.FromString,
-                    response_serializer=unifmu__fmi2__pb2.GetStringReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.GetXXX.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.GetStringReturn.SerializeToString,
             ),
             'Fmi2EnterInitializationMode': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2EnterInitializationMode,
-                    request_deserializer=unifmu__fmi2__pb2.EnterInitializationMode.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.EnterInitializationMode.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2ExitInitializationMode': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2ExitInitializationMode,
-                    request_deserializer=unifmu__fmi2__pb2.ExitInitializationMode.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.ExitInitializationMode.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2Terminate': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2Terminate,
-                    request_deserializer=unifmu__fmi2__pb2.Terminate.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.Terminate.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2Reset': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2Reset,
-                    request_deserializer=unifmu__fmi2__pb2.Reset.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.Reset.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2FreeInstance': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2FreeInstance,
-                    request_deserializer=unifmu__fmi2__pb2.FreeInstance.FromString,
-                    response_serializer=unifmu__fmi2__pb2.Void.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.FreeInstance.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.Void.SerializeToString,
             ),
             'Fmi2SetDebugLogging': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2SetDebugLogging,
-                    request_deserializer=unifmu__fmi2__pb2.SetDebugLogging.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.SetDebugLogging.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Serialize': grpc.unary_unary_rpc_method_handler(
                     servicer.Serialize,
-                    request_deserializer=unifmu__fmi2__pb2.SerializeMessage.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.SerializeMessage.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Deserialize': grpc.unary_unary_rpc_method_handler(
                     servicer.Deserialize,
-                    request_deserializer=unifmu__fmi2__pb2.DeserializeMessage.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.DeserializeMessage.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2DoStep': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2DoStep,
-                    request_deserializer=unifmu__fmi2__pb2.DoStep.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.DoStep.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2CancelStep': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2CancelStep,
-                    request_deserializer=unifmu__fmi2__pb2.CancelStep.FromString,
-                    response_serializer=unifmu__fmi2__pb2.StatusReturn.SerializeToString,
+                    request_deserializer=schemas_dot_unifmu__fmi2__pb2.CancelStep.FromString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'unifmu_fmi2_proto.SendCommand', rpc_method_handlers)
+            'fmi2_proto.SendCommand', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -344,9 +344,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2SetReal',
-            unifmu__fmi2__pb2.SetReal.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2SetReal',
+            schemas_dot_unifmu__fmi2__pb2.SetReal.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -361,9 +361,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2GetReal',
-            unifmu__fmi2__pb2.GetXXX.SerializeToString,
-            unifmu__fmi2__pb2.GetRealReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2GetReal',
+            schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.GetRealReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -378,9 +378,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2SetInteger',
-            unifmu__fmi2__pb2.SetInteger.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2SetInteger',
+            schemas_dot_unifmu__fmi2__pb2.SetInteger.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -395,9 +395,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2GetInteger',
-            unifmu__fmi2__pb2.GetXXX.SerializeToString,
-            unifmu__fmi2__pb2.GetIntegerReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2GetInteger',
+            schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.GetIntegerReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -412,9 +412,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2SetBoolean',
-            unifmu__fmi2__pb2.SetBoolean.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2SetBoolean',
+            schemas_dot_unifmu__fmi2__pb2.SetBoolean.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -429,9 +429,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2GetBoolean',
-            unifmu__fmi2__pb2.GetXXX.SerializeToString,
-            unifmu__fmi2__pb2.GetBooleanReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2GetBoolean',
+            schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.GetBooleanReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -446,9 +446,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2SetString',
-            unifmu__fmi2__pb2.SetString.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2SetString',
+            schemas_dot_unifmu__fmi2__pb2.SetString.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -463,9 +463,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2GetString',
-            unifmu__fmi2__pb2.GetXXX.SerializeToString,
-            unifmu__fmi2__pb2.GetStringReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2GetString',
+            schemas_dot_unifmu__fmi2__pb2.GetXXX.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.GetStringReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -480,9 +480,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2EnterInitializationMode',
-            unifmu__fmi2__pb2.EnterInitializationMode.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2EnterInitializationMode',
+            schemas_dot_unifmu__fmi2__pb2.EnterInitializationMode.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -497,9 +497,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2ExitInitializationMode',
-            unifmu__fmi2__pb2.ExitInitializationMode.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2ExitInitializationMode',
+            schemas_dot_unifmu__fmi2__pb2.ExitInitializationMode.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -514,9 +514,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2Terminate',
-            unifmu__fmi2__pb2.Terminate.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2Terminate',
+            schemas_dot_unifmu__fmi2__pb2.Terminate.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -531,9 +531,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2Reset',
-            unifmu__fmi2__pb2.Reset.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2Reset',
+            schemas_dot_unifmu__fmi2__pb2.Reset.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -548,9 +548,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2FreeInstance',
-            unifmu__fmi2__pb2.FreeInstance.SerializeToString,
-            unifmu__fmi2__pb2.Void.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2FreeInstance',
+            schemas_dot_unifmu__fmi2__pb2.FreeInstance.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.Void.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -565,9 +565,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2SetDebugLogging',
-            unifmu__fmi2__pb2.SetDebugLogging.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2SetDebugLogging',
+            schemas_dot_unifmu__fmi2__pb2.SetDebugLogging.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -582,9 +582,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Serialize',
-            unifmu__fmi2__pb2.SerializeMessage.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Serialize',
+            schemas_dot_unifmu__fmi2__pb2.SerializeMessage.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -599,9 +599,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Deserialize',
-            unifmu__fmi2__pb2.DeserializeMessage.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Deserialize',
+            schemas_dot_unifmu__fmi2__pb2.DeserializeMessage.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -616,9 +616,9 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2DoStep',
-            unifmu__fmi2__pb2.DoStep.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2DoStep',
+            schemas_dot_unifmu__fmi2__pb2.DoStep.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -633,8 +633,8 @@ class SendCommand(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/unifmu_fmi2_proto.SendCommand/Fmi2CancelStep',
-            unifmu__fmi2__pb2.CancelStep.SerializeToString,
-            unifmu__fmi2__pb2.StatusReturn.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2CancelStep',
+            schemas_dot_unifmu__fmi2__pb2.CancelStep.SerializeToString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
