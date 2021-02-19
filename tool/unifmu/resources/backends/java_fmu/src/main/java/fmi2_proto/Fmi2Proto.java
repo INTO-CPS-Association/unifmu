@@ -158,6 +158,732 @@ public final class Fmi2Proto {
     // @@protoc_insertion_point(enum_scope:fmi2_proto.FmiStatus)
   }
 
+  public interface HandshakeInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:fmi2_proto.HandshakeInfo)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string ip_address = 1;</code>
+     * @return The ipAddress.
+     */
+    java.lang.String getIpAddress();
+    /**
+     * <code>string ip_address = 1;</code>
+     * @return The bytes for ipAddress.
+     */
+    com.google.protobuf.ByteString
+        getIpAddressBytes();
+
+    /**
+     * <code>string port = 2;</code>
+     * @return The port.
+     */
+    java.lang.String getPort();
+    /**
+     * <code>string port = 2;</code>
+     * @return The bytes for port.
+     */
+    com.google.protobuf.ByteString
+        getPortBytes();
+  }
+  /**
+   * <pre>
+   * Message containing the handshake information
+   * </pre>
+   *
+   * Protobuf type {@code fmi2_proto.HandshakeInfo}
+   */
+  public static final class HandshakeInfo extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:fmi2_proto.HandshakeInfo)
+      HandshakeInfoOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use HandshakeInfo.newBuilder() to construct.
+    private HandshakeInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private HandshakeInfo() {
+      ipAddress_ = "";
+      port_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new HandshakeInfo();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private HandshakeInfo(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              ipAddress_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              port_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return fmi2_proto.Fmi2Proto.internal_static_fmi2_proto_HandshakeInfo_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return fmi2_proto.Fmi2Proto.internal_static_fmi2_proto_HandshakeInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              fmi2_proto.Fmi2Proto.HandshakeInfo.class, fmi2_proto.Fmi2Proto.HandshakeInfo.Builder.class);
+    }
+
+    public static final int IP_ADDRESS_FIELD_NUMBER = 1;
+    private volatile java.lang.Object ipAddress_;
+    /**
+     * <code>string ip_address = 1;</code>
+     * @return The ipAddress.
+     */
+    @java.lang.Override
+    public java.lang.String getIpAddress() {
+      java.lang.Object ref = ipAddress_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        ipAddress_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string ip_address = 1;</code>
+     * @return The bytes for ipAddress.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getIpAddressBytes() {
+      java.lang.Object ref = ipAddress_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        ipAddress_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PORT_FIELD_NUMBER = 2;
+    private volatile java.lang.Object port_;
+    /**
+     * <code>string port = 2;</code>
+     * @return The port.
+     */
+    @java.lang.Override
+    public java.lang.String getPort() {
+      java.lang.Object ref = port_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        port_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string port = 2;</code>
+     * @return The bytes for port.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPortBytes() {
+      java.lang.Object ref = port_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        port_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getIpAddressBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, ipAddress_);
+      }
+      if (!getPortBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, port_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getIpAddressBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, ipAddress_);
+      }
+      if (!getPortBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, port_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof fmi2_proto.Fmi2Proto.HandshakeInfo)) {
+        return super.equals(obj);
+      }
+      fmi2_proto.Fmi2Proto.HandshakeInfo other = (fmi2_proto.Fmi2Proto.HandshakeInfo) obj;
+
+      if (!getIpAddress()
+          .equals(other.getIpAddress())) return false;
+      if (!getPort()
+          .equals(other.getPort())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + IP_ADDRESS_FIELD_NUMBER;
+      hash = (53 * hash) + getIpAddress().hashCode();
+      hash = (37 * hash) + PORT_FIELD_NUMBER;
+      hash = (53 * hash) + getPort().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(fmi2_proto.Fmi2Proto.HandshakeInfo prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * Message containing the handshake information
+     * </pre>
+     *
+     * Protobuf type {@code fmi2_proto.HandshakeInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:fmi2_proto.HandshakeInfo)
+        fmi2_proto.Fmi2Proto.HandshakeInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return fmi2_proto.Fmi2Proto.internal_static_fmi2_proto_HandshakeInfo_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return fmi2_proto.Fmi2Proto.internal_static_fmi2_proto_HandshakeInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                fmi2_proto.Fmi2Proto.HandshakeInfo.class, fmi2_proto.Fmi2Proto.HandshakeInfo.Builder.class);
+      }
+
+      // Construct using fmi2_proto.Fmi2Proto.HandshakeInfo.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        ipAddress_ = "";
+
+        port_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return fmi2_proto.Fmi2Proto.internal_static_fmi2_proto_HandshakeInfo_descriptor;
+      }
+
+      @java.lang.Override
+      public fmi2_proto.Fmi2Proto.HandshakeInfo getDefaultInstanceForType() {
+        return fmi2_proto.Fmi2Proto.HandshakeInfo.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public fmi2_proto.Fmi2Proto.HandshakeInfo build() {
+        fmi2_proto.Fmi2Proto.HandshakeInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public fmi2_proto.Fmi2Proto.HandshakeInfo buildPartial() {
+        fmi2_proto.Fmi2Proto.HandshakeInfo result = new fmi2_proto.Fmi2Proto.HandshakeInfo(this);
+        result.ipAddress_ = ipAddress_;
+        result.port_ = port_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof fmi2_proto.Fmi2Proto.HandshakeInfo) {
+          return mergeFrom((fmi2_proto.Fmi2Proto.HandshakeInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(fmi2_proto.Fmi2Proto.HandshakeInfo other) {
+        if (other == fmi2_proto.Fmi2Proto.HandshakeInfo.getDefaultInstance()) return this;
+        if (!other.getIpAddress().isEmpty()) {
+          ipAddress_ = other.ipAddress_;
+          onChanged();
+        }
+        if (!other.getPort().isEmpty()) {
+          port_ = other.port_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        fmi2_proto.Fmi2Proto.HandshakeInfo parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (fmi2_proto.Fmi2Proto.HandshakeInfo) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object ipAddress_ = "";
+      /**
+       * <code>string ip_address = 1;</code>
+       * @return The ipAddress.
+       */
+      public java.lang.String getIpAddress() {
+        java.lang.Object ref = ipAddress_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          ipAddress_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string ip_address = 1;</code>
+       * @return The bytes for ipAddress.
+       */
+      public com.google.protobuf.ByteString
+          getIpAddressBytes() {
+        java.lang.Object ref = ipAddress_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          ipAddress_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string ip_address = 1;</code>
+       * @param value The ipAddress to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIpAddress(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        ipAddress_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string ip_address = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIpAddress() {
+        
+        ipAddress_ = getDefaultInstance().getIpAddress();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string ip_address = 1;</code>
+       * @param value The bytes for ipAddress to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIpAddressBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        ipAddress_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object port_ = "";
+      /**
+       * <code>string port = 2;</code>
+       * @return The port.
+       */
+      public java.lang.String getPort() {
+        java.lang.Object ref = port_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          port_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string port = 2;</code>
+       * @return The bytes for port.
+       */
+      public com.google.protobuf.ByteString
+          getPortBytes() {
+        java.lang.Object ref = port_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          port_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string port = 2;</code>
+       * @param value The port to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPort(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        port_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string port = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPort() {
+        
+        port_ = getDefaultInstance().getPort();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string port = 2;</code>
+       * @param value The bytes for port to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPortBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        port_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:fmi2_proto.HandshakeInfo)
+    }
+
+    // @@protoc_insertion_point(class_scope:fmi2_proto.HandshakeInfo)
+    private static final fmi2_proto.Fmi2Proto.HandshakeInfo DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new fmi2_proto.Fmi2Proto.HandshakeInfo();
+    }
+
+    public static fmi2_proto.Fmi2Proto.HandshakeInfo getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<HandshakeInfo>
+        PARSER = new com.google.protobuf.AbstractParser<HandshakeInfo>() {
+      @java.lang.Override
+      public HandshakeInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new HandshakeInfo(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<HandshakeInfo> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<HandshakeInfo> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public fmi2_proto.Fmi2Proto.HandshakeInfo getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface SetRealOrBuilder extends
       // @@protoc_insertion_point(interface_extends:fmi2_proto.SetReal)
       com.google.protobuf.MessageOrBuilder {
@@ -17144,7 +17870,18 @@ public final class Fmi2Proto {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>bytes state = 1;</code>
+     * <code>.fmi2_proto.FmiStatus status = 1;</code>
+     * @return The enum numeric value on the wire for status.
+     */
+    int getStatusValue();
+    /**
+     * <code>.fmi2_proto.FmiStatus status = 1;</code>
+     * @return The status.
+     */
+    fmi2_proto.Fmi2Proto.FmiStatus getStatus();
+
+    /**
+     * <code>bytes state = 2;</code>
      * @return The state.
      */
     com.google.protobuf.ByteString getState();
@@ -17162,6 +17899,7 @@ public final class Fmi2Proto {
       super(builder);
     }
     private SerializeReturn() {
+      status_ = 0;
       state_ = com.google.protobuf.ByteString.EMPTY;
     }
 
@@ -17195,7 +17933,13 @@ public final class Fmi2Proto {
             case 0:
               done = true;
               break;
-            case 10: {
+            case 8: {
+              int rawValue = input.readEnum();
+
+              status_ = rawValue;
+              break;
+            }
+            case 18: {
 
               state_ = input.readBytes();
               break;
@@ -17232,10 +17976,29 @@ public final class Fmi2Proto {
               fmi2_proto.Fmi2Proto.SerializeReturn.class, fmi2_proto.Fmi2Proto.SerializeReturn.Builder.class);
     }
 
-    public static final int STATE_FIELD_NUMBER = 1;
+    public static final int STATUS_FIELD_NUMBER = 1;
+    private int status_;
+    /**
+     * <code>.fmi2_proto.FmiStatus status = 1;</code>
+     * @return The enum numeric value on the wire for status.
+     */
+    @java.lang.Override public int getStatusValue() {
+      return status_;
+    }
+    /**
+     * <code>.fmi2_proto.FmiStatus status = 1;</code>
+     * @return The status.
+     */
+    @java.lang.Override public fmi2_proto.Fmi2Proto.FmiStatus getStatus() {
+      @SuppressWarnings("deprecation")
+      fmi2_proto.Fmi2Proto.FmiStatus result = fmi2_proto.Fmi2Proto.FmiStatus.valueOf(status_);
+      return result == null ? fmi2_proto.Fmi2Proto.FmiStatus.UNRECOGNIZED : result;
+    }
+
+    public static final int STATE_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString state_;
     /**
-     * <code>bytes state = 1;</code>
+     * <code>bytes state = 2;</code>
      * @return The state.
      */
     @java.lang.Override
@@ -17257,8 +18020,11 @@ public final class Fmi2Proto {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (status_ != fmi2_proto.Fmi2Proto.FmiStatus.Ok.getNumber()) {
+        output.writeEnum(1, status_);
+      }
       if (!state_.isEmpty()) {
-        output.writeBytes(1, state_);
+        output.writeBytes(2, state_);
       }
       unknownFields.writeTo(output);
     }
@@ -17269,9 +18035,13 @@ public final class Fmi2Proto {
       if (size != -1) return size;
 
       size = 0;
+      if (status_ != fmi2_proto.Fmi2Proto.FmiStatus.Ok.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, status_);
+      }
       if (!state_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, state_);
+          .computeBytesSize(2, state_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -17288,6 +18058,7 @@ public final class Fmi2Proto {
       }
       fmi2_proto.Fmi2Proto.SerializeReturn other = (fmi2_proto.Fmi2Proto.SerializeReturn) obj;
 
+      if (status_ != other.status_) return false;
       if (!getState()
           .equals(other.getState())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
@@ -17301,6 +18072,8 @@ public final class Fmi2Proto {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + STATUS_FIELD_NUMBER;
+      hash = (53 * hash) + status_;
       hash = (37 * hash) + STATE_FIELD_NUMBER;
       hash = (53 * hash) + getState().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -17436,6 +18209,8 @@ public final class Fmi2Proto {
       @java.lang.Override
       public Builder clear() {
         super.clear();
+        status_ = 0;
+
         state_ = com.google.protobuf.ByteString.EMPTY;
 
         return this;
@@ -17464,6 +18239,7 @@ public final class Fmi2Proto {
       @java.lang.Override
       public fmi2_proto.Fmi2Proto.SerializeReturn buildPartial() {
         fmi2_proto.Fmi2Proto.SerializeReturn result = new fmi2_proto.Fmi2Proto.SerializeReturn(this);
+        result.status_ = status_;
         result.state_ = state_;
         onBuilt();
         return result;
@@ -17513,6 +18289,9 @@ public final class Fmi2Proto {
 
       public Builder mergeFrom(fmi2_proto.Fmi2Proto.SerializeReturn other) {
         if (other == fmi2_proto.Fmi2Proto.SerializeReturn.getDefaultInstance()) return this;
+        if (other.status_ != 0) {
+          setStatusValue(other.getStatusValue());
+        }
         if (other.getState() != com.google.protobuf.ByteString.EMPTY) {
           setState(other.getState());
         }
@@ -17545,9 +18324,63 @@ public final class Fmi2Proto {
         return this;
       }
 
+      private int status_ = 0;
+      /**
+       * <code>.fmi2_proto.FmiStatus status = 1;</code>
+       * @return The enum numeric value on the wire for status.
+       */
+      @java.lang.Override public int getStatusValue() {
+        return status_;
+      }
+      /**
+       * <code>.fmi2_proto.FmiStatus status = 1;</code>
+       * @param value The enum numeric value on the wire for status to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatusValue(int value) {
+        
+        status_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.fmi2_proto.FmiStatus status = 1;</code>
+       * @return The status.
+       */
+      @java.lang.Override
+      public fmi2_proto.Fmi2Proto.FmiStatus getStatus() {
+        @SuppressWarnings("deprecation")
+        fmi2_proto.Fmi2Proto.FmiStatus result = fmi2_proto.Fmi2Proto.FmiStatus.valueOf(status_);
+        return result == null ? fmi2_proto.Fmi2Proto.FmiStatus.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.fmi2_proto.FmiStatus status = 1;</code>
+       * @param value The status to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatus(fmi2_proto.Fmi2Proto.FmiStatus value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        status_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.fmi2_proto.FmiStatus status = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearStatus() {
+        
+        status_ = 0;
+        onChanged();
+        return this;
+      }
+
       private com.google.protobuf.ByteString state_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>bytes state = 1;</code>
+       * <code>bytes state = 2;</code>
        * @return The state.
        */
       @java.lang.Override
@@ -17555,7 +18388,7 @@ public final class Fmi2Proto {
         return state_;
       }
       /**
-       * <code>bytes state = 1;</code>
+       * <code>bytes state = 2;</code>
        * @param value The state to set.
        * @return This builder for chaining.
        */
@@ -17569,7 +18402,7 @@ public final class Fmi2Proto {
         return this;
       }
       /**
-       * <code>bytes state = 1;</code>
+       * <code>bytes state = 2;</code>
        * @return This builder for chaining.
        */
       public Builder clearState() {
@@ -18058,6 +18891,11 @@ public final class Fmi2Proto {
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_fmi2_proto_HandshakeInfo_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_fmi2_proto_HandshakeInfo_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_fmi2_proto_SetReal_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -18206,255 +19044,267 @@ public final class Fmi2Proto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\021unifmu_fmi2.proto\022\nfmi2_proto\"-\n\007SetRe" +
-      "al\022\022\n\nreferences\030\001 \003(\r\022\016\n\006values\030\002 \003(\001\"0" +
-      "\n\nSetInteger\022\022\n\nreferences\030\001 \003(\r\022\016\n\006valu" +
-      "es\030\002 \003(\005\"0\n\nSetBoolean\022\022\n\nreferences\030\001 \003" +
-      "(\r\022\016\n\006values\030\002 \003(\010\"/\n\tSetString\022\022\n\nrefer" +
-      "ences\030\001 \003(\r\022\016\n\006values\030\002 \003(\t\"\034\n\006GetXXX\022\022\n" +
-      "\nreferences\030\001 \003(\r\"H\n\006DoStep\022\024\n\014current_t" +
-      "ime\030\001 \001(\001\022\021\n\tstep_size\030\002 \001(\001\022\025\n\rno_step_" +
-      "prior\030\003 \001(\010\"\031\n\027EnterInitializationMode\"\030" +
-      "\n\026ExitInitializationMode\"\016\n\014FreeInstance" +
-      "\"\013\n\tTerminate\"\007\n\005Reset\"y\n\017SetupExperimen" +
-      "t\022\022\n\nstart_time\030\001 \001(\001\022\021\n\tstop_time\030\002 \001(\001" +
-      "\022\021\n\ttolerance\030\003 \001(\001\022\025\n\rhas_stop_time\030\004 \001" +
-      "(\010\022\025\n\rhas_tolerance\030\005 \001(\010\"\022\n\020SerializeMe" +
-      "ssage\"#\n\022DeserializeMessage\022\r\n\005state\030\001 \001" +
-      "(\014\"\033\n\031GetDirectionalDerivatives\"\025\n\023SetIn" +
-      "putDerivatives\"\026\n\024GetOutputDerivatives\"\014" +
-      "\n\nCancelStep\"\016\n\014GetXXXStatus\"9\n\017SetDebug" +
-      "Logging\022\022\n\ncategories\030\001 \001(\t\022\022\n\nlogging_o" +
-      "n\030\002 \001(\010\"\306\004\n\013Fmi2Command\022\020\n\006DoStep\030\001 \001(\005H" +
-      "\000\022\021\n\007SetReal\030\002 \001(\005H\000\022\024\n\nSetInteger\030\003 \001(\005" +
-      "H\000\022\024\n\nSetBoolean\030\004 \001(\005H\000\022\023\n\tSetString\030\005 " +
-      "\001(\005H\000\022\021\n\007GetReal\030\006 \001(\005H\000\022\024\n\nGetInteger\030\007" +
-      " \001(\005H\000\022\024\n\nGetBoolean\030\010 \001(\005H\000\022\023\n\tGetStrin" +
-      "g\030\t \001(\005H\000\022\031\n\017SetDebugLogging\030\n \001(\005H\000\022\031\n\017" +
-      "SetupExperiment\030\013 \001(\005H\000\022\026\n\014FreeInstance\030" +
-      "\014 \001(\005H\000\022!\n\027EnterInitializationMode\030\r \001(\005" +
-      "H\000\022 \n\026ExitInitializationMode\030\016 \001(\005H\000\022\023\n\t" +
-      "Terminate\030\017 \001(\005H\000\022\017\n\005Reset\030\020 \001(\005H\000\022\023\n\tSe" +
-      "rialize\030\021 \001(\005H\000\022\025\n\013Deserialize\030\022 \001(\005H\000\022#" +
-      "\n\031GetDirectionalDerivatives\030\023 \001(\005H\000\022\035\n\023S" +
-      "etInputDerivatives\030\024 \001(\005H\000\022\036\n\024GetOutputD" +
-      "erivatives\030\025 \001(\005H\000\022\024\n\nCancelStep\030\026 \001(\005H\000" +
-      "\022\026\n\014GetXXXStatus\030\027 \001(\005H\000B\006\n\004args\"5\n\014Stat" +
-      "usReturn\022%\n\006status\030\001 \001(\0162\025.fmi2_proto.Fm" +
-      "iStatus\"F\n\rGetRealReturn\022%\n\006status\030\001 \001(\016" +
-      "2\025.fmi2_proto.FmiStatus\022\016\n\006values\030\002 \003(\001\"" +
-      "I\n\020GetIntegerReturn\022%\n\006status\030\001 \001(\0162\025.fm" +
-      "i2_proto.FmiStatus\022\016\n\006values\030\002 \003(\005\"I\n\020Ge" +
-      "tBooleanReturn\022%\n\006status\030\001 \001(\0162\025.fmi2_pr" +
-      "oto.FmiStatus\022\016\n\006values\030\002 \003(\010\"H\n\017GetStri" +
-      "ngReturn\022%\n\006status\030\001 \001(\0162\025.fmi2_proto.Fm" +
-      "iStatus\022\016\n\006values\030\002 \003(\t\" \n\017SerializeRetu" +
-      "rn\022\r\n\005state\030\001 \001(\014\"\006\n\004Void*P\n\tFmiStatus\022\006" +
-      "\n\002Ok\020\000\022\013\n\007Warning\020\001\022\013\n\007Discard\020\002\022\t\n\005Erro" +
-      "r\020\003\022\t\n\005Fatal\020\004\022\013\n\007Pending\020\0052\223\n\n\013SendComm" +
-      "and\022>\n\013Fmi2SetReal\022\023.fmi2_proto.SetReal\032" +
-      "\030.fmi2_proto.StatusReturn\"\000\022>\n\013Fmi2GetRe" +
-      "al\022\022.fmi2_proto.GetXXX\032\031.fmi2_proto.GetR" +
-      "ealReturn\"\000\022D\n\016Fmi2SetInteger\022\026.fmi2_pro" +
-      "to.SetInteger\032\030.fmi2_proto.StatusReturn\"" +
-      "\000\022D\n\016Fmi2GetInteger\022\022.fmi2_proto.GetXXX\032" +
-      "\034.fmi2_proto.GetIntegerReturn\"\000\022D\n\016Fmi2S" +
-      "etBoolean\022\026.fmi2_proto.SetBoolean\032\030.fmi2" +
-      "_proto.StatusReturn\"\000\022D\n\016Fmi2GetBoolean\022" +
-      "\022.fmi2_proto.GetXXX\032\034.fmi2_proto.GetBool" +
-      "eanReturn\"\000\022B\n\rFmi2SetString\022\025.fmi2_prot" +
-      "o.SetString\032\030.fmi2_proto.StatusReturn\"\000\022" +
-      "B\n\rFmi2GetString\022\022.fmi2_proto.GetXXX\032\033.f" +
-      "mi2_proto.GetStringReturn\"\000\022^\n\033Fmi2Enter" +
-      "InitializationMode\022#.fmi2_proto.EnterIni" +
-      "tializationMode\032\030.fmi2_proto.StatusRetur" +
-      "n\"\000\022\\\n\032Fmi2ExitInitializationMode\022\".fmi2" +
-      "_proto.ExitInitializationMode\032\030.fmi2_pro" +
-      "to.StatusReturn\"\000\022B\n\rFmi2Terminate\022\025.fmi" +
-      "2_proto.Terminate\032\030.fmi2_proto.StatusRet" +
-      "urn\"\000\022:\n\tFmi2Reset\022\021.fmi2_proto.Reset\032\030." +
-      "fmi2_proto.StatusReturn\"\000\022@\n\020Fmi2FreeIns" +
-      "tance\022\030.fmi2_proto.FreeInstance\032\020.fmi2_p" +
-      "roto.Void\"\000\022N\n\023Fmi2SetDebugLogging\022\033.fmi" +
-      "2_proto.SetDebugLogging\032\030.fmi2_proto.Sta" +
-      "tusReturn\"\000\022E\n\tSerialize\022\034.fmi2_proto.Se" +
-      "rializeMessage\032\030.fmi2_proto.StatusReturn" +
-      "\"\000\022I\n\013Deserialize\022\036.fmi2_proto.Deseriali" +
-      "zeMessage\032\030.fmi2_proto.StatusReturn\"\000\022<\n" +
-      "\nFmi2DoStep\022\022.fmi2_proto.DoStep\032\030.fmi2_p" +
-      "roto.StatusReturn\"\000\022D\n\016Fmi2CancelStep\022\026." +
-      "fmi2_proto.CancelStep\032\030.fmi2_proto.Statu" +
-      "sReturn\"\000B#B\tFmi2ProtoH\001P\000\252\002\021schemas.Fmi" +
-      "2Protob\006proto3"
+      "\n\021unifmu_fmi2.proto\022\nfmi2_proto\"1\n\rHands" +
+      "hakeInfo\022\022\n\nip_address\030\001 \001(\t\022\014\n\004port\030\002 \001" +
+      "(\t\"-\n\007SetReal\022\022\n\nreferences\030\001 \003(\r\022\016\n\006val" +
+      "ues\030\002 \003(\001\"0\n\nSetInteger\022\022\n\nreferences\030\001 " +
+      "\003(\r\022\016\n\006values\030\002 \003(\005\"0\n\nSetBoolean\022\022\n\nref" +
+      "erences\030\001 \003(\r\022\016\n\006values\030\002 \003(\010\"/\n\tSetStri" +
+      "ng\022\022\n\nreferences\030\001 \003(\r\022\016\n\006values\030\002 \003(\t\"\034" +
+      "\n\006GetXXX\022\022\n\nreferences\030\001 \003(\r\"H\n\006DoStep\022\024" +
+      "\n\014current_time\030\001 \001(\001\022\021\n\tstep_size\030\002 \001(\001\022" +
+      "\025\n\rno_step_prior\030\003 \001(\010\"\031\n\027EnterInitializ" +
+      "ationMode\"\030\n\026ExitInitializationMode\"\016\n\014F" +
+      "reeInstance\"\013\n\tTerminate\"\007\n\005Reset\"y\n\017Set" +
+      "upExperiment\022\022\n\nstart_time\030\001 \001(\001\022\021\n\tstop" +
+      "_time\030\002 \001(\001\022\021\n\ttolerance\030\003 \001(\001\022\025\n\rhas_st" +
+      "op_time\030\004 \001(\010\022\025\n\rhas_tolerance\030\005 \001(\010\"\022\n\020" +
+      "SerializeMessage\"#\n\022DeserializeMessage\022\r" +
+      "\n\005state\030\001 \001(\014\"\033\n\031GetDirectionalDerivativ" +
+      "es\"\025\n\023SetInputDerivatives\"\026\n\024GetOutputDe" +
+      "rivatives\"\014\n\nCancelStep\"\016\n\014GetXXXStatus\"" +
+      "9\n\017SetDebugLogging\022\022\n\ncategories\030\001 \001(\t\022\022" +
+      "\n\nlogging_on\030\002 \001(\010\"\306\004\n\013Fmi2Command\022\020\n\006Do" +
+      "Step\030\001 \001(\005H\000\022\021\n\007SetReal\030\002 \001(\005H\000\022\024\n\nSetIn" +
+      "teger\030\003 \001(\005H\000\022\024\n\nSetBoolean\030\004 \001(\005H\000\022\023\n\tS" +
+      "etString\030\005 \001(\005H\000\022\021\n\007GetReal\030\006 \001(\005H\000\022\024\n\nG" +
+      "etInteger\030\007 \001(\005H\000\022\024\n\nGetBoolean\030\010 \001(\005H\000\022" +
+      "\023\n\tGetString\030\t \001(\005H\000\022\031\n\017SetDebugLogging\030" +
+      "\n \001(\005H\000\022\031\n\017SetupExperiment\030\013 \001(\005H\000\022\026\n\014Fr" +
+      "eeInstance\030\014 \001(\005H\000\022!\n\027EnterInitializatio" +
+      "nMode\030\r \001(\005H\000\022 \n\026ExitInitializationMode\030" +
+      "\016 \001(\005H\000\022\023\n\tTerminate\030\017 \001(\005H\000\022\017\n\005Reset\030\020 " +
+      "\001(\005H\000\022\023\n\tSerialize\030\021 \001(\005H\000\022\025\n\013Deserializ" +
+      "e\030\022 \001(\005H\000\022#\n\031GetDirectionalDerivatives\030\023" +
+      " \001(\005H\000\022\035\n\023SetInputDerivatives\030\024 \001(\005H\000\022\036\n" +
+      "\024GetOutputDerivatives\030\025 \001(\005H\000\022\024\n\nCancelS" +
+      "tep\030\026 \001(\005H\000\022\026\n\014GetXXXStatus\030\027 \001(\005H\000B\006\n\004a" +
+      "rgs\"5\n\014StatusReturn\022%\n\006status\030\001 \001(\0162\025.fm" +
+      "i2_proto.FmiStatus\"F\n\rGetRealReturn\022%\n\006s" +
+      "tatus\030\001 \001(\0162\025.fmi2_proto.FmiStatus\022\016\n\006va" +
+      "lues\030\002 \003(\001\"I\n\020GetIntegerReturn\022%\n\006status" +
+      "\030\001 \001(\0162\025.fmi2_proto.FmiStatus\022\016\n\006values\030" +
+      "\002 \003(\005\"I\n\020GetBooleanReturn\022%\n\006status\030\001 \001(" +
+      "\0162\025.fmi2_proto.FmiStatus\022\016\n\006values\030\002 \003(\010" +
+      "\"H\n\017GetStringReturn\022%\n\006status\030\001 \001(\0162\025.fm" +
+      "i2_proto.FmiStatus\022\016\n\006values\030\002 \003(\t\"G\n\017Se" +
+      "rializeReturn\022%\n\006status\030\001 \001(\0162\025.fmi2_pro" +
+      "to.FmiStatus\022\r\n\005state\030\002 \001(\014\"\006\n\004Void*P\n\tF" +
+      "miStatus\022\006\n\002Ok\020\000\022\013\n\007Warning\020\001\022\013\n\007Discard" +
+      "\020\002\022\t\n\005Error\020\003\022\t\n\005Fatal\020\004\022\013\n\007Pending\020\0052O\n" +
+      "\nHandshaker\022A\n\020PerformHandshake\022\031.fmi2_p" +
+      "roto.HandshakeInfo\032\020.fmi2_proto.Void\"\0002\346" +
+      "\n\n\013SendCommand\022>\n\013Fmi2SetReal\022\023.fmi2_pro" +
+      "to.SetReal\032\030.fmi2_proto.StatusReturn\"\000\022>" +
+      "\n\013Fmi2GetReal\022\022.fmi2_proto.GetXXX\032\031.fmi2" +
+      "_proto.GetRealReturn\"\000\022D\n\016Fmi2SetInteger" +
+      "\022\026.fmi2_proto.SetInteger\032\030.fmi2_proto.St" +
+      "atusReturn\"\000\022D\n\016Fmi2GetInteger\022\022.fmi2_pr" +
+      "oto.GetXXX\032\034.fmi2_proto.GetIntegerReturn" +
+      "\"\000\022D\n\016Fmi2SetBoolean\022\026.fmi2_proto.SetBoo" +
+      "lean\032\030.fmi2_proto.StatusReturn\"\000\022D\n\016Fmi2" +
+      "GetBoolean\022\022.fmi2_proto.GetXXX\032\034.fmi2_pr" +
+      "oto.GetBooleanReturn\"\000\022B\n\rFmi2SetString\022" +
+      "\025.fmi2_proto.SetString\032\030.fmi2_proto.Stat" +
+      "usReturn\"\000\022B\n\rFmi2GetString\022\022.fmi2_proto" +
+      ".GetXXX\032\033.fmi2_proto.GetStringReturn\"\000\022^" +
+      "\n\033Fmi2EnterInitializationMode\022#.fmi2_pro" +
+      "to.EnterInitializationMode\032\030.fmi2_proto." +
+      "StatusReturn\"\000\022\\\n\032Fmi2ExitInitialization" +
+      "Mode\022\".fmi2_proto.ExitInitializationMode" +
+      "\032\030.fmi2_proto.StatusReturn\"\000\022B\n\rFmi2Term" +
+      "inate\022\025.fmi2_proto.Terminate\032\030.fmi2_prot" +
+      "o.StatusReturn\"\000\022:\n\tFmi2Reset\022\021.fmi2_pro" +
+      "to.Reset\032\030.fmi2_proto.StatusReturn\"\000\022N\n\023" +
+      "Fmi2SetupExperiment\022\033.fmi2_proto.SetupEx" +
+      "periment\032\030.fmi2_proto.StatusReturn\"\000\022@\n\020" +
+      "Fmi2FreeInstance\022\030.fmi2_proto.FreeInstan" +
+      "ce\032\020.fmi2_proto.Void\"\000\022N\n\023Fmi2SetDebugLo" +
+      "gging\022\033.fmi2_proto.SetDebugLogging\032\030.fmi" +
+      "2_proto.StatusReturn\"\000\022<\n\nFmi2DoStep\022\022.f" +
+      "mi2_proto.DoStep\032\030.fmi2_proto.StatusRetu" +
+      "rn\"\000\022D\n\016Fmi2CancelStep\022\026.fmi2_proto.Canc" +
+      "elStep\032\030.fmi2_proto.StatusReturn\"\000\022H\n\tSe" +
+      "rialize\022\034.fmi2_proto.SerializeMessage\032\033." +
+      "fmi2_proto.SerializeReturn\"\000\022I\n\013Deserial" +
+      "ize\022\036.fmi2_proto.DeserializeMessage\032\030.fm" +
+      "i2_proto.StatusReturn\"\000B#B\tFmi2ProtoH\001P\000" +
+      "\252\002\021schemas.Fmi2Protob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         });
-    internal_static_fmi2_proto_SetReal_descriptor =
+    internal_static_fmi2_proto_HandshakeInfo_descriptor =
       getDescriptor().getMessageTypes().get(0);
+    internal_static_fmi2_proto_HandshakeInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_fmi2_proto_HandshakeInfo_descriptor,
+        new java.lang.String[] { "IpAddress", "Port", });
+    internal_static_fmi2_proto_SetReal_descriptor =
+      getDescriptor().getMessageTypes().get(1);
     internal_static_fmi2_proto_SetReal_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SetReal_descriptor,
         new java.lang.String[] { "References", "Values", });
     internal_static_fmi2_proto_SetInteger_descriptor =
-      getDescriptor().getMessageTypes().get(1);
+      getDescriptor().getMessageTypes().get(2);
     internal_static_fmi2_proto_SetInteger_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SetInteger_descriptor,
         new java.lang.String[] { "References", "Values", });
     internal_static_fmi2_proto_SetBoolean_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(3);
     internal_static_fmi2_proto_SetBoolean_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SetBoolean_descriptor,
         new java.lang.String[] { "References", "Values", });
     internal_static_fmi2_proto_SetString_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_fmi2_proto_SetString_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SetString_descriptor,
         new java.lang.String[] { "References", "Values", });
     internal_static_fmi2_proto_GetXXX_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_fmi2_proto_GetXXX_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetXXX_descriptor,
         new java.lang.String[] { "References", });
     internal_static_fmi2_proto_DoStep_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_fmi2_proto_DoStep_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_DoStep_descriptor,
         new java.lang.String[] { "CurrentTime", "StepSize", "NoStepPrior", });
     internal_static_fmi2_proto_EnterInitializationMode_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_fmi2_proto_EnterInitializationMode_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_EnterInitializationMode_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_ExitInitializationMode_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_fmi2_proto_ExitInitializationMode_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_ExitInitializationMode_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_FreeInstance_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_fmi2_proto_FreeInstance_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_FreeInstance_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_Terminate_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_fmi2_proto_Terminate_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_Terminate_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_Reset_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_fmi2_proto_Reset_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_Reset_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_SetupExperiment_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_fmi2_proto_SetupExperiment_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SetupExperiment_descriptor,
         new java.lang.String[] { "StartTime", "StopTime", "Tolerance", "HasStopTime", "HasTolerance", });
     internal_static_fmi2_proto_SerializeMessage_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_fmi2_proto_SerializeMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SerializeMessage_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_DeserializeMessage_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_fmi2_proto_DeserializeMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_DeserializeMessage_descriptor,
         new java.lang.String[] { "State", });
     internal_static_fmi2_proto_GetDirectionalDerivatives_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_fmi2_proto_GetDirectionalDerivatives_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetDirectionalDerivatives_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_SetInputDerivatives_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(16);
     internal_static_fmi2_proto_SetInputDerivatives_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SetInputDerivatives_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_GetOutputDerivatives_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_fmi2_proto_GetOutputDerivatives_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetOutputDerivatives_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_CancelStep_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_fmi2_proto_CancelStep_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_CancelStep_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_GetXXXStatus_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(19);
     internal_static_fmi2_proto_GetXXXStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetXXXStatus_descriptor,
         new java.lang.String[] { });
     internal_static_fmi2_proto_SetDebugLogging_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(20);
     internal_static_fmi2_proto_SetDebugLogging_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SetDebugLogging_descriptor,
         new java.lang.String[] { "Categories", "LoggingOn", });
     internal_static_fmi2_proto_Fmi2Command_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(21);
     internal_static_fmi2_proto_Fmi2Command_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_Fmi2Command_descriptor,
         new java.lang.String[] { "DoStep", "SetReal", "SetInteger", "SetBoolean", "SetString", "GetReal", "GetInteger", "GetBoolean", "GetString", "SetDebugLogging", "SetupExperiment", "FreeInstance", "EnterInitializationMode", "ExitInitializationMode", "Terminate", "Reset", "Serialize", "Deserialize", "GetDirectionalDerivatives", "SetInputDerivatives", "GetOutputDerivatives", "CancelStep", "GetXXXStatus", "Args", });
     internal_static_fmi2_proto_StatusReturn_descriptor =
-      getDescriptor().getMessageTypes().get(21);
+      getDescriptor().getMessageTypes().get(22);
     internal_static_fmi2_proto_StatusReturn_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_StatusReturn_descriptor,
         new java.lang.String[] { "Status", });
     internal_static_fmi2_proto_GetRealReturn_descriptor =
-      getDescriptor().getMessageTypes().get(22);
+      getDescriptor().getMessageTypes().get(23);
     internal_static_fmi2_proto_GetRealReturn_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetRealReturn_descriptor,
         new java.lang.String[] { "Status", "Values", });
     internal_static_fmi2_proto_GetIntegerReturn_descriptor =
-      getDescriptor().getMessageTypes().get(23);
+      getDescriptor().getMessageTypes().get(24);
     internal_static_fmi2_proto_GetIntegerReturn_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetIntegerReturn_descriptor,
         new java.lang.String[] { "Status", "Values", });
     internal_static_fmi2_proto_GetBooleanReturn_descriptor =
-      getDescriptor().getMessageTypes().get(24);
+      getDescriptor().getMessageTypes().get(25);
     internal_static_fmi2_proto_GetBooleanReturn_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetBooleanReturn_descriptor,
         new java.lang.String[] { "Status", "Values", });
     internal_static_fmi2_proto_GetStringReturn_descriptor =
-      getDescriptor().getMessageTypes().get(25);
+      getDescriptor().getMessageTypes().get(26);
     internal_static_fmi2_proto_GetStringReturn_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_GetStringReturn_descriptor,
         new java.lang.String[] { "Status", "Values", });
     internal_static_fmi2_proto_SerializeReturn_descriptor =
-      getDescriptor().getMessageTypes().get(26);
+      getDescriptor().getMessageTypes().get(27);
     internal_static_fmi2_proto_SerializeReturn_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_SerializeReturn_descriptor,
-        new java.lang.String[] { "State", });
+        new java.lang.String[] { "Status", "State", });
     internal_static_fmi2_proto_Void_descriptor =
-      getDescriptor().getMessageTypes().get(27);
+      getDescriptor().getMessageTypes().get(28);
     internal_static_fmi2_proto_Void_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_fmi2_proto_Void_descriptor,

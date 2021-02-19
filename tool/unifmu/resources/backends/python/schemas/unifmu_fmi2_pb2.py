@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'B\tFmi2ProtoH\001P\000\252\002\021schemas.Fmi2Proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x19schemas/unifmu_fmi2.proto\x12\nfmi2_proto\"-\n\x07SetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x01\"0\n\nSetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x05\"0\n\nSetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x08\"/\n\tSetString\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\t\"\x1c\n\x06GetXXX\x12\x12\n\nreferences\x18\x01 \x03(\r\"H\n\x06\x44oStep\x12\x14\n\x0c\x63urrent_time\x18\x01 \x01(\x01\x12\x11\n\tstep_size\x18\x02 \x01(\x01\x12\x15\n\rno_step_prior\x18\x03 \x01(\x08\"\x19\n\x17\x45nterInitializationMode\"\x18\n\x16\x45xitInitializationMode\"\x0e\n\x0c\x46reeInstance\"\x0b\n\tTerminate\"\x07\n\x05Reset\"y\n\x0fSetupExperiment\x12\x12\n\nstart_time\x18\x01 \x01(\x01\x12\x11\n\tstop_time\x18\x02 \x01(\x01\x12\x11\n\ttolerance\x18\x03 \x01(\x01\x12\x15\n\rhas_stop_time\x18\x04 \x01(\x08\x12\x15\n\rhas_tolerance\x18\x05 \x01(\x08\"\x12\n\x10SerializeMessage\"#\n\x12\x44\x65serializeMessage\x12\r\n\x05state\x18\x01 \x01(\x0c\"\x1b\n\x19GetDirectionalDerivatives\"\x15\n\x13SetInputDerivatives\"\x16\n\x14GetOutputDerivatives\"\x0c\n\nCancelStep\"\x0e\n\x0cGetXXXStatus\"9\n\x0fSetDebugLogging\x12\x12\n\ncategories\x18\x01 \x01(\t\x12\x12\n\nlogging_on\x18\x02 \x01(\x08\"\xc6\x04\n\x0b\x46mi2Command\x12\x10\n\x06\x44oStep\x18\x01 \x01(\x05H\x00\x12\x11\n\x07SetReal\x18\x02 \x01(\x05H\x00\x12\x14\n\nSetInteger\x18\x03 \x01(\x05H\x00\x12\x14\n\nSetBoolean\x18\x04 \x01(\x05H\x00\x12\x13\n\tSetString\x18\x05 \x01(\x05H\x00\x12\x11\n\x07GetReal\x18\x06 \x01(\x05H\x00\x12\x14\n\nGetInteger\x18\x07 \x01(\x05H\x00\x12\x14\n\nGetBoolean\x18\x08 \x01(\x05H\x00\x12\x13\n\tGetString\x18\t \x01(\x05H\x00\x12\x19\n\x0fSetDebugLogging\x18\n \x01(\x05H\x00\x12\x19\n\x0fSetupExperiment\x18\x0b \x01(\x05H\x00\x12\x16\n\x0c\x46reeInstance\x18\x0c \x01(\x05H\x00\x12!\n\x17\x45nterInitializationMode\x18\r \x01(\x05H\x00\x12 \n\x16\x45xitInitializationMode\x18\x0e \x01(\x05H\x00\x12\x13\n\tTerminate\x18\x0f \x01(\x05H\x00\x12\x0f\n\x05Reset\x18\x10 \x01(\x05H\x00\x12\x13\n\tSerialize\x18\x11 \x01(\x05H\x00\x12\x15\n\x0b\x44\x65serialize\x18\x12 \x01(\x05H\x00\x12#\n\x19GetDirectionalDerivatives\x18\x13 \x01(\x05H\x00\x12\x1d\n\x13SetInputDerivatives\x18\x14 \x01(\x05H\x00\x12\x1e\n\x14GetOutputDerivatives\x18\x15 \x01(\x05H\x00\x12\x14\n\nCancelStep\x18\x16 \x01(\x05H\x00\x12\x16\n\x0cGetXXXStatus\x18\x17 \x01(\x05H\x00\x42\x06\n\x04\x61rgs\"5\n\x0cStatusReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\"F\n\rGetRealReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\x01\"I\n\x10GetIntegerReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\x05\"I\n\x10GetBooleanReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\x08\"H\n\x0fGetStringReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\t\" \n\x0fSerializeReturn\x12\r\n\x05state\x18\x01 \x01(\x0c\"\x06\n\x04Void*P\n\tFmiStatus\x12\x06\n\x02Ok\x10\x00\x12\x0b\n\x07Warning\x10\x01\x12\x0b\n\x07\x44iscard\x10\x02\x12\t\n\x05\x45rror\x10\x03\x12\t\n\x05\x46\x61tal\x10\x04\x12\x0b\n\x07Pending\x10\x05\x32\x93\n\n\x0bSendCommand\x12>\n\x0b\x46mi2SetReal\x12\x13.fmi2_proto.SetReal\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12>\n\x0b\x46mi2GetReal\x12\x12.fmi2_proto.GetXXX\x1a\x19.fmi2_proto.GetRealReturn\"\x00\x12\x44\n\x0e\x46mi2SetInteger\x12\x16.fmi2_proto.SetInteger\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x44\n\x0e\x46mi2GetInteger\x12\x12.fmi2_proto.GetXXX\x1a\x1c.fmi2_proto.GetIntegerReturn\"\x00\x12\x44\n\x0e\x46mi2SetBoolean\x12\x16.fmi2_proto.SetBoolean\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x44\n\x0e\x46mi2GetBoolean\x12\x12.fmi2_proto.GetXXX\x1a\x1c.fmi2_proto.GetBooleanReturn\"\x00\x12\x42\n\rFmi2SetString\x12\x15.fmi2_proto.SetString\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x42\n\rFmi2GetString\x12\x12.fmi2_proto.GetXXX\x1a\x1b.fmi2_proto.GetStringReturn\"\x00\x12^\n\x1b\x46mi2EnterInitializationMode\x12#.fmi2_proto.EnterInitializationMode\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\\\n\x1a\x46mi2ExitInitializationMode\x12\".fmi2_proto.ExitInitializationMode\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x42\n\rFmi2Terminate\x12\x15.fmi2_proto.Terminate\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12:\n\tFmi2Reset\x12\x11.fmi2_proto.Reset\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12@\n\x10\x46mi2FreeInstance\x12\x18.fmi2_proto.FreeInstance\x1a\x10.fmi2_proto.Void\"\x00\x12N\n\x13\x46mi2SetDebugLogging\x12\x1b.fmi2_proto.SetDebugLogging\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x45\n\tSerialize\x12\x1c.fmi2_proto.SerializeMessage\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12I\n\x0b\x44\x65serialize\x12\x1e.fmi2_proto.DeserializeMessage\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12<\n\nFmi2DoStep\x12\x12.fmi2_proto.DoStep\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x44\n\x0e\x46mi2CancelStep\x12\x16.fmi2_proto.CancelStep\x1a\x18.fmi2_proto.StatusReturn\"\x00\x42#B\tFmi2ProtoH\x01P\x00\xaa\x02\x11schemas.Fmi2Protob\x06proto3'
+  serialized_pb=b'\n\x19schemas/unifmu_fmi2.proto\x12\nfmi2_proto\"1\n\rHandshakeInfo\x12\x12\n\nip_address\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\t\"-\n\x07SetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x01\"0\n\nSetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x05\"0\n\nSetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x08\"/\n\tSetString\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\t\"\x1c\n\x06GetXXX\x12\x12\n\nreferences\x18\x01 \x03(\r\"H\n\x06\x44oStep\x12\x14\n\x0c\x63urrent_time\x18\x01 \x01(\x01\x12\x11\n\tstep_size\x18\x02 \x01(\x01\x12\x15\n\rno_step_prior\x18\x03 \x01(\x08\"\x19\n\x17\x45nterInitializationMode\"\x18\n\x16\x45xitInitializationMode\"\x0e\n\x0c\x46reeInstance\"\x0b\n\tTerminate\"\x07\n\x05Reset\"y\n\x0fSetupExperiment\x12\x12\n\nstart_time\x18\x01 \x01(\x01\x12\x11\n\tstop_time\x18\x02 \x01(\x01\x12\x11\n\ttolerance\x18\x03 \x01(\x01\x12\x15\n\rhas_stop_time\x18\x04 \x01(\x08\x12\x15\n\rhas_tolerance\x18\x05 \x01(\x08\"\x12\n\x10SerializeMessage\"#\n\x12\x44\x65serializeMessage\x12\r\n\x05state\x18\x01 \x01(\x0c\"\x1b\n\x19GetDirectionalDerivatives\"\x15\n\x13SetInputDerivatives\"\x16\n\x14GetOutputDerivatives\"\x0c\n\nCancelStep\"\x0e\n\x0cGetXXXStatus\"9\n\x0fSetDebugLogging\x12\x12\n\ncategories\x18\x01 \x01(\t\x12\x12\n\nlogging_on\x18\x02 \x01(\x08\"\xc6\x04\n\x0b\x46mi2Command\x12\x10\n\x06\x44oStep\x18\x01 \x01(\x05H\x00\x12\x11\n\x07SetReal\x18\x02 \x01(\x05H\x00\x12\x14\n\nSetInteger\x18\x03 \x01(\x05H\x00\x12\x14\n\nSetBoolean\x18\x04 \x01(\x05H\x00\x12\x13\n\tSetString\x18\x05 \x01(\x05H\x00\x12\x11\n\x07GetReal\x18\x06 \x01(\x05H\x00\x12\x14\n\nGetInteger\x18\x07 \x01(\x05H\x00\x12\x14\n\nGetBoolean\x18\x08 \x01(\x05H\x00\x12\x13\n\tGetString\x18\t \x01(\x05H\x00\x12\x19\n\x0fSetDebugLogging\x18\n \x01(\x05H\x00\x12\x19\n\x0fSetupExperiment\x18\x0b \x01(\x05H\x00\x12\x16\n\x0c\x46reeInstance\x18\x0c \x01(\x05H\x00\x12!\n\x17\x45nterInitializationMode\x18\r \x01(\x05H\x00\x12 \n\x16\x45xitInitializationMode\x18\x0e \x01(\x05H\x00\x12\x13\n\tTerminate\x18\x0f \x01(\x05H\x00\x12\x0f\n\x05Reset\x18\x10 \x01(\x05H\x00\x12\x13\n\tSerialize\x18\x11 \x01(\x05H\x00\x12\x15\n\x0b\x44\x65serialize\x18\x12 \x01(\x05H\x00\x12#\n\x19GetDirectionalDerivatives\x18\x13 \x01(\x05H\x00\x12\x1d\n\x13SetInputDerivatives\x18\x14 \x01(\x05H\x00\x12\x1e\n\x14GetOutputDerivatives\x18\x15 \x01(\x05H\x00\x12\x14\n\nCancelStep\x18\x16 \x01(\x05H\x00\x12\x16\n\x0cGetXXXStatus\x18\x17 \x01(\x05H\x00\x42\x06\n\x04\x61rgs\"5\n\x0cStatusReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\"F\n\rGetRealReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\x01\"I\n\x10GetIntegerReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\x05\"I\n\x10GetBooleanReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\x08\"H\n\x0fGetStringReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\x0e\n\x06values\x18\x02 \x03(\t\"G\n\x0fSerializeReturn\x12%\n\x06status\x18\x01 \x01(\x0e\x32\x15.fmi2_proto.FmiStatus\x12\r\n\x05state\x18\x02 \x01(\x0c\"\x06\n\x04Void*P\n\tFmiStatus\x12\x06\n\x02Ok\x10\x00\x12\x0b\n\x07Warning\x10\x01\x12\x0b\n\x07\x44iscard\x10\x02\x12\t\n\x05\x45rror\x10\x03\x12\t\n\x05\x46\x61tal\x10\x04\x12\x0b\n\x07Pending\x10\x05\x32O\n\nHandshaker\x12\x41\n\x10PerformHandshake\x12\x19.fmi2_proto.HandshakeInfo\x1a\x10.fmi2_proto.Void\"\x00\x32\xe6\n\n\x0bSendCommand\x12>\n\x0b\x46mi2SetReal\x12\x13.fmi2_proto.SetReal\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12>\n\x0b\x46mi2GetReal\x12\x12.fmi2_proto.GetXXX\x1a\x19.fmi2_proto.GetRealReturn\"\x00\x12\x44\n\x0e\x46mi2SetInteger\x12\x16.fmi2_proto.SetInteger\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x44\n\x0e\x46mi2GetInteger\x12\x12.fmi2_proto.GetXXX\x1a\x1c.fmi2_proto.GetIntegerReturn\"\x00\x12\x44\n\x0e\x46mi2SetBoolean\x12\x16.fmi2_proto.SetBoolean\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x44\n\x0e\x46mi2GetBoolean\x12\x12.fmi2_proto.GetXXX\x1a\x1c.fmi2_proto.GetBooleanReturn\"\x00\x12\x42\n\rFmi2SetString\x12\x15.fmi2_proto.SetString\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x42\n\rFmi2GetString\x12\x12.fmi2_proto.GetXXX\x1a\x1b.fmi2_proto.GetStringReturn\"\x00\x12^\n\x1b\x46mi2EnterInitializationMode\x12#.fmi2_proto.EnterInitializationMode\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\\\n\x1a\x46mi2ExitInitializationMode\x12\".fmi2_proto.ExitInitializationMode\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x42\n\rFmi2Terminate\x12\x15.fmi2_proto.Terminate\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12:\n\tFmi2Reset\x12\x11.fmi2_proto.Reset\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12N\n\x13\x46mi2SetupExperiment\x12\x1b.fmi2_proto.SetupExperiment\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12@\n\x10\x46mi2FreeInstance\x12\x18.fmi2_proto.FreeInstance\x1a\x10.fmi2_proto.Void\"\x00\x12N\n\x13\x46mi2SetDebugLogging\x12\x1b.fmi2_proto.SetDebugLogging\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12<\n\nFmi2DoStep\x12\x12.fmi2_proto.DoStep\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12\x44\n\x0e\x46mi2CancelStep\x12\x16.fmi2_proto.CancelStep\x1a\x18.fmi2_proto.StatusReturn\"\x00\x12H\n\tSerialize\x12\x1c.fmi2_proto.SerializeMessage\x1a\x1b.fmi2_proto.SerializeReturn\"\x00\x12I\n\x0b\x44\x65serialize\x12\x1e.fmi2_proto.DeserializeMessage\x1a\x18.fmi2_proto.StatusReturn\"\x00\x42#B\tFmi2ProtoH\x01P\x00\xaa\x02\x11schemas.Fmi2Protob\x06proto3'
 )
 
 _FMISTATUS = _descriptor.EnumDescriptor(
@@ -63,8 +63,8 @@ _FMISTATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1755,
-  serialized_end=1835,
+  serialized_start=1845,
+  serialized_end=1925,
 )
 _sym_db.RegisterEnumDescriptor(_FMISTATUS)
 
@@ -76,6 +76,45 @@ Error = 3
 Fatal = 4
 Pending = 5
 
+
+
+_HANDSHAKEINFO = _descriptor.Descriptor(
+  name='HandshakeInfo',
+  full_name='fmi2_proto.HandshakeInfo',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='ip_address', full_name='fmi2_proto.HandshakeInfo.ip_address', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='port', full_name='fmi2_proto.HandshakeInfo.port', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=41,
+  serialized_end=90,
+)
 
 
 _SETREAL = _descriptor.Descriptor(
@@ -112,8 +151,8 @@ _SETREAL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=41,
-  serialized_end=86,
+  serialized_start=92,
+  serialized_end=137,
 )
 
 
@@ -151,8 +190,8 @@ _SETINTEGER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=88,
-  serialized_end=136,
+  serialized_start=139,
+  serialized_end=187,
 )
 
 
@@ -190,8 +229,8 @@ _SETBOOLEAN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=138,
-  serialized_end=186,
+  serialized_start=189,
+  serialized_end=237,
 )
 
 
@@ -229,8 +268,8 @@ _SETSTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=188,
-  serialized_end=235,
+  serialized_start=239,
+  serialized_end=286,
 )
 
 
@@ -261,8 +300,8 @@ _GETXXX = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=237,
-  serialized_end=265,
+  serialized_start=288,
+  serialized_end=316,
 )
 
 
@@ -307,8 +346,8 @@ _DOSTEP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=267,
-  serialized_end=339,
+  serialized_start=318,
+  serialized_end=390,
 )
 
 
@@ -332,8 +371,8 @@ _ENTERINITIALIZATIONMODE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=341,
-  serialized_end=366,
+  serialized_start=392,
+  serialized_end=417,
 )
 
 
@@ -357,8 +396,8 @@ _EXITINITIALIZATIONMODE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=368,
-  serialized_end=392,
+  serialized_start=419,
+  serialized_end=443,
 )
 
 
@@ -382,8 +421,8 @@ _FREEINSTANCE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=394,
-  serialized_end=408,
+  serialized_start=445,
+  serialized_end=459,
 )
 
 
@@ -407,8 +446,8 @@ _TERMINATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=410,
-  serialized_end=421,
+  serialized_start=461,
+  serialized_end=472,
 )
 
 
@@ -432,8 +471,8 @@ _RESET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=423,
-  serialized_end=430,
+  serialized_start=474,
+  serialized_end=481,
 )
 
 
@@ -492,8 +531,8 @@ _SETUPEXPERIMENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=432,
-  serialized_end=553,
+  serialized_start=483,
+  serialized_end=604,
 )
 
 
@@ -517,8 +556,8 @@ _SERIALIZEMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=555,
-  serialized_end=573,
+  serialized_start=606,
+  serialized_end=624,
 )
 
 
@@ -549,8 +588,8 @@ _DESERIALIZEMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=575,
-  serialized_end=610,
+  serialized_start=626,
+  serialized_end=661,
 )
 
 
@@ -574,8 +613,8 @@ _GETDIRECTIONALDERIVATIVES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=612,
-  serialized_end=639,
+  serialized_start=663,
+  serialized_end=690,
 )
 
 
@@ -599,8 +638,8 @@ _SETINPUTDERIVATIVES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=641,
-  serialized_end=662,
+  serialized_start=692,
+  serialized_end=713,
 )
 
 
@@ -624,8 +663,8 @@ _GETOUTPUTDERIVATIVES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=664,
-  serialized_end=686,
+  serialized_start=715,
+  serialized_end=737,
 )
 
 
@@ -649,8 +688,8 @@ _CANCELSTEP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=688,
-  serialized_end=700,
+  serialized_start=739,
+  serialized_end=751,
 )
 
 
@@ -674,8 +713,8 @@ _GETXXXSTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=702,
-  serialized_end=716,
+  serialized_start=753,
+  serialized_end=767,
 )
 
 
@@ -713,8 +752,8 @@ _SETDEBUGLOGGING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=718,
-  serialized_end=775,
+  serialized_start=769,
+  serialized_end=826,
 )
 
 
@@ -904,8 +943,8 @@ _FMI2COMMAND = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=778,
-  serialized_end=1360,
+  serialized_start=829,
+  serialized_end=1411,
 )
 
 
@@ -936,8 +975,8 @@ _STATUSRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1362,
-  serialized_end=1415,
+  serialized_start=1413,
+  serialized_end=1466,
 )
 
 
@@ -975,8 +1014,8 @@ _GETREALRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1417,
-  serialized_end=1487,
+  serialized_start=1468,
+  serialized_end=1538,
 )
 
 
@@ -1014,8 +1053,8 @@ _GETINTEGERRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1489,
-  serialized_end=1562,
+  serialized_start=1540,
+  serialized_end=1613,
 )
 
 
@@ -1053,8 +1092,8 @@ _GETBOOLEANRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1564,
-  serialized_end=1637,
+  serialized_start=1615,
+  serialized_end=1688,
 )
 
 
@@ -1092,8 +1131,8 @@ _GETSTRINGRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1639,
-  serialized_end=1711,
+  serialized_start=1690,
+  serialized_end=1762,
 )
 
 
@@ -1106,8 +1145,15 @@ _SERIALIZERETURN = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='state', full_name='fmi2_proto.SerializeReturn.state', index=0,
-      number=1, type=12, cpp_type=9, label=1,
+      name='status', full_name='fmi2_proto.SerializeReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='state', full_name='fmi2_proto.SerializeReturn.state', index=1,
+      number=2, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1124,8 +1170,8 @@ _SERIALIZERETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1713,
-  serialized_end=1745,
+  serialized_start=1764,
+  serialized_end=1835,
 )
 
 
@@ -1149,8 +1195,8 @@ _VOID = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1747,
-  serialized_end=1753,
+  serialized_start=1837,
+  serialized_end=1843,
 )
 
 _FMI2COMMAND.oneofs_by_name['args'].fields.append(
@@ -1227,6 +1273,8 @@ _GETREALRETURN.fields_by_name['status'].enum_type = _FMISTATUS
 _GETINTEGERRETURN.fields_by_name['status'].enum_type = _FMISTATUS
 _GETBOOLEANRETURN.fields_by_name['status'].enum_type = _FMISTATUS
 _GETSTRINGRETURN.fields_by_name['status'].enum_type = _FMISTATUS
+_SERIALIZERETURN.fields_by_name['status'].enum_type = _FMISTATUS
+DESCRIPTOR.message_types_by_name['HandshakeInfo'] = _HANDSHAKEINFO
 DESCRIPTOR.message_types_by_name['SetReal'] = _SETREAL
 DESCRIPTOR.message_types_by_name['SetInteger'] = _SETINTEGER
 DESCRIPTOR.message_types_by_name['SetBoolean'] = _SETBOOLEAN
@@ -1257,6 +1305,13 @@ DESCRIPTOR.message_types_by_name['SerializeReturn'] = _SERIALIZERETURN
 DESCRIPTOR.message_types_by_name['Void'] = _VOID
 DESCRIPTOR.enum_types_by_name['FmiStatus'] = _FMISTATUS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+HandshakeInfo = _reflection.GeneratedProtocolMessageType('HandshakeInfo', (_message.Message,), {
+  'DESCRIPTOR' : _HANDSHAKEINFO,
+  '__module__' : 'schemas.unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.HandshakeInfo)
+  })
+_sym_db.RegisterMessage(HandshakeInfo)
 
 SetReal = _reflection.GeneratedProtocolMessageType('SetReal', (_message.Message,), {
   'DESCRIPTOR' : _SETREAL,
@@ -1457,15 +1512,41 @@ _sym_db.RegisterMessage(Void)
 
 DESCRIPTOR._options = None
 
-_SENDCOMMAND = _descriptor.ServiceDescriptor(
-  name='SendCommand',
-  full_name='fmi2_proto.SendCommand',
+_HANDSHAKER = _descriptor.ServiceDescriptor(
+  name='Handshaker',
+  full_name='fmi2_proto.Handshaker',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1838,
-  serialized_end=3137,
+  serialized_start=1927,
+  serialized_end=2006,
+  methods=[
+  _descriptor.MethodDescriptor(
+    name='PerformHandshake',
+    full_name='fmi2_proto.Handshaker.PerformHandshake',
+    index=0,
+    containing_service=None,
+    input_type=_HANDSHAKEINFO,
+    output_type=_VOID,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+])
+_sym_db.RegisterServiceDescriptor(_HANDSHAKER)
+
+DESCRIPTOR.services_by_name['Handshaker'] = _HANDSHAKER
+
+
+_SENDCOMMAND = _descriptor.ServiceDescriptor(
+  name='SendCommand',
+  full_name='fmi2_proto.SendCommand',
+  file=DESCRIPTOR,
+  index=1,
+  serialized_options=None,
+  create_key=_descriptor._internal_create_key,
+  serialized_start=2009,
+  serialized_end=3391,
   methods=[
   _descriptor.MethodDescriptor(
     name='Fmi2SetReal',
@@ -1588,9 +1669,19 @@ _SENDCOMMAND = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
+    name='Fmi2SetupExperiment',
+    full_name='fmi2_proto.SendCommand.Fmi2SetupExperiment',
+    index=12,
+    containing_service=None,
+    input_type=_SETUPEXPERIMENT,
+    output_type=_STATUSRETURN,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
     name='Fmi2FreeInstance',
     full_name='fmi2_proto.SendCommand.Fmi2FreeInstance',
-    index=12,
+    index=13,
     containing_service=None,
     input_type=_FREEINSTANCE,
     output_type=_VOID,
@@ -1600,7 +1691,7 @@ _SENDCOMMAND = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='Fmi2SetDebugLogging',
     full_name='fmi2_proto.SendCommand.Fmi2SetDebugLogging',
-    index=13,
+    index=14,
     containing_service=None,
     input_type=_SETDEBUGLOGGING,
     output_type=_STATUSRETURN,
@@ -1608,29 +1699,9 @@ _SENDCOMMAND = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
-    name='Serialize',
-    full_name='fmi2_proto.SendCommand.Serialize',
-    index=14,
-    containing_service=None,
-    input_type=_SERIALIZEMESSAGE,
-    output_type=_STATUSRETURN,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
-    name='Deserialize',
-    full_name='fmi2_proto.SendCommand.Deserialize',
-    index=15,
-    containing_service=None,
-    input_type=_DESERIALIZEMESSAGE,
-    output_type=_STATUSRETURN,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
     name='Fmi2DoStep',
     full_name='fmi2_proto.SendCommand.Fmi2DoStep',
-    index=16,
+    index=15,
     containing_service=None,
     input_type=_DOSTEP,
     output_type=_STATUSRETURN,
@@ -1640,9 +1711,29 @@ _SENDCOMMAND = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='Fmi2CancelStep',
     full_name='fmi2_proto.SendCommand.Fmi2CancelStep',
-    index=17,
+    index=16,
     containing_service=None,
     input_type=_CANCELSTEP,
+    output_type=_STATUSRETURN,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='Serialize',
+    full_name='fmi2_proto.SendCommand.Serialize',
+    index=17,
+    containing_service=None,
+    input_type=_SERIALIZEMESSAGE,
+    output_type=_SERIALIZERETURN,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='Deserialize',
+    full_name='fmi2_proto.SendCommand.Deserialize',
+    index=18,
+    containing_service=None,
+    input_type=_DESERIALIZEMESSAGE,
     output_type=_STATUSRETURN,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,

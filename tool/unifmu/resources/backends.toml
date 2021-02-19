@@ -35,8 +35,8 @@ files = [
   ["backends/python/adder.py", "resources/adder.py"],
   ["backends/python/fmi2.py", "resources/fmi2.py"],
   ["backends/python/backend_grpc.py", "resources/backend_grpc.py"],
-  ["backends/python/schemas/unifmu_fmi2_pb2.py", "resources/unifmu_fmi2_pb2.py"],
-  ["backends/python/schemas/unifmu_fmi2_pb2_grpc.py", "resources/unifmu_fmi2_pb2_grpc.py"],
+  ["backends/python/schemas/unifmu_fmi2_pb2.py", "resources/schemas/unifmu_fmi2_pb2.py"],
+  ["backends/python/schemas/unifmu_fmi2_pb2_grpc.py", "resources/schemas/unifmu_fmi2_pb2_grpc.py"],
   ["backends/python/launch_grpc.toml", "resources/launch.toml"],
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
@@ -44,6 +44,9 @@ files = [
 # [backend.csharp]
 
 # files = [
+#   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
+#   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+#   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
 #   ["backends/csharp/launch.toml", "resources/launch.toml"],
 #   ["common/modelDescription.xml", "modelDescription.xml"],
 # ]

@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
         # with TemporaryDirectory() as tmpdir:
 
-        for backend in ["python_schemaless_rpc"]:  # "python_grpc"
+        for backend in ["python_grpc", "python_schemaless_rpc"]:  # "python_grpc" "python_schemaless_rpc"
             tmpdir = Path(mkdtemp())
             fmu_path = tmpdir / "fmu"
             generate_fmu_from_backend(backend, fmu_path)
@@ -202,7 +202,7 @@ if __name__ == "__main__":
             with Chdir("Wrapper"):
 
                 res = subprocess.run(
-                    args=["cargo", "test", "--", "--show-output"]
+                    args=["cargo", "test", "--", "--nocapture"] #  "--show-output",
                 )
 
                 if res.returncode != 0:

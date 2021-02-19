@@ -24,80 +24,87 @@ namespace schemas.Fmi2Proto {
     static UnifmuFmi2Reflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "ChF1bmlmbXVfZm1pMi5wcm90bxIKZm1pMl9wcm90byItCgdTZXRSZWFsEhIK",
-            "CnJlZmVyZW5jZXMYASADKA0SDgoGdmFsdWVzGAIgAygBIjAKClNldEludGVn",
-            "ZXISEgoKcmVmZXJlbmNlcxgBIAMoDRIOCgZ2YWx1ZXMYAiADKAUiMAoKU2V0",
-            "Qm9vbGVhbhISCgpyZWZlcmVuY2VzGAEgAygNEg4KBnZhbHVlcxgCIAMoCCIv",
-            "CglTZXRTdHJpbmcSEgoKcmVmZXJlbmNlcxgBIAMoDRIOCgZ2YWx1ZXMYAiAD",
-            "KAkiHAoGR2V0WFhYEhIKCnJlZmVyZW5jZXMYASADKA0iSAoGRG9TdGVwEhQK",
-            "DGN1cnJlbnRfdGltZRgBIAEoARIRCglzdGVwX3NpemUYAiABKAESFQoNbm9f",
-            "c3RlcF9wcmlvchgDIAEoCCIZChdFbnRlckluaXRpYWxpemF0aW9uTW9kZSIY",
-            "ChZFeGl0SW5pdGlhbGl6YXRpb25Nb2RlIg4KDEZyZWVJbnN0YW5jZSILCglU",
-            "ZXJtaW5hdGUiBwoFUmVzZXQieQoPU2V0dXBFeHBlcmltZW50EhIKCnN0YXJ0",
-            "X3RpbWUYASABKAESEQoJc3RvcF90aW1lGAIgASgBEhEKCXRvbGVyYW5jZRgD",
-            "IAEoARIVCg1oYXNfc3RvcF90aW1lGAQgASgIEhUKDWhhc190b2xlcmFuY2UY",
-            "BSABKAgiEgoQU2VyaWFsaXplTWVzc2FnZSIjChJEZXNlcmlhbGl6ZU1lc3Nh",
-            "Z2USDQoFc3RhdGUYASABKAwiGwoZR2V0RGlyZWN0aW9uYWxEZXJpdmF0aXZl",
-            "cyIVChNTZXRJbnB1dERlcml2YXRpdmVzIhYKFEdldE91dHB1dERlcml2YXRp",
-            "dmVzIgwKCkNhbmNlbFN0ZXAiDgoMR2V0WFhYU3RhdHVzIjkKD1NldERlYnVn",
-            "TG9nZ2luZxISCgpjYXRlZ29yaWVzGAEgASgJEhIKCmxvZ2dpbmdfb24YAiAB",
-            "KAgixgQKC0ZtaTJDb21tYW5kEhAKBkRvU3RlcBgBIAEoBUgAEhEKB1NldFJl",
-            "YWwYAiABKAVIABIUCgpTZXRJbnRlZ2VyGAMgASgFSAASFAoKU2V0Qm9vbGVh",
-            "bhgEIAEoBUgAEhMKCVNldFN0cmluZxgFIAEoBUgAEhEKB0dldFJlYWwYBiAB",
-            "KAVIABIUCgpHZXRJbnRlZ2VyGAcgASgFSAASFAoKR2V0Qm9vbGVhbhgIIAEo",
-            "BUgAEhMKCUdldFN0cmluZxgJIAEoBUgAEhkKD1NldERlYnVnTG9nZ2luZxgK",
-            "IAEoBUgAEhkKD1NldHVwRXhwZXJpbWVudBgLIAEoBUgAEhYKDEZyZWVJbnN0",
-            "YW5jZRgMIAEoBUgAEiEKF0VudGVySW5pdGlhbGl6YXRpb25Nb2RlGA0gASgF",
-            "SAASIAoWRXhpdEluaXRpYWxpemF0aW9uTW9kZRgOIAEoBUgAEhMKCVRlcm1p",
-            "bmF0ZRgPIAEoBUgAEg8KBVJlc2V0GBAgASgFSAASEwoJU2VyaWFsaXplGBEg",
-            "ASgFSAASFQoLRGVzZXJpYWxpemUYEiABKAVIABIjChlHZXREaXJlY3Rpb25h",
-            "bERlcml2YXRpdmVzGBMgASgFSAASHQoTU2V0SW5wdXREZXJpdmF0aXZlcxgU",
-            "IAEoBUgAEh4KFEdldE91dHB1dERlcml2YXRpdmVzGBUgASgFSAASFAoKQ2Fu",
-            "Y2VsU3RlcBgWIAEoBUgAEhYKDEdldFhYWFN0YXR1cxgXIAEoBUgAQgYKBGFy",
-            "Z3MiNQoMU3RhdHVzUmV0dXJuEiUKBnN0YXR1cxgBIAEoDjIVLmZtaTJfcHJv",
-            "dG8uRm1pU3RhdHVzIkYKDUdldFJlYWxSZXR1cm4SJQoGc3RhdHVzGAEgASgO",
-            "MhUuZm1pMl9wcm90by5GbWlTdGF0dXMSDgoGdmFsdWVzGAIgAygBIkkKEEdl",
-            "dEludGVnZXJSZXR1cm4SJQoGc3RhdHVzGAEgASgOMhUuZm1pMl9wcm90by5G",
-            "bWlTdGF0dXMSDgoGdmFsdWVzGAIgAygFIkkKEEdldEJvb2xlYW5SZXR1cm4S",
-            "JQoGc3RhdHVzGAEgASgOMhUuZm1pMl9wcm90by5GbWlTdGF0dXMSDgoGdmFs",
-            "dWVzGAIgAygIIkgKD0dldFN0cmluZ1JldHVybhIlCgZzdGF0dXMYASABKA4y",
-            "FS5mbWkyX3Byb3RvLkZtaVN0YXR1cxIOCgZ2YWx1ZXMYAiADKAkiIAoPU2Vy",
-            "aWFsaXplUmV0dXJuEg0KBXN0YXRlGAEgASgMIgYKBFZvaWQqUAoJRm1pU3Rh",
+            "ChF1bmlmbXVfZm1pMi5wcm90bxIKZm1pMl9wcm90byIxCg1IYW5kc2hha2VJ",
+            "bmZvEhIKCmlwX2FkZHJlc3MYASABKAkSDAoEcG9ydBgCIAEoCSItCgdTZXRS",
+            "ZWFsEhIKCnJlZmVyZW5jZXMYASADKA0SDgoGdmFsdWVzGAIgAygBIjAKClNl",
+            "dEludGVnZXISEgoKcmVmZXJlbmNlcxgBIAMoDRIOCgZ2YWx1ZXMYAiADKAUi",
+            "MAoKU2V0Qm9vbGVhbhISCgpyZWZlcmVuY2VzGAEgAygNEg4KBnZhbHVlcxgC",
+            "IAMoCCIvCglTZXRTdHJpbmcSEgoKcmVmZXJlbmNlcxgBIAMoDRIOCgZ2YWx1",
+            "ZXMYAiADKAkiHAoGR2V0WFhYEhIKCnJlZmVyZW5jZXMYASADKA0iSAoGRG9T",
+            "dGVwEhQKDGN1cnJlbnRfdGltZRgBIAEoARIRCglzdGVwX3NpemUYAiABKAES",
+            "FQoNbm9fc3RlcF9wcmlvchgDIAEoCCIZChdFbnRlckluaXRpYWxpemF0aW9u",
+            "TW9kZSIYChZFeGl0SW5pdGlhbGl6YXRpb25Nb2RlIg4KDEZyZWVJbnN0YW5j",
+            "ZSILCglUZXJtaW5hdGUiBwoFUmVzZXQieQoPU2V0dXBFeHBlcmltZW50EhIK",
+            "CnN0YXJ0X3RpbWUYASABKAESEQoJc3RvcF90aW1lGAIgASgBEhEKCXRvbGVy",
+            "YW5jZRgDIAEoARIVCg1oYXNfc3RvcF90aW1lGAQgASgIEhUKDWhhc190b2xl",
+            "cmFuY2UYBSABKAgiEgoQU2VyaWFsaXplTWVzc2FnZSIjChJEZXNlcmlhbGl6",
+            "ZU1lc3NhZ2USDQoFc3RhdGUYASABKAwiGwoZR2V0RGlyZWN0aW9uYWxEZXJp",
+            "dmF0aXZlcyIVChNTZXRJbnB1dERlcml2YXRpdmVzIhYKFEdldE91dHB1dERl",
+            "cml2YXRpdmVzIgwKCkNhbmNlbFN0ZXAiDgoMR2V0WFhYU3RhdHVzIjkKD1Nl",
+            "dERlYnVnTG9nZ2luZxISCgpjYXRlZ29yaWVzGAEgASgJEhIKCmxvZ2dpbmdf",
+            "b24YAiABKAgixgQKC0ZtaTJDb21tYW5kEhAKBkRvU3RlcBgBIAEoBUgAEhEK",
+            "B1NldFJlYWwYAiABKAVIABIUCgpTZXRJbnRlZ2VyGAMgASgFSAASFAoKU2V0",
+            "Qm9vbGVhbhgEIAEoBUgAEhMKCVNldFN0cmluZxgFIAEoBUgAEhEKB0dldFJl",
+            "YWwYBiABKAVIABIUCgpHZXRJbnRlZ2VyGAcgASgFSAASFAoKR2V0Qm9vbGVh",
+            "bhgIIAEoBUgAEhMKCUdldFN0cmluZxgJIAEoBUgAEhkKD1NldERlYnVnTG9n",
+            "Z2luZxgKIAEoBUgAEhkKD1NldHVwRXhwZXJpbWVudBgLIAEoBUgAEhYKDEZy",
+            "ZWVJbnN0YW5jZRgMIAEoBUgAEiEKF0VudGVySW5pdGlhbGl6YXRpb25Nb2Rl",
+            "GA0gASgFSAASIAoWRXhpdEluaXRpYWxpemF0aW9uTW9kZRgOIAEoBUgAEhMK",
+            "CVRlcm1pbmF0ZRgPIAEoBUgAEg8KBVJlc2V0GBAgASgFSAASEwoJU2VyaWFs",
+            "aXplGBEgASgFSAASFQoLRGVzZXJpYWxpemUYEiABKAVIABIjChlHZXREaXJl",
+            "Y3Rpb25hbERlcml2YXRpdmVzGBMgASgFSAASHQoTU2V0SW5wdXREZXJpdmF0",
+            "aXZlcxgUIAEoBUgAEh4KFEdldE91dHB1dERlcml2YXRpdmVzGBUgASgFSAAS",
+            "FAoKQ2FuY2VsU3RlcBgWIAEoBUgAEhYKDEdldFhYWFN0YXR1cxgXIAEoBUgA",
+            "QgYKBGFyZ3MiNQoMU3RhdHVzUmV0dXJuEiUKBnN0YXR1cxgBIAEoDjIVLmZt",
+            "aTJfcHJvdG8uRm1pU3RhdHVzIkYKDUdldFJlYWxSZXR1cm4SJQoGc3RhdHVz",
+            "GAEgASgOMhUuZm1pMl9wcm90by5GbWlTdGF0dXMSDgoGdmFsdWVzGAIgAygB",
+            "IkkKEEdldEludGVnZXJSZXR1cm4SJQoGc3RhdHVzGAEgASgOMhUuZm1pMl9w",
+            "cm90by5GbWlTdGF0dXMSDgoGdmFsdWVzGAIgAygFIkkKEEdldEJvb2xlYW5S",
+            "ZXR1cm4SJQoGc3RhdHVzGAEgASgOMhUuZm1pMl9wcm90by5GbWlTdGF0dXMS",
+            "DgoGdmFsdWVzGAIgAygIIkgKD0dldFN0cmluZ1JldHVybhIlCgZzdGF0dXMY",
+            "ASABKA4yFS5mbWkyX3Byb3RvLkZtaVN0YXR1cxIOCgZ2YWx1ZXMYAiADKAki",
+            "RwoPU2VyaWFsaXplUmV0dXJuEiUKBnN0YXR1cxgBIAEoDjIVLmZtaTJfcHJv",
+            "dG8uRm1pU3RhdHVzEg0KBXN0YXRlGAIgASgMIgYKBFZvaWQqUAoJRm1pU3Rh",
             "dHVzEgYKAk9rEAASCwoHV2FybmluZxABEgsKB0Rpc2NhcmQQAhIJCgVFcnJv",
-            "chADEgkKBUZhdGFsEAQSCwoHUGVuZGluZxAFMpMKCgtTZW5kQ29tbWFuZBI+",
-            "CgtGbWkyU2V0UmVhbBITLmZtaTJfcHJvdG8uU2V0UmVhbBoYLmZtaTJfcHJv",
-            "dG8uU3RhdHVzUmV0dXJuIgASPgoLRm1pMkdldFJlYWwSEi5mbWkyX3Byb3Rv",
-            "LkdldFhYWBoZLmZtaTJfcHJvdG8uR2V0UmVhbFJldHVybiIAEkQKDkZtaTJT",
-            "ZXRJbnRlZ2VyEhYuZm1pMl9wcm90by5TZXRJbnRlZ2VyGhguZm1pMl9wcm90",
-            "by5TdGF0dXNSZXR1cm4iABJECg5GbWkyR2V0SW50ZWdlchISLmZtaTJfcHJv",
-            "dG8uR2V0WFhYGhwuZm1pMl9wcm90by5HZXRJbnRlZ2VyUmV0dXJuIgASRAoO",
-            "Rm1pMlNldEJvb2xlYW4SFi5mbWkyX3Byb3RvLlNldEJvb2xlYW4aGC5mbWky",
-            "X3Byb3RvLlN0YXR1c1JldHVybiIAEkQKDkZtaTJHZXRCb29sZWFuEhIuZm1p",
-            "Ml9wcm90by5HZXRYWFgaHC5mbWkyX3Byb3RvLkdldEJvb2xlYW5SZXR1cm4i",
-            "ABJCCg1GbWkyU2V0U3RyaW5nEhUuZm1pMl9wcm90by5TZXRTdHJpbmcaGC5m",
-            "bWkyX3Byb3RvLlN0YXR1c1JldHVybiIAEkIKDUZtaTJHZXRTdHJpbmcSEi5m",
-            "bWkyX3Byb3RvLkdldFhYWBobLmZtaTJfcHJvdG8uR2V0U3RyaW5nUmV0dXJu",
-            "IgASXgobRm1pMkVudGVySW5pdGlhbGl6YXRpb25Nb2RlEiMuZm1pMl9wcm90",
-            "by5FbnRlckluaXRpYWxpemF0aW9uTW9kZRoYLmZtaTJfcHJvdG8uU3RhdHVz",
-            "UmV0dXJuIgASXAoaRm1pMkV4aXRJbml0aWFsaXphdGlvbk1vZGUSIi5mbWky",
-            "X3Byb3RvLkV4aXRJbml0aWFsaXphdGlvbk1vZGUaGC5mbWkyX3Byb3RvLlN0",
-            "YXR1c1JldHVybiIAEkIKDUZtaTJUZXJtaW5hdGUSFS5mbWkyX3Byb3RvLlRl",
-            "cm1pbmF0ZRoYLmZtaTJfcHJvdG8uU3RhdHVzUmV0dXJuIgASOgoJRm1pMlJl",
-            "c2V0EhEuZm1pMl9wcm90by5SZXNldBoYLmZtaTJfcHJvdG8uU3RhdHVzUmV0",
-            "dXJuIgASQAoQRm1pMkZyZWVJbnN0YW5jZRIYLmZtaTJfcHJvdG8uRnJlZUlu",
-            "c3RhbmNlGhAuZm1pMl9wcm90by5Wb2lkIgASTgoTRm1pMlNldERlYnVnTG9n",
-            "Z2luZxIbLmZtaTJfcHJvdG8uU2V0RGVidWdMb2dnaW5nGhguZm1pMl9wcm90",
-            "by5TdGF0dXNSZXR1cm4iABJFCglTZXJpYWxpemUSHC5mbWkyX3Byb3RvLlNl",
-            "cmlhbGl6ZU1lc3NhZ2UaGC5mbWkyX3Byb3RvLlN0YXR1c1JldHVybiIAEkkK",
-            "C0Rlc2VyaWFsaXplEh4uZm1pMl9wcm90by5EZXNlcmlhbGl6ZU1lc3NhZ2Ua",
-            "GC5mbWkyX3Byb3RvLlN0YXR1c1JldHVybiIAEjwKCkZtaTJEb1N0ZXASEi5m",
-            "bWkyX3Byb3RvLkRvU3RlcBoYLmZtaTJfcHJvdG8uU3RhdHVzUmV0dXJuIgAS",
-            "RAoORm1pMkNhbmNlbFN0ZXASFi5mbWkyX3Byb3RvLkNhbmNlbFN0ZXAaGC5m",
-            "bWkyX3Byb3RvLlN0YXR1c1JldHVybiIAQiNCCUZtaTJQcm90b0gBUACqAhFz",
-            "Y2hlbWFzLkZtaTJQcm90b2IGcHJvdG8z"));
+            "chADEgkKBUZhdGFsEAQSCwoHUGVuZGluZxAFMk8KCkhhbmRzaGFrZXISQQoQ",
+            "UGVyZm9ybUhhbmRzaGFrZRIZLmZtaTJfcHJvdG8uSGFuZHNoYWtlSW5mbxoQ",
+            "LmZtaTJfcHJvdG8uVm9pZCIAMuYKCgtTZW5kQ29tbWFuZBI+CgtGbWkyU2V0",
+            "UmVhbBITLmZtaTJfcHJvdG8uU2V0UmVhbBoYLmZtaTJfcHJvdG8uU3RhdHVz",
+            "UmV0dXJuIgASPgoLRm1pMkdldFJlYWwSEi5mbWkyX3Byb3RvLkdldFhYWBoZ",
+            "LmZtaTJfcHJvdG8uR2V0UmVhbFJldHVybiIAEkQKDkZtaTJTZXRJbnRlZ2Vy",
+            "EhYuZm1pMl9wcm90by5TZXRJbnRlZ2VyGhguZm1pMl9wcm90by5TdGF0dXNS",
+            "ZXR1cm4iABJECg5GbWkyR2V0SW50ZWdlchISLmZtaTJfcHJvdG8uR2V0WFhY",
+            "GhwuZm1pMl9wcm90by5HZXRJbnRlZ2VyUmV0dXJuIgASRAoORm1pMlNldEJv",
+            "b2xlYW4SFi5mbWkyX3Byb3RvLlNldEJvb2xlYW4aGC5mbWkyX3Byb3RvLlN0",
+            "YXR1c1JldHVybiIAEkQKDkZtaTJHZXRCb29sZWFuEhIuZm1pMl9wcm90by5H",
+            "ZXRYWFgaHC5mbWkyX3Byb3RvLkdldEJvb2xlYW5SZXR1cm4iABJCCg1GbWky",
+            "U2V0U3RyaW5nEhUuZm1pMl9wcm90by5TZXRTdHJpbmcaGC5mbWkyX3Byb3Rv",
+            "LlN0YXR1c1JldHVybiIAEkIKDUZtaTJHZXRTdHJpbmcSEi5mbWkyX3Byb3Rv",
+            "LkdldFhYWBobLmZtaTJfcHJvdG8uR2V0U3RyaW5nUmV0dXJuIgASXgobRm1p",
+            "MkVudGVySW5pdGlhbGl6YXRpb25Nb2RlEiMuZm1pMl9wcm90by5FbnRlcklu",
+            "aXRpYWxpemF0aW9uTW9kZRoYLmZtaTJfcHJvdG8uU3RhdHVzUmV0dXJuIgAS",
+            "XAoaRm1pMkV4aXRJbml0aWFsaXphdGlvbk1vZGUSIi5mbWkyX3Byb3RvLkV4",
+            "aXRJbml0aWFsaXphdGlvbk1vZGUaGC5mbWkyX3Byb3RvLlN0YXR1c1JldHVy",
+            "biIAEkIKDUZtaTJUZXJtaW5hdGUSFS5mbWkyX3Byb3RvLlRlcm1pbmF0ZRoY",
+            "LmZtaTJfcHJvdG8uU3RhdHVzUmV0dXJuIgASOgoJRm1pMlJlc2V0EhEuZm1p",
+            "Ml9wcm90by5SZXNldBoYLmZtaTJfcHJvdG8uU3RhdHVzUmV0dXJuIgASTgoT",
+            "Rm1pMlNldHVwRXhwZXJpbWVudBIbLmZtaTJfcHJvdG8uU2V0dXBFeHBlcmlt",
+            "ZW50GhguZm1pMl9wcm90by5TdGF0dXNSZXR1cm4iABJAChBGbWkyRnJlZUlu",
+            "c3RhbmNlEhguZm1pMl9wcm90by5GcmVlSW5zdGFuY2UaEC5mbWkyX3Byb3Rv",
+            "LlZvaWQiABJOChNGbWkyU2V0RGVidWdMb2dnaW5nEhsuZm1pMl9wcm90by5T",
+            "ZXREZWJ1Z0xvZ2dpbmcaGC5mbWkyX3Byb3RvLlN0YXR1c1JldHVybiIAEjwK",
+            "CkZtaTJEb1N0ZXASEi5mbWkyX3Byb3RvLkRvU3RlcBoYLmZtaTJfcHJvdG8u",
+            "U3RhdHVzUmV0dXJuIgASRAoORm1pMkNhbmNlbFN0ZXASFi5mbWkyX3Byb3Rv",
+            "LkNhbmNlbFN0ZXAaGC5mbWkyX3Byb3RvLlN0YXR1c1JldHVybiIAEkgKCVNl",
+            "cmlhbGl6ZRIcLmZtaTJfcHJvdG8uU2VyaWFsaXplTWVzc2FnZRobLmZtaTJf",
+            "cHJvdG8uU2VyaWFsaXplUmV0dXJuIgASSQoLRGVzZXJpYWxpemUSHi5mbWky",
+            "X3Byb3RvLkRlc2VyaWFsaXplTWVzc2FnZRoYLmZtaTJfcHJvdG8uU3RhdHVz",
+            "UmV0dXJuIgBCI0IJRm1pMlByb3RvSAFQAKoCEXNjaGVtYXMuRm1pMlByb3Rv",
+            "YgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::schemas.Fmi2Proto.FmiStatus), }, null, new pbr::GeneratedClrTypeInfo[] {
+            new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.HandshakeInfo), global::schemas.Fmi2Proto.HandshakeInfo.Parser, new[]{ "IpAddress", "Port" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.SetReal), global::schemas.Fmi2Proto.SetReal.Parser, new[]{ "References", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.SetInteger), global::schemas.Fmi2Proto.SetInteger.Parser, new[]{ "References", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.SetBoolean), global::schemas.Fmi2Proto.SetBoolean.Parser, new[]{ "References", "Values" }, null, null, null, null),
@@ -124,7 +131,7 @@ namespace schemas.Fmi2Proto {
             new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.GetIntegerReturn), global::schemas.Fmi2Proto.GetIntegerReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.GetBooleanReturn), global::schemas.Fmi2Proto.GetBooleanReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.GetStringReturn), global::schemas.Fmi2Proto.GetStringReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.SerializeReturn), global::schemas.Fmi2Proto.SerializeReturn.Parser, new[]{ "State" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.SerializeReturn), global::schemas.Fmi2Proto.SerializeReturn.Parser, new[]{ "Status", "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::schemas.Fmi2Proto.Void), global::schemas.Fmi2Proto.Void.Parser, null, null, null, null, null)
           }));
     }
@@ -144,6 +151,217 @@ namespace schemas.Fmi2Proto {
   #endregion
 
   #region Messages
+  /// <summary>
+  /// Message containing the handshake information
+  /// </summary>
+  public sealed partial class HandshakeInfo : pb::IMessage<HandshakeInfo>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<HandshakeInfo> _parser = new pb::MessageParser<HandshakeInfo>(() => new HandshakeInfo());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<HandshakeInfo> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[0]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public HandshakeInfo() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public HandshakeInfo(HandshakeInfo other) : this() {
+      ipAddress_ = other.ipAddress_;
+      port_ = other.port_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public HandshakeInfo Clone() {
+      return new HandshakeInfo(this);
+    }
+
+    /// <summary>Field number for the "ip_address" field.</summary>
+    public const int IpAddressFieldNumber = 1;
+    private string ipAddress_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string IpAddress {
+      get { return ipAddress_; }
+      set {
+        ipAddress_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "port" field.</summary>
+    public const int PortFieldNumber = 2;
+    private string port_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string Port {
+      get { return port_; }
+      set {
+        port_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as HandshakeInfo);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(HandshakeInfo other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (IpAddress != other.IpAddress) return false;
+      if (Port != other.Port) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (IpAddress.Length != 0) hash ^= IpAddress.GetHashCode();
+      if (Port.Length != 0) hash ^= Port.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (IpAddress.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(IpAddress);
+      }
+      if (Port.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(Port);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (IpAddress.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(IpAddress);
+      }
+      if (Port.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(Port);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (IpAddress.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(IpAddress);
+      }
+      if (Port.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Port);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(HandshakeInfo other) {
+      if (other == null) {
+        return;
+      }
+      if (other.IpAddress.Length != 0) {
+        IpAddress = other.IpAddress;
+      }
+      if (other.Port.Length != 0) {
+        Port = other.Port;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            IpAddress = input.ReadString();
+            break;
+          }
+          case 18: {
+            Port = input.ReadString();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            IpAddress = input.ReadString();
+            break;
+          }
+          case 18: {
+            Port = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   public sealed partial class SetReal : pb::IMessage<SetReal>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -156,7 +374,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[0]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[1]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -349,7 +567,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[1]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[2]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -539,7 +757,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[2]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -729,7 +947,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[3]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -917,7 +1135,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[4]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1080,7 +1298,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[5]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1324,7 +1542,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[6]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1460,7 +1678,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[7]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1596,7 +1814,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[8]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1732,7 +1950,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[9]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1868,7 +2086,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[10]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2004,7 +2222,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[11]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2326,7 +2544,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[12]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[13]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2462,7 +2680,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[13]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[14]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2634,7 +2852,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[14]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[15]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2770,7 +2988,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[15]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[16]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2906,7 +3124,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[16]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[17]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3042,7 +3260,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[17]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[18]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3178,7 +3396,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[18]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[19]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3314,7 +3532,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[19]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[20]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3522,7 +3740,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[20]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[21]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4586,7 +4804,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[21]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[22]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4758,7 +4976,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[22]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[23]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4957,7 +5175,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[23]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[24]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5156,7 +5374,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[24]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[25]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5355,7 +5573,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[25]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[26]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5552,7 +5770,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[26]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[27]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5569,6 +5787,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public SerializeReturn(SerializeReturn other) : this() {
+      status_ = other.status_;
       state_ = other.state_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -5578,8 +5797,19 @@ namespace schemas.Fmi2Proto {
       return new SerializeReturn(this);
     }
 
+    /// <summary>Field number for the "status" field.</summary>
+    public const int StatusFieldNumber = 1;
+    private global::schemas.Fmi2Proto.FmiStatus status_ = global::schemas.Fmi2Proto.FmiStatus.Ok;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::schemas.Fmi2Proto.FmiStatus Status {
+      get { return status_; }
+      set {
+        status_ = value;
+      }
+    }
+
     /// <summary>Field number for the "state" field.</summary>
-    public const int StateFieldNumber = 1;
+    public const int StateFieldNumber = 2;
     private pb::ByteString state_ = pb::ByteString.Empty;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public pb::ByteString State {
@@ -5602,6 +5832,7 @@ namespace schemas.Fmi2Proto {
       if (ReferenceEquals(other, this)) {
         return true;
       }
+      if (Status != other.Status) return false;
       if (State != other.State) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -5609,6 +5840,7 @@ namespace schemas.Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override int GetHashCode() {
       int hash = 1;
+      if (Status != global::schemas.Fmi2Proto.FmiStatus.Ok) hash ^= Status.GetHashCode();
       if (State.Length != 0) hash ^= State.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -5626,8 +5858,12 @@ namespace schemas.Fmi2Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
+      if (Status != global::schemas.Fmi2Proto.FmiStatus.Ok) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Status);
+      }
       if (State.Length != 0) {
-        output.WriteRawTag(10);
+        output.WriteRawTag(18);
         output.WriteBytes(State);
       }
       if (_unknownFields != null) {
@@ -5639,8 +5875,12 @@ namespace schemas.Fmi2Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Status != global::schemas.Fmi2Proto.FmiStatus.Ok) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Status);
+      }
       if (State.Length != 0) {
-        output.WriteRawTag(10);
+        output.WriteRawTag(18);
         output.WriteBytes(State);
       }
       if (_unknownFields != null) {
@@ -5652,6 +5892,9 @@ namespace schemas.Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public int CalculateSize() {
       int size = 0;
+      if (Status != global::schemas.Fmi2Proto.FmiStatus.Ok) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Status);
+      }
       if (State.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeBytesSize(State);
       }
@@ -5665,6 +5908,9 @@ namespace schemas.Fmi2Proto {
     public void MergeFrom(SerializeReturn other) {
       if (other == null) {
         return;
+      }
+      if (other.Status != global::schemas.Fmi2Proto.FmiStatus.Ok) {
+        Status = other.Status;
       }
       if (other.State.Length != 0) {
         State = other.State;
@@ -5683,7 +5929,11 @@ namespace schemas.Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
+          case 8: {
+            Status = (global::schemas.Fmi2Proto.FmiStatus) input.ReadEnum();
+            break;
+          }
+          case 18: {
             State = input.ReadBytes();
             break;
           }
@@ -5701,7 +5951,11 @@ namespace schemas.Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
+          case 8: {
+            Status = (global::schemas.Fmi2Proto.FmiStatus) input.ReadEnum();
+            break;
+          }
+          case 18: {
             State = input.ReadBytes();
             break;
           }
@@ -5727,7 +5981,7 @@ namespace schemas.Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[27]; }
+      get { return global::schemas.Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[28]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

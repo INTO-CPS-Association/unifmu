@@ -14,6 +14,21 @@ option csharp_namespace = "schemas.Fmi2Proto";
 option optimize_for = SPEED; // optimize the code to be fast, read https://developers.google.com/protocol-buffers/docs/proto#options 
 
 
+//// Only related to Handshake between wrapper and FMU ////
+service Handshaker {
+    // Send a message for performing a handshake
+    rpc PerformHandshake (HandshakeInfo) returns (Void) {}
+  }
+  
+  // Message containing the handshake information
+  message HandshakeInfo {
+    string ip_address = 1;
+    string port = 2;
+  }
+
+
+
+
 service SendCommand{
     // Set and Get variable value methods
     rpc Fmi2SetReal(SetReal) returns (StatusReturn) {}
@@ -25,26 +40,31 @@ service SendCommand{
     rpc Fmi2SetString(SetString) returns (StatusReturn) {}
     rpc Fmi2GetString(GetXXX) returns (GetStringReturn) {}
 
-    // Initialization, termination and resetting fmus
+    // 2.1.6 Initialization, termination and resetting fmus
     rpc Fmi2EnterInitializationMode(EnterInitializationMode) returns (StatusReturn) {}
     rpc Fmi2ExitInitializationMode(ExitInitializationMode) returns (StatusReturn) {}
     rpc Fmi2Terminate(Terminate) returns (StatusReturn) {}
     rpc Fmi2Reset(Reset) returns (StatusReturn) {}
+    rpc Fmi2SetupExperiment(SetupExperiment) returns (StatusReturn) {}
 
     // Creation, destruction and logging of fmu instances
-    rpc Fmi2FreeInstance(FreeInstance) returns (Void) {}
+    rpc Fmi2FreeInstance(FreeInstance) returns (StatusReturn) {}
     rpc Fmi2SetDebugLogging(SetDebugLogging) returns (StatusReturn) {}
 
-    // Setting and Getting complete fmu state
-    rpc Serialize(SerializeMessage) returns (StatusReturn) {}
-    rpc Deserialize(DeserializeMessage) returns (StatusReturn) {} // TODO: check how this should be implemented
-    // todo rest of the functions
+    /*
+    // 2.1.8 Setting and Getting complete fmu state
+    // rpc Fmi2SetFMUState(FMUState) returns (StatusReturn) {}
+    // rpc Fmi2GetFMUState(FMUState) returns (StatusReturn) {}
+    // rpc Fmi2FreeFMUState(FMUState) returns (StatusReturn) {}
+    
 
     // Getting partial derivatives
     // todo
 
     // 4.2.1 Transfer of input/output values and parameters
     // todo
+    */
+    
 
     // 4.2.2 Computation
     rpc Fmi2DoStep(DoStep) returns (StatusReturn) {}
@@ -52,6 +72,9 @@ service SendCommand{
 
     // 4.2.3 Retrieving status information from the slave
     // todo
+
+    rpc Serialize(SerializeMessage) returns (SerializeReturn) {}
+    rpc Deserialize(DeserializeMessage) returns (StatusReturn) {} // TODO: check how this should be implemented
 }
 
 
@@ -107,6 +130,7 @@ message SetupExperiment{
     bool has_stop_time = 4;
     bool has_tolerance = 5;
 }
+
 
 message SerializeMessage{}
 
@@ -202,7 +226,8 @@ message GetStringReturn{
 }
 
 message SerializeReturn{
-    bytes state = 1;
+    FmiStatus status = 1;
+    bytes state = 2;
 }
 
 
