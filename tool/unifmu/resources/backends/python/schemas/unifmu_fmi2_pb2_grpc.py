@@ -147,7 +147,7 @@ class SendCommandStub(object):
         self.Fmi2FreeInstance = channel.unary_unary(
                 '/fmi2_proto.SendCommand/Fmi2FreeInstance',
                 request_serializer=schemas_dot_unifmu__fmi2__pb2.FreeInstance.SerializeToString,
-                response_deserializer=schemas_dot_unifmu__fmi2__pb2.Void.FromString,
+                response_deserializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
                 )
         self.Fmi2SetDebugLogging = channel.unary_unary(
                 '/fmi2_proto.SendCommand/Fmi2SetDebugLogging',
@@ -273,16 +273,18 @@ class SendCommandServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def Fmi2DoStep(self, request, context):
-        """2.1.8 Setting and Getting complete fmu state
-        rpc Fmi2SetFMUState(FMUState) returns (StatusReturn) {}
-        rpc Fmi2GetFMUState(FMUState) returns (StatusReturn) {}
-        rpc Fmi2FreeFMUState(FMUState) returns (StatusReturn) {}
+        """
+        // 2.1.8 Setting and Getting complete fmu state
+        // rpc Fmi2SetFMUState(FMUState) returns (StatusReturn) {}
+        // rpc Fmi2GetFMUState(FMUState) returns (StatusReturn) {}
+        // rpc Fmi2FreeFMUState(FMUState) returns (StatusReturn) {}
 
-        Getting partial derivatives
-        todo
 
-        4.2.1 Transfer of input/output values and parameters
-        todo
+        // Getting partial derivatives
+        // todo
+
+        // 4.2.1 Transfer of input/output values and parameters
+        // todo
 
         4.2.2 Computation
         """
@@ -382,7 +384,7 @@ def add_SendCommandServicer_to_server(servicer, server):
             'Fmi2FreeInstance': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2FreeInstance,
                     request_deserializer=schemas_dot_unifmu__fmi2__pb2.FreeInstance.FromString,
-                    response_serializer=schemas_dot_unifmu__fmi2__pb2.Void.SerializeToString,
+                    response_serializer=schemas_dot_unifmu__fmi2__pb2.StatusReturn.SerializeToString,
             ),
             'Fmi2SetDebugLogging': grpc.unary_unary_rpc_method_handler(
                     servicer.Fmi2SetDebugLogging,
@@ -653,7 +655,7 @@ class SendCommand(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/fmi2_proto.SendCommand/Fmi2FreeInstance',
             schemas_dot_unifmu__fmi2__pb2.FreeInstance.SerializeToString,
-            schemas_dot_unifmu__fmi2__pb2.Void.FromString,
+            schemas_dot_unifmu__fmi2__pb2.StatusReturn.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

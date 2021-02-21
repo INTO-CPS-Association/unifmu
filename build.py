@@ -1,5 +1,4 @@
 import argparse
-
 from pathlib import Path
 import logging
 import shutil
@@ -7,11 +6,12 @@ from shutil import SameFileError, rmtree
 import subprocess
 import os
 import sys
-from sys import  platform
+from sys import platform
 import platform
 from tempfile import TemporaryDirectory
 from os import makedirs
 
+from grpc_tools.protoc import _protoc_compiler
 
 from unifmu.generate import generate_fmu_from_backend, get_backends
 
@@ -114,59 +114,76 @@ if __name__ == "__main__":
         schema = "unifmu_fmi2.proto"
         schema_include_dir = "schemas"
 
-        try:
-            targets = [
-                ("java", "tool/unifmu/resources/backends/java_fmu/src/main/java/", []),  
-                (
-                    "csharp",
-                    "tool/unifmu/resources/backends/csharp_fmu/",
-                    [],
-                ),
-            ]
-            for lang, outdir, kwargs in targets:
+        # the protoc compiler requires language specific extensions to generate grpc
+        # code for different targets. The recommended way of getting these is using
+        # the de-facto package manager of the language such.
+        #
+        # For example:
+        # * python: pip install grpc-tools
+        # * C#: dotnet add package Grpc.Tools
+        #
+        # For C# the compilation of *.proto files is integrated in build process
+        # as such it must be copied into the resources for the C# backend.
 
-                #makedirs(Path(outdir),exist_ok=True)
-
-                res = subprocess.run(
-                    [
-                        "protoc",
-                        "-I",
-                        schema_include_dir,
-                        f"--{lang}_out={outdir}",
-                        schema,
-                        *kwargs,
-                    ]
-                )
-
-                if res.returncode != 0:
-                    logger.error(
-                        f"Failed compile protobuf schemas, for target language: {lang}"
-                    )
-
-            from grpc_tools.protoc import _protoc_compiler
-            
-            # Generating rpc components requires a plugin for the protocol buffer compiler
-            # The recommended way is to get the compiler bundled with a plugin trough 'grpc_tools' package on PyPI.
-            # However, the bundled version of the protocol buffer compiler does not support other languages like Java and C#.
+        def generate_python(outdir):
+            """Generating rpc components requires a plugin for the protocol buffer compiler
+            The recommended way is to get the compiler bundled with a plugin trough 'grpc-tools' package on PyPI."""
             protoc_args = [
                 s.encode()
                 for s in [
                     f"--proto_path={schema_include_dir}",
-                    "--python_out=tool/unifmu/resources/backends/python/",
-                    "--grpc_python_out=tool/unifmu/resources/backends/python/",
-                    (Path(schema_include_dir)/schema).__fspath__(), # unlike invoking protoc, it seems schema needs absolute path
-                    *kwargs
+                    f"--python_out={outdir}",
+                    f"--grpc_python_out={outdir}",
+                    (
+                        Path(schema_include_dir) / schema
+                    ).__fspath__(),  # unlike invoking protoc, it seems schema needs absolute path
                 ]
             ]
             _protoc_compiler.run_main(protoc_args)
 
+        def generate_java(outdir):
+            res = subprocess.run(
+                [
+                    "protoc",
+                    "-I",
+                    schema_include_dir,
+                    f"--java_out={outdir}",
+                    schema,
+                ]
+            ).check_returncode()
 
-        except Exception:
-            logger.error(
-                f"Proto failed to execute. Ensure that it is installed and available in the systems path",
-                exc_info=True,
-            )
+        def generate_csharp(outdir):
+            shutil.copyfile(Path(schema_include_dir) / schema, Path(outdir) / schema)
 
+        generate_commands = [
+            ("python", "tool/unifmu/resources/backends/python/", generate_python),
+            (
+                "java",
+                "tool/unifmu/resources/backends/java_fmu/src/main/java/",
+                generate_java,
+            ),
+            (
+                "csharp",
+                "tool/unifmu/resources/backends/csharp/schemas",
+                generate_csharp,
+            ),
+        ]
+        logger.info(
+            f"updating schemas for target languages '{[lang for lang, _ ,_ in generate_commands]}'"
+        )
+        for lang, outdir, cmd in generate_commands:
+            try:
+                makedirs(outdir, exist_ok=True)
+                cmd(outdir)
+                logger.info(f"Updated schemas for target '{lang}'")
+            except Exception:
+                logger.critical(
+                    f"Failed to update schemas for target language '{lang}', an exception was raised during the process.",
+                    exc_info=True,
+                )
+                sys.exit(1)
+
+    ####################################### EXPORT FMU EXAMPLES #################################################
     if args.export_examples:
 
         for b in get_backends():
@@ -187,7 +204,7 @@ if __name__ == "__main__":
 
         # with TemporaryDirectory() as tmpdir:
 
-        for backend in ["python_grpc", "python_schemaless_rpc"]:  # "python_grpc" "python_schemaless_rpc"
+        for backend in ["python_schemaless_rpc", "python_grpc"]:  # "python_grpc" "python_schemaless_rpc" "csharp"
             tmpdir = Path(mkdtemp())
             fmu_path = tmpdir / "fmu"
             generate_fmu_from_backend(backend, fmu_path)
@@ -202,7 +219,7 @@ if __name__ == "__main__":
             with Chdir("Wrapper"):
 
                 res = subprocess.run(
-                    args=["cargo", "test", "--", "--nocapture"] #  "--show-output",
+                    args=["cargo", "test", "--", "--nocapture"]  #  "--show-output",
                 )
 
                 if res.returncode != 0:

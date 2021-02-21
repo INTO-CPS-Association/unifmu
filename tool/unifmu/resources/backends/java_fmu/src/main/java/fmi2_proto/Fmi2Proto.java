@@ -19093,7 +19093,7 @@ public final class Fmi2Proto {
       "miStatus\022\006\n\002Ok\020\000\022\013\n\007Warning\020\001\022\013\n\007Discard" +
       "\020\002\022\t\n\005Error\020\003\022\t\n\005Fatal\020\004\022\013\n\007Pending\020\0052O\n" +
       "\nHandshaker\022A\n\020PerformHandshake\022\031.fmi2_p" +
-      "roto.HandshakeInfo\032\020.fmi2_proto.Void\"\0002\346" +
+      "roto.HandshakeInfo\032\020.fmi2_proto.Void\"\0002\356" +
       "\n\n\013SendCommand\022>\n\013Fmi2SetReal\022\023.fmi2_pro" +
       "to.SetReal\032\030.fmi2_proto.StatusReturn\"\000\022>" +
       "\n\013Fmi2GetReal\022\022.fmi2_proto.GetXXX\032\031.fmi2" +
@@ -19117,19 +19117,19 @@ public final class Fmi2Proto {
       "o.StatusReturn\"\000\022:\n\tFmi2Reset\022\021.fmi2_pro" +
       "to.Reset\032\030.fmi2_proto.StatusReturn\"\000\022N\n\023" +
       "Fmi2SetupExperiment\022\033.fmi2_proto.SetupEx" +
-      "periment\032\030.fmi2_proto.StatusReturn\"\000\022@\n\020" +
+      "periment\032\030.fmi2_proto.StatusReturn\"\000\022H\n\020" +
       "Fmi2FreeInstance\022\030.fmi2_proto.FreeInstan" +
-      "ce\032\020.fmi2_proto.Void\"\000\022N\n\023Fmi2SetDebugLo" +
-      "gging\022\033.fmi2_proto.SetDebugLogging\032\030.fmi" +
-      "2_proto.StatusReturn\"\000\022<\n\nFmi2DoStep\022\022.f" +
-      "mi2_proto.DoStep\032\030.fmi2_proto.StatusRetu" +
-      "rn\"\000\022D\n\016Fmi2CancelStep\022\026.fmi2_proto.Canc" +
-      "elStep\032\030.fmi2_proto.StatusReturn\"\000\022H\n\tSe" +
-      "rialize\022\034.fmi2_proto.SerializeMessage\032\033." +
-      "fmi2_proto.SerializeReturn\"\000\022I\n\013Deserial" +
-      "ize\022\036.fmi2_proto.DeserializeMessage\032\030.fm" +
-      "i2_proto.StatusReturn\"\000B#B\tFmi2ProtoH\001P\000" +
-      "\252\002\021schemas.Fmi2Protob\006proto3"
+      "ce\032\030.fmi2_proto.StatusReturn\"\000\022N\n\023Fmi2Se" +
+      "tDebugLogging\022\033.fmi2_proto.SetDebugLoggi" +
+      "ng\032\030.fmi2_proto.StatusReturn\"\000\022<\n\nFmi2Do" +
+      "Step\022\022.fmi2_proto.DoStep\032\030.fmi2_proto.St" +
+      "atusReturn\"\000\022D\n\016Fmi2CancelStep\022\026.fmi2_pr" +
+      "oto.CancelStep\032\030.fmi2_proto.StatusReturn" +
+      "\"\000\022H\n\tSerialize\022\034.fmi2_proto.SerializeMe" +
+      "ssage\032\033.fmi2_proto.SerializeReturn\"\000\022I\n\013" +
+      "Deserialize\022\036.fmi2_proto.DeserializeMess" +
+      "age\032\030.fmi2_proto.StatusReturn\"\000B#B\tFmi2P" +
+      "rotoH\001P\000\252\002\021schemas.Fmi2Protob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

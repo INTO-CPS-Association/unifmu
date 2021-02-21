@@ -41,15 +41,23 @@ files = [
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
 
-# [backend.csharp]
+[backend.csharp]
 
-# files = [
-#   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
-#   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
-#   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-#   ["backends/csharp/launch.toml", "resources/launch.toml"],
-#   ["common/modelDescription.xml", "modelDescription.xml"],
-# ]
+files = [
+  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
+  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
+  ["backends/csharp/adder.cs", "resources/adder.cs"],
+  ["backends/csharp/csharp.csproj", "resources/csharp.csproj"],
+  ["backends/csharp/fmi2.cs", "resources/fmi2.cs"],
+  ["backends/csharp/launch.cs", "resources/launch.cs"],
+  ["backends/csharp/schemas/UnifmuFmi2.cs", "resources/schemas/UnifmuFmi2.cs"],
+  ["backends/csharp/schemas/UnifmuFmi2Grpc.cs", "resources/schemas/UnifmuFmi2Grpc.cs"],
+  ["backends/csharp/CommandService.cs", "resources/CommandService.cs"],
+  ["backends/csharp/launch.toml", "resources/launch.toml"],
+  ["backends/csharp/schemas/unifmu_fmi2.proto", "resources/schemas/unifmu_fmi2.proto"],
+  ["common/modelDescription.xml", "modelDescription.xml"],
+]
 
 # [backend.java]
 
