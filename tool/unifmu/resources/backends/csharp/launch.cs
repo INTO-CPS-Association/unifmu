@@ -1,3 +1,4 @@
+using System.Net;
 using System.IO;
 using System;
 using CommandLine;
@@ -15,7 +16,7 @@ namespace Launch
         class Options
         {
             [Option('e', "handshake-endpoint", Required = true, HelpText = "The ip and port used to perform the handshake between the wrapper and this slave.")]
-            public string handshake_endpoint { get; set; }
+            public string HandshakeEndpoint { get; set; }
         }
 
         public static void Main(string[] args)
@@ -26,18 +27,19 @@ namespace Launch
             Console.SetOut(sw);
 
             // Obtain handshake arguments
-            string handshake_endpoint = null;
+            string HandshakeEndpoint = null;
             Options options = new Options();
             Parser.Default.ParseArguments<Options>(args).WithParsed<Options>(o =>
             {
-                handshake_endpoint = o.handshake_endpoint;
+                HandshakeEndpoint = o.HandshakeEndpoint;
             });
-            if (handshake_endpoint == null)
+            if (HandshakeEndpoint == null)
                 throw new Exception("The handshake endpoint is not defined.");
 
             // Get value references of attributes in modelDescription file of fmu
             Dictionary<uint, string> referenceToAttr = new Dictionary<uint, string>();
-            string parentPath = Directory.GetCurrentDirectory();
+            string curPath = Directory.GetCurrentDirectory();
+            string parentPath = Directory.GetParent(curPath).ToString();
             var modelDescriptionPath = Path.Combine(parentPath, "modelDescription.xml");
             XDocument modelDescription = XDocument.Load(modelDescriptionPath);
             var modelVariables = modelDescription.Descendants("ModelVariables");
@@ -49,11 +51,35 @@ namespace Launch
                 referenceToAttr.Add(valueReference, name);
             }
 
+            Fmi2FMU slave = new Adder(referenceToAttr);
 
 
-            Channel handshake_channel = new Channel(handshake_endpoint, ChannelCredentials.Insecure);
-            var handshake_client = new Handshaker.HandshakerClient(handshake_channel);
-            Console.WriteLine("Connected handshake client to handshake endpoint: {0}", handshake_endpoint);
+            string uri = "localhost";
+            Server server = new Server
+            {
+                Services = { SendCommand.BindService(new CommandService.CommandServicer(slave)) },
+                Ports = { new ServerPort(uri, 0, ServerCredentials.Insecure) }
+            };
+            server.Start();
+
+            // Get Connected port
+            var enumerator = server.Ports.GetEnumerator();
+            enumerator.MoveNext();
+            string BoundPort = (enumerator.Current as ServerPort).BoundPort.ToString();
+            Console.WriteLine("Started fmu slave on port " + BoundPort);
+            Console.WriteLine("Waiting!");
+
+            {
+                Channel HandshakeChannel = new Channel(HandshakeEndpoint, ChannelCredentials.Insecure);
+                var HandshakeClient = new Handshaker.HandshakerClient(HandshakeChannel);
+                sw.WriteLine("Connected handshake client to handshake endpoint {0}", HandshakeEndpoint);
+                HandshakeClient.PerformHandshake(new HandshakeInfo { IpAddress = uri, Port = BoundPort });
+                HandshakeChannel.ShutdownAsync();
+            }
+
+            Console.WriteLine("Sent port number to wrapper!");
+            
+            server.ShutdownTask.Wait();
         }
     }
 }

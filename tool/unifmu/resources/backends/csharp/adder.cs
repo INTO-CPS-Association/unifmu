@@ -1,6 +1,8 @@
-using System.Collections.Generic;
 using System;
-using System.Globalization;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+
 public class Adder : Fmi2FMU
 {
     // Make all class variables properties, in order to access them all in a similar manner. 
@@ -16,6 +18,7 @@ public class Adder : Fmi2FMU
     public string string_a { get; set; }
     public string string_b { get; set; }
     public string string_c { get; set; }
+    
 
     public Adder(Dictionary<uint, string> referenceToAttr) : base(referenceToAttr)
     {
@@ -30,20 +33,51 @@ public class Adder : Fmi2FMU
 
         this.string_a = "";
         this.string_b = "";
-
+        
         UpdateOutputs();
     }
 
-    // TODO: implement correctly
+  
     public override (byte[], Fmi2Status) Serialize()
     {
-        return (null, Fmi2Status.Ok);
+        using (MemoryStream m = new MemoryStream()) {
+         using (BinaryWriter writer = new BinaryWriter(m)) {
+            writer.Write(real_a);
+            writer.Write(real_b);
+            writer.Write(real_c);
+            writer.Write(integer_a);
+            writer.Write(integer_b);
+            writer.Write(integer_c);
+            writer.Write(boolean_a);
+            writer.Write(boolean_b);
+            writer.Write(boolean_c);
+            writer.Write(string_a);
+            writer.Write(string_b);
+            writer.Write(string_c);
+         }
+         return (m.ToArray(), Fmi2Status.Ok);
+      }
     }
 
-    // TODO: implement correctly
     public override Fmi2Status Deserialize(byte[] state)
     {
-        return base.Deserialize(state);
+        using (MemoryStream m = new MemoryStream(state)) {
+         using (BinaryReader reader = new BinaryReader(m)) {
+            this.real_a = reader.ReadDouble();
+            this.real_b = reader.ReadDouble();
+            this.real_c = reader.ReadDouble();
+            this.integer_a = reader.ReadInt32();
+            this.integer_b = reader.ReadInt32();
+            this.integer_c = reader.ReadInt32();
+            this.boolean_a = reader.ReadBoolean();
+            this.boolean_b = reader.ReadBoolean();
+            this.boolean_c = reader.ReadBoolean();
+            this.string_a = reader.ReadString();
+            this.string_b = reader.ReadString();
+            this.string_c = reader.ReadString();
+         }
+      }
+        return Fmi2Status.Ok;
     }
 
     // Implementation of properties
