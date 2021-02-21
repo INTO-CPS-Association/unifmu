@@ -8,7 +8,7 @@ use libc::size_t;
 
 use ::safer_ffi::prelude::*;
 use num_enum::TryFromPrimitive;
-use rpc::{config::RpcConfig, initialize_slave_from_config, Fmi2CommandRPC};
+use rpc::{initialize_slave_from_config, Fmi2CommandRPC, RpcConfig};
 use safer_ffi::{
     c,
     char_p::{char_p_raw, char_p_ref},
@@ -23,10 +23,13 @@ use std::os::raw::c_ulonglong;
 use std::os::raw::c_void;
 use std::panic::UnwindSafe;
 use std::{ffi::CStr, panic::RefUnwindSafe};
-
 use toml;
 use url::Url;
+
+pub mod fmi2_proto;
+pub mod google_rpc;
 pub mod rpc;
+pub mod schemaless_rpc;
 
 ///
 /// Represents the function signature of the logging callback function passsed
@@ -115,11 +118,15 @@ pub struct Slave {
     /// Buffer storing 0 or more past state of the slave.
 
     /// Object performing remote procedure calls on the slave
-    rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe>,
+    rpc: Box<dyn Fmi2CommandRPC>,
 }
+//  + Send + UnwindSafe + RefUnwindSafe
+impl RefUnwindSafe for Slave {}
+impl UnwindSafe for Slave {}
+unsafe impl Send for Slave {}
 
 impl Slave {
-    fn new(rpc: Box<dyn Fmi2CommandRPC + Send + UnwindSafe + RefUnwindSafe>) -> Self {
+    fn new(rpc: Box<dyn Fmi2CommandRPC>) -> Self {
         Self {
             rpc,
             string_buffer: Vec::new(),
