@@ -27,7 +27,7 @@ jobs:
           python build.py --update-wrapper
       - name: Run integration tests
         run: |
-          python build.py --test-c
+          python build.py --test-integration
 
   build-wrapper-linux:
     runs-on: ubuntu-latest
@@ -45,10 +45,10 @@ jobs:
           python3 build.py --update-wrapper
       - name: Run integration tests
         run: |
-          python3 build.py --test-c
+          python3 build.py --test-integration
 
   build-wrapper-macos:
-    runs-on: 	macos-latest
+    runs-on: macos-latest
     strategy:
       matrix:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
@@ -63,4 +63,4 @@ jobs:
           python3 build.py --update-wrapper
       - name: Run integration tests
         run: |
-          python3 build.py --test-c
+          python3 build.py --test-integration
