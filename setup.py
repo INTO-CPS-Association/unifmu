@@ -34,6 +34,7 @@ _extras_require = {
     ],
     "tests": [],
     "gui": ["wxpython", "PyPubSub"],
+    "protobuf": ["grpcio-tools", "protoc-wheel-0"],
 }
 _extras_require["dev"] = (
     _extras_require["docs"] + _extras_require["tests"] + _extras_require["gui"]
@@ -54,7 +55,7 @@ setup(
         "Documentation": "https://into-cps-application.readthedocs.io/en/latest/submodules/unifmu/docs/index.html",
         "Source Code": "https://github.com/INTO-CPS-Association/unifmu",
     },
-    install_requires=["zmq", "lxml", "toml"],
+    install_requires=["zmq", "grpcio", "lxml", "toml"],
     extras_require=_extras_require,
     # resources needed by the CLI to generate and export
     package_data={"unifmu": get_resource_files()},
