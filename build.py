@@ -11,7 +11,6 @@ import platform
 from tempfile import TemporaryDirectory
 from os import makedirs
 
-from grpc_tools.protoc import _protoc_compiler
 
 from unifmu.generate import generate_fmu_from_backend, get_backends
 
@@ -126,6 +125,8 @@ if __name__ == "__main__":
         # as such it must be copied into the resources for the C# backend.
 
         def generate_python(outdir):
+            from grpc_tools.protoc import _protoc_compiler
+
             """Generating rpc components requires a plugin for the protocol buffer compiler
             The recommended way is to get the compiler bundled with a plugin trough 'grpc-tools' package on PyPI."""
             protoc_args = [
