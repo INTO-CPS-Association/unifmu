@@ -11984,10 +11984,24 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 DoStep = 1;</code>
+     * @return Whether the doStep field is set.
+     */
+    boolean hasDoStep();
+    /**
+     * <pre>
+     * Field numbers between 1-15 only use one byte, therefore the functions that are called the most will be between 1-15
+     * </pre>
+     *
+     * <code>int32 DoStep = 1;</code>
      * @return The doStep.
      */
     int getDoStep();
 
+    /**
+     * <code>int32 SetReal = 2;</code>
+     * @return Whether the setReal field is set.
+     */
+    boolean hasSetReal();
     /**
      * <code>int32 SetReal = 2;</code>
      * @return The setReal.
@@ -11996,10 +12010,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 SetInteger = 3;</code>
+     * @return Whether the setInteger field is set.
+     */
+    boolean hasSetInteger();
+    /**
+     * <code>int32 SetInteger = 3;</code>
      * @return The setInteger.
      */
     int getSetInteger();
 
+    /**
+     * <code>int32 SetBoolean = 4;</code>
+     * @return Whether the setBoolean field is set.
+     */
+    boolean hasSetBoolean();
     /**
      * <code>int32 SetBoolean = 4;</code>
      * @return The setBoolean.
@@ -12008,10 +12032,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 SetString = 5;</code>
+     * @return Whether the setString field is set.
+     */
+    boolean hasSetString();
+    /**
+     * <code>int32 SetString = 5;</code>
      * @return The setString.
      */
     int getSetString();
 
+    /**
+     * <code>int32 GetReal = 6;</code>
+     * @return Whether the getReal field is set.
+     */
+    boolean hasGetReal();
     /**
      * <code>int32 GetReal = 6;</code>
      * @return The getReal.
@@ -12020,10 +12054,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 GetInteger = 7;</code>
+     * @return Whether the getInteger field is set.
+     */
+    boolean hasGetInteger();
+    /**
+     * <code>int32 GetInteger = 7;</code>
      * @return The getInteger.
      */
     int getGetInteger();
 
+    /**
+     * <code>int32 GetBoolean = 8;</code>
+     * @return Whether the getBoolean field is set.
+     */
+    boolean hasGetBoolean();
     /**
      * <code>int32 GetBoolean = 8;</code>
      * @return The getBoolean.
@@ -12032,10 +12076,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 GetString = 9;</code>
+     * @return Whether the getString field is set.
+     */
+    boolean hasGetString();
+    /**
+     * <code>int32 GetString = 9;</code>
      * @return The getString.
      */
     int getGetString();
 
+    /**
+     * <code>int32 SetDebugLogging = 10;</code>
+     * @return Whether the setDebugLogging field is set.
+     */
+    boolean hasSetDebugLogging();
     /**
      * <code>int32 SetDebugLogging = 10;</code>
      * @return The setDebugLogging.
@@ -12044,10 +12098,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 SetupExperiment = 11;</code>
+     * @return Whether the setupExperiment field is set.
+     */
+    boolean hasSetupExperiment();
+    /**
+     * <code>int32 SetupExperiment = 11;</code>
      * @return The setupExperiment.
      */
     int getSetupExperiment();
 
+    /**
+     * <code>int32 FreeInstance = 12;</code>
+     * @return Whether the freeInstance field is set.
+     */
+    boolean hasFreeInstance();
     /**
      * <code>int32 FreeInstance = 12;</code>
      * @return The freeInstance.
@@ -12056,10 +12120,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 EnterInitializationMode = 13;</code>
+     * @return Whether the enterInitializationMode field is set.
+     */
+    boolean hasEnterInitializationMode();
+    /**
+     * <code>int32 EnterInitializationMode = 13;</code>
      * @return The enterInitializationMode.
      */
     int getEnterInitializationMode();
 
+    /**
+     * <code>int32 ExitInitializationMode = 14;</code>
+     * @return Whether the exitInitializationMode field is set.
+     */
+    boolean hasExitInitializationMode();
     /**
      * <code>int32 ExitInitializationMode = 14;</code>
      * @return The exitInitializationMode.
@@ -12068,10 +12142,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 Terminate = 15;</code>
+     * @return Whether the terminate field is set.
+     */
+    boolean hasTerminate();
+    /**
+     * <code>int32 Terminate = 15;</code>
      * @return The terminate.
      */
     int getTerminate();
 
+    /**
+     * <code>int32 Reset = 16;</code>
+     * @return Whether the reset field is set.
+     */
+    boolean hasReset();
     /**
      * <code>int32 Reset = 16;</code>
      * @return The reset.
@@ -12080,10 +12164,20 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 Serialize = 17;</code>
+     * @return Whether the serialize field is set.
+     */
+    boolean hasSerialize();
+    /**
+     * <code>int32 Serialize = 17;</code>
      * @return The serialize.
      */
     int getSerialize();
 
+    /**
+     * <code>int32 Deserialize = 18;</code>
+     * @return Whether the deserialize field is set.
+     */
+    boolean hasDeserialize();
     /**
      * <code>int32 Deserialize = 18;</code>
      * @return The deserialize.
@@ -12096,10 +12190,24 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 GetDirectionalDerivatives = 19;</code>
+     * @return Whether the getDirectionalDerivatives field is set.
+     */
+    boolean hasGetDirectionalDerivatives();
+    /**
+     * <pre>
+     * Co-sim
+     * </pre>
+     *
+     * <code>int32 GetDirectionalDerivatives = 19;</code>
      * @return The getDirectionalDerivatives.
      */
     int getGetDirectionalDerivatives();
 
+    /**
+     * <code>int32 SetInputDerivatives = 20;</code>
+     * @return Whether the setInputDerivatives field is set.
+     */
+    boolean hasSetInputDerivatives();
     /**
      * <code>int32 SetInputDerivatives = 20;</code>
      * @return The setInputDerivatives.
@@ -12108,16 +12216,31 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 GetOutputDerivatives = 21;</code>
+     * @return Whether the getOutputDerivatives field is set.
+     */
+    boolean hasGetOutputDerivatives();
+    /**
+     * <code>int32 GetOutputDerivatives = 21;</code>
      * @return The getOutputDerivatives.
      */
     int getGetOutputDerivatives();
 
     /**
      * <code>int32 CancelStep = 22;</code>
+     * @return Whether the cancelStep field is set.
+     */
+    boolean hasCancelStep();
+    /**
+     * <code>int32 CancelStep = 22;</code>
      * @return The cancelStep.
      */
     int getCancelStep();
 
+    /**
+     * <code>int32 GetXXXStatus = 23;</code>
+     * @return Whether the getXXXStatus field is set.
+     */
+    boolean hasGetXXXStatus();
     /**
      * <code>int32 GetXXXStatus = 23;</code>
      * @return The getXXXStatus.
@@ -12408,6 +12531,18 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 DoStep = 1;</code>
+     * @return Whether the doStep field is set.
+     */
+    @java.lang.Override
+    public boolean hasDoStep() {
+      return argsCase_ == 1;
+    }
+    /**
+     * <pre>
+     * Field numbers between 1-15 only use one byte, therefore the functions that are called the most will be between 1-15
+     * </pre>
+     *
+     * <code>int32 DoStep = 1;</code>
      * @return The doStep.
      */
     @java.lang.Override
@@ -12419,6 +12554,14 @@ public final class Fmi2Proto {
     }
 
     public static final int SETREAL_FIELD_NUMBER = 2;
+    /**
+     * <code>int32 SetReal = 2;</code>
+     * @return Whether the setReal field is set.
+     */
+    @java.lang.Override
+    public boolean hasSetReal() {
+      return argsCase_ == 2;
+    }
     /**
      * <code>int32 SetReal = 2;</code>
      * @return The setReal.
@@ -12434,6 +12577,14 @@ public final class Fmi2Proto {
     public static final int SETINTEGER_FIELD_NUMBER = 3;
     /**
      * <code>int32 SetInteger = 3;</code>
+     * @return Whether the setInteger field is set.
+     */
+    @java.lang.Override
+    public boolean hasSetInteger() {
+      return argsCase_ == 3;
+    }
+    /**
+     * <code>int32 SetInteger = 3;</code>
      * @return The setInteger.
      */
     @java.lang.Override
@@ -12445,6 +12596,14 @@ public final class Fmi2Proto {
     }
 
     public static final int SETBOOLEAN_FIELD_NUMBER = 4;
+    /**
+     * <code>int32 SetBoolean = 4;</code>
+     * @return Whether the setBoolean field is set.
+     */
+    @java.lang.Override
+    public boolean hasSetBoolean() {
+      return argsCase_ == 4;
+    }
     /**
      * <code>int32 SetBoolean = 4;</code>
      * @return The setBoolean.
@@ -12460,6 +12619,14 @@ public final class Fmi2Proto {
     public static final int SETSTRING_FIELD_NUMBER = 5;
     /**
      * <code>int32 SetString = 5;</code>
+     * @return Whether the setString field is set.
+     */
+    @java.lang.Override
+    public boolean hasSetString() {
+      return argsCase_ == 5;
+    }
+    /**
+     * <code>int32 SetString = 5;</code>
      * @return The setString.
      */
     @java.lang.Override
@@ -12471,6 +12638,14 @@ public final class Fmi2Proto {
     }
 
     public static final int GETREAL_FIELD_NUMBER = 6;
+    /**
+     * <code>int32 GetReal = 6;</code>
+     * @return Whether the getReal field is set.
+     */
+    @java.lang.Override
+    public boolean hasGetReal() {
+      return argsCase_ == 6;
+    }
     /**
      * <code>int32 GetReal = 6;</code>
      * @return The getReal.
@@ -12486,6 +12661,14 @@ public final class Fmi2Proto {
     public static final int GETINTEGER_FIELD_NUMBER = 7;
     /**
      * <code>int32 GetInteger = 7;</code>
+     * @return Whether the getInteger field is set.
+     */
+    @java.lang.Override
+    public boolean hasGetInteger() {
+      return argsCase_ == 7;
+    }
+    /**
+     * <code>int32 GetInteger = 7;</code>
      * @return The getInteger.
      */
     @java.lang.Override
@@ -12497,6 +12680,14 @@ public final class Fmi2Proto {
     }
 
     public static final int GETBOOLEAN_FIELD_NUMBER = 8;
+    /**
+     * <code>int32 GetBoolean = 8;</code>
+     * @return Whether the getBoolean field is set.
+     */
+    @java.lang.Override
+    public boolean hasGetBoolean() {
+      return argsCase_ == 8;
+    }
     /**
      * <code>int32 GetBoolean = 8;</code>
      * @return The getBoolean.
@@ -12512,6 +12703,14 @@ public final class Fmi2Proto {
     public static final int GETSTRING_FIELD_NUMBER = 9;
     /**
      * <code>int32 GetString = 9;</code>
+     * @return Whether the getString field is set.
+     */
+    @java.lang.Override
+    public boolean hasGetString() {
+      return argsCase_ == 9;
+    }
+    /**
+     * <code>int32 GetString = 9;</code>
      * @return The getString.
      */
     @java.lang.Override
@@ -12523,6 +12722,14 @@ public final class Fmi2Proto {
     }
 
     public static final int SETDEBUGLOGGING_FIELD_NUMBER = 10;
+    /**
+     * <code>int32 SetDebugLogging = 10;</code>
+     * @return Whether the setDebugLogging field is set.
+     */
+    @java.lang.Override
+    public boolean hasSetDebugLogging() {
+      return argsCase_ == 10;
+    }
     /**
      * <code>int32 SetDebugLogging = 10;</code>
      * @return The setDebugLogging.
@@ -12538,6 +12745,14 @@ public final class Fmi2Proto {
     public static final int SETUPEXPERIMENT_FIELD_NUMBER = 11;
     /**
      * <code>int32 SetupExperiment = 11;</code>
+     * @return Whether the setupExperiment field is set.
+     */
+    @java.lang.Override
+    public boolean hasSetupExperiment() {
+      return argsCase_ == 11;
+    }
+    /**
+     * <code>int32 SetupExperiment = 11;</code>
      * @return The setupExperiment.
      */
     @java.lang.Override
@@ -12549,6 +12764,14 @@ public final class Fmi2Proto {
     }
 
     public static final int FREEINSTANCE_FIELD_NUMBER = 12;
+    /**
+     * <code>int32 FreeInstance = 12;</code>
+     * @return Whether the freeInstance field is set.
+     */
+    @java.lang.Override
+    public boolean hasFreeInstance() {
+      return argsCase_ == 12;
+    }
     /**
      * <code>int32 FreeInstance = 12;</code>
      * @return The freeInstance.
@@ -12564,6 +12787,14 @@ public final class Fmi2Proto {
     public static final int ENTERINITIALIZATIONMODE_FIELD_NUMBER = 13;
     /**
      * <code>int32 EnterInitializationMode = 13;</code>
+     * @return Whether the enterInitializationMode field is set.
+     */
+    @java.lang.Override
+    public boolean hasEnterInitializationMode() {
+      return argsCase_ == 13;
+    }
+    /**
+     * <code>int32 EnterInitializationMode = 13;</code>
      * @return The enterInitializationMode.
      */
     @java.lang.Override
@@ -12575,6 +12806,14 @@ public final class Fmi2Proto {
     }
 
     public static final int EXITINITIALIZATIONMODE_FIELD_NUMBER = 14;
+    /**
+     * <code>int32 ExitInitializationMode = 14;</code>
+     * @return Whether the exitInitializationMode field is set.
+     */
+    @java.lang.Override
+    public boolean hasExitInitializationMode() {
+      return argsCase_ == 14;
+    }
     /**
      * <code>int32 ExitInitializationMode = 14;</code>
      * @return The exitInitializationMode.
@@ -12590,6 +12829,14 @@ public final class Fmi2Proto {
     public static final int TERMINATE_FIELD_NUMBER = 15;
     /**
      * <code>int32 Terminate = 15;</code>
+     * @return Whether the terminate field is set.
+     */
+    @java.lang.Override
+    public boolean hasTerminate() {
+      return argsCase_ == 15;
+    }
+    /**
+     * <code>int32 Terminate = 15;</code>
      * @return The terminate.
      */
     @java.lang.Override
@@ -12601,6 +12848,14 @@ public final class Fmi2Proto {
     }
 
     public static final int RESET_FIELD_NUMBER = 16;
+    /**
+     * <code>int32 Reset = 16;</code>
+     * @return Whether the reset field is set.
+     */
+    @java.lang.Override
+    public boolean hasReset() {
+      return argsCase_ == 16;
+    }
     /**
      * <code>int32 Reset = 16;</code>
      * @return The reset.
@@ -12616,6 +12871,14 @@ public final class Fmi2Proto {
     public static final int SERIALIZE_FIELD_NUMBER = 17;
     /**
      * <code>int32 Serialize = 17;</code>
+     * @return Whether the serialize field is set.
+     */
+    @java.lang.Override
+    public boolean hasSerialize() {
+      return argsCase_ == 17;
+    }
+    /**
+     * <code>int32 Serialize = 17;</code>
      * @return The serialize.
      */
     @java.lang.Override
@@ -12627,6 +12890,14 @@ public final class Fmi2Proto {
     }
 
     public static final int DESERIALIZE_FIELD_NUMBER = 18;
+    /**
+     * <code>int32 Deserialize = 18;</code>
+     * @return Whether the deserialize field is set.
+     */
+    @java.lang.Override
+    public boolean hasDeserialize() {
+      return argsCase_ == 18;
+    }
     /**
      * <code>int32 Deserialize = 18;</code>
      * @return The deserialize.
@@ -12646,6 +12917,18 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 GetDirectionalDerivatives = 19;</code>
+     * @return Whether the getDirectionalDerivatives field is set.
+     */
+    @java.lang.Override
+    public boolean hasGetDirectionalDerivatives() {
+      return argsCase_ == 19;
+    }
+    /**
+     * <pre>
+     * Co-sim
+     * </pre>
+     *
+     * <code>int32 GetDirectionalDerivatives = 19;</code>
      * @return The getDirectionalDerivatives.
      */
     @java.lang.Override
@@ -12657,6 +12940,14 @@ public final class Fmi2Proto {
     }
 
     public static final int SETINPUTDERIVATIVES_FIELD_NUMBER = 20;
+    /**
+     * <code>int32 SetInputDerivatives = 20;</code>
+     * @return Whether the setInputDerivatives field is set.
+     */
+    @java.lang.Override
+    public boolean hasSetInputDerivatives() {
+      return argsCase_ == 20;
+    }
     /**
      * <code>int32 SetInputDerivatives = 20;</code>
      * @return The setInputDerivatives.
@@ -12672,6 +12963,14 @@ public final class Fmi2Proto {
     public static final int GETOUTPUTDERIVATIVES_FIELD_NUMBER = 21;
     /**
      * <code>int32 GetOutputDerivatives = 21;</code>
+     * @return Whether the getOutputDerivatives field is set.
+     */
+    @java.lang.Override
+    public boolean hasGetOutputDerivatives() {
+      return argsCase_ == 21;
+    }
+    /**
+     * <code>int32 GetOutputDerivatives = 21;</code>
      * @return The getOutputDerivatives.
      */
     @java.lang.Override
@@ -12685,6 +12984,14 @@ public final class Fmi2Proto {
     public static final int CANCELSTEP_FIELD_NUMBER = 22;
     /**
      * <code>int32 CancelStep = 22;</code>
+     * @return Whether the cancelStep field is set.
+     */
+    @java.lang.Override
+    public boolean hasCancelStep() {
+      return argsCase_ == 22;
+    }
+    /**
+     * <code>int32 CancelStep = 22;</code>
      * @return The cancelStep.
      */
     @java.lang.Override
@@ -12696,6 +13003,14 @@ public final class Fmi2Proto {
     }
 
     public static final int GETXXXSTATUS_FIELD_NUMBER = 23;
+    /**
+     * <code>int32 GetXXXStatus = 23;</code>
+     * @return Whether the getXXXStatus field is set.
+     */
+    @java.lang.Override
+    public boolean hasGetXXXStatus() {
+      return argsCase_ == 23;
+    }
     /**
      * <code>int32 GetXXXStatus = 23;</code>
      * @return The getXXXStatus.
@@ -13583,6 +13898,17 @@ public final class Fmi2Proto {
        * </pre>
        *
        * <code>int32 DoStep = 1;</code>
+       * @return Whether the doStep field is set.
+       */
+      public boolean hasDoStep() {
+        return argsCase_ == 1;
+      }
+      /**
+       * <pre>
+       * Field numbers between 1-15 only use one byte, therefore the functions that are called the most will be between 1-15
+       * </pre>
+       *
+       * <code>int32 DoStep = 1;</code>
        * @return The doStep.
        */
       public int getDoStep() {
@@ -13625,6 +13951,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetReal = 2;</code>
+       * @return Whether the setReal field is set.
+       */
+      public boolean hasSetReal() {
+        return argsCase_ == 2;
+      }
+      /**
+       * <code>int32 SetReal = 2;</code>
        * @return The setReal.
        */
       public int getSetReal() {
@@ -13657,6 +13990,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 SetInteger = 3;</code>
+       * @return Whether the setInteger field is set.
+       */
+      public boolean hasSetInteger() {
+        return argsCase_ == 3;
+      }
       /**
        * <code>int32 SetInteger = 3;</code>
        * @return The setInteger.
@@ -13693,6 +14033,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetBoolean = 4;</code>
+       * @return Whether the setBoolean field is set.
+       */
+      public boolean hasSetBoolean() {
+        return argsCase_ == 4;
+      }
+      /**
+       * <code>int32 SetBoolean = 4;</code>
        * @return The setBoolean.
        */
       public int getSetBoolean() {
@@ -13725,6 +14072,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 SetString = 5;</code>
+       * @return Whether the setString field is set.
+       */
+      public boolean hasSetString() {
+        return argsCase_ == 5;
+      }
       /**
        * <code>int32 SetString = 5;</code>
        * @return The setString.
@@ -13761,6 +14115,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 GetReal = 6;</code>
+       * @return Whether the getReal field is set.
+       */
+      public boolean hasGetReal() {
+        return argsCase_ == 6;
+      }
+      /**
+       * <code>int32 GetReal = 6;</code>
        * @return The getReal.
        */
       public int getGetReal() {
@@ -13793,6 +14154,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 GetInteger = 7;</code>
+       * @return Whether the getInteger field is set.
+       */
+      public boolean hasGetInteger() {
+        return argsCase_ == 7;
+      }
       /**
        * <code>int32 GetInteger = 7;</code>
        * @return The getInteger.
@@ -13829,6 +14197,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 GetBoolean = 8;</code>
+       * @return Whether the getBoolean field is set.
+       */
+      public boolean hasGetBoolean() {
+        return argsCase_ == 8;
+      }
+      /**
+       * <code>int32 GetBoolean = 8;</code>
        * @return The getBoolean.
        */
       public int getGetBoolean() {
@@ -13861,6 +14236,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 GetString = 9;</code>
+       * @return Whether the getString field is set.
+       */
+      public boolean hasGetString() {
+        return argsCase_ == 9;
+      }
       /**
        * <code>int32 GetString = 9;</code>
        * @return The getString.
@@ -13897,6 +14279,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetDebugLogging = 10;</code>
+       * @return Whether the setDebugLogging field is set.
+       */
+      public boolean hasSetDebugLogging() {
+        return argsCase_ == 10;
+      }
+      /**
+       * <code>int32 SetDebugLogging = 10;</code>
        * @return The setDebugLogging.
        */
       public int getSetDebugLogging() {
@@ -13929,6 +14318,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 SetupExperiment = 11;</code>
+       * @return Whether the setupExperiment field is set.
+       */
+      public boolean hasSetupExperiment() {
+        return argsCase_ == 11;
+      }
       /**
        * <code>int32 SetupExperiment = 11;</code>
        * @return The setupExperiment.
@@ -13965,6 +14361,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 FreeInstance = 12;</code>
+       * @return Whether the freeInstance field is set.
+       */
+      public boolean hasFreeInstance() {
+        return argsCase_ == 12;
+      }
+      /**
+       * <code>int32 FreeInstance = 12;</code>
        * @return The freeInstance.
        */
       public int getFreeInstance() {
@@ -13997,6 +14400,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 EnterInitializationMode = 13;</code>
+       * @return Whether the enterInitializationMode field is set.
+       */
+      public boolean hasEnterInitializationMode() {
+        return argsCase_ == 13;
+      }
       /**
        * <code>int32 EnterInitializationMode = 13;</code>
        * @return The enterInitializationMode.
@@ -14033,6 +14443,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 ExitInitializationMode = 14;</code>
+       * @return Whether the exitInitializationMode field is set.
+       */
+      public boolean hasExitInitializationMode() {
+        return argsCase_ == 14;
+      }
+      /**
+       * <code>int32 ExitInitializationMode = 14;</code>
        * @return The exitInitializationMode.
        */
       public int getExitInitializationMode() {
@@ -14065,6 +14482,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 Terminate = 15;</code>
+       * @return Whether the terminate field is set.
+       */
+      public boolean hasTerminate() {
+        return argsCase_ == 15;
+      }
       /**
        * <code>int32 Terminate = 15;</code>
        * @return The terminate.
@@ -14101,6 +14525,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 Reset = 16;</code>
+       * @return Whether the reset field is set.
+       */
+      public boolean hasReset() {
+        return argsCase_ == 16;
+      }
+      /**
+       * <code>int32 Reset = 16;</code>
        * @return The reset.
        */
       public int getReset() {
@@ -14133,6 +14564,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 Serialize = 17;</code>
+       * @return Whether the serialize field is set.
+       */
+      public boolean hasSerialize() {
+        return argsCase_ == 17;
+      }
       /**
        * <code>int32 Serialize = 17;</code>
        * @return The serialize.
@@ -14169,6 +14607,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 Deserialize = 18;</code>
+       * @return Whether the deserialize field is set.
+       */
+      public boolean hasDeserialize() {
+        return argsCase_ == 18;
+      }
+      /**
+       * <code>int32 Deserialize = 18;</code>
        * @return The deserialize.
        */
       public int getDeserialize() {
@@ -14201,6 +14646,17 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <pre>
+       * Co-sim
+       * </pre>
+       *
+       * <code>int32 GetDirectionalDerivatives = 19;</code>
+       * @return Whether the getDirectionalDerivatives field is set.
+       */
+      public boolean hasGetDirectionalDerivatives() {
+        return argsCase_ == 19;
+      }
       /**
        * <pre>
        * Co-sim
@@ -14249,6 +14705,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetInputDerivatives = 20;</code>
+       * @return Whether the setInputDerivatives field is set.
+       */
+      public boolean hasSetInputDerivatives() {
+        return argsCase_ == 20;
+      }
+      /**
+       * <code>int32 SetInputDerivatives = 20;</code>
        * @return The setInputDerivatives.
        */
       public int getSetInputDerivatives() {
@@ -14281,6 +14744,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 GetOutputDerivatives = 21;</code>
+       * @return Whether the getOutputDerivatives field is set.
+       */
+      public boolean hasGetOutputDerivatives() {
+        return argsCase_ == 21;
+      }
       /**
        * <code>int32 GetOutputDerivatives = 21;</code>
        * @return The getOutputDerivatives.
@@ -14317,6 +14787,13 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 CancelStep = 22;</code>
+       * @return Whether the cancelStep field is set.
+       */
+      public boolean hasCancelStep() {
+        return argsCase_ == 22;
+      }
+      /**
+       * <code>int32 CancelStep = 22;</code>
        * @return The cancelStep.
        */
       public int getCancelStep() {
@@ -14349,6 +14826,13 @@ public final class Fmi2Proto {
         return this;
       }
 
+      /**
+       * <code>int32 GetXXXStatus = 23;</code>
+       * @return Whether the getXXXStatus field is set.
+       */
+      public boolean hasGetXXXStatus() {
+        return argsCase_ == 23;
+      }
       /**
        * <code>int32 GetXXXStatus = 23;</code>
        * @return The getXXXStatus.
