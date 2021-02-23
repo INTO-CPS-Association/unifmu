@@ -93,7 +93,7 @@ class CommandServicer(SendCommandServicer):
 
     #### Enter initialization mode #### 
     def Fmi2EnterInitializationMode(self, request, context):
-        logger.info(f"InitInitializationMode called on slave")
+        logger.info(f"EnterInitializationMode called on slave")
         status = self.fmu.enter_initialization_mode()
         return StatusReturn(status=status)
 

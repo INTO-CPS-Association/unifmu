@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
         # with TemporaryDirectory() as tmpdir:
 
-        for backend in ["python_schemaless_rpc", "python_grpc"]:  # "python_grpc" "python_schemaless_rpc" "csharp"
+        for backend in ["python_schemaless_rpc", "python_grpc", "csharp"]:
             tmpdir = Path(mkdtemp())
             fmu_path = tmpdir / "fmu"
             generate_fmu_from_backend(backend, fmu_path)

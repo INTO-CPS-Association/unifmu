@@ -202,20 +202,16 @@ impl Fmi2CommandRPC for ProtobufGRPC {
         let sp_time: f64;
         let tol: f64;
         if stop_time != None {
-            println!("Stoptim is defined");
             has_stop_time = true;
             sp_time = stop_time.unwrap();
         } else {
-            println!("Stoptim is NOT defined");
             has_stop_time = false;
             sp_time = 0.0;
         }
         if tolerance != None {
-            println!("Tolerance is defined");
             has_tolerance = true;
             tol = tolerance.unwrap();
         } else {
-            println!("Tolerance is not defined");
             has_tolerance = false;
             tol = 0.0;
         }
