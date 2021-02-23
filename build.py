@@ -143,13 +143,7 @@ if __name__ == "__main__":
 
         def generate_java(outdir):
             res = subprocess.run(
-                [
-                    "protoc",
-                    "-I",
-                    schema_include_dir,
-                    f"--java_out={outdir}",
-                    schema,
-                ]
+                ["protoc", "-I", schema_include_dir, f"--java_out={outdir}", schema,]
             ).check_returncode()
 
         def generate_csharp(outdir):
@@ -204,7 +198,7 @@ if __name__ == "__main__":
 
         # with TemporaryDirectory() as tmpdir:
 
-        for backend in ["python_schemaless_rpc", "python_grpc", "csharp"]:
+        for backend in ["python_schemaless_rpc", "python_grpc"]:
             tmpdir = Path(mkdtemp())
             fmu_path = tmpdir / "fmu"
             generate_fmu_from_backend(backend, fmu_path)

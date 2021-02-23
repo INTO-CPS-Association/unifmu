@@ -4,25 +4,23 @@ edition = "2018"
 name = "unifmu"
 version = "0.1.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[profile.dev]
+panic = "abort"
+
 [profile.release]
 panic = "abort"
 
 [lib]
 crate-type = ["rlib", "cdylib"]
-panic = "abort"
 
 [features]
 default = ["vendored-zmq"]
 vendored-zmq = ['zmq/vendored']
 
 [dependencies]
-dlopen = "*"
-dlopen_derive = "*"
 lazy_static = "*"
 libc = "*"
 num_enum = "*"
-once_cell = "*"
 prost = "0.7"
 safer-ffi = {version = "*", features = ["proc_macros"]}
 serde = {version = "*", features = ["derive"]}
