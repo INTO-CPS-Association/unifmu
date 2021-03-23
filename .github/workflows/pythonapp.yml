@@ -29,6 +29,15 @@ jobs:
         run: |
           python build.py --test-integration
 
+      # ensure that win64 wrapper matches source code by commiting build result
+      - name: commit win64 wrapper to repo
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add tool/unifmu/resources/common/unifmu_binaries/win64/unifmu.so
+          git commit -am "Update wrapper for win64 platforms"
+          git push
+
   build-wrapper-linux:
     runs-on: ubuntu-latest
     strategy:
@@ -80,3 +89,12 @@ jobs:
       - name: run integration tests
         run: |
           python3 build.py --test-integration
+
+      # ensure that darwin64 wrapper matches source code by commiting build result
+      - name: commit darwin64 wrapper to repo
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add tool/unifmu/resources/common/unifmu_binaries/darwin64/unifmu.dylib
+          git commit -am "Update wrapper for darwin64 platforms"
+          git push
