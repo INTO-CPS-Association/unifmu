@@ -39,8 +39,8 @@ jobs:
       - name: Install package
         run: |
           pip3 install setuptools
-          pip3 install protobuf
           pip3 install .[protobuf-schema-generation,python-backend]
+          pip3 install --upgrade protobuf
 
       - name: Update all resources then run integration tests
         run: |
