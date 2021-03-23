@@ -211,7 +211,7 @@ if __name__ == "__main__":
                 f"running integration tests, with resource-uri: {resources_uri} and library: {wrapper_lib}"
             )
 
-            with Chdir("Wrapper"):
+            with Chdir("wrapper"):
 
                 res = subprocess.run(
                     args=["cargo", "test", "--", "--nocapture"]  #  "--show-output",
