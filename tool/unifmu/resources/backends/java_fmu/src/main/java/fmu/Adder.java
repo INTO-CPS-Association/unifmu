@@ -1,7 +1,5 @@
 package fmu;
 
-import java.util.List;
-
 public class Adder extends FMI2FMU {
 
     public double real_a;

@@ -32,11 +32,24 @@ _extras_require = {
         "sphinxcontrib-bibtex",
         "sphinxcontrib-programoutput",
     ],
-    "tests": [],
+    # purely used by wxwidget based gui in python, i.e. CLI use does not require these
     "gui": ["wxpython", "PyPubSub"],
+    # dependencies necessary only for generating protobuf schemas,
+    # i.e. not necessary at runtime when using fmus FMUs:
+    # - protoc-wheel-0: used to obtain `protoc` program used to generate java code
+    # - grpcio-tools: used to generate python code
+    "protobuf-schema-generation": ["protoc-wheel-0", "grpcio-tools"],
+    # dependencies used by at runtime by the Python backend.
+    # there are two variants of the python backends, using the dependencies:
+    # - grpc-based: used `protobuf` and `grpcio`
+    # - schemaless: uses `pyzmq`
+    "python-backend": ["protobuf", "grpcio", "pyzmq"],
 }
 _extras_require["dev"] = (
-    _extras_require["docs"] + _extras_require["tests"] + _extras_require["gui"]
+    _extras_require["docs"]
+    + _extras_require["gui"]
+    + _extras_require["python-backend"]
+    + _extras_require["protobuf-schema-generation"]
 )
 
 setup(
@@ -54,11 +67,11 @@ setup(
         "Documentation": "https://into-cps-application.readthedocs.io/en/latest/submodules/unifmu/docs/index.html",
         "Source Code": "https://github.com/INTO-CPS-Association/unifmu",
     },
-    install_requires=["zmq", "lxml", "toml"],
+    install_requires=["lxml", "toml"],
     extras_require=_extras_require,
     # resources needed by the CLI to generate and export
     package_data={"unifmu": get_resource_files()},
     include_package_data=True,
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     entry_points={"console_scripts": ["unifmu=unifmu.cli:main"]},
 )

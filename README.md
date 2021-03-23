@@ -212,7 +212,6 @@ Building the project requires the following programs:
 
 - python3
 - cargo
-- cmake
 
 A utility script, `build.py`, is located in the root of the repository.
 
@@ -225,7 +224,7 @@ python build.py --update-wrapper
 To run the C integration tests run:
 
 ```bash
-python build.py --test-c
+python build.py --test-integration
 ```
 
 ## Backends

@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: Build and update wrappers
 
 on:
@@ -15,19 +12,22 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
-
     steps:
       - uses: actions/checkout@v2
-      - name: Install package
+      - name: Install python packages
         run: |
           pip install setuptools
-          pip install .[tests]
+          pip install .[protobuf-schema-generation,python-backend]
+          pip install --upgrade protobuf
       - name: Build wrapper
         run: |
           python build.py --update-wrapper
-      - name: Run integration tests
+      - name: Update protobuf schemas
         run: |
-          python build.py --test-c
+          python build.py --update-schemas
+      - name: run integration tests
+        run: |
+          python build.py --test-integration
 
   build-wrapper-linux:
     runs-on: ubuntu-latest
@@ -36,31 +36,39 @@ jobs:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
-      - name: Install package
+      - name: Install python packages
         run: |
           pip3 install setuptools
-          pip3 install .[tests]
+          pip3 install .[protobuf-schema-generation,python-backend]
+          pip3 install --upgrade protobuf
       - name: Build wrapper
         run: |
           python3 build.py --update-wrapper
-      - name: Run integration tests
+      - name: Update protobuf schemas
         run: |
-          python3 build.py --test-c
+          python3 build.py --update-schemas
+      - name: run integration tests
+        run: |
+          python3 build.py --test-integration
 
   build-wrapper-macos:
-    runs-on: 	macos-latest
+    runs-on: macos-latest
     strategy:
       matrix:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
-      - name: Install package
+      - name: Install python packages
         run: |
           pip3 install setuptools
-          pip3 install .[tests]
+          pip3 install .[protobuf-schema-generation,python-backend]
+          pip3 install --upgrade protobuf
       - name: Build wrapper
         run: |
           python3 build.py --update-wrapper
-      - name: Run integration tests
+      - name: Update protobuf schemas
         run: |
-          python3 build.py --test-c
+          python3 build.py --update-schemas
+      - name: run integration tests
+        run: |
+          python3 build.py --test-integration

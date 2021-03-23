@@ -1,6 +1,7 @@
 # auto-exported examples
 examples/
 tmp/
+thirdparty/
 
 /.vscode
 **.pyc
