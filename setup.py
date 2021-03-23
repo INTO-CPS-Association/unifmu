@@ -72,6 +72,6 @@ setup(
     # resources needed by the CLI to generate and export
     package_data={"unifmu": get_resource_files()},
     include_package_data=True,
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     entry_points={"console_scripts": ["unifmu=unifmu.cli:main"]},
 )
