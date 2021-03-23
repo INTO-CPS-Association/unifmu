@@ -50,6 +50,14 @@ jobs:
       - name: run integration tests
         run: |
           python3 build.py --test-integration
+      # ensure that linux64 wrapper matches source code by commiting build result
+      - name: commit linux64 wrapper to repo
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add tool/unifmu/resources/common/unifmu_binaries/linux64/unifmu.so
+          git commit -am "Update wrapper for linux64 platforms"
+          git push
 
   build-wrapper-macos:
     runs-on: macos-latest
