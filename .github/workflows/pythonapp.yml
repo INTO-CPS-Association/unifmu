@@ -21,7 +21,7 @@ jobs:
   #     - name: Install package
   #       run: |
   #         pip install setuptools
-  #         pip install .[tests]
+  #         pip install .[dev]
   #     - name: Build wrapper
   #       run: |
   #         python build.py --update-wrapper
@@ -39,13 +39,11 @@ jobs:
       - name: Install package
         run: |
           pip3 install setuptools
-          pip3 install .[tests]
-      - name: Build wrapper
+          pip3 install .[dev]
+
+      - name: Run wrapper and integration tests
         run: |
-          python3 build.py --update-wrapper
-      - name: Run integration tests
-        run: |
-          python3 build.py --test-integration
+          python3 build.py --update-wrapper --test-integration
   # build-wrapper-macos:
   #   runs-on: macos-latest
   #   strategy:
@@ -56,7 +54,7 @@ jobs:
   #     - name: Install package
   #       run: |
   #         pip3 install setuptools
-  #         pip3 install .[tests]
+  #         pip3 install .[dev]
   #     - name: Build wrapper
   #       run: |
   #         python3 build.py --update-wrapper
