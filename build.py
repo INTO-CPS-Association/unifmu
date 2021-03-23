@@ -8,7 +8,6 @@ import os
 import sys
 from sys import platform
 import platform
-from tempfile import TemporaryDirectory
 from os import makedirs
 
 
@@ -199,7 +198,12 @@ if __name__ == "__main__":
 
         # with TemporaryDirectory() as tmpdir:
 
-        for backend in ["python_schemaless_rpc", "python_grpc"]:
+        test_cases = ["python_schemaless_rpc", "python_grpc", "csharp"]
+        logger.info(
+            f"Starting integration test of the following backends: {test_cases}"
+        )
+
+        for backend in test_cases:
             tmpdir = Path(mkdtemp())
             fmu_path = tmpdir / "fmu"
             generate_fmu_from_backend(backend, fmu_path)
