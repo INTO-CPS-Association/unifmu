@@ -39,11 +39,11 @@ jobs:
       - name: Install package
         run: |
           pip3 install setuptools
-          pip3 install .[dev]
+          pip3 install .[protobuf-schema-generation,python-backend]
 
-      - name: Run wrapper and integration tests
+      - name: Update all resources then run integration tests
         run: |
-          python3 build.py --update-wrapper --test-integration
+          python3 build.py --update-wrapper --update-schemas --test-integration
   # build-wrapper-macos:
   #   runs-on: macos-latest
   #   strategy:

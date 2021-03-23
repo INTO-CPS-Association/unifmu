@@ -143,7 +143,7 @@ if __name__ == "__main__":
             _protoc_compiler.run_main(protoc_args)
 
         def generate_java(outdir):
-            res = subprocess.run(
+            subprocess.run(
                 ["protoc", "-I", schema_include_dir, f"--java_out={outdir}", schema,]
             ).check_returncode()
 

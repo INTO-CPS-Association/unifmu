@@ -32,9 +32,17 @@ _extras_require = {
         "sphinxcontrib-bibtex",
         "sphinxcontrib-programoutput",
     ],
+    # purely used by wxwidget based gui in python, i.e. CLI use does not require these
     "gui": ["wxpython", "PyPubSub"],
-    # dependencies necessary only for generating protobuf schemas
+    # dependencies necessary only for generating protobuf schemas,
+    # i.e. not necessary at runtime when using fmus FMUs:
+    # - protoc-wheel-0: used to obtain `protoc` program used to generate java code
+    # - grpcio-tools: used to generate python code
     "protobuf-schema-generation": ["protoc-wheel-0", "grpcio-tools"],
+    # dependencies used by at runtime by the Python backend.
+    # there are two variants of the python backends, using the dependencies:
+    # - grpc-based: used `protobuf` and `grpcio`
+    # - schemaless: uses `pyzmq`
     "python-backend": ["protobuf", "grpcio", "pyzmq"],
 }
 _extras_require["dev"] = (
