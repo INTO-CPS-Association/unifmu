@@ -32,12 +32,16 @@ _extras_require = {
         "sphinxcontrib-bibtex",
         "sphinxcontrib-programoutput",
     ],
-    "tests": [],
     "gui": ["wxpython", "PyPubSub"],
-    "protobuf": ["grpcio-tools", "protoc-wheel-0"],
+    # dependencies necessary only for generating protobuf schemas
+    "protobuf-schema-generation": ["protoc-wheel-0", "grpcio-tools"],
+    "python-backend": ["protobuf", "grpcio", "pyzmq"],
 }
 _extras_require["dev"] = (
-    _extras_require["docs"] + _extras_require["tests"] + _extras_require["gui"]
+    _extras_require["docs"]
+    + _extras_require["gui"]
+    + _extras_require["python-backend"]
+    + _extras_require["protobuf-schema-generation"]
 )
 
 setup(
@@ -55,7 +59,7 @@ setup(
         "Documentation": "https://into-cps-application.readthedocs.io/en/latest/submodules/unifmu/docs/index.html",
         "Source Code": "https://github.com/INTO-CPS-Association/unifmu",
     },
-    install_requires=["pyzmq", "grpcio", "protobuf", "lxml", "toml"],  #
+    install_requires=["lxml", "toml"],
     extras_require=_extras_require,
     # resources needed by the CLI to generate and export
     package_data={"unifmu": get_resource_files()},
