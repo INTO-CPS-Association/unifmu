@@ -10,24 +10,24 @@ on:
     branches: [master]
 
 jobs:
-  build-wrapper-windows:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
+  # build-wrapper-windows:
+  #   runs-on: windows-latest
+  #   strategy:
+  #     matrix:
+  #       python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
 
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install package
-        run: |
-          pip install setuptools
-          pip install .[tests]
-      - name: Build wrapper
-        run: |
-          python build.py --update-wrapper
-      - name: Run integration tests
-        run: |
-          python build.py --test-integration
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Install package
+  #       run: |
+  #         pip install setuptools
+  #         pip install .[tests]
+  #     - name: Build wrapper
+  #       run: |
+  #         python build.py --update-wrapper
+  #     - name: Run integration tests
+  #       run: |
+  #         python build.py --test-integration
 
   build-wrapper-linux:
     runs-on: ubuntu-latest
@@ -46,21 +46,20 @@ jobs:
       - name: Run integration tests
         run: |
           python3 build.py --test-integration
-
-  build-wrapper-macos:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install package
-        run: |
-          pip3 install setuptools
-          pip3 install .[tests]
-      - name: Build wrapper
-        run: |
-          python3 build.py --update-wrapper
-      - name: Run integration tests
-        run: |
-          python3 build.py --test-integration
+  # build-wrapper-macos:
+  #   runs-on: macos-latest
+  #   strategy:
+  #     matrix:
+  #       python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Install package
+  #       run: |
+  #         pip3 install setuptools
+  #         pip3 install .[tests]
+  #     - name: Build wrapper
+  #       run: |
+  #         python3 build.py --update-wrapper
+  #     - name: Run integration tests
+  #       run: |
+  #         python3 build.py --test-integration
