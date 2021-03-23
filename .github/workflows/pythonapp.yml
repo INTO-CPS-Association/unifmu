@@ -34,8 +34,9 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
+          git pull
           git add tool/unifmu/resources/common/unifmu_binaries/win64/unifmu.so
-          git commit -am "Update wrapper for win64 platforms"
+          git commit --allow-empty -m "Update wrapper for win64 platforms"
           git push
 
   build-wrapper-linux:
@@ -64,8 +65,9 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
+          git pull
           git add tool/unifmu/resources/common/unifmu_binaries/linux64/unifmu.so
-          git commit -am "Update wrapper for linux64 platforms"
+          git commit --allow-empty -m "Update wrapper for linux64 platforms"
           git push
 
   build-wrapper-macos:
@@ -95,6 +97,7 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
+          git pull
           git add tool/unifmu/resources/common/unifmu_binaries/darwin64/unifmu.dylib
-          git commit -am "Update wrapper for darwin64 platforms"
+          git commit --allow-empty -m "Update wrapper for darwin64 platforms"
           git push
