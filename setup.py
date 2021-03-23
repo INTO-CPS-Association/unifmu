@@ -55,7 +55,7 @@ setup(
         "Documentation": "https://into-cps-application.readthedocs.io/en/latest/submodules/unifmu/docs/index.html",
         "Source Code": "https://github.com/INTO-CPS-Association/unifmu",
     },
-    install_requires=["pyzmq", "grpcio", "lxml", "toml"],
+    install_requires=["pyzmq", "grpcio", "protobuf", "lxml", "toml"],
     extras_require=_extras_require,
     # resources needed by the CLI to generate and export
     package_data={"unifmu": get_resource_files()},
