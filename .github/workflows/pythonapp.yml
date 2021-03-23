@@ -36,15 +36,20 @@ jobs:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
-      - name: Install package
+      - name: Install python packages
         run: |
           pip3 install setuptools
           pip3 install .[protobuf-schema-generation,python-backend]
           pip3 install --upgrade protobuf
-
-      - name: Update all resources then run integration tests
+      - name: Build wrapper
         run: |
-          python3 build.py --update-wrapper --update-schemas --test-integration
+          python build.py --update-wrapper
+      - name: Update protobuf schemas
+        run: |
+          python build.py --update-schemas
+      - name: run integration tests
+        run: |
+          python3 build.py --test-integration
   # build-wrapper-macos:
   #   runs-on: macos-latest
   #   strategy:
