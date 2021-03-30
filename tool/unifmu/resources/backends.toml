@@ -15,7 +15,6 @@ files = [
 ]
 
 [backend.python_schemaless_rpc]
-
 files = [
   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
@@ -24,6 +23,21 @@ files = [
   ["backends/python/fmi2.py", "resources/fmi2.py"],
   ["backends/python/backend_schemaless_rpc.py", "resources/backend_schemaless_rpc.py"],
   ["backends/python/launch_schemaless_rpc.toml", "resources/launch.toml"],
+  ["common/modelDescription.xml", "modelDescription.xml"],
+]
+
+[backend.python_schemaless_rpc_dockerized]
+files = [
+  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
+  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
+  ["backends/python/adder.py", "resources/src/adder.py"],
+  ["backends/python/fmi2.py", "resources/src/fmi2.py"],
+  ["backends/python/backend_schemaless_rpc.py", "resources/src/backend_schemaless_rpc.py"],
+  ["backends/python/requirements.txt", "resources/requirements.txt"],
+  ["backends/python/Dockerfile_schemaless", "resources/Dockerfile"],
+  ["backends/docker/run.sh", "resources/run.sh"],
+  ["backends/docker/launch.toml", "resources/launch.toml"],
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
 
@@ -42,7 +56,6 @@ files = [
 ]
 
 [backend.csharp]
-
 files = [
   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],

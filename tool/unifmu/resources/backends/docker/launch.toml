@@ -1,0 +1,5 @@
+[command.Zmq]
+linux = ["/bin/bash", "run.sh" ]
+macos = ["/bin/bash", "run.sh" ]
+serialization_format = "Pickle"
+windows = [""]
