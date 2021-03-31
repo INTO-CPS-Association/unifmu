@@ -37,6 +37,7 @@ files = [
   ["backends/python/requirements.txt", "resources/requirements.txt"],
   ["backends/python/Dockerfile_schemaless", "resources/Dockerfile"],
   ["backends/docker/run.sh", "resources/run.sh"],
+  ["backends/docker/run.ps1", "resources/run.ps1"],
   ["backends/docker/launch.toml", "resources/launch.toml"],
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
