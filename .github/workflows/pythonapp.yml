@@ -14,6 +14,8 @@ jobs:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - name: Install python packages
         run: |
           pip install setuptools
@@ -46,6 +48,8 @@ jobs:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - name: Install python packages
         run: |
           pip3 install setuptools
@@ -77,6 +81,8 @@ jobs:
         python-version: [3.7] #[3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - name: Install python packages
         run: |
           pip3 install setuptools
