@@ -557,8 +557,9 @@ pub fn fmi2SetFMUstate(slave: &mut Slave, state: &SlaveState) -> Fmi2Status {
 }
 
 //#[ffi_export]
+#[no_mangle]
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
-pub fn fmi2GetFMUstate(slave: &mut Slave, state: &mut Option<SlaveState>) -> Fmi2Status {
+pub extern "C" fn fmi2GetFMUstate(slave: &mut Slave, state: &mut Option<SlaveState>) -> Fmi2Status {
     let (status, bytes) = slave.rpc.serialize();
 
     match status {
@@ -613,7 +614,9 @@ pub fn fmi2SerializeFMUstate(
 }
 
 //#[ffi_export]
-pub fn fmi2DeSerializeFMUstate(
+// #[repr(C)]
+#[no_mangle]
+pub extern "C" fn fmi2DeSerializeFMUstate(
     slave: &mut Slave,
     serialized_state: *const u8,
     size: size_t,

@@ -1,3 +1,4 @@
+use port_scanner::request_open_port;
 use std::{convert::TryInto, future::Future, task::Poll};
 use subprocess::{Popen, PopenConfig};
 use tokio::runtime::{Builder, Runtime};
@@ -111,9 +112,12 @@ impl ProtobufGRPC {
         let (tx, rx) = sync_channel::<HandshakeInfo>(1);
         let svc = HandshakerServer::new(HandshakeService { handshake_tx: tx });
 
+        let open_port = request_open_port().unwrap_or(0);
+        let endpoint = format!("127.0.0.1:{:?}", &open_port);
+
         let server_task = Server::builder()
             .add_service(svc)
-            .serve("127.0.0.1:50051".parse().unwrap());
+            .serve(endpoint.parse().unwrap());
         rt.spawn(server_task);
 
         // ################################ HANDSHAKE SLAVE TO WRAPPER #######################################
@@ -124,7 +128,6 @@ impl ProtobufGRPC {
         };
 
         command.push("--handshake-endpoint".to_string());
-        let endpoint = format!("127.0.0.1:{:?}", 50051);
         command.push(endpoint.to_string());
 
         let process = Popen::create(
