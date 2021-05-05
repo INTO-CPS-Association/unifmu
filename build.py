@@ -244,7 +244,6 @@ if __name__ == "__main__":
         if res.returncode == 1:
 
             logger.info(f"wrapper has changed, updating wrapper for {s}")
-            exit(0)
 
             subprocess.run(
                 "git config user.name github-actions", shell=True, check=True
@@ -254,10 +253,10 @@ if __name__ == "__main__":
                 shell=True,
                 check=True,
             )
-            subprocess.run("git pull", shell=True, check=True)
+            subprocess.run("git pull --rebase", shell=True, check=True)
             subprocess.run(f"git add {wrapper_lib}", shell=True, check=True)
             subprocess.run(
-                f'git commit -m "updated wrapper for {s}" platforms',
+                f'git commit -m "updated wrapper for {s} platforms"',
                 shell=True,
                 check=True,
             )
@@ -281,15 +280,15 @@ if __name__ == "__main__":
             if success:
                 logger.info("wrapper pushed succesfully")
             else:
-                logger.info(f"wrapper was not pushed after '{n_tries}'")
+                logger.error(f"wrapper was not pushed after '{n_tries}'")
+                exit(-1)
 
         elif res.returncode == 0:
             logger.info(f"wrapper unchanged for {s}, no need to update")
-            exit(0)
 
         else:
-            exit(0)
-            raise RuntimeError(
+            logger.error(
                 "Git diff returned error code. There is an error in the build automation."
             )
+            exit(-1)
 
