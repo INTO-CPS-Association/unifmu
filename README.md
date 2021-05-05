@@ -2,7 +2,7 @@
 
 # Universal Functional Mock-Up Unit (UniFMU)
 
-To succesfully integrate FMI based co-simulation into a development process a model should be easy to create and modify.
+To successfully integrate FMI based co-simulation into a development process a model should be easy to create and modify.
 In some cases a modelling tool may be available that provide the exact modelling capabilities needed.
 However, there may be cases where existing tools are not suitable, or their cost prohibitive, in case of commercial tools.
 
@@ -13,7 +13,7 @@ A consequence of FMI being a C-based standard is that a FMU must, generally, be 
 UniFMU makes it possible to implement FMUs in any language, by writing a small a adapter for the particular language.
 UniFMU also provides a GUI and CLI tool for generating new FMUs from a selection of languages, see backends.
 
-A challenge of creating an FMU is defining it's interface and which features of the FMI specification it supports.
+A challenge of creating an FMU is defining its interface and which features of the FMI specification it supports.
 Traditionally, this is done by manually editing a xml-file referred to as the model description; a process that is laden with pitfalls.
 
 The GUI allows the FMU author to modify the underlying xml document is a more user-friendly manner and ensures that the xml file is consistent.
@@ -66,7 +66,7 @@ python_fmu
     └── launch.toml
 ```
 
-Alternativly, the same functionality can be accessed by launching the GUI
+Alternatively, the same functionality can be accessed by launching the GUI
 
 ```bash
 unifmu gui
@@ -96,7 +96,7 @@ Depending on whether the FMU is compressed or a directory use the `File->Open FM
 Recall, a fmu is an zip archive containing a static description of the models interface, `modelDescription.xml`, a set of platform shared object libraries defining the behavior of the model, and finally a set of option resource files that might be used during execution of the model.
 
 To make this more concrete we consider the example of how python may be integrated using UniFMU, as shown in the _python_fmu_ example.
-Below is the file structure of a the concrete FMU:
+Below is the file structure of a concrete FMU:
 
 ```
 python_fmu
@@ -174,7 +174,7 @@ Following this the script awaits and executes commands sent to the slave:
             sys.exit(0)
 ```
 
-## How do i install it?
+## How do I install it?
 
 The easiest way to install the tool is using pip.
 Clone the repository and invoke the following command the root:
@@ -208,6 +208,9 @@ pip3 install -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-2
 
 ## Building and Running Tests
 
+Building and testing this project is described in [pythonapp.yml](.github/workflows/pythonapp.yml).
+The following represents the easiest way to get started.
+
 Building the project requires the following programs:
 
 - python3
@@ -215,32 +218,30 @@ Building the project requires the following programs:
 
 A utility script, `build.py`, is located in the root of the repository.
 
-To build the and update the wrapper in the examples use:
-
+To build and update the wrapper in the examples, use:
 ```bash
-python build.py --update-wrapper
-```
-
-To run the C integration tests run:
-
-```bash
+pip install setuptools
+pip install .[protobuf-schema-generation,python-backend]
+pip install --upgrade protobuf
 python build.py --test-integration
 ```
 
+
 ## Backends
 
-An backend is a piece of code that is responsible for communicating with the wrapper to execute commands on the proxy-fmu.
-It does so by implementing a application-layer protocol called _unifmu-protocol_ which is built on top of [ZeroMQ](https://zeromq.org/).
+A backend is a piece of code that is responsible for communicating with the wrapper to execute commands on the proxy-fmu.
+It does so by implementing an application-layer protocol called _unifmu-protocol_ which is built on top of [ZeroMQ](https://zeromq.org/).
 
 Note that several backends for popular languages are provided by the tool out of the box.
-These can be be exported using the GUI or located manually inside the resources folder in the `tool/unifmu/resources`.
+These can be exported using the GUI or located manually inside the resources folder in the `tool/unifmu/resources`.
 
 ### Protocol
 
 The goal of the unifmu-protocol is to allow the wrapper to execute commands on slave in a simple and language agnostic way.
-This is done by implementing a request-response protocol where the wrapper sends a command consisting of an function id and a list of arguments for the specific method. When the slave receives the message it extract the id, calls the models do_step method, and sends the result back to the wrapper.
+This is done by implementing a request-response protocol where the wrapper sends a command consisting of an function id and a list of arguments for the specific method. 
+When the slave receives the message, it extracts the id, calls the model's do_step method, and sends the result back to the wrapper.
 
-The process is described by the psudo code below, which shows the wrapper and the backend code:
+The process is described by the pseudo code below, which shows the wrapper and the backend code:
 
 **Wrapper**
 
@@ -309,16 +310,16 @@ specific flags in their model description.
 
 #### Python
 
-This backend allow an FMU to be implemented in Python 3.
-When a new FMU is generated it includes 3 Python scripts in the `resources` folder.
+This backend allows an FMU to be implemented in Python 3.
+When a new FMU is generated, it includes 3 Python scripts in the `resources` folder.
 
 The role of the respective files are:
 
 1. fmi2.py : Provides FMI specific base class that provides functionality commonly used for a FMU
 
-2. adder.py : Concerte implementation of an FMU in Python
+2. adder.py : Concrete implementation of an FMU in Python
 
-3. launch.py : Instatinates slave and implement communication with wrapper.
+3. launch.py : Instantiates slave and implement communication with wrapper.
 
 **How do i declare and access variables of the FMU?**
 
@@ -362,7 +363,7 @@ def weight(self,value):
 
 In addition to properties, python allows the programmer to overwrite the an objects setattr and getattr methods. For example, suppose that you want a number of inputs [x1,...,x10] to go into a single array inside the slave. In this case you could define a setattr method that recognices this particular set of inputs and writes them to an array in the slave object, rather than 10 individual attributes.
 
-**How do i implement FMI methods?**
+**How do I implement FMI methods?**
 
 To implement a FMI specific method, take a look at the Fmi2FMU in fmi2.py, the parameters and return types are declared there.
 
@@ -373,7 +374,7 @@ def do_step(
     return Fmi2Status.ok
 ```
 
-**How do i change the name of the slave?**
+**How do I change the name of the slave?**
 
 To change the name of the slave being instantiated you can modify the launch.py file to use the name of the class you want to instantiate:
 
@@ -382,7 +383,7 @@ def get_slave_instance():
     return Adder()
 ```
 
-**How do i test a slave?**
+**How do I test a slave?**
 
 Remember your slave is valid python code, so not why test it in python, where you have good debugging tools.
 
@@ -420,11 +421,11 @@ if __name__ == "__main__": # <--- ensures that test-code is not run if module is
 
 A more complex FMU may warrant multiple test cases, each testing a distinct piece of functionality. For these cases a proper testing framework like [pytest](https://docs.pytest.org/en/stable/) is recommended.
 
-**How can i modify the backend?**
+**How can I modify the backend?**
 
-While the three files: launch.py, fmi2.py, and adder.py, implement a object oriented method for implementing a FMU, it entirely possible to modify or even replace these files.
+While the three files: launch.py, fmi2.py, and adder.py, implement an object oriented method for implementing a FMU, it entirely possible to modify or even replace these files.
 
-For example you could implement the FMU functions inside the launch.py, rather than in a seperate file, or you could add logging calls to the definition of the Fmi2FMU class defined in the fmi2.py script.
+For example you could implement the FMU functions inside the launch.py, rather than in a separate file, or you could add logging calls to the definition of the Fmi2FMU class defined in the fmi2.py script.
 
 As with any other backend the only requirement is that the running the launch command results in a connection being established between the wrapper and some process (this is what 'python launch.py' does). Inspecting the code of launch.py and comparing it with the unifmu protocol should hopefully clarify the interaction between the wrapper and the particular backend.
 
@@ -450,7 +451,7 @@ linux = [ "/bin/sh","launch.sh"]
 macos = ["zsh","launch.sh"]
 ```
 
-The example shows how an platform specific helper script would be invoked:
+The example shows how a platform specific helper script would be invoked:
 
 ```bash
 # launch.sh
@@ -459,7 +460,7 @@ EXPORT FOO=BAR              # set environment variable
 python3.8 launch.py $1 $2   # last arguments are --handshake-endpoint and its value
 ```
 
-### Do i need Python to run my FMU?
+### Do I need Python to run my FMU?
 
 No, not in the general case. The FMUs generated by unifmu depend ONLY on the commands specified in the launch.toml file.
 In the case of the _python_fmu_ example the command launches python, which is where the confusion may arise.
@@ -467,7 +468,7 @@ In the case of the _python_fmu_ example the command launches python, which is wh
 In addition to this the commandline tool is implemented itself is implemented in Python.
 To summarize Python is required to use the tool that generates and packages the FMUs, but it is not required during their execution.
 
-### How can i make my FMU portable?
+### How can I make my FMU portable?
 
 Suppose that your FMU is written in python and that your launch.toml looks like:
 
@@ -477,7 +478,7 @@ linux = [ "python3", "launch.py" ]
 ```
 
 Using this command the wrapper try to use the system's python3 executable to launch the FMU by invoking executing the launch.py script.
-Nautrally, the success of this relies on python3 being in the systems path.
+Naturally, the success of this relies on python3 being in the systems path.
 
 To make the FMU portable you could place a complete python interpreter inside resources folder of the FMU.
 Then you can invoke the local interpreter rather than the system interpreter, by modifying the `launch.toml` file:
@@ -488,18 +489,18 @@ linux = [ "./interpreter_linux/python3", "launch.py" ]
 ```
 
 This approach is applicable to any OS and runtime dependency.
-For Python getting an complete interpreter is a bit trickier, but tools for creating bundeling interpreters and libraries exist such as [PyInstaller](https://pyinstaller.readthedocs.io/en/v4.1/index.html).
+For Python getting a complete interpreter is a bit trickier, but tools for bundling interpreters and libraries exist such as [PyInstaller](https://pyinstaller.readthedocs.io/en/v4.1/index.html).
 
 ### Does an FMU need to support every feature of FMI?
 
 No, the FMI2 specification allows you set falgs that declare the capabilities of an FMU.
 
-For example you may declare that the FMU supports serialization by setting `canGetAndSetFMUstate` and `canSerializeFMUstate` attributes in the modelDescription.xml, see specification p.25 for more info.
+For example, you may declare that the FMU supports serialization by setting `canGetAndSetFMUstate` and `canSerializeFMUstate` attributes in the modelDescription.xml, see specification p.25 for more info.
 The simulation tool should check these flags during simulation and ensure that only supported operations are executed.
 
 Naturally, the capabilities declared in the model description should also be implemented by the FMU.
 The specifics of this depends on the particular backend being used.
-For example, using the python backend implmenting the capabilities `canGetAndSetFMUstate` and `canSerializeFMUstate` requires that the 2 following methods are defined:
+For example, using the python backend implementing the capabilities `canGetAndSetFMUstate` and `canSerializeFMUstate` requires that the 2 following methods are defined:
 
 ```python
 def serialize(self):
