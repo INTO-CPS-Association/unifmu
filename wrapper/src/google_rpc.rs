@@ -187,11 +187,23 @@ impl Fmi2CommandRPC for ProtobufGRPC {
     }
 
     fn fmi2CancelStep(&mut self) -> Fmi2Status {
-        todo!()
+        let args = tonic::Request::new(fmi2_proto::CancelStep {});
+        match self.rt.block_on(self.client.fmi2_cancel_step(args)) {
+            Ok(s) => s.into_inner().status.try_into().unwrap(),
+            Err(_) => Fmi2Status::Fmi2Error,
+        }
     }
 
     fn fmi2SetDebugLogging(&mut self, categories: &[&str], logging_on: bool) -> Fmi2Status {
-        todo!()
+        let vec_categories: Vec<String> = categories.iter().map(|s| s.to_string()).collect();
+        let args = tonic::Request::new(fmi2_proto::SetDebugLogging {
+            categories: vec_categories,
+            logging_on: logging_on,
+        });
+        match self.rt.block_on(self.client.fmi2_set_debug_logging(args)) {
+            Ok(s) => s.into_inner().status.try_into().unwrap(),
+            Err(_) => Fmi2Status::Fmi2Error,
+        }
     }
 
     fn fmi2SetupExperiment(

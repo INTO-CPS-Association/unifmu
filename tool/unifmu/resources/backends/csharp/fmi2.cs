@@ -90,7 +90,7 @@ public abstract class Fmi2FMU
 
 
     /********************************************************* COMMON **********************************************************/
-    public virtual Fmi2Status SetDebugLogging(string categories, bool loggingOn)
+    public virtual Fmi2Status SetDebugLogging(IEnumerable<string> categories, bool loggingOn)
     {
         // The categories parameter may potentially be a string array
         return Fmi2Status.Ok;
