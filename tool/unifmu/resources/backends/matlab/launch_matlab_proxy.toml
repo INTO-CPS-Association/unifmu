@@ -1,0 +1,5 @@
+[command.Zmq]
+linux = ["python3", "matlab_proxy.py"]
+macos = ["python3", "matlab_proxy.py"]
+serialization_format = "Pickle"
+windows = ["python", "matlab_proxy.py"]

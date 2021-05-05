@@ -127,7 +127,7 @@ def generate_fmu_from_backend(backend: str, output_path):
             src = tmpdir_resources / "resources" / src
 
             if not src.exists():
-                raise FileNotFoundError(f"The file {src} does not any known resource")
+                raise FileNotFoundError(f"The file {src} does not math any known resource")
 
             if not src.is_file():
                 raise FileNotFoundError(
