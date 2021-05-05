@@ -32,6 +32,8 @@ if __name__ == "__main__":
     handshake_socket.connect(f"{args.handshake_endpoint}")
     command_port = command_socket.bind_to_random_port("tcp://127.0.0.1")
 
+    logger.info(f"cwd:{os.getcwd()}")
+
     handshake_info = {
         "serialization_format": "Pickle",
         "command_endpoint": command_socket.getsockopt(zmq.LAST_ENDPOINT).decode(),
@@ -46,6 +48,8 @@ if __name__ == "__main__":
     with open(Path.cwd().parent / "modelDescription.xml") as f:
         for v in ET.parse(f).find("ModelVariables"):
             reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
+
+    os.chdir("matlabcode")
 
     slave: Fmi2FMU = MatlabFMU(reference_to_attr)
 

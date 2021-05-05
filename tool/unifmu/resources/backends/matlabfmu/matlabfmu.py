@@ -3,8 +3,9 @@ import pickle
 from fmi2 import Fmi2FMU, Fmi2Status
 import matlab.engine
 
+
 class MatlabFMU(Fmi2FMU):
-    def __init__(self,reference_to_attr=None) -> None:
+    def __init__(self, reference_to_attr=None) -> None:
         super().__init__(reference_to_attr)
         self.real_a = 0.0
         self.real_b = 0.0
@@ -20,12 +21,14 @@ class MatlabFMU(Fmi2FMU):
 
         # Matlab engine
         self._eng = None
-        
-        self._update_outputs()
 
     def enter_initialization_mode(self) -> int:
         # Start matlab engine
         self._eng = matlab.engine.start_matlab()
+
+        assert self._eng is not None
+
+        self._update_outputs()
 
         return super(MatlabFMU, self).enter_initialization_mode()
 
@@ -77,15 +80,12 @@ class MatlabFMU(Fmi2FMU):
         return Fmi2Status.ok
 
     def _update_outputs(self):
-        self.real_c = self.real_a + self.real_b
+        self.real_c = self._eng.matlabfmu(self.real_a, self.real_b)
         self.integer_c = self.integer_a + self.integer_b
         self.boolean_c = self.boolean_a and self.boolean_b
         self.string_c = self.string_a + self.string_b
 
     def do_step(self, current_time, step_size, no_step_prior):
-        
         self._update_outputs()
 
         return Fmi2Status.ok
-        
-
