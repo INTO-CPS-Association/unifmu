@@ -253,7 +253,7 @@ if __name__ == "__main__":
                 shell=True,
                 check=True,
             )
-            subprocess.run("git pull --rebase", shell=True, check=True)
+            subprocess.run("git pull", shell=True, check=True)
             subprocess.run(f"git add {wrapper_lib}", shell=True, check=True)
             subprocess.run(
                 f'git commit -m "updated wrapper for {s} platforms"',
