@@ -149,7 +149,7 @@ message CancelStep{}
 message GetXXXStatus{}
 
 message SetDebugLogging{
-    string categories = 1;
+    repeated string categories = 1;
     bool logging_on = 2;
 }
 

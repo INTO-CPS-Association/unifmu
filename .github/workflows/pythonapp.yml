@@ -30,16 +30,10 @@ jobs:
       - name: run integration tests
         run: |
           python build.py --test-integration
-
-      # ensure that win64 wrapper matches source code by commiting build result
       - name: commit win64 wrapper to repo
+        if: github.ref == 'refs/heads/master'
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git pull
-          git add tool/unifmu/resources/common/unifmu_binaries/win64/unifmu.dll
-          git commit --allow-empty -m "Update wrapper for win64 platforms"
-          git push
+          python build.py --github-update-wrapper
 
   build-wrapper-linux:
     runs-on: ubuntu-latest
@@ -64,15 +58,10 @@ jobs:
       - name: run integration tests
         run: |
           python3 build.py --test-integration
-      # ensure that linux64 wrapper matches source code by commiting build result
       - name: commit linux64 wrapper to repo
+        if: github.ref == 'refs/heads/master'
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git pull
-          git add tool/unifmu/resources/common/unifmu_binaries/linux64/unifmu.so
-          git commit --allow-empty -m "Update wrapper for linux64 platforms"
-          git push
+          python3 build.py --github-update-wrapper
 
   build-wrapper-macos:
     runs-on: macos-latest
@@ -97,13 +86,7 @@ jobs:
       - name: run integration tests
         run: |
           python3 build.py --test-integration
-
-      # ensure that darwin64 wrapper matches source code by commiting build result
       - name: commit darwin64 wrapper to repo
+        if: github.ref == 'refs/heads/master'
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git pull
-          git add tool/unifmu/resources/common/unifmu_binaries/darwin64/unifmu.dylib
-          git commit --allow-empty -m "Update wrapper for darwin64 platforms"
-          git push
+          python3 build.py --github-update-wrapper

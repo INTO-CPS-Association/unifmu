@@ -11340,16 +11340,29 @@ public final class Fmi2Proto {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>string categories = 1;</code>
-     * @return The categories.
+     * <code>repeated string categories = 1;</code>
+     * @return A list containing the categories.
      */
-    java.lang.String getCategories();
+    java.util.List<java.lang.String>
+        getCategoriesList();
     /**
-     * <code>string categories = 1;</code>
-     * @return The bytes for categories.
+     * <code>repeated string categories = 1;</code>
+     * @return The count of categories.
+     */
+    int getCategoriesCount();
+    /**
+     * <code>repeated string categories = 1;</code>
+     * @param index The index of the element to return.
+     * @return The categories at the given index.
+     */
+    java.lang.String getCategories(int index);
+    /**
+     * <code>repeated string categories = 1;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the categories at the given index.
      */
     com.google.protobuf.ByteString
-        getCategoriesBytes();
+        getCategoriesBytes(int index);
 
     /**
      * <code>bool logging_on = 2;</code>
@@ -11370,7 +11383,7 @@ public final class Fmi2Proto {
       super(builder);
     }
     private SetDebugLogging() {
-      categories_ = "";
+      categories_ = com.google.protobuf.LazyStringArrayList.EMPTY;
     }
 
     @java.lang.Override
@@ -11393,6 +11406,7 @@ public final class Fmi2Proto {
       if (extensionRegistry == null) {
         throw new java.lang.NullPointerException();
       }
+      int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -11405,8 +11419,11 @@ public final class Fmi2Proto {
               break;
             case 10: {
               java.lang.String s = input.readStringRequireUtf8();
-
-              categories_ = s;
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                categories_ = new com.google.protobuf.LazyStringArrayList();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              categories_.add(s);
               break;
             }
             case 16: {
@@ -11429,6 +11446,9 @@ public final class Fmi2Proto {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
+        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+          categories_ = categories_.getUnmodifiableView();
+        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -11447,41 +11467,38 @@ public final class Fmi2Proto {
     }
 
     public static final int CATEGORIES_FIELD_NUMBER = 1;
-    private volatile java.lang.Object categories_;
+    private com.google.protobuf.LazyStringList categories_;
     /**
-     * <code>string categories = 1;</code>
-     * @return The categories.
+     * <code>repeated string categories = 1;</code>
+     * @return A list containing the categories.
      */
-    @java.lang.Override
-    public java.lang.String getCategories() {
-      java.lang.Object ref = categories_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        categories_ = s;
-        return s;
-      }
+    public com.google.protobuf.ProtocolStringList
+        getCategoriesList() {
+      return categories_;
     }
     /**
-     * <code>string categories = 1;</code>
-     * @return The bytes for categories.
+     * <code>repeated string categories = 1;</code>
+     * @return The count of categories.
      */
-    @java.lang.Override
+    public int getCategoriesCount() {
+      return categories_.size();
+    }
+    /**
+     * <code>repeated string categories = 1;</code>
+     * @param index The index of the element to return.
+     * @return The categories at the given index.
+     */
+    public java.lang.String getCategories(int index) {
+      return categories_.get(index);
+    }
+    /**
+     * <code>repeated string categories = 1;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the categories at the given index.
+     */
     public com.google.protobuf.ByteString
-        getCategoriesBytes() {
-      java.lang.Object ref = categories_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        categories_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+        getCategoriesBytes(int index) {
+      return categories_.getByteString(index);
     }
 
     public static final int LOGGING_ON_FIELD_NUMBER = 2;
@@ -11509,8 +11526,8 @@ public final class Fmi2Proto {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getCategoriesBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, categories_);
+      for (int i = 0; i < categories_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, categories_.getRaw(i));
       }
       if (loggingOn_ != false) {
         output.writeBool(2, loggingOn_);
@@ -11524,8 +11541,13 @@ public final class Fmi2Proto {
       if (size != -1) return size;
 
       size = 0;
-      if (!getCategoriesBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, categories_);
+      {
+        int dataSize = 0;
+        for (int i = 0; i < categories_.size(); i++) {
+          dataSize += computeStringSizeNoTag(categories_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getCategoriesList().size();
       }
       if (loggingOn_ != false) {
         size += com.google.protobuf.CodedOutputStream
@@ -11546,8 +11568,8 @@ public final class Fmi2Proto {
       }
       fmi2_proto.Fmi2Proto.SetDebugLogging other = (fmi2_proto.Fmi2Proto.SetDebugLogging) obj;
 
-      if (!getCategories()
-          .equals(other.getCategories())) return false;
+      if (!getCategoriesList()
+          .equals(other.getCategoriesList())) return false;
       if (getLoggingOn()
           != other.getLoggingOn()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
@@ -11561,8 +11583,10 @@ public final class Fmi2Proto {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + CATEGORIES_FIELD_NUMBER;
-      hash = (53 * hash) + getCategories().hashCode();
+      if (getCategoriesCount() > 0) {
+        hash = (37 * hash) + CATEGORIES_FIELD_NUMBER;
+        hash = (53 * hash) + getCategoriesList().hashCode();
+      }
       hash = (37 * hash) + LOGGING_ON_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
           getLoggingOn());
@@ -11699,8 +11723,8 @@ public final class Fmi2Proto {
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        categories_ = "";
-
+        categories_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
         loggingOn_ = false;
 
         return this;
@@ -11729,6 +11753,11 @@ public final class Fmi2Proto {
       @java.lang.Override
       public fmi2_proto.Fmi2Proto.SetDebugLogging buildPartial() {
         fmi2_proto.Fmi2Proto.SetDebugLogging result = new fmi2_proto.Fmi2Proto.SetDebugLogging(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) != 0)) {
+          categories_ = categories_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
         result.categories_ = categories_;
         result.loggingOn_ = loggingOn_;
         onBuilt();
@@ -11779,8 +11808,14 @@ public final class Fmi2Proto {
 
       public Builder mergeFrom(fmi2_proto.Fmi2Proto.SetDebugLogging other) {
         if (other == fmi2_proto.Fmi2Proto.SetDebugLogging.getDefaultInstance()) return this;
-        if (!other.getCategories().isEmpty()) {
-          categories_ = other.categories_;
+        if (!other.categories_.isEmpty()) {
+          if (categories_.isEmpty()) {
+            categories_ = other.categories_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureCategoriesIsMutable();
+            categories_.addAll(other.categories_);
+          }
           onChanged();
         }
         if (other.getLoggingOn() != false) {
@@ -11814,79 +11849,114 @@ public final class Fmi2Proto {
         }
         return this;
       }
+      private int bitField0_;
 
-      private java.lang.Object categories_ = "";
-      /**
-       * <code>string categories = 1;</code>
-       * @return The categories.
-       */
-      public java.lang.String getCategories() {
-        java.lang.Object ref = categories_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          categories_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+      private com.google.protobuf.LazyStringList categories_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureCategoriesIsMutable() {
+        if (!((bitField0_ & 0x00000001) != 0)) {
+          categories_ = new com.google.protobuf.LazyStringArrayList(categories_);
+          bitField0_ |= 0x00000001;
+         }
       }
       /**
-       * <code>string categories = 1;</code>
-       * @return The bytes for categories.
+       * <code>repeated string categories = 1;</code>
+       * @return A list containing the categories.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getCategoriesList() {
+        return categories_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string categories = 1;</code>
+       * @return The count of categories.
+       */
+      public int getCategoriesCount() {
+        return categories_.size();
+      }
+      /**
+       * <code>repeated string categories = 1;</code>
+       * @param index The index of the element to return.
+       * @return The categories at the given index.
+       */
+      public java.lang.String getCategories(int index) {
+        return categories_.get(index);
+      }
+      /**
+       * <code>repeated string categories = 1;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the categories at the given index.
        */
       public com.google.protobuf.ByteString
-          getCategoriesBytes() {
-        java.lang.Object ref = categories_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          categories_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
+          getCategoriesBytes(int index) {
+        return categories_.getByteString(index);
       }
       /**
-       * <code>string categories = 1;</code>
+       * <code>repeated string categories = 1;</code>
+       * @param index The index to set the value at.
        * @param value The categories to set.
        * @return This builder for chaining.
        */
       public Builder setCategories(
+          int index, java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureCategoriesIsMutable();
+        categories_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string categories = 1;</code>
+       * @param value The categories to add.
+       * @return This builder for chaining.
+       */
+      public Builder addCategories(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  
-        categories_ = value;
+  ensureCategoriesIsMutable();
+        categories_.add(value);
         onChanged();
         return this;
       }
       /**
-       * <code>string categories = 1;</code>
+       * <code>repeated string categories = 1;</code>
+       * @param values The categories to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllCategories(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureCategoriesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, categories_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string categories = 1;</code>
        * @return This builder for chaining.
        */
       public Builder clearCategories() {
-        
-        categories_ = getDefaultInstance().getCategories();
+        categories_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
         onChanged();
         return this;
       }
       /**
-       * <code>string categories = 1;</code>
-       * @param value The bytes for categories to set.
+       * <code>repeated string categories = 1;</code>
+       * @param value The bytes of the categories to add.
        * @return This builder for chaining.
        */
-      public Builder setCategoriesBytes(
+      public Builder addCategoriesBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
-        categories_ = value;
+        ensureCategoriesIsMutable();
+        categories_.add(value);
         onChanged();
         return this;
       }
@@ -11984,24 +12054,10 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 DoStep = 1;</code>
-     * @return Whether the doStep field is set.
-     */
-    boolean hasDoStep();
-    /**
-     * <pre>
-     * Field numbers between 1-15 only use one byte, therefore the functions that are called the most will be between 1-15
-     * </pre>
-     *
-     * <code>int32 DoStep = 1;</code>
      * @return The doStep.
      */
     int getDoStep();
 
-    /**
-     * <code>int32 SetReal = 2;</code>
-     * @return Whether the setReal field is set.
-     */
-    boolean hasSetReal();
     /**
      * <code>int32 SetReal = 2;</code>
      * @return The setReal.
@@ -12010,20 +12066,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 SetInteger = 3;</code>
-     * @return Whether the setInteger field is set.
-     */
-    boolean hasSetInteger();
-    /**
-     * <code>int32 SetInteger = 3;</code>
      * @return The setInteger.
      */
     int getSetInteger();
 
-    /**
-     * <code>int32 SetBoolean = 4;</code>
-     * @return Whether the setBoolean field is set.
-     */
-    boolean hasSetBoolean();
     /**
      * <code>int32 SetBoolean = 4;</code>
      * @return The setBoolean.
@@ -12032,20 +12078,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 SetString = 5;</code>
-     * @return Whether the setString field is set.
-     */
-    boolean hasSetString();
-    /**
-     * <code>int32 SetString = 5;</code>
      * @return The setString.
      */
     int getSetString();
 
-    /**
-     * <code>int32 GetReal = 6;</code>
-     * @return Whether the getReal field is set.
-     */
-    boolean hasGetReal();
     /**
      * <code>int32 GetReal = 6;</code>
      * @return The getReal.
@@ -12054,20 +12090,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 GetInteger = 7;</code>
-     * @return Whether the getInteger field is set.
-     */
-    boolean hasGetInteger();
-    /**
-     * <code>int32 GetInteger = 7;</code>
      * @return The getInteger.
      */
     int getGetInteger();
 
-    /**
-     * <code>int32 GetBoolean = 8;</code>
-     * @return Whether the getBoolean field is set.
-     */
-    boolean hasGetBoolean();
     /**
      * <code>int32 GetBoolean = 8;</code>
      * @return The getBoolean.
@@ -12076,20 +12102,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 GetString = 9;</code>
-     * @return Whether the getString field is set.
-     */
-    boolean hasGetString();
-    /**
-     * <code>int32 GetString = 9;</code>
      * @return The getString.
      */
     int getGetString();
 
-    /**
-     * <code>int32 SetDebugLogging = 10;</code>
-     * @return Whether the setDebugLogging field is set.
-     */
-    boolean hasSetDebugLogging();
     /**
      * <code>int32 SetDebugLogging = 10;</code>
      * @return The setDebugLogging.
@@ -12098,20 +12114,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 SetupExperiment = 11;</code>
-     * @return Whether the setupExperiment field is set.
-     */
-    boolean hasSetupExperiment();
-    /**
-     * <code>int32 SetupExperiment = 11;</code>
      * @return The setupExperiment.
      */
     int getSetupExperiment();
 
-    /**
-     * <code>int32 FreeInstance = 12;</code>
-     * @return Whether the freeInstance field is set.
-     */
-    boolean hasFreeInstance();
     /**
      * <code>int32 FreeInstance = 12;</code>
      * @return The freeInstance.
@@ -12120,20 +12126,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 EnterInitializationMode = 13;</code>
-     * @return Whether the enterInitializationMode field is set.
-     */
-    boolean hasEnterInitializationMode();
-    /**
-     * <code>int32 EnterInitializationMode = 13;</code>
      * @return The enterInitializationMode.
      */
     int getEnterInitializationMode();
 
-    /**
-     * <code>int32 ExitInitializationMode = 14;</code>
-     * @return Whether the exitInitializationMode field is set.
-     */
-    boolean hasExitInitializationMode();
     /**
      * <code>int32 ExitInitializationMode = 14;</code>
      * @return The exitInitializationMode.
@@ -12142,20 +12138,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 Terminate = 15;</code>
-     * @return Whether the terminate field is set.
-     */
-    boolean hasTerminate();
-    /**
-     * <code>int32 Terminate = 15;</code>
      * @return The terminate.
      */
     int getTerminate();
 
-    /**
-     * <code>int32 Reset = 16;</code>
-     * @return Whether the reset field is set.
-     */
-    boolean hasReset();
     /**
      * <code>int32 Reset = 16;</code>
      * @return The reset.
@@ -12164,20 +12150,10 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 Serialize = 17;</code>
-     * @return Whether the serialize field is set.
-     */
-    boolean hasSerialize();
-    /**
-     * <code>int32 Serialize = 17;</code>
      * @return The serialize.
      */
     int getSerialize();
 
-    /**
-     * <code>int32 Deserialize = 18;</code>
-     * @return Whether the deserialize field is set.
-     */
-    boolean hasDeserialize();
     /**
      * <code>int32 Deserialize = 18;</code>
      * @return The deserialize.
@@ -12190,24 +12166,10 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 GetDirectionalDerivatives = 19;</code>
-     * @return Whether the getDirectionalDerivatives field is set.
-     */
-    boolean hasGetDirectionalDerivatives();
-    /**
-     * <pre>
-     * Co-sim
-     * </pre>
-     *
-     * <code>int32 GetDirectionalDerivatives = 19;</code>
      * @return The getDirectionalDerivatives.
      */
     int getGetDirectionalDerivatives();
 
-    /**
-     * <code>int32 SetInputDerivatives = 20;</code>
-     * @return Whether the setInputDerivatives field is set.
-     */
-    boolean hasSetInputDerivatives();
     /**
      * <code>int32 SetInputDerivatives = 20;</code>
      * @return The setInputDerivatives.
@@ -12216,31 +12178,16 @@ public final class Fmi2Proto {
 
     /**
      * <code>int32 GetOutputDerivatives = 21;</code>
-     * @return Whether the getOutputDerivatives field is set.
-     */
-    boolean hasGetOutputDerivatives();
-    /**
-     * <code>int32 GetOutputDerivatives = 21;</code>
      * @return The getOutputDerivatives.
      */
     int getGetOutputDerivatives();
 
     /**
      * <code>int32 CancelStep = 22;</code>
-     * @return Whether the cancelStep field is set.
-     */
-    boolean hasCancelStep();
-    /**
-     * <code>int32 CancelStep = 22;</code>
      * @return The cancelStep.
      */
     int getCancelStep();
 
-    /**
-     * <code>int32 GetXXXStatus = 23;</code>
-     * @return Whether the getXXXStatus field is set.
-     */
-    boolean hasGetXXXStatus();
     /**
      * <code>int32 GetXXXStatus = 23;</code>
      * @return The getXXXStatus.
@@ -12531,18 +12478,6 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 DoStep = 1;</code>
-     * @return Whether the doStep field is set.
-     */
-    @java.lang.Override
-    public boolean hasDoStep() {
-      return argsCase_ == 1;
-    }
-    /**
-     * <pre>
-     * Field numbers between 1-15 only use one byte, therefore the functions that are called the most will be between 1-15
-     * </pre>
-     *
-     * <code>int32 DoStep = 1;</code>
      * @return The doStep.
      */
     @java.lang.Override
@@ -12554,14 +12489,6 @@ public final class Fmi2Proto {
     }
 
     public static final int SETREAL_FIELD_NUMBER = 2;
-    /**
-     * <code>int32 SetReal = 2;</code>
-     * @return Whether the setReal field is set.
-     */
-    @java.lang.Override
-    public boolean hasSetReal() {
-      return argsCase_ == 2;
-    }
     /**
      * <code>int32 SetReal = 2;</code>
      * @return The setReal.
@@ -12577,14 +12504,6 @@ public final class Fmi2Proto {
     public static final int SETINTEGER_FIELD_NUMBER = 3;
     /**
      * <code>int32 SetInteger = 3;</code>
-     * @return Whether the setInteger field is set.
-     */
-    @java.lang.Override
-    public boolean hasSetInteger() {
-      return argsCase_ == 3;
-    }
-    /**
-     * <code>int32 SetInteger = 3;</code>
      * @return The setInteger.
      */
     @java.lang.Override
@@ -12596,14 +12515,6 @@ public final class Fmi2Proto {
     }
 
     public static final int SETBOOLEAN_FIELD_NUMBER = 4;
-    /**
-     * <code>int32 SetBoolean = 4;</code>
-     * @return Whether the setBoolean field is set.
-     */
-    @java.lang.Override
-    public boolean hasSetBoolean() {
-      return argsCase_ == 4;
-    }
     /**
      * <code>int32 SetBoolean = 4;</code>
      * @return The setBoolean.
@@ -12619,14 +12530,6 @@ public final class Fmi2Proto {
     public static final int SETSTRING_FIELD_NUMBER = 5;
     /**
      * <code>int32 SetString = 5;</code>
-     * @return Whether the setString field is set.
-     */
-    @java.lang.Override
-    public boolean hasSetString() {
-      return argsCase_ == 5;
-    }
-    /**
-     * <code>int32 SetString = 5;</code>
      * @return The setString.
      */
     @java.lang.Override
@@ -12638,14 +12541,6 @@ public final class Fmi2Proto {
     }
 
     public static final int GETREAL_FIELD_NUMBER = 6;
-    /**
-     * <code>int32 GetReal = 6;</code>
-     * @return Whether the getReal field is set.
-     */
-    @java.lang.Override
-    public boolean hasGetReal() {
-      return argsCase_ == 6;
-    }
     /**
      * <code>int32 GetReal = 6;</code>
      * @return The getReal.
@@ -12661,14 +12556,6 @@ public final class Fmi2Proto {
     public static final int GETINTEGER_FIELD_NUMBER = 7;
     /**
      * <code>int32 GetInteger = 7;</code>
-     * @return Whether the getInteger field is set.
-     */
-    @java.lang.Override
-    public boolean hasGetInteger() {
-      return argsCase_ == 7;
-    }
-    /**
-     * <code>int32 GetInteger = 7;</code>
      * @return The getInteger.
      */
     @java.lang.Override
@@ -12680,14 +12567,6 @@ public final class Fmi2Proto {
     }
 
     public static final int GETBOOLEAN_FIELD_NUMBER = 8;
-    /**
-     * <code>int32 GetBoolean = 8;</code>
-     * @return Whether the getBoolean field is set.
-     */
-    @java.lang.Override
-    public boolean hasGetBoolean() {
-      return argsCase_ == 8;
-    }
     /**
      * <code>int32 GetBoolean = 8;</code>
      * @return The getBoolean.
@@ -12703,14 +12582,6 @@ public final class Fmi2Proto {
     public static final int GETSTRING_FIELD_NUMBER = 9;
     /**
      * <code>int32 GetString = 9;</code>
-     * @return Whether the getString field is set.
-     */
-    @java.lang.Override
-    public boolean hasGetString() {
-      return argsCase_ == 9;
-    }
-    /**
-     * <code>int32 GetString = 9;</code>
      * @return The getString.
      */
     @java.lang.Override
@@ -12722,14 +12593,6 @@ public final class Fmi2Proto {
     }
 
     public static final int SETDEBUGLOGGING_FIELD_NUMBER = 10;
-    /**
-     * <code>int32 SetDebugLogging = 10;</code>
-     * @return Whether the setDebugLogging field is set.
-     */
-    @java.lang.Override
-    public boolean hasSetDebugLogging() {
-      return argsCase_ == 10;
-    }
     /**
      * <code>int32 SetDebugLogging = 10;</code>
      * @return The setDebugLogging.
@@ -12745,14 +12608,6 @@ public final class Fmi2Proto {
     public static final int SETUPEXPERIMENT_FIELD_NUMBER = 11;
     /**
      * <code>int32 SetupExperiment = 11;</code>
-     * @return Whether the setupExperiment field is set.
-     */
-    @java.lang.Override
-    public boolean hasSetupExperiment() {
-      return argsCase_ == 11;
-    }
-    /**
-     * <code>int32 SetupExperiment = 11;</code>
      * @return The setupExperiment.
      */
     @java.lang.Override
@@ -12764,14 +12619,6 @@ public final class Fmi2Proto {
     }
 
     public static final int FREEINSTANCE_FIELD_NUMBER = 12;
-    /**
-     * <code>int32 FreeInstance = 12;</code>
-     * @return Whether the freeInstance field is set.
-     */
-    @java.lang.Override
-    public boolean hasFreeInstance() {
-      return argsCase_ == 12;
-    }
     /**
      * <code>int32 FreeInstance = 12;</code>
      * @return The freeInstance.
@@ -12787,14 +12634,6 @@ public final class Fmi2Proto {
     public static final int ENTERINITIALIZATIONMODE_FIELD_NUMBER = 13;
     /**
      * <code>int32 EnterInitializationMode = 13;</code>
-     * @return Whether the enterInitializationMode field is set.
-     */
-    @java.lang.Override
-    public boolean hasEnterInitializationMode() {
-      return argsCase_ == 13;
-    }
-    /**
-     * <code>int32 EnterInitializationMode = 13;</code>
      * @return The enterInitializationMode.
      */
     @java.lang.Override
@@ -12806,14 +12645,6 @@ public final class Fmi2Proto {
     }
 
     public static final int EXITINITIALIZATIONMODE_FIELD_NUMBER = 14;
-    /**
-     * <code>int32 ExitInitializationMode = 14;</code>
-     * @return Whether the exitInitializationMode field is set.
-     */
-    @java.lang.Override
-    public boolean hasExitInitializationMode() {
-      return argsCase_ == 14;
-    }
     /**
      * <code>int32 ExitInitializationMode = 14;</code>
      * @return The exitInitializationMode.
@@ -12829,14 +12660,6 @@ public final class Fmi2Proto {
     public static final int TERMINATE_FIELD_NUMBER = 15;
     /**
      * <code>int32 Terminate = 15;</code>
-     * @return Whether the terminate field is set.
-     */
-    @java.lang.Override
-    public boolean hasTerminate() {
-      return argsCase_ == 15;
-    }
-    /**
-     * <code>int32 Terminate = 15;</code>
      * @return The terminate.
      */
     @java.lang.Override
@@ -12848,14 +12671,6 @@ public final class Fmi2Proto {
     }
 
     public static final int RESET_FIELD_NUMBER = 16;
-    /**
-     * <code>int32 Reset = 16;</code>
-     * @return Whether the reset field is set.
-     */
-    @java.lang.Override
-    public boolean hasReset() {
-      return argsCase_ == 16;
-    }
     /**
      * <code>int32 Reset = 16;</code>
      * @return The reset.
@@ -12871,14 +12686,6 @@ public final class Fmi2Proto {
     public static final int SERIALIZE_FIELD_NUMBER = 17;
     /**
      * <code>int32 Serialize = 17;</code>
-     * @return Whether the serialize field is set.
-     */
-    @java.lang.Override
-    public boolean hasSerialize() {
-      return argsCase_ == 17;
-    }
-    /**
-     * <code>int32 Serialize = 17;</code>
      * @return The serialize.
      */
     @java.lang.Override
@@ -12890,14 +12697,6 @@ public final class Fmi2Proto {
     }
 
     public static final int DESERIALIZE_FIELD_NUMBER = 18;
-    /**
-     * <code>int32 Deserialize = 18;</code>
-     * @return Whether the deserialize field is set.
-     */
-    @java.lang.Override
-    public boolean hasDeserialize() {
-      return argsCase_ == 18;
-    }
     /**
      * <code>int32 Deserialize = 18;</code>
      * @return The deserialize.
@@ -12917,18 +12716,6 @@ public final class Fmi2Proto {
      * </pre>
      *
      * <code>int32 GetDirectionalDerivatives = 19;</code>
-     * @return Whether the getDirectionalDerivatives field is set.
-     */
-    @java.lang.Override
-    public boolean hasGetDirectionalDerivatives() {
-      return argsCase_ == 19;
-    }
-    /**
-     * <pre>
-     * Co-sim
-     * </pre>
-     *
-     * <code>int32 GetDirectionalDerivatives = 19;</code>
      * @return The getDirectionalDerivatives.
      */
     @java.lang.Override
@@ -12940,14 +12727,6 @@ public final class Fmi2Proto {
     }
 
     public static final int SETINPUTDERIVATIVES_FIELD_NUMBER = 20;
-    /**
-     * <code>int32 SetInputDerivatives = 20;</code>
-     * @return Whether the setInputDerivatives field is set.
-     */
-    @java.lang.Override
-    public boolean hasSetInputDerivatives() {
-      return argsCase_ == 20;
-    }
     /**
      * <code>int32 SetInputDerivatives = 20;</code>
      * @return The setInputDerivatives.
@@ -12963,14 +12742,6 @@ public final class Fmi2Proto {
     public static final int GETOUTPUTDERIVATIVES_FIELD_NUMBER = 21;
     /**
      * <code>int32 GetOutputDerivatives = 21;</code>
-     * @return Whether the getOutputDerivatives field is set.
-     */
-    @java.lang.Override
-    public boolean hasGetOutputDerivatives() {
-      return argsCase_ == 21;
-    }
-    /**
-     * <code>int32 GetOutputDerivatives = 21;</code>
      * @return The getOutputDerivatives.
      */
     @java.lang.Override
@@ -12984,14 +12755,6 @@ public final class Fmi2Proto {
     public static final int CANCELSTEP_FIELD_NUMBER = 22;
     /**
      * <code>int32 CancelStep = 22;</code>
-     * @return Whether the cancelStep field is set.
-     */
-    @java.lang.Override
-    public boolean hasCancelStep() {
-      return argsCase_ == 22;
-    }
-    /**
-     * <code>int32 CancelStep = 22;</code>
      * @return The cancelStep.
      */
     @java.lang.Override
@@ -13003,14 +12766,6 @@ public final class Fmi2Proto {
     }
 
     public static final int GETXXXSTATUS_FIELD_NUMBER = 23;
-    /**
-     * <code>int32 GetXXXStatus = 23;</code>
-     * @return Whether the getXXXStatus field is set.
-     */
-    @java.lang.Override
-    public boolean hasGetXXXStatus() {
-      return argsCase_ == 23;
-    }
     /**
      * <code>int32 GetXXXStatus = 23;</code>
      * @return The getXXXStatus.
@@ -13898,17 +13653,6 @@ public final class Fmi2Proto {
        * </pre>
        *
        * <code>int32 DoStep = 1;</code>
-       * @return Whether the doStep field is set.
-       */
-      public boolean hasDoStep() {
-        return argsCase_ == 1;
-      }
-      /**
-       * <pre>
-       * Field numbers between 1-15 only use one byte, therefore the functions that are called the most will be between 1-15
-       * </pre>
-       *
-       * <code>int32 DoStep = 1;</code>
        * @return The doStep.
        */
       public int getDoStep() {
@@ -13951,13 +13695,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetReal = 2;</code>
-       * @return Whether the setReal field is set.
-       */
-      public boolean hasSetReal() {
-        return argsCase_ == 2;
-      }
-      /**
-       * <code>int32 SetReal = 2;</code>
        * @return The setReal.
        */
       public int getSetReal() {
@@ -13990,13 +13727,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 SetInteger = 3;</code>
-       * @return Whether the setInteger field is set.
-       */
-      public boolean hasSetInteger() {
-        return argsCase_ == 3;
-      }
       /**
        * <code>int32 SetInteger = 3;</code>
        * @return The setInteger.
@@ -14033,13 +13763,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetBoolean = 4;</code>
-       * @return Whether the setBoolean field is set.
-       */
-      public boolean hasSetBoolean() {
-        return argsCase_ == 4;
-      }
-      /**
-       * <code>int32 SetBoolean = 4;</code>
        * @return The setBoolean.
        */
       public int getSetBoolean() {
@@ -14072,13 +13795,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 SetString = 5;</code>
-       * @return Whether the setString field is set.
-       */
-      public boolean hasSetString() {
-        return argsCase_ == 5;
-      }
       /**
        * <code>int32 SetString = 5;</code>
        * @return The setString.
@@ -14115,13 +13831,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 GetReal = 6;</code>
-       * @return Whether the getReal field is set.
-       */
-      public boolean hasGetReal() {
-        return argsCase_ == 6;
-      }
-      /**
-       * <code>int32 GetReal = 6;</code>
        * @return The getReal.
        */
       public int getGetReal() {
@@ -14154,13 +13863,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 GetInteger = 7;</code>
-       * @return Whether the getInteger field is set.
-       */
-      public boolean hasGetInteger() {
-        return argsCase_ == 7;
-      }
       /**
        * <code>int32 GetInteger = 7;</code>
        * @return The getInteger.
@@ -14197,13 +13899,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 GetBoolean = 8;</code>
-       * @return Whether the getBoolean field is set.
-       */
-      public boolean hasGetBoolean() {
-        return argsCase_ == 8;
-      }
-      /**
-       * <code>int32 GetBoolean = 8;</code>
        * @return The getBoolean.
        */
       public int getGetBoolean() {
@@ -14236,13 +13931,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 GetString = 9;</code>
-       * @return Whether the getString field is set.
-       */
-      public boolean hasGetString() {
-        return argsCase_ == 9;
-      }
       /**
        * <code>int32 GetString = 9;</code>
        * @return The getString.
@@ -14279,13 +13967,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetDebugLogging = 10;</code>
-       * @return Whether the setDebugLogging field is set.
-       */
-      public boolean hasSetDebugLogging() {
-        return argsCase_ == 10;
-      }
-      /**
-       * <code>int32 SetDebugLogging = 10;</code>
        * @return The setDebugLogging.
        */
       public int getSetDebugLogging() {
@@ -14318,13 +13999,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 SetupExperiment = 11;</code>
-       * @return Whether the setupExperiment field is set.
-       */
-      public boolean hasSetupExperiment() {
-        return argsCase_ == 11;
-      }
       /**
        * <code>int32 SetupExperiment = 11;</code>
        * @return The setupExperiment.
@@ -14361,13 +14035,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 FreeInstance = 12;</code>
-       * @return Whether the freeInstance field is set.
-       */
-      public boolean hasFreeInstance() {
-        return argsCase_ == 12;
-      }
-      /**
-       * <code>int32 FreeInstance = 12;</code>
        * @return The freeInstance.
        */
       public int getFreeInstance() {
@@ -14400,13 +14067,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 EnterInitializationMode = 13;</code>
-       * @return Whether the enterInitializationMode field is set.
-       */
-      public boolean hasEnterInitializationMode() {
-        return argsCase_ == 13;
-      }
       /**
        * <code>int32 EnterInitializationMode = 13;</code>
        * @return The enterInitializationMode.
@@ -14443,13 +14103,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 ExitInitializationMode = 14;</code>
-       * @return Whether the exitInitializationMode field is set.
-       */
-      public boolean hasExitInitializationMode() {
-        return argsCase_ == 14;
-      }
-      /**
-       * <code>int32 ExitInitializationMode = 14;</code>
        * @return The exitInitializationMode.
        */
       public int getExitInitializationMode() {
@@ -14482,13 +14135,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 Terminate = 15;</code>
-       * @return Whether the terminate field is set.
-       */
-      public boolean hasTerminate() {
-        return argsCase_ == 15;
-      }
       /**
        * <code>int32 Terminate = 15;</code>
        * @return The terminate.
@@ -14525,13 +14171,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 Reset = 16;</code>
-       * @return Whether the reset field is set.
-       */
-      public boolean hasReset() {
-        return argsCase_ == 16;
-      }
-      /**
-       * <code>int32 Reset = 16;</code>
        * @return The reset.
        */
       public int getReset() {
@@ -14564,13 +14203,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 Serialize = 17;</code>
-       * @return Whether the serialize field is set.
-       */
-      public boolean hasSerialize() {
-        return argsCase_ == 17;
-      }
       /**
        * <code>int32 Serialize = 17;</code>
        * @return The serialize.
@@ -14607,13 +14239,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 Deserialize = 18;</code>
-       * @return Whether the deserialize field is set.
-       */
-      public boolean hasDeserialize() {
-        return argsCase_ == 18;
-      }
-      /**
-       * <code>int32 Deserialize = 18;</code>
        * @return The deserialize.
        */
       public int getDeserialize() {
@@ -14646,17 +14271,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <pre>
-       * Co-sim
-       * </pre>
-       *
-       * <code>int32 GetDirectionalDerivatives = 19;</code>
-       * @return Whether the getDirectionalDerivatives field is set.
-       */
-      public boolean hasGetDirectionalDerivatives() {
-        return argsCase_ == 19;
-      }
       /**
        * <pre>
        * Co-sim
@@ -14705,13 +14319,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 SetInputDerivatives = 20;</code>
-       * @return Whether the setInputDerivatives field is set.
-       */
-      public boolean hasSetInputDerivatives() {
-        return argsCase_ == 20;
-      }
-      /**
-       * <code>int32 SetInputDerivatives = 20;</code>
        * @return The setInputDerivatives.
        */
       public int getSetInputDerivatives() {
@@ -14744,13 +14351,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 GetOutputDerivatives = 21;</code>
-       * @return Whether the getOutputDerivatives field is set.
-       */
-      public boolean hasGetOutputDerivatives() {
-        return argsCase_ == 21;
-      }
       /**
        * <code>int32 GetOutputDerivatives = 21;</code>
        * @return The getOutputDerivatives.
@@ -14787,13 +14387,6 @@ public final class Fmi2Proto {
 
       /**
        * <code>int32 CancelStep = 22;</code>
-       * @return Whether the cancelStep field is set.
-       */
-      public boolean hasCancelStep() {
-        return argsCase_ == 22;
-      }
-      /**
-       * <code>int32 CancelStep = 22;</code>
        * @return The cancelStep.
        */
       public int getCancelStep() {
@@ -14826,13 +14419,6 @@ public final class Fmi2Proto {
         return this;
       }
 
-      /**
-       * <code>int32 GetXXXStatus = 23;</code>
-       * @return Whether the getXXXStatus field is set.
-       */
-      public boolean hasGetXXXStatus() {
-        return argsCase_ == 23;
-      }
       /**
        * <code>int32 GetXXXStatus = 23;</code>
        * @return The getXXXStatus.
@@ -19547,7 +19133,7 @@ public final class Fmi2Proto {
       "\n\005state\030\001 \001(\014\"\033\n\031GetDirectionalDerivativ" +
       "es\"\025\n\023SetInputDerivatives\"\026\n\024GetOutputDe" +
       "rivatives\"\014\n\nCancelStep\"\016\n\014GetXXXStatus\"" +
-      "9\n\017SetDebugLogging\022\022\n\ncategories\030\001 \001(\t\022\022" +
+      "9\n\017SetDebugLogging\022\022\n\ncategories\030\001 \003(\t\022\022" +
       "\n\nlogging_on\030\002 \001(\010\"\306\004\n\013Fmi2Command\022\020\n\006Do" +
       "Step\030\001 \001(\005H\000\022\021\n\007SetReal\030\002 \001(\005H\000\022\024\n\nSetIn" +
       "teger\030\003 \001(\005H\000\022\024\n\nSetBoolean\030\004 \001(\005H\000\022\023\n\tS" +

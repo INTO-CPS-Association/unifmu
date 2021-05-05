@@ -32,7 +32,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__file__)
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser("Builds and tests UniFMU project.")
 
     # ----------- here we resolve file paths -----------------------
 
@@ -83,6 +83,15 @@ if __name__ == "__main__":
         dest="update_schemas",
         action="store_true",
         help="update resource files generated based on Protobuf schemas",
+    )
+
+    parser.add_argument(
+        "--github-update-wrapper",
+        dest="github_update_wrapper",
+        help="utility used by build automation to commit and push compiled wrapper. "
+        "If another repository has pushed changes these will be pulled before attempting "
+        "to push again. This command is only meant to be used by GitHub actions!",
+        action="store_true",
     )
 
     args = parser.parse_args()
@@ -226,3 +235,56 @@ if __name__ == "__main__":
                     sys.exit(-1)
 
         logger.info("integration tests successful")
+
+    if args.github_update_wrapper:
+
+        res = subprocess.run(["git", "diff", "--quiet", "--exit-code", wrapper_lib])
+
+        # check if wrapper has actually changed
+        if res.returncode == 1:
+
+            logger.info(f"wrapper has changed, updating wrapper for {s}")
+
+            subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
+            subprocess.run(
+                ["git", "config", "user.email", "github-actions@github.com"],
+                check=True,
+            )
+            subprocess.run(["git", "pull"], check=True)
+            subprocess.run(["git", "add", wrapper_lib], check=True)
+            subprocess.run(
+                ["git", "commit", "-m", "updated wrapper for {s} platforms"],
+                check=True,
+            )
+
+            # if another repository has pushed since last pull
+            # we need to do a pull followed by a push
+            # since 3 binaries are being build 2 clashes are possible
+            success = False
+            n_tries = 5
+            for i in range(n_tries):
+
+                try:
+                    subprocess.run(["git", "push"], check=True)
+                    success = True
+                except subprocess.CalledProcessError:
+                    logger.info(
+                        f"Another repository has pushed in the mean time, retry '{i+1} of '{n_tries}'"
+                    )
+                    subprocess.run(["git", "pull", "--rebase"], check=True)
+
+            if success:
+                logger.info("wrapper pushed succesfully")
+            else:
+                logger.error(f"wrapper was not pushed after '{n_tries}'")
+                exit(-1)
+
+        elif res.returncode == 0:
+            logger.info(f"wrapper unchanged for {s}, no need to update")
+
+        else:
+            logger.error(
+                "Git diff returned error code. There is an error in the build automation."
+            )
+            exit(-1)
+
