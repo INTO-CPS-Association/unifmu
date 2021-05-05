@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sys
 import xml.etree.ElementTree as ET
 from argparse import ArgumentParser
@@ -7,11 +8,10 @@ from pathlib import Path
 
 import zmq
 
-from matlab import Matlab
+from matlabfmu import MatlabFMU
 from fmi2 import Fmi2FMU
 
 if __name__ == "__main__":
-
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__file__)
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         for v in ET.parse(f).find("ModelVariables"):
             reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
 
-    slave: Fmi2FMU = Matlab(reference_to_attr)
+    slave: Fmi2FMU = MatlabFMU(reference_to_attr)
 
     # methods bound to a slave which returns status codes
     command_to_slave_methods = {

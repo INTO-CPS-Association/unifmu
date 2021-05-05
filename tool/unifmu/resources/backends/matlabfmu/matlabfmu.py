@@ -2,7 +2,8 @@ import pickle
 
 from fmi2 import Fmi2FMU, Fmi2Status
 
-class Matlab(Fmi2FMU):
+
+class MatlabFMU(Fmi2FMU):
     def __init__(self,reference_to_attr=None) -> None:
         super().__init__(reference_to_attr)
         self.real_a = 0.0
