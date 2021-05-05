@@ -238,26 +238,25 @@ if __name__ == "__main__":
 
     if args.github_update_wrapper:
 
-        res = subprocess.run(f"git diff --quiet --exit-code {wrapper_lib}")
+        res = subprocess.run(["git", "diff", "--quiet", "--exit-code", wrapper_lib])
 
         # check if wrapper has actually changed
         if res.returncode == 1:
 
             logger.info(f"wrapper has changed, updating wrapper for {s}")
 
+            # subprocess.run(
+            #     "git config user.name github-actions", shell=True, check=True
+            # )
+            # subprocess.run(
+            #     "git config user.email github-actions@github.com",
+            #     shell=True,
+            #     check=True,
+            # )
+            subprocess.run(["git", "pull"], check=True)
+            subprocess.run(["git", "add", wrapper_lib], check=True)
             subprocess.run(
-                "git config user.name github-actions", shell=True, check=True
-            )
-            subprocess.run(
-                "git config user.email github-actions@github.com",
-                shell=True,
-                check=True,
-            )
-            subprocess.run("git pull", shell=True, check=True)
-            subprocess.run(f"git add {wrapper_lib}", shell=True, check=True)
-            subprocess.run(
-                f'git commit -m "updated wrapper for {s} platforms"',
-                shell=True,
+                ["git", "commit",  "-m", "updated wrapper for {s} platforms"],
                 check=True,
             )
 
@@ -269,13 +268,13 @@ if __name__ == "__main__":
             for i in range(n_tries):
 
                 try:
-                    subprocess.run(f"git push", shell=True, check=True)
+                    subprocess.run(["git", "push"], check=True)
                     success = True
                 except subprocess.CalledProcessError:
                     logger.info(
                         f"Another repository has pushed in the mean time, retry '{i+1} of '{n_tries}'"
                     )
-                    subprocess.run(f"git pull --rebase", shell=True, check=True)
+                    subprocess.run(["git", "pull", "--rebase"], check=True)
 
             if success:
                 logger.info("wrapper pushed succesfully")
