@@ -21,8 +21,7 @@ if __name__ == "__main__":
         dest="handshake_endpoint",
         type=str,
         help="socket",
-        required=False,
-        default="tcp://localhost:5000"
+        required=True
     )
     args = parser.parse_args()
 
