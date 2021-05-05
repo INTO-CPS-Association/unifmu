@@ -1,7 +1,7 @@
 import pickle
 
 from fmi2 import Fmi2FMU, Fmi2Status
-
+import matlab.engine
 
 class MatlabFMU(Fmi2FMU):
     def __init__(self,reference_to_attr=None) -> None:
@@ -18,9 +18,22 @@ class MatlabFMU(Fmi2FMU):
         self.string_a = ""
         self.string_b = ""
 
+        # Matlab engine
+        self._eng = None
+        
         self._update_outputs()
 
-        
+    def enter_initialization_mode(self) -> int:
+        # Start matlab engine
+        self._eng = matlab.engine.start_matlab()
+
+        return super(MatlabFMU, self).enter_initialization_mode()
+
+    def terminate(self) -> int:
+        if self._eng is not None:
+            self._eng.quit()
+
+        return super(MatlabFMU, self).terminate()
 
     def __repr__(self):
         return "Adder"
