@@ -245,18 +245,15 @@ if __name__ == "__main__":
 
             logger.info(f"wrapper has changed, updating wrapper for {s}")
 
+            subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
             subprocess.run(
-                "git config user.name github-actions", shell=True, check=True
-            )
-            subprocess.run(
-                "git config user.email github-actions@github.com",
-                shell=True,
+                ["git", "config", "user.email", "github-actions@github.com"],
                 check=True,
             )
             subprocess.run(["git", "pull"], check=True)
             subprocess.run(["git", "add", wrapper_lib], check=True)
             subprocess.run(
-                ["git", "commit",  "-m", "updated wrapper for {s} platforms"],
+                ["git", "commit", "-m", "updated wrapper for {s} platforms"],
                 check=True,
             )
 
