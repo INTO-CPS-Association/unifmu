@@ -244,6 +244,7 @@ if __name__ == "__main__":
         if res.returncode == 1:
 
             logger.info(f"wrapper has changed, updating wrapper for {s}")
+            exit(0)
 
             subprocess.run(
                 "git config user.name github-actions", shell=True, check=True
@@ -284,8 +285,10 @@ if __name__ == "__main__":
 
         elif res.returncode == 0:
             logger.info(f"wrapper unchanged for {s}, no need to update")
+            exit(0)
 
         else:
+            exit(0)
             raise RuntimeError(
                 "Git diff returned error code. There is an error in the build automation."
             )
