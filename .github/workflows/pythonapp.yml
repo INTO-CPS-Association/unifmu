@@ -31,6 +31,7 @@ jobs:
         run: |
           python build.py --test-integration
       - name: commit win64 wrapper to repo
+        if: github.ref == 'refs/heads/master'
         run: |
           python build.py --github-update-wrapper
 
@@ -58,6 +59,7 @@ jobs:
         run: |
           python3 build.py --test-integration
       - name: commit linux64 wrapper to repo
+        if: github.ref == 'refs/heads/master'
         run: |
           python3 build.py --github-update-wrapper
 
@@ -85,5 +87,6 @@ jobs:
         run: |
           python3 build.py --test-integration
       - name: commit darwin64 wrapper to repo
+        if: github.ref == 'refs/heads/master'
         run: |
           python3 build.py --github-update-wrapper
