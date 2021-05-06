@@ -105,14 +105,16 @@ class MatlabInterface:
     def serialize(eng) -> bytes:
         status, values = eng.serialize(nargout=2)
 
-        import pdb
-        pdb.set_trace()
+        if not isinstance(values, Sequence):
+            result = [values]
+        else:
+            result = [v for v in values[0]]
 
-        return status, values
+        return status, bytes(result)
 
     @staticmethod
     def deserialize(state: bytes, eng):
-        return Fmi2Status.ok
+        return eng.deserialize(matlab.uint8(state), nargout=1)
 
     @staticmethod
     def do_step(
