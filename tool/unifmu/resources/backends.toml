@@ -33,7 +33,8 @@ files = [
   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
   ["backends/python/fmi2.py", "resources/fmi2.py"],
   ["backends/matlabfmu/matlab_proxy.py", "resources/matlab_proxy.py"],
-  ["backends/matlabfmu/launch_matlab_proxy.toml", "resources/launch.toml"],
+  ["backends/matlabfmu/launch.toml", "resources/launch.toml"],
+  ["backends/matlabfmu/README.md", "README.md"],
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
 dirs = [

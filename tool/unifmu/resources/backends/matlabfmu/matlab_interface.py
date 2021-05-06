@@ -1,5 +1,4 @@
 import logging
-import pickle
 from collections.abc import Sequence
 
 import matlab.engine

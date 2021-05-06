@@ -35,6 +35,7 @@ COMMAND_ENCODING = {
     # 16: "get_xxx_status",
 }
 
+
 def ensure_matlab_in_dir(cmd_str):
     file_name = f"{cmd_str}.m"
     if not os.path.exists(file_name):
