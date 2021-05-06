@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
         # with TemporaryDirectory() as tmpdir:
 
-        test_cases = ["python_schemaless_rpc", "python_grpc", "csharp", "matlabfmu"]
+        test_cases = ["python_schemaless_rpc", "python_grpc", "csharp"]
         logger.info(
             f"Starting integration test of the following backends: {test_cases}"
         )

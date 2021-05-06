@@ -18,8 +18,6 @@ class Adder(Fmi2FMU):
 
         self._update_outputs()
 
-        
-
     def __repr__(self):
         return "Adder"
 

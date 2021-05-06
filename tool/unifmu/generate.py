@@ -1,3 +1,4 @@
+import pdb
 import shutil
 from os import makedirs
 from pathlib import Path
@@ -116,7 +117,6 @@ def generate_fmu_from_backend(backend: str, output_path):
                 }
 
         for src, dst in files_to_output.items():
-
             src = tmpdir_resources / "resources" / src
 
             if not src.exists():
