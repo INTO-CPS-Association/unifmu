@@ -14,46 +14,20 @@ files = [
   ["backends/empty/launch.toml", "resources/launch.toml"],
 ]
 
-[backend.python_schemaless_rpc]
+[backend.python]
 files = [
   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-  ["backends/python/adder.py", "resources/adder.py"],
+  ["backends/python/model.py", "resources/model.py"],
   ["backends/python/fmi2.py", "resources/fmi2.py"],
+  ["backends/python/launch.toml", "resources/launch.toml"],
   ["backends/python/backend_schemaless_rpc.py", "resources/backend_schemaless_rpc.py"],
-  ["backends/python/launch_schemaless_rpc.toml", "resources/launch.toml"],
-  ["common/modelDescription.xml", "modelDescription.xml"],
-]
-
-[backend.python_schemaless_rpc_dockerized]
-files = [
-  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
-  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
-  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-  ["backends/python/adder.py", "resources/src/adder.py"],
-  ["backends/python/fmi2.py", "resources/src/fmi2.py"],
-  ["backends/python/backend_schemaless_rpc.py", "resources/src/backend_schemaless_rpc.py"],
-  ["backends/python/requirements.txt", "resources/requirements.txt"],
-  ["backends/python/Dockerfile_schemaless", "resources/Dockerfile"],
-  ["backends/docker/run.sh", "resources/run.sh"],
-  ["backends/docker/run.ps1", "resources/run.ps1"],
-  ["backends/docker/launch.toml", "resources/launch.toml"],
-  ["common/modelDescription.xml", "modelDescription.xml"],
-]
-
-[backend.python_grpc]
-files = [
-  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
-  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
-  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-  ["backends/python/adder.py", "resources/adder.py"],
-  ["backends/python/fmi2.py", "resources/fmi2.py"],
   ["backends/python/backend_grpc.py", "resources/backend_grpc.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2.py", "resources/schemas/unifmu_fmi2_pb2.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2_grpc.py", "resources/schemas/unifmu_fmi2_pb2_grpc.py"],
-  ["backends/python/launch_grpc.toml", "resources/launch.toml"],
   ["common/modelDescription.xml", "modelDescription.xml"],
+  ["backends/python/Dockerfile", "resources/Dockerfile"],
 ]
 
 [backend.csharp]

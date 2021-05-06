@@ -1,0 +1,12 @@
+backend = "grpc"
+
+[grpc]
+linux = ["python3", "backend_grpc.py"]
+macos = ["python3", "backend_grpc.py"]
+windows = ["python", "backend_grpc.py"]
+
+[zmq]
+linux = ["python3", "backend_schemaless_rpc.py"]
+macos = ["python3", "backend_schemaless_rpc.py"]
+serialization_format = "Pickle"
+windows = ["python", "backend_schemaless_rpc.py"]

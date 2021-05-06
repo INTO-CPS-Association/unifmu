@@ -8,7 +8,7 @@ from pathlib import Path
 import zmq
 
 from fmi2 import Fmi2Status, Fmi2FMU
-from adder import Adder
+from model import Model
 
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         for v in ET.parse(f).find("ModelVariables"):
             reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
 
-    slave: Fmi2FMU = Adder(reference_to_attr)
+    slave: Fmi2FMU = Model(reference_to_attr)
 
     # methods bound to a slave which returns status codes
     command_to_slave_methods = {
