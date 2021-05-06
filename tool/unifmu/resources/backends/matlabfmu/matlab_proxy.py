@@ -10,6 +10,7 @@ import zmq
 
 from matlabfmu import MatlabFMU
 from fmi2 import Fmi2FMU
+from unifmu.fmi2 import parse_model_description
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
@@ -45,6 +46,12 @@ if __name__ == "__main__":
     # create slave object then use model description to create a mapping between fmi value references and attribute names of FMU
 
     reference_to_attr = {}
+    attr_to_start = {}
+
+    with open(Path.cwd().parent / "modelDescription.xml") as f:
+        model_description_str = f.read()
+        model_desc = parse_model_description(model_description_str)
+
     with open(Path.cwd().parent / "modelDescription.xml") as f:
         for v in ET.parse(f).find("ModelVariables"):
             reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
