@@ -52,9 +52,8 @@ if __name__ == "__main__":
         model_description_str = f.read()
         model_desc = parse_model_description(model_description_str)
 
-    with open(Path.cwd().parent / "modelDescription.xml") as f:
-        for v in ET.parse(f).find("ModelVariables"):
-            reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
+        for v in model_desc.modelVariables:
+            reference_to_attr[int(v.value_reference)] = v.name
 
     os.chdir("matlabcode")
 
