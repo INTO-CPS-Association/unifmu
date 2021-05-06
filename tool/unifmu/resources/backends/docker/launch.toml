@@ -1,12 +1,12 @@
 backend = "grpc"
 
-[command.grpc]
-linux = ["python3", "deploy.sh"]
-macos = ["python3", "deploy.sh"]
-windows = ["python", "deploy.ps1"]
+[grpc]
+linux = ["/bin/bash", "deploy.sh"]
+macos = ["/bin/bash", "deploy.sh"]
+windows = ["powershell", "deploy.ps1"]
 
-[command.zmq]
-linux = ["python3", "deploy.sh"]
-macos = ["python3", "deploy.sh"]
+[zmq]
+linux = ["/bin/bash", "deploy.sh"]
+macos = ["/bin/bash", "deploy.sh"]
 serialization_format = "Pickle"
-windows = ["python", "deploy.sh"]
+windows = ["powershell", "deploy.sh"]

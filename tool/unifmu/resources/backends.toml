@@ -27,7 +27,6 @@ files = [
   ["backends/python/schemas/unifmu_fmi2_pb2.py", "resources/schemas/unifmu_fmi2_pb2.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2_grpc.py", "resources/schemas/unifmu_fmi2_pb2_grpc.py"],
   ["common/modelDescription.xml", "modelDescription.xml"],
-  ["backends/python/Dockerfile", "resources/Dockerfile"],
 ]
 
 [backend.csharp]

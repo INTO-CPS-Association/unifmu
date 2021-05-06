@@ -1,4 +1,5 @@
 import argparse
+from unifmu.generate import dockerize
 
 
 from unifmu.generate import get_backends, generate_fmu_from_backend
@@ -28,11 +29,17 @@ def main():
         type=str,
         help="directory into which the FMU's resources are written (new directories will be created if needed)",
     )
+    generate_parser.add_argument(
+        "--dockerize", action="store_true", help="enable docker support for FMU",
+    )
 
     args = parser.parse_args()
 
     if args.subprogram == "generate":
         generate_fmu_from_backend(args.backend, args.outdir)
+
+        if args.dockerize:
+            dockerize(args.backend, args.outdir)
 
     if args.subprogram == "gui":
 
