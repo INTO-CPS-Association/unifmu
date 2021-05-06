@@ -53,7 +53,7 @@ if __name__ == "__main__":
         model_desc = parse_model_description(model_description_str)
 
         for v in model_desc.modelVariables:
-            reference_to_attr[int(v.value_reference)] = v.name
+            reference_to_attr[v.value_reference] = v.name
 
     os.chdir("matlabcode")
 

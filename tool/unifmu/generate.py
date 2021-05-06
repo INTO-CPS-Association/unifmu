@@ -1,25 +1,18 @@
+import shutil
 from os import makedirs
 from pathlib import Path
 from shutil import copy, copytree
 from tempfile import TemporaryDirectory
-import shutil
 from typing import List
-import zipfile
 from zipfile import ZipFile
 
-# import xml.etree.ElementTree as ET
-import pkg_resources
-
-# import xml.etree.ElementTree as ET
-
 import lxml.etree as ET
+import pkg_resources
 import toml
 
 from unifmu.fmi2 import (
     ModelDescription,
-    CoSimulation,
-    ScalarVariable,
-    get_intitial_choices_and_default, parse_model_description,
+    parse_model_description,
 )
 
 

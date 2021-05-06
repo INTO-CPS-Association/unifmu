@@ -16,7 +16,7 @@ class ScalarVariable:
     def __init__(
         self,
         name: str,
-        valueReference: str,
+        valueReference: int,
         dataType: str,
         description: str,
         causality: str = "local",
@@ -277,7 +277,7 @@ def parse_model_description(model_description: str) -> ModelDescription:
         model_variables.append(
             ScalarVariable(
                 name=scalarVariable.get("name"),
-                valueReference=scalarVariable.get("valueReference"),
+                valueReference=int(scalarVariable.get("valueReference")),
                 variability=variability,
                 causality=causality,
                 description=scalarVariable.get("description", default=""),
