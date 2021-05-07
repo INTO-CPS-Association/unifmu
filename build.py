@@ -1,4 +1,5 @@
 import argparse
+from contextlib import contextmanager
 from pathlib import Path
 import logging
 import shutil
@@ -24,6 +25,18 @@ class Chdir:
 
     def __exit__(self, type, value, traceback):
         os.chdir(self.old_wd)
+
+
+@contextmanager
+def silent_temp_dir(logger, prefix, keep):
+    # Code to acquire resource, e.g.:
+    temp_path = Path(mkdtemp(prefix=prefix))
+    try:
+        yield temp_path
+    finally:
+        if not keep:
+            logger.debug(f"attempting to remove {temp_path}")
+            rmtree(temp_path, lambda func, path, exc_info: logger.warn(f"Failed to delete {path}: {func}, {exc_info}."))
 
 
 if __name__ == "__main__":
@@ -68,6 +81,14 @@ if __name__ == "__main__":
         dest="test_integration",
         action="store_true",
         help="run rust integration tests",
+    )
+
+    parser.add_argument(
+        "--keep-generated-fmus",
+        dest="keep_generated",
+        action="store_true",
+        help="Use with --test-integration. Keeps the temporary folders (useful for debugging).",
+        default=False
     )
 
     parser.add_argument(
@@ -209,27 +230,26 @@ if __name__ == "__main__":
             f"Starting integration test of the following backends: {test_cases}"
         )
 
-        for backend in test_cases:
-            tmpdir = Path(mkdtemp(prefix="unifmu_test"))
-            fmu_path = tmpdir / "fmu"
-            generate_fmu_from_backend(backend, fmu_path)
+        with silent_temp_dir(logger, prefix="unifmu_test", keep=args.keep_generated) as tmpdir:
+            for backend in test_cases:
+                fmu_path = tmpdir / backend
+                generate_fmu_from_backend(backend, fmu_path)
 
-            resources_uri = (fmu_path / "resources").absolute().as_uri()
-            os.environ["UNIFMU_ADDER_RESOURCES_URI"] = resources_uri
-            os.environ["UNIFMU_ADDER_LIBRARY"] = wrapper_lib
-            logger.info(
-                f"running integration tests, with resource-uri: {resources_uri} and library: {wrapper_lib}"
-            )
-
-            with Chdir("wrapper"):
-
-                res = subprocess.run(
-                    args=["cargo", "test", "--", "--nocapture"]  #  "--show-output",
+                resources_uri = (fmu_path / "resources").absolute().as_uri()
+                os.environ["UNIFMU_ADDER_RESOURCES_URI"] = resources_uri
+                os.environ["UNIFMU_ADDER_LIBRARY"] = wrapper_lib
+                logger.info(
+                    f"running integration tests, with resource-uri: {resources_uri} and library: {wrapper_lib}"
                 )
 
-                if res.returncode != 0:
-                    logger.error(f"integration tests failed for backend {backend}")
-                    sys.exit(-1)
+                with Chdir("wrapper"):
+                    res = subprocess.run(
+                        args=["cargo", "test", "--", "--nocapture"]  #  "--show-output",
+                    )
+
+                    if res.returncode != 0:
+                        logger.error(f"integration tests failed for backend {backend}")
+                        sys.exit(-1)
 
         logger.info("integration tests successful")
 
@@ -284,4 +304,5 @@ if __name__ == "__main__":
                 "Git diff returned error code. There is an error in the build automation."
             )
             exit(-1)
+
 
