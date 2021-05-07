@@ -7,8 +7,8 @@ To use this FMU, you need:
 - a python interpreter with the following
   - matlab engine installed (instructions taken from [here](https://se.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html))
     1. Make sure you have a python that's compatible with your matlab.
-    2. Open a terminal at the Matlab's python installation directory. For example: C:\Program Files\MATLAB\R2021a\extern\engines\python
-    3. Install the matlab engine: `pip install .`
+    2. Open an administrator's terminal at the Matlab's python installation directory. For example: C:\Program Files\MATLAB\R2021a\extern\engines\python
+    3. Install the matlab engine (use `sudo` if on linux): `pip install .`
     4. Test the matlab engine by starting a python interpreter and running
         ```
         >>> import matlab.engine
