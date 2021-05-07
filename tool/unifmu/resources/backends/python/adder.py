@@ -62,7 +62,7 @@ class Adder(Fmi2FMU):
     def _update_outputs(self):
         self.real_c = self.real_a + self.real_b
         self.integer_c = self.integer_a + self.integer_b
-        self.boolean_c = self.boolean_a and self.boolean_b
+        self.boolean_c = self.boolean_a or self.boolean_b
         self.string_c = self.string_a + self.string_b
 
     def do_step(self, current_time, step_size, no_step_prior):

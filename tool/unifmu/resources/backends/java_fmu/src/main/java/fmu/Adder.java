@@ -42,7 +42,7 @@ public class Adder extends FMI2FMU {
     private void update_outputs() {
         real_c = real_a + real_b;
         integer_c = integer_a + integer_b;
-        boolean_c = boolean_a && boolean_b;
+        boolean_c = boolean_a || boolean_b;
         string_c = string_a + string_b;
     }
 

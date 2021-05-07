@@ -6,7 +6,6 @@ from shutil import SameFileError, rmtree
 import subprocess
 import os
 import sys
-from sys import platform
 import platform
 from os import makedirs
 
@@ -205,15 +204,13 @@ if __name__ == "__main__":
         # export test examples into tmp directory and execute tests
         from tempfile import mkdtemp
 
-        # with TemporaryDirectory() as tmpdir:
-
         test_cases = ["python_schemaless_rpc", "python_grpc", "csharp" , "matlabfmu"]
         logger.info(
             f"Starting integration test of the following backends: {test_cases}"
         )
 
         for backend in test_cases:
-            tmpdir = Path(mkdtemp())
+            tmpdir = Path(mkdtemp(prefix="unifmu_test"))
             fmu_path = tmpdir / "fmu"
             generate_fmu_from_backend(backend, fmu_path)
 

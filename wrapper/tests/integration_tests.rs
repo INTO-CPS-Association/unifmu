@@ -167,7 +167,7 @@ mod tests {
                 assert_eq!(vals[0], 0);
                 assert_eq!(vals[1], 0); // 0.0 is default
                 vals[0] = 1;
-                vals[1] = 1;
+                vals[1] = 0;
                 assert_eq!(
                     fmi2SetBoolean(slave, refs.as_ptr(), 2, vals.as_ptr()),
                     Fmi2Status::Fmi2OK
@@ -255,7 +255,7 @@ mod tests {
             cur_time += step_size;
         }
 
-        // // roll back to initial state, then check if it behaves as newly intialized
+        // rollback to initial state, then check if it behaves as newly intialized
 
         let state = repr_c::Box::new(state.take().unwrap());
 
@@ -302,7 +302,7 @@ mod tests {
         fmi2Terminate(&mut slave);
         fmi2Reset(&mut slave);
 
-        // // No way to check if actually freed
+        // No way to check if actually freed
 
         fmi2FreeInstance(Some(slave));
     }

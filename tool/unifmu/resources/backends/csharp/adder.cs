@@ -110,7 +110,7 @@ public class Adder : Fmi2FMU
     {
         this.real_c = real_a + real_b;
         this.integer_c = integer_a + integer_b;
-        this.boolean_c = boolean_a && boolean_b;
+        this.boolean_c = boolean_a || boolean_b;
         this.string_c = string_a + string_b;
     }
 
