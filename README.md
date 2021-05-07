@@ -535,3 +535,22 @@ The wrapper is implemented in Rust. The source code can be in `wrapper/src` dire
 
 The GUI is implemented in python using the wxpython framework.
 The source code for this can be found in the `tool/unifmu` directory.
+
+
+## Citing the tool
+
+When citing the tool, please cite the following paper:
+- Legaard, Christian M., Daniella Tola, Thomas Schranz, Hugo Daniel Macedo, and Peter Gorm Larsen. “A Universal Mechanism for Implementing Functional Mock-up Units,” to appear. SIMULTECH 2021. Virtual Event, 2021.
+
+Bibtex:
+```
+@inproceedings{Legaard2021,
+  title = {A Universal Mechanism for Implementing Functional Mock-up Units},
+  booktitle = {11th {{International}} Conference on Simulation and Modeling Methodologies, Technologies and Applications},
+  author = {Legaard, Christian M. and Tola, Daniella and Schranz, Thomas and Macedo, Hugo Daniel and Larsen, Peter Gorm},
+  year = {2021},
+  pages = {to appear},
+  address = {{Virtual Event}},
+  series = {{{SIMULTECH}} 2021}
+}
+```
