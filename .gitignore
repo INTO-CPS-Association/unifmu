@@ -6,6 +6,8 @@ thirdparty/
 /.vscode
 **.pyc
 
+.idea/
+
 /target
 Cargo.lock
 

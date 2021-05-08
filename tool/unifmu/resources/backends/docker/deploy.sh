@@ -11,4 +11,4 @@ echo "build container for $uid"
 docker build -t "$uid" .
 
 # run container
-docker run --net=host --rm "$uid" python3 bootstrap.py "$1" "$2"
+docker run --net=host --add-host=host.docker.internal:host-gateway --rm "$uid" python3 bootstrap.py "$@"

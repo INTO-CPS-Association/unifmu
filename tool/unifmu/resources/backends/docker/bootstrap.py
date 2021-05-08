@@ -12,14 +12,15 @@ if __name__ == "__main__":
     # localhost or 127.0.0.1 must be replaced with
     # 'host.docker.internal' such that the container
     # knows to connect to the "host's" localhost.
-    for idx, value in enumerate(sys.argv):
-        if value == "--handshake-endpoint":
-            handshake_endpoint = (
-                sys.argv[idx + 1]
-                .replace("localhost", "host.docker.internal")
-                .replace("127.0.0.1", "host.docker.internal")
-            )
-            sys.argv[idx + 1] = handshake_endpoint
+    if platform.system() == "Windows":
+        for idx, value in enumerate(sys.argv):
+            if value == "--handshake-endpoint":
+                handshake_endpoint = (
+                    sys.argv[idx + 1]
+                    .replace("localhost", "host.docker.internal")
+                    .replace("127.0.0.1", "host.docker.internal")
+                )
+                sys.argv[idx + 1] = handshake_endpoint
 
     # The command run by script is determined by the contents
     # of 'launch.toml' and the keyword arguments passed
