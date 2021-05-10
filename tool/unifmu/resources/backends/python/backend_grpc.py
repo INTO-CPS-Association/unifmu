@@ -176,6 +176,19 @@ if __name__ == "__main__":
         help="ip_address:port",
         required=True,
     )
+    parser.add_argument(
+        "--command-endpoint",
+        dest="command_endpoint",
+        type=str,
+        help="if specified, use this endpoint (ip:port) for command socket instead of randomly allocated",
+        required=False,
+    )
+
+    args = parser.parse_args()
+
+    command_endpoint = args.command_endpoint if args.command_endpoint else "127.0.0.1:0"
+    ip, port = command_endpoint.split(":")
+
     handshake_info = parser.parse_args().handshake_endpoint
     logger.info(f"Connecting to ip and port: {handshake_info}")
     handshaker_channel = grpc.insecure_channel(handshake_info)
@@ -190,15 +203,14 @@ if __name__ == "__main__":
 
     server = grpc.server(futures.ThreadPoolExecutor())
     add_SendCommandServicer_to_server(CommandServicer(slave), server)
-    ip = "localhost"
-    p = server.add_insecure_port(f"{ip}:0")  # change port to 0, to bind to random port
+    port = str(server.add_insecure_port(command_endpoint))
     server.start()
-    logger.info(f"Started fmu slave on port: {p}")
+    logger.info(f"Started fmu slave on port: {port}")
     logger.info("Waiting!")
 
     # Tell the unifmu wrapper which ip and port the fmu is connected to
     handshaker_client = HandshakerStub(handshaker_channel)
-    handshake_message = HandshakeInfo(ip_address=ip, port=str(p))
+    handshake_message = HandshakeInfo(ip_address=ip, port=port)
     handshaker_client.PerformHandshake(handshake_message)
     handshaker_channel.close()
 

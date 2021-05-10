@@ -1,6 +1,6 @@
 import subprocess
 import sys
-import platform
+from argparse import ArgumentParser
 
 import toml
 
@@ -8,11 +8,18 @@ if __name__ == "__main__":
     data = toml.load("launch.toml")
     backend = data["backend"]
 
-    # In cases where the binary is running on localhost
-    # localhost or 127.0.0.1 must be replaced with
-    # 'host.docker.internal' such that the container
-    # knows to connect to the "host's" localhost.
-    if platform.system() == "Windows":
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--use-docker-localhost",
+        dest="use_docker_localhost",
+        action="store_true",
+        help="if true, replace occurences of 'localhost' and "
+        " '127.0.0.1' with 'host.docker.internal' in --handshake-endpoint.",
+    )
+
+    args, _ = parser.parse_known_args()
+
+    if args.use_docker_localhost:
         for idx, value in enumerate(sys.argv):
             if value == "--handshake-endpoint":
                 handshake_endpoint = (
@@ -21,6 +28,7 @@ if __name__ == "__main__":
                     .replace("127.0.0.1", "host.docker.internal")
                 )
                 sys.argv[idx + 1] = handshake_endpoint
+        sys.argv.remove("--use-docker-localhost")
 
     # The command run by script is determined by the contents
     # of 'launch.toml' and the keyword arguments passed
