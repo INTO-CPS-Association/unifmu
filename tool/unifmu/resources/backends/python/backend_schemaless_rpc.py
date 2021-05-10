@@ -8,7 +8,7 @@ from pathlib import Path
 import zmq
 
 from fmi2 import Fmi2Status, Fmi2FMU
-from adder import Adder
+from model import Model
 
 
 if __name__ == "__main__":
@@ -24,14 +24,29 @@ if __name__ == "__main__":
         help="socket",
         required=True,
     )
+    parser.add_argument(
+        "--command-endpoint",
+        dest="command_endpoint",
+        type=str,
+        help="if specified, use this endpoint (ip:port) for command socket instead of randomly allocated.",
+        required=False,
+    )
     args = parser.parse_args()
+
+    command_endpoint = (
+        f"tcp://{args.command_endpoint}"
+        if args.command_endpoint
+        else "tcp://127.0.0.1:0"
+    )
 
     # initializing message queue
     context = zmq.Context()
     handshake_socket = context.socket(zmq.PUSH)
     command_socket = context.socket(zmq.REP)
+    logger.info(f"hanshake endpoint received: {args.handshake_endpoint}")
     handshake_socket.connect(f"{args.handshake_endpoint}")
-    command_port = command_socket.bind_to_random_port("tcp://127.0.0.1")
+
+    command_port = command_socket.bind(command_endpoint)
 
     handshake_info = {
         "serialization_format": "Pickle",
@@ -48,7 +63,7 @@ if __name__ == "__main__":
         for v in ET.parse(f).find("ModelVariables"):
             reference_to_attr[int(v.attrib["valueReference"])] = v.attrib["name"]
 
-    slave: Fmi2FMU = Adder(reference_to_attr)
+    slave: Fmi2FMU = Model(reference_to_attr)
 
     # methods bound to a slave which returns status codes
     command_to_slave_methods = {

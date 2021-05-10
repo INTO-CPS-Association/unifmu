@@ -1,7 +1,7 @@
 from os import makedirs
 from pathlib import Path
 from shutil import copy, copytree
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, tempdir
 import shutil
 from typing import List
 import zipfile
@@ -146,6 +146,34 @@ def generate_fmu_from_backend(backend: str, output_path):
             copytree(src, dst)
 
         shutil.copytree(tmpdir_fmu, output_path)
+
+
+def get_resource(resource_name) -> bytes:
+
+    return pkg_resources.resource_string(__name__, resource_name)
+
+
+def dockerize(backend, fmu_path):
+
+    resources_path = Path(fmu_path) / "resources"
+
+    # move all resouces into a subdirectory 'container_bundle'
+    tmp_path = Path(fmu_path) / "tmp" / "container_bundle"
+    shutil.move(resources_path, tmp_path)
+    shutil.move(Path(fmu_path) / "tmp", Path(fmu_path) / "resources")
+
+    docker_file = f"Dockerfile_{backend}"  # the "actual" Dockerfile
+    all_docker_files = {
+        "resources/backends/docker/bootstrap.py": "container_bundle/bootstrap.py",
+        "resources/backends/docker/launch.toml": "launch.toml",
+        "resources/backends/docker/deploy.ps1": "deploy.ps1",
+        "resources/backends/docker/deploy.sh": "deploy.sh",
+        f"resources/backends/docker/{docker_file}": "Dockerfile",
+    }
+    for src, dest in all_docker_files.items():
+
+        with open(resources_path / dest, "wb") as f:
+            f.write(get_resource(src))
 
 
 def _get_attribute_default_values():

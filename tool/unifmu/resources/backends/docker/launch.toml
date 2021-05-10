@@ -1,5 +1,12 @@
-[command.Zmq]
-linux = ["/bin/bash", "run.sh" ]
-macos = ["/bin/bash", "run.sh" ]
+backend = "grpc"
+
+[grpc]
+linux = ["/bin/bash", "deploy.sh"]
+macos = ["/bin/bash", "deploy.sh"]
+windows = ["powershell", ".\\deploy.ps1"]
+
+[zmq]
+linux = ["/bin/bash", "deploy.sh"]
+macos = ["/bin/bash", "deploy.sh"]
 serialization_format = "Pickle"
-windows = ["powershell", ".\\run.ps1"]
+windows = ["powershell", ".\\deploy.ps1"]

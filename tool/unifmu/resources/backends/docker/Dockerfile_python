@@ -1,0 +1,8 @@
+FROM python:3.8
+
+RUN pip install zmq grpcio toml protobuf
+
+COPY container_bundle resources
+RUN mv resources/modelDescription.xml modelDescription.xml
+
+WORKDIR /resources
