@@ -9,6 +9,7 @@ import sys
 from sys import platform
 import platform
 from os import makedirs
+from distutils.util import strtobool
 
 
 from unifmu.generate import generate_fmu_from_backend, get_backends
@@ -41,15 +42,15 @@ if __name__ == "__main__":
     binary_basename = "unifmu"
 
     # note that lib prefix is removed
-    input, output = {
+    input_path, output_path = {
         "Linux": (f"lib{binary_basename}.so", f"linux64/{binary_basename}.so"),
         "Windows": (f"{binary_basename}.dll", f"win64/{binary_basename}.dll"),
         "Darwin": (f"lib{binary_basename}.dylib", f"darwin64/{binary_basename}.dylib"),
     }[s]
 
-    wrapper_in = Path(f"wrapper/target/debug/{input}").absolute().__fspath__()
+    wrapper_in = Path(f"wrapper/target/debug/{input_path}").absolute().__fspath__()
     wrapper_lib = Path(
-        f"tool/unifmu/resources/common/unifmu_binaries/{output}"
+        f"tool/unifmu/resources/common/unifmu_binaries/{output_path}"
     ).absolute()
     makedirs(wrapper_lib.parent, exist_ok=True)
     wrapper_lib = wrapper_lib.__fspath__()
@@ -91,6 +92,14 @@ if __name__ == "__main__":
         help="utility used by build automation to commit and push compiled wrapper. "
         "If another repository has pushed changes these will be pulled before attempting "
         "to push again. This command is only meant to be used by GitHub actions!",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--publish-pypi",
+        dest="publish_pypi",
+        help="utility for publishing package to python package index (pipy) such that a "
+        " new version of UniFMU can be installed using 'pip install unifmu'.",
         action="store_true",
     )
 
@@ -288,3 +297,31 @@ if __name__ == "__main__":
             )
             exit(-1)
 
+    if args.publish_pypi:
+
+        logger.info("building distribution using setuptools")
+        subprocess.run(["python", "setup.py", "sdist", "bdist_wheel"], check=True)
+
+        logger.info(
+            "commencing publish to test repository. "
+            "This step allows you to preview the changes before publishing to the real package index. "
+            "Note that you need a separate account for the test package index. "
+            "Go to 'https://test.pypi.org/account/register/' to register your account."
+        )
+
+        choice = input("do you want to publish to test repo? [Y/n]")
+
+        if choice == "" or strtobool(choice):
+            subprocess.run(["twine", "upload", "-r", "testpypi", "dist/*",], check=True)
+        else:
+            logger.info("skipping publish to test repo")
+
+        choice = input(
+            "do you want to publish the distribution to pypi? [y/N] (please review test repo first the link from the shell)."
+        )
+
+        if choice == "" or not strtobool(choice):
+            logger.info("publishing to pypi")
+        else:
+            logger.info("publishing to pypi")
+            subprocess.run(["twine", "upload", "dist/*"])
