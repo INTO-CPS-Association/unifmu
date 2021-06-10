@@ -44,17 +44,20 @@ _extras_require = {
     # - grpc-based: used `protobuf` and `grpcio`
     # - schemaless: uses `pyzmq`
     "python-backend": ["protobuf", "grpcio", "pyzmq"],
+    # utilities for installing and packaging distributions of unifmu
+    "setuptools": ["setuptools", "twine"],
 }
 _extras_require["dev"] = (
     _extras_require["docs"]
     + _extras_require["gui"]
     + _extras_require["python-backend"]
     + _extras_require["protobuf-schema-generation"]
+    + _extras_require["setuptools"]
 )
 
 setup(
     name="unifmu",
-    version="0.0.1",
+    version="0.0.2",
     author="INTO-CPS Association",
     description="A set of tools for developing functional-mockup-units (FMUs) implemented in any language.",
     long_description=long_description,
