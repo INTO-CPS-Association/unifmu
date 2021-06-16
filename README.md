@@ -120,7 +120,7 @@ UniFMU provides a generic binary that can be dropped into any newly created FMUs
 The first thing that happens during simulation is the creation of instances of the particular FMU, each referred to as a slave.
 UniFMU uses a simple configuration file `launch.toml`, located in the resources directory, to specify a command that is used to create new instances of the FMU.
 
-__NOTE: The modelDescription.xml file has to be unzipped and available in the parent directory of the unzipped resources directory upon instantiation of an FMU Instance.__
+__NOTE: Some backends require that the modelDescription.xml file has to be unzipped and available in the parent directory of the unzipped resources directory upon instantiation of an FMU Instance.__
 
 Below is a configuration for starting a python based FMU, see `examples/python_fmu`:
 
