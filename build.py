@@ -191,7 +191,7 @@ if __name__ == "__main__":
             ("python", "tool/unifmu/resources/backends/python/", generate_python),
             (
                 "java",
-                "tool/unifmu/resources/backends/java_fmu/src/main/java/",
+                "tool/unifmu/resources/backends/java/src/main/java/",
                 generate_java,
             ),
             (

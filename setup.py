@@ -57,7 +57,7 @@ _extras_require["dev"] = (
 
 setup(
     name="unifmu",
-    version="0.0.2",
+    version="0.0.3",
     author="INTO-CPS Association",
     description="A set of tools for developing functional-mockup-units (FMUs) implemented in any language.",
     long_description=long_description,
