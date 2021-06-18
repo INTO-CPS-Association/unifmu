@@ -14,61 +14,34 @@ files = [
   ["backends/empty/launch.toml", "resources/launch.toml"],
 ]
 
-[backend.python_schemaless_rpc]
-files = [
-  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
-  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
-  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-  ["backends/python/adder.py", "resources/adder.py"],
-  ["backends/python/fmi2.py", "resources/fmi2.py"],
-  ["backends/python/backend_schemaless_rpc.py", "resources/backend_schemaless_rpc.py"],
-  ["backends/python/launch_schemaless_rpc.toml", "resources/launch.toml"],
-  ["common/modelDescription.xml", "modelDescription.xml"],
-]
-
-[backend.matlabfmu]
-files = [
-  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
-  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
-  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-  ["backends/python/fmi2.py", "resources/fmi2.py"],
-  ["backends/matlabfmu/matlab_proxy.py", "resources/matlab_proxy.py"],
-  ["backends/matlabfmu/matlab_interface.py", "resources/matlab_interface.py"],
-  ["backends/matlabfmu/launch.toml", "resources/launch.toml"],
-  ["backends/matlabfmu/README.md", "README.md"],
-  ["common/modelDescription.xml", "modelDescription.xml"],
-]
+[backend.matlab]
 dirs = [
-  ["backends/matlabfmu/matlabcode", "resources/matlabcode"],
+  ["backends/matlab/matlabcode", "resources/matlabcode"],
 ]
-
-[backend.python_schemaless_rpc_dockerized]
 files = [
   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-  ["backends/python/adder.py", "resources/src/adder.py"],
-  ["backends/python/fmi2.py", "resources/src/fmi2.py"],
-  ["backends/python/backend_schemaless_rpc.py", "resources/src/backend_schemaless_rpc.py"],
-  ["backends/python/requirements.txt", "resources/requirements.txt"],
-  ["backends/python/Dockerfile_schemaless", "resources/Dockerfile"],
-  ["backends/docker/run.sh", "resources/run.sh"],
-  ["backends/docker/run.ps1", "resources/run.ps1"],
-  ["backends/docker/launch.toml", "resources/launch.toml"],
+  ["backends/python/fmi2.py", "resources/fmi2.py"],
+  ["backends/matlab/matlab_proxy.py", "resources/matlab_proxy.py"],
+  ["backends/matlab/matlab_interface.py", "resources/matlab_interface.py"],
+  ["backends/matlab/launch.toml", "resources/launch.toml"],
+  ["backends/matlab/README.md", "README.md"],
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
 
-[backend.python_grpc]
+[backend.python]
 files = [
   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-  ["backends/python/adder.py", "resources/adder.py"],
+  ["backends/python/model.py", "resources/model.py"],
   ["backends/python/fmi2.py", "resources/fmi2.py"],
+  ["backends/python/launch.toml", "resources/launch.toml"],
+  ["backends/python/backend_schemaless_rpc.py", "resources/backend_schemaless_rpc.py"],
   ["backends/python/backend_grpc.py", "resources/backend_grpc.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2.py", "resources/schemas/unifmu_fmi2_pb2.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2_grpc.py", "resources/schemas/unifmu_fmi2_pb2_grpc.py"],
-  ["backends/python/launch_grpc.toml", "resources/launch.toml"],
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
 
@@ -89,19 +62,19 @@ files = [
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]
 
-# [backend.java]
+[backend.java]
 
-# files = [
-#   ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
-#   ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
-#   ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
-#   ["backends/java/launch.toml", "resources/launch.toml"],
-#   ["backends/java/pom.xml", "resources/pom.xml"],
-#   ["backends/java/build.ps1", "resources/build.ps1"],
-#   ["backends/java/build.sh", "resources/build.sh"],
-#   ["common/modelDescription.xml", "modelDescription.xml"],
-# ]
+files = [
+  ["common/unifmu_binaries/win64/unifmu.dll", "binaries/win64/unifmu.dll"],
+  ["common/unifmu_binaries/linux64/unifmu.so", "binaries/linux64/unifmu.so"],
+  ["common/unifmu_binaries/darwin64/unifmu.dylib", "binaries/darwin64/unifmu.dylib"],
+  ["backends/java/launch.toml", "resources/launch.toml"],
+  ["backends/java/pom.xml", "resources/pom.xml"],
+  ["backends/java/build.ps1", "resources/build.ps1"],
+  ["backends/java/build.sh", "resources/build.sh"],
+  ["common/modelDescription.xml", "modelDescription.xml"],
+]
 
-# dirs = [
-#   ["backends/java/src", "resources/src"],
-# ]
+dirs = [
+  ["backends/java/src", "resources/src"],
+]

@@ -5,18 +5,22 @@ use serde::Deserialize;
 use crate::{google_rpc::GRPCConfig, schemaless_rpc::ZMQConfig};
 use crate::{google_rpc::ProtobufGRPC, schemaless_rpc::ZMQSchemalessRPC, Fmi2Status};
 
+#[derive(Deserialize, Clone, Debug)]
+pub enum RpcConfigType {
+    #[serde(rename = "zmq")]
+    Zmq,
+    #[serde(rename = "grpc")]
+    Grpc,
+}
+
 /// Data-structure representing the contents of the launch.toml file,
 /// located in the 'resources' directory of an FMU.
 /// The backend such as `grpc` or `zmq` is choosen based on the concrete contents.
 #[derive(Deserialize, Clone, Debug)]
-pub enum RpcConfigType {
-    Zmq(ZMQConfig),
-    Grpc(GRPCConfig),
-}
-
-#[derive(Deserialize, Debug, Clone)]
 pub struct RpcConfig {
-    pub command: RpcConfigType,
+    backend: RpcConfigType,
+    zmq: Option<ZMQConfig>,
+    grpc: Option<GRPCConfig>,
 }
 
 /// Trait implemented by objects that provide a way to communicate with FMUs using 'Remote Procedure Call' (RPC)
@@ -62,8 +66,18 @@ pub fn initialize_slave_from_config(
     config: RpcConfig,
     resources_dir: PathBuf,
 ) -> Result<Box<dyn Fmi2CommandRPC>, String> {
-    match config.command {
-        RpcConfigType::Zmq(config) => ZMQSchemalessRPC::new(&config, &resources_dir),
-        RpcConfigType::Grpc(config) => ProtobufGRPC::new(&config, &resources_dir),
+    match config.backend {
+        RpcConfigType::Zmq => ZMQSchemalessRPC::new(
+            &config
+                .zmq
+                .expect("The 'zmq' backend does not define any launch commands."),
+            &resources_dir,
+        ),
+        RpcConfigType::Grpc => ProtobufGRPC::new(
+            &config
+                .grpc
+                .expect("The 'grpc' backend does not define any launch commands."),
+            &resources_dir,
+        ),
     }
 }

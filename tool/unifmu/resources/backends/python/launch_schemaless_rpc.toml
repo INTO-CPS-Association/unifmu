@@ -1,5 +1,0 @@
-[command.Zmq]
-linux = ["python3", "backend_schemaless_rpc.py"]
-macos = ["python3", "backend_schemaless_rpc.py"]
-serialization_format = "Pickle"
-windows = ["python", "backend_schemaless_rpc.py"]

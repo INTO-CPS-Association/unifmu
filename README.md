@@ -219,13 +219,13 @@ Building the project requires the following programs:
 A utility script, `build.py`, is located in the root of the repository.
 
 To build and update the wrapper in the examples, use:
+
 ```bash
 pip install setuptools
 pip install .[protobuf-schema-generation,python-backend]
 pip install --upgrade protobuf
 python build.py --test-integration
 ```
-
 
 ## Backends
 
@@ -238,7 +238,7 @@ These can be exported using the GUI or located manually inside the resources fol
 ### Protocol
 
 The goal of the unifmu-protocol is to allow the wrapper to execute commands on slave in a simple and language agnostic way.
-This is done by implementing a request-response protocol where the wrapper sends a command consisting of an function id and a list of arguments for the specific method. 
+This is done by implementing a request-response protocol where the wrapper sends a command consisting of an function id and a list of arguments for the specific method.
 When the slave receives the message, it extracts the id, calls the model's do_step method, and sends the result back to the wrapper.
 
 The process is described by the pseudo code below, which shows the wrapper and the backend code:
@@ -536,13 +536,14 @@ The wrapper is implemented in Rust. The source code can be in `wrapper/src` dire
 The GUI is implemented in python using the wxpython framework.
 The source code for this can be found in the `tool/unifmu` directory.
 
-
 ## Citing the tool
 
 When citing the tool, please cite the following paper:
+
 - Legaard, Christian M., Daniella Tola, Thomas Schranz, Hugo Daniel Macedo, and Peter Gorm Larsen. “A Universal Mechanism for Implementing Functional Mock-up Units,” to appear. SIMULTECH 2021. Virtual Event, 2021.
 
 Bibtex:
+
 ```
 @inproceedings{Legaard2021,
   title = {A Universal Mechanism for Implementing Functional Mock-up Units},
