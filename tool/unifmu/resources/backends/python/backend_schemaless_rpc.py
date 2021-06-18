@@ -5,16 +5,23 @@ import xml.etree.ElementTree as ET
 from argparse import ArgumentParser
 from pathlib import Path
 
-import zmq
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__file__)
+
+try:
+    import zmq
+except ImportError:
+    logger.fatal(
+        "unable to import the python library 'zmq' required by the schemaless backend. "
+        "please ensure that the library is present in the python environment launching the script. "
+        "the missing dependencies can be installed using 'python -m pip install unifmu[python-backend]'"
+        )
+    sys.exit(-1)
 
 from fmi2 import Fmi2Status, Fmi2FMU
 from model import Model
 
-
 if __name__ == "__main__":
-
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__file__)
 
     parser = ArgumentParser()
     parser.add_argument(
