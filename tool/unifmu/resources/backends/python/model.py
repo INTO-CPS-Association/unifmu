@@ -54,6 +54,7 @@ class Model(Fmi2FMU):
         self.boolean_b = boolean_b
         self.string_a = string_a
         self.string_b = string_b
+        self._update_outputs()
 
         return Fmi2Status.ok
 
