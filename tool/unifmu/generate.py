@@ -1,32 +1,27 @@
+import pdb
+import shutil
 from os import makedirs
 from pathlib import Path
 from shutil import copy, copytree
-from tempfile import TemporaryDirectory, tempdir
+from tempfile import TemporaryDirectory
 import shutil
 from typing import List
-import zipfile
 from zipfile import ZipFile
 
-# import xml.etree.ElementTree as ET
-import pkg_resources
-
-# import xml.etree.ElementTree as ET
-
 import lxml.etree as ET
+import pkg_resources
 import toml
 
 from unifmu.fmi2 import (
     ModelDescription,
-    CoSimulation,
-    ScalarVariable,
-    get_intitial_choices_and_default,
+    parse_model_description,
 )
 
 
 def list_resource_files(resource_name: str) -> List[str]:
     """Get a list containing all datafiles and directories available through setuptools pkg_resources interface
 
-    Directories are appended a trailing slash to disinguish them from files, e.g. resoures -> resources/
+    Directories are appended a trailing slash to distinguish them from files, e.g. resources -> resources/
     """
 
     files = []
@@ -74,7 +69,7 @@ def generate_fmu_from_backend(backend: str, output_path):
     """Create a new FMU at specified location using a particular backend.
 
     The resources making up each backend are defined in a configuration file located in the resources directory.
-    Specifically each backend defines a list of source-to-destination experssions:
+    Specifically each backend defines a list of source-to-destination expressions:
 
     ["backends/python/*.py","resources/"],
 
@@ -87,7 +82,7 @@ def generate_fmu_from_backend(backend: str, output_path):
     if "files" not in backend_manifest:
         raise RuntimeError("'files' attribute is not defined in the configuration")
 
-    # create phyiscal files in tmpdir, such that the copy/mv semantics can be implemented with function of standard lib
+    # create physical files in tmpdir, such that the copy/mv semantics can be implemented with function of standard lib
     with TemporaryDirectory() as tmpdir_resources, TemporaryDirectory() as tmpdir_fmu:
         tmpdir_resources = Path(tmpdir_resources)
         tmpdir_fmu = Path(tmpdir_fmu)
@@ -123,11 +118,10 @@ def generate_fmu_from_backend(backend: str, output_path):
                 }
 
         for src, dst in files_to_output.items():
-
             src = tmpdir_resources / "resources" / src
 
             if not src.exists():
-                raise FileNotFoundError(f"The file {src} does not any known resource")
+                raise FileNotFoundError(f"The file {src} does not math any known resource")
 
             if not src.is_file():
                 raise FileNotFoundError(
@@ -221,172 +215,6 @@ def validate_model_description(model_description: ModelDescription):
     err_d = "A fixed or tunable “input” has exactly the same properties as a fixed or tunable parameter. For simplicity, only fixed and tunable parameters shall be defined."
     err_d = "A fixed or tunable “output” has exactly the same properties as a fixed or tunable calculatedParameter. For simplicity, only fixed and tunable calculatedParameters shall be defined."
 
-
-def parse_model_description(model_description: str) -> ModelDescription:
-    """Parse the contents of the xml tree and return an in memory representation.
-    """
-    root = ET.fromstring(model_description)
-
-    defaults = _get_attribute_default_values()
-
-    # mandatory p.32
-    fmi_version = root.get("fmiVersion")
-    model_name = root.get("modelName")
-    guid = root.get("guid")
-    # optional
-    description = root.get("description", default="")
-    author = root.get("author", default="")
-    copyright = root.get("copyright", default="")
-    version = root.get("version", default="")
-    license = root.get("license", default="")
-    generation_tool = root.get("generationTool", default="")
-    generation_date_and_time = root.get("generationDateAndTime", default="")
-    variable_naming_convention = root.get("variableNamingConvention", default="flat")
-    numberOfEventIndicators = root.get("numberOfEventIndicators", default=0)
-
-    model_variables = []
-
-    """ Iterate over model variables:
-    <ScalarVariable name="real_a" valueReference="0" variability="continuous" causality="input">
-        <Real start="0.0" />
-    </ScalarVariable>
-    """
-    for scalarVariable in root.iter("ScalarVariable"):
-
-        causality = scalarVariable.get("causality", default="local")
-        variability = scalarVariable.get("variability", default="continuous")
-
-        initial = scalarVariable.get("initial", default=None)
-        # defaults of initial depend on causality and variablilty
-        # the combinations lead to 5 different cases denoted A-E on p.50
-        if initial is None:
-            initial, _ = get_intitial_choices_and_default(causality, variability)
-
-        var = list(scalarVariable)[0]
-        start = var.get("start", default=None)
-        dataType = var.tag
-
-        model_variables.append(
-            ScalarVariable(
-                name=scalarVariable.get("name"),
-                valueReference=scalarVariable.get("valueReference"),
-                variability=variability,
-                causality=causality,
-                description=scalarVariable.get("description", default=""),
-                initial=initial,
-                start=start,
-                dataType=dataType,
-            )
-        )
-
-    log_categories = []
-    for category in root.iter("Category"):
-        log_categories.append(category.get("name"))
-
-    model_structure = []
-
-    # cosimulation
-    cosim_element = root.find("CoSimulation")
-
-    modelIdentifier = cosim_element.get("modelIdentifier")
-    needsExecutionTool = cosim_element.get(
-        "needsExecutionTool", default=defaults["needsExecutionTool"]
-    )
-    canHandleVariableCommunicationStepSize = cosim_element.get(
-        "canHandleVariableCommunicationStepSize",
-        default=defaults["canHandleVariableCommunicationStepSize"],
-    )
-    canInterpolateInputs = cosim_element.get(
-        "canInterpolateInputs", default=defaults["canInterpolateInputs"]
-    )
-    maxOutputDerivativeOrder = cosim_element.get(
-        "maxOutputDerivativeOrder", default=defaults["maxOutputDerivativeOrder"]
-    )
-    canRunAsynchronuously = cosim_element.get(
-        "canRunAsynchronuously", default=defaults["canRunAsynchronuously"]
-    )
-    canBeInstantiatedOnlyOncePerProcess = cosim_element.get(
-        "canBeInstantiatedOnlyOncePerProcess",
-        default=defaults["canBeInstantiatedOnlyOncePerProcess"],
-    )
-    canNotUseMemoryManagementFunctions = cosim_element.get(
-        "canNotUseMemoryManagementFunctions",
-        default=defaults["canNotUseMemoryManagementFunctions"],
-    )
-    canGetAndSetFMUstate = cosim_element.get(
-        "canGetAndSetFMUstate", default=defaults["canGetAndSetFMUstate"]
-    )
-    canSerializeFMUstate = cosim_element.get(
-        "canSerializeFMUstate", default=defaults["canSerializeFMUstate"]
-    )
-    providesDirectionalDerivative = cosim_element.get(
-        "providesDirectionalDerivative",
-        default=defaults["providesDirectionalDerivative"],
-    )
-
-    def xs_boolean(s):
-        if s is None:
-            return None
-        if s in {"false", "0"}:
-            return False
-        elif s in {"true", "1"}:
-            return True
-        else:
-            raise ValueError(f"Unable to convert {s} to xsd boolean")
-
-    def xs_normalized_string(s: str):
-        if s is None:
-            return None
-        if not s.isprintable():
-            raise ValueError(r"normalized string can not contain: \n, \t or \r")
-        return s
-
-    def xs_unsigned_int(s: str):
-        if s is None:
-            return None
-        value = int(s)
-        if value > 4294967295:
-            raise ValueError("xs:unsingedInt cannot exceed the value 4294967295")
-        return value
-
-    cosimulation = CoSimulation(
-        modelIdentifier=modelIdentifier,
-        needsExecutionTool=xs_boolean(needsExecutionTool),
-        canHandleVariableCommunicationStepSize=xs_boolean(
-            canHandleVariableCommunicationStepSize
-        ),
-        canInterpolateInputs=xs_boolean(canInterpolateInputs),
-        maxOutputDerivativeOrder=xs_unsigned_int(maxOutputDerivativeOrder),
-        canRunAsynchronuously=xs_boolean(canRunAsynchronuously),
-        canBeInstantiatedOnlyOncePerProcess=xs_boolean(
-            canBeInstantiatedOnlyOncePerProcess
-        ),
-        canNotUseMemoryManagementFunctions=xs_boolean(
-            canNotUseMemoryManagementFunctions
-        ),
-        canGetAndSetFMUstate=xs_boolean(canGetAndSetFMUstate),
-        canSerializeFMUstate=xs_boolean(canSerializeFMUstate),
-        providesDirectionalDerivative=xs_boolean(providesDirectionalDerivative),
-    )
-
-    return ModelDescription(
-        fmiVersion=fmi_version,
-        modelName=model_name,
-        guid=guid,
-        author=author,
-        description=description,
-        version=version,
-        copyright=copyright,
-        logCategories=log_categories,
-        license=license,
-        generationTool=generation_tool,
-        generationDateAndTime=generation_date_and_time,
-        variableNamingConvention=variable_naming_convention,
-        numberOfEventIndicators=numberOfEventIndicators,
-        CoSimulation=cosimulation,
-        modelVariables=model_variables,
-        modelStructure=model_structure,
-    )
 
 
 def export_model_description(md: ModelDescription) -> bytes:

@@ -2,12 +2,21 @@ import xml.etree.ElementTree as ET
 from argparse import ArgumentParser
 from pathlib import Path
 import logging
-
-# from command_server import CommandServicer
-from model import Model
-
 from concurrent import futures
-import grpc
+import sys
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__file__)
+
+try:
+    import grpc
+except ImportError:
+    logger.fatal(
+        "unable to import the python library 'grpc' required by the grpc backend. "
+        "please ensure that the library is present in the python environment launching the script. "
+        "the missing dependencies can be installed using 'python -m pip install unifmu[python-backend]'"
+        )
+    sys.exit(-1)
 
 from schemas.unifmu_fmi2_pb2_grpc import (
     SendCommandServicer,
@@ -24,6 +33,10 @@ from schemas.unifmu_fmi2_pb2 import (
     SerializeReturn,
     FmiStatus,
 )
+
+from model import Model
+
+
 
 
 class CommandServicer(SendCommandServicer):
@@ -164,9 +177,6 @@ class CommandServicer(SendCommandServicer):
 
 
 if __name__ == "__main__":
-
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__file__)
 
     parser = ArgumentParser()
     parser.add_argument(
