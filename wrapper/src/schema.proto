@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+package fmi2_proto;
+
+message Fmi2SetReal{
+  repeated uint32 references = 1;
+  repeated double values = 2;
+}
+
+message Fmi2SetInteger{
+  repeated uint32 references = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi2SetBoolean{
+  repeated uint32 references = 1;
+  repeated bool values = 2;
+}
+
+message Fmi2SetString{
+  repeated uint32 references = 1;
+  repeated string values = 2;
+}
+
+message Fmi2GetReal{
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetInteger{
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetBoolean{
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetString{
+  repeated uint32 references = 1;
+}
+
+message Fmi2DoStep {
+  double current_time = 1;
+  double step_size = 2;
+  bool no_step_prior = 3;
+}
+
+message Fmi2SetupExperiment{   
+  double start_time = 1;
+  double stop_time = 2;
+  double tolerance = 3;
+  bool has_stop_time = 4;
+  bool has_tolerance = 5;
+}
+
+
+message Fmi2CancelStep {}
+  
+message Fmi2EnterInitializationMode{}
+
+message Fmi2ExitInitializationMode{}
+
+
+message Fmi2FreeInstance{}
+
+message Fmi2Terminate{}
+
+message Fmi2Reset{}
+
+
+
+message Fmi2GetDirectionalDerivatives{}
+
+message Fmi2SetInputDerivatives{}
+
+message Fmi2GetOutputDerivatives{}
+
+
+message GetXXXStatus{}
+
+message Fmi2SetDebugLogging{
+    repeated string categories = 1;
+    bool logging_on = 2;
+}
+
+
+
+enum Fmi2Status
+{
+    Ok = 0;
+    Warning=1;
+    Discard=2;
+    Error=3;
+    Fatal=4;
+    Pending=5;
+}
+
+// ----------------------- RETURN VALUES ----------------------
+
+message Fmi2StatusReturn{
+    Fmi2Status status = 1;
+}
+
+message Fmi2GetRealReturn{
+  int32 status = 1;
+  repeated double values = 2;
+}
+
+
+message Fmi2GetIntegerReturn{
+    Fmi2Status status = 1;
+    repeated int32 values = 2;
+}
+
+message Fmi2GetBooleanReturn{
+    Fmi2Status status = 1;
+    repeated bool values = 2;
+}
+
+message Fmi2GetStringReturn{
+    Fmi2Status status = 1;
+    repeated string values = 2;
+}
+
+
+
+
+// ----------------------- Non FMI2 standard messages ----------------------
+
+message Fmi2ExtSerializeSlave{}
+
+message Fmi2ExtDeserializeSlave{
+    bytes state = 1;
+}
+
+message Fmi2ExtHandshake{}
+
+
+message Fmi2ExtSerializeSlaveReturn{
+  Fmi2Status status = 1;
+  bytes state = 2;
+}
+
+// enumeration listing all possible command that are sent from binary to slave
+message Fmi2Command
+{
+  oneof command
+  {
+    Fmi2DoStep Fmi2DoStep = 1;
+    Fmi2SetReal Fmi2SetReal = 2;
+    Fmi2SetInteger Fmi2SetInteger = 3;
+    Fmi2SetBoolean Fmi2SetBoolean = 4;
+    Fmi2SetString Fmi2SetString = 5;
+    Fmi2GetReal Fmi2GetReal = 6;
+    Fmi2GetInteger Fmi2GetInteger = 7;
+    Fmi2GetBoolean Fmi2GetBoolean = 8;
+    Fmi2GetString Fmi2GetString = 9;
+  
+    Fmi2SetupExperiment Fmi2SetupExperiment = 10;
+    Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 11;
+    Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 12;
+    Fmi2FreeInstance Fmi2FreeInstance = 13;
+
+    Fmi2Reset Fmi2Reset = 14;
+    Fmi2Terminate Fmi2Terminate = 15;
+    Fmi2CancelStep Fmi2CancelStep = 16;
+    
+    Fmi2ExtSerializeSlave Fmi2ExtSerializeSlave =17;
+    Fmi2ExtDeserializeSlave Fmi2ExtDeserializeSlave =18;
+  }
+}
+
+
+
+
+message Fmi2Return
+{
+
+
+  oneof result 
+  {
+    Fmi2StatusReturn Fmi2StatusReturn = 1;
+    Fmi2GetRealReturn Fmi2GetRealReturn = 2;
+    Fmi2GetIntegerReturn Fmi2GetIntegerReturn = 3;
+    Fmi2GetBooleanReturn Fmi2GetBooleanReturn = 4;
+    Fmi2GetStringReturn Fmi2GetStringReturn = 5;
+    Fmi2ExtHandshake Fmi2ExtHandshake = 6;
+    Fmi2ExtSerializeSlaveReturn Fmi2ExtSerializeSlaveReturn = 7; 
+    
+  }
+  
+  
+}
