@@ -1,7 +1,4 @@
-use crate::{
-    fmi2_proto::{self},
-    Fmi2Command, Fmi2Return,
-};
+use crate::{fmi2_proto, Fmi2Command, Fmi2Return};
 
 /// Defines trait facilitating the conversion between generated 'protobuf' code and handwritten rust code.
 

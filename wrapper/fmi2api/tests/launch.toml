@@ -1,0 +1,14 @@
+active_dispatcher = "socket" # {socket, grpc}
+
+[socket]
+type = "zmq"      # {zmq, tcp}
+format = "pickle" # {protobuf, pickle, json}
+linux = [""]
+windows = [""]
+macos = [""]
+
+
+[grpc]
+linux = [""]
+windows = [""]
+macos = [""]

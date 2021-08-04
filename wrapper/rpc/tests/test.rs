@@ -1,94 +1,90 @@
 #[cfg(test)]
 use std::thread;
 
-use static_dispatch::{
-    master::Fmi2Master, slave::Fmi2SlaveInstance, Fmi2Return, SerializationFormat,
+mod slave;
+use rpc::{
+    socket_dispatcher::{Fmi2SocketDispatcher, SerializationFormat},
+    Fmi2CommandDispatcher, Fmi2Return,
 };
+use slave::Fmi2SlaveInstance;
 
 fn setup_preconnected(
     context: &zmq::Context,
     format: SerializationFormat,
-) -> (Fmi2Master<zmq::Socket>, Fmi2SlaveInstance<zmq::Socket>) {
-    let master_socket = context.socket(zmq::SocketType::REP).unwrap();
+) -> (
+    Fmi2SocketDispatcher<zmq::Socket>,
+    Fmi2SlaveInstance<zmq::Socket>,
+) {
     let slave_socket = context.socket(zmq::SocketType::REQ).unwrap();
 
-    master_socket.bind("tcp://*:0").unwrap();
-    let master_endpoint = master_socket.get_last_endpoint().unwrap().unwrap();
-    println!("Connected binary endpoint {:?}", master_endpoint);
-    slave_socket.connect(&master_endpoint).unwrap();
+    let (endpoint, mut dispatcher) = Fmi2SocketDispatcher::<zmq::Socket>::new(format);
 
-    // send handshake from slave to binary
+    println!("Connected binary endpoint {:?}", endpoint);
+    slave_socket.connect(&endpoint).unwrap();
+
+    // send handshake from slave to dispatcher
     let buf = Fmi2Return::Fmi2ExtHandshake {}.serialize_as(&format);
     slave_socket.send(&buf, 0).unwrap();
-    let _ = master_socket.recv_bytes(0).unwrap();
 
-    let master_init = move || Fmi2Master::from_connected_socket(format, master_socket);
+    dispatcher.recv_handshake();
 
-    let slave_init = move || Fmi2SlaveInstance::from_connected_socket(format, slave_socket);
+    let slave = Fmi2SlaveInstance::from_connected_socket(format, slave_socket);
 
-    let master_handle = thread::spawn(master_init);
-    let slave_handle = thread::spawn(slave_init);
-
-    let master = master_handle.join().unwrap();
-    let slave = slave_handle.join().unwrap();
-
-    (master, slave)
+    (dispatcher, slave)
 }
 
 mod tests {
-
-    use static_dispatch::Fmi2Command::{
-        Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode, Fmi2FreeInstance,
-        Fmi2GetBoolean, Fmi2GetInteger, Fmi2GetReal, Fmi2GetString, Fmi2Reset, Fmi2SetBoolean,
-        Fmi2SetInteger, Fmi2SetReal, Fmi2SetString, Fmi2SetupExperiment, Fmi2Terminate,
+    use rpc::{
+        Fmi2Command::{
+            Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
+            Fmi2ExtDeserializeSlave, Fmi2ExtSerializeSlave, Fmi2FreeInstance, Fmi2GetBoolean,
+            Fmi2GetInteger, Fmi2GetReal, Fmi2GetString, Fmi2Reset, Fmi2SetBoolean, Fmi2SetInteger,
+            Fmi2SetReal, Fmi2SetString, Fmi2SetupExperiment, Fmi2Terminate,
+        },
+        Fmi2CommandDispatcher,
     };
 
-    use super::*;
-    #[test]
-
-    fn request_response_no_handshake() {
-        // zmq
+    fn test_request_response(format: SerializationFormat) {
         let context = zmq::Context::new();
 
-        let (mut server, mut client) = setup_preconnected(&context, SerializationFormat::Protobuf);
+        let (mut dispatcher, mut worker) = setup_preconnected(&context, format);
 
-        // serializer
         let server_thread = thread::spawn(move || {
-            let ret = server.invoke_command(&Fmi2SetupExperiment {
+            let ret = dispatcher.invoke_command(&Fmi2SetupExperiment {
                 start_time: 0.0,
                 stop_time: Some(1.0),
                 tolerance: Some(0.0),
             });
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            let mut ret = server.invoke_command(&Fmi2EnterInitializationMode);
+            let mut ret = dispatcher.invoke_command(&Fmi2EnterInitializationMode);
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2ExitInitializationMode);
+            ret = dispatcher.invoke_command(&Fmi2ExitInitializationMode);
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2EnterInitializationMode {});
+            ret = dispatcher.invoke_command(&Fmi2EnterInitializationMode {});
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2SetReal {
+            ret = dispatcher.invoke_command(&Fmi2SetReal {
                 references: vec![1, 2, 3],
                 values: vec![1.0, 2.0, 3.0],
             });
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2SetInteger {
+            ret = dispatcher.invoke_command(&Fmi2SetInteger {
                 references: vec![1, 2, 3],
                 values: vec![1, 2, 3],
             });
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2SetBoolean {
+            ret = dispatcher.invoke_command(&Fmi2SetBoolean {
                 references: vec![1, 2, 3],
                 values: vec![false, true, false],
             });
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2SetString {
+            ret = dispatcher.invoke_command(&Fmi2SetString {
                 references: vec![1, 2, 3],
                 values: vec![
                     String::from("foo"),
@@ -98,14 +94,14 @@ mod tests {
             });
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2DoStep {
+            ret = dispatcher.invoke_command(&Fmi2DoStep {
                 current_time: 0.0,
                 step_size: 1.0,
                 no_step_prior: true,
             });
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2GetReal {
+            ret = dispatcher.invoke_command(&Fmi2GetReal {
                 references: vec![1, 2, 3],
             });
             assert!(
@@ -115,7 +111,7 @@ mod tests {
                 }
             );
 
-            ret = server.invoke_command(&Fmi2GetInteger {
+            ret = dispatcher.invoke_command(&Fmi2GetInteger {
                 references: vec![1, 2, 3],
             });
             assert!(
@@ -125,7 +121,7 @@ mod tests {
                 }
             );
 
-            ret = server.invoke_command(&Fmi2GetBoolean {
+            ret = dispatcher.invoke_command(&Fmi2GetBoolean {
                 references: vec![1, 2, 3],
             });
             assert!(
@@ -135,7 +131,7 @@ mod tests {
                 }
             );
 
-            ret = server.invoke_command(&Fmi2GetString {
+            ret = dispatcher.invoke_command(&Fmi2GetString {
                 references: vec![1, 2, 3],
             });
             assert!(
@@ -149,7 +145,7 @@ mod tests {
                 }
             );
 
-            ret = server.invoke_command(&static_dispatch::Fmi2Command::Fmi2ExtSerializeSlave);
+            ret = dispatcher.invoke_command(&Fmi2ExtSerializeSlave);
             assert!(
                 ret == Fmi2Return::Fmi2ExtSerializeSlaveReturn {
                     status: 0,
@@ -162,23 +158,39 @@ mod tests {
                 _ => panic!("whoops wrong return"),
             };
 
-            ret = server
-                .invoke_command(&static_dispatch::Fmi2Command::Fmi2ExtDeserializeSlave { state });
+            ret = dispatcher.invoke_command(&Fmi2ExtDeserializeSlave { state });
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2Terminate);
+            ret = dispatcher.invoke_command(&Fmi2Terminate);
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2Reset);
+            ret = dispatcher.invoke_command(&Fmi2Reset);
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
 
-            ret = server.invoke_command(&Fmi2FreeInstance);
+            ret = dispatcher.invoke_command(&Fmi2FreeInstance);
             assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
         });
 
-        let client_thread = thread::spawn(move || while client.work() {});
+        let client_thread = thread::spawn(move || while worker.work() {});
 
         server_thread.join().unwrap();
         client_thread.join().unwrap();
+    }
+
+    use super::*;
+    #[test]
+
+    fn request_response_json() {
+        test_request_response(SerializationFormat::Json);
+    }
+
+    #[test]
+    fn request_response_pickle() {
+        test_request_response(SerializationFormat::Pickle);
+    }
+
+    #[test]
+    fn request_response_protobuf() {
+        test_request_response(SerializationFormat::Protobuf);
     }
 }

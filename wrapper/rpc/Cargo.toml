@@ -1,0 +1,22 @@
+[package]
+name = "rpc"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["vendored-zmq"]
+vendored-zmq = ['zmq/vendored']
+
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+prost = "*"
+zmq = "*"
+serde_json = "*"
+serde-pickle = "*"
+
+[build-dependencies]
+prost-build = "*"
+tonic-build = "*"

@@ -1,4 +1,7 @@
-use crate::{Fmi2Command, Fmi2Return, FramedSocket, SerializationFormat};
+use rpc::{
+    socket_dispatcher::{FramedSocket, SerializationFormat},
+    Fmi2Command, Fmi2Return,
+};
 
 /// Implementing the slave side of the RPC
 pub struct Fmi2SlaveInstance<T: FramedSocket> {
@@ -9,7 +12,7 @@ pub struct Fmi2SlaveInstance<T: FramedSocket> {
 impl<T: FramedSocket> Fmi2SlaveInstance<T> {
     pub fn from_connected_socket(format: SerializationFormat, command_socket: T) -> Self {
         Self {
-            format: format,
+            format,
             socket: command_socket,
         }
     }

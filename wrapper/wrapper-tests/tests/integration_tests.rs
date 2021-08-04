@@ -1,22 +1,29 @@
 #![allow(non_snake_case)]
 
-use libc::{c_char, c_double, c_int, c_uint, size_t};
-use std::{
-    collections::HashMap,
-    ffi::{CStr, CString},
-    ptr::null_mut,
-};
-use unifmu::{Fmi2CallbackFunctions, *};
-
 #[cfg(test)]
 mod tests {
 
-    use libc::c_void;
+    use std::{
+        collections::HashMap,
+        ffi::{CStr, CString},
+        ptr::null_mut,
+    };
+
+    use fmi2api::{
+        fmi2DeSerializeFMUstate, fmi2DoStep, fmi2EnterInitializationMode,
+        fmi2ExitInitializationMode, fmi2FreeFMUstate, fmi2FreeInstance, fmi2GetBoolean,
+        fmi2GetFMUstate, fmi2GetInteger, fmi2GetReal, fmi2GetString, fmi2GetTypesPlatform,
+        fmi2GetVersion, fmi2Instantiate, fmi2Reset, fmi2SerializeFMUstate,
+        fmi2SerializedFMUstateSize, fmi2SetBoolean, fmi2SetFMUstate, fmi2SetInteger, fmi2SetReal,
+        fmi2SetString, fmi2SetupExperiment, fmi2Terminate, Fmi2CallbackFunctions, Fmi2Status,
+        Fmi2Type, Slave, SlaveState,
+    };
+    use libc::{c_char, c_double, c_int, c_uint, c_void, size_t};
     use safer_ffi::{
+        c,
         char_p::{char_p_raw, char_p_ref},
         prelude::repr_c,
     };
-    use unifmu::Fmi2Status;
 
     use super::*;
 
