@@ -118,7 +118,9 @@ pub struct Slave {
     string_buffer: Vec<CString>,
 
     /// Object performing remote procedure calls on the slave
-    rpc: Box<dyn Fmi2CommandDispatcher>,
+    dispatcher: Box<dyn Fmi2CommandDispatcher>,
+
+    popen: Popen,
 }
 //  + Send + UnwindSafe + RefUnwindSafe
 impl RefUnwindSafe for Slave {}
@@ -126,10 +128,11 @@ impl UnwindSafe for Slave {}
 unsafe impl Send for Slave {}
 
 impl Slave {
-    fn new(rpc: Box<dyn Fmi2CommandDispatcher>) -> Self {
+    fn new(dispatcher: Box<dyn Fmi2CommandDispatcher>, popen: Popen) -> Self {
         Self {
-            rpc,
+            dispatcher,
             string_buffer: Vec::new(),
+            popen,
         }
     }
 }
@@ -249,9 +252,11 @@ pub fn fmi2Instantiate(
     )
     .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", command));
 
+    println!("awaiting handshake from slave");
     dispatcher.recv_handshake();
+    println!("received handshake");
 
-    Some(repr_c::Box::new(Slave::new(dispatcher)))
+    Some(repr_c::Box::new(Slave::new(dispatcher, popen)))
 }
 
 #[ffi_export]
@@ -262,7 +267,7 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<repr_c::Box<Slave>>) {
 
     match slave.as_mut() {
         Some(s) => {
-            s.rpc.invoke_command(&Fmi2Command::Fmi2FreeInstance);
+            s.dispatcher.invoke_command(&Fmi2Command::Fmi2FreeInstance);
             drop(slave)
         }
         None => {}
@@ -295,8 +300,7 @@ pub fn fmi2SetupExperiment(
     stop_time_defined: c_int,
     stop_time: c_double,
 ) -> Fmi2Status {
-    todo!();
-
+    println!("doing the setup");
     let tolerance = {
         if tolerance_defined != 0 {
             Some(tolerance)
@@ -312,17 +316,21 @@ pub fn fmi2SetupExperiment(
             None
         }
     };
-    slave.rpc.invoke_command(&Fmi2Command::Fmi2SetupExperiment {
-        start_time,
-        stop_time,
-        tolerance,
-    });
+    slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2SetupExperiment {
+            start_time,
+            stop_time,
+            tolerance,
+        });
+
+    Fmi2Status::Fmi2OK
 }
 
 #[ffi_export]
 pub fn fmi2EnterInitializationMode(slave: &mut Slave) -> Fmi2Status {
     let ret = slave
-        .rpc
+        .dispatcher
         .invoke_command(&Fmi2Command::Fmi2EnterInitializationMode);
 
     match ret {
@@ -334,7 +342,7 @@ pub fn fmi2EnterInitializationMode(slave: &mut Slave) -> Fmi2Status {
 #[ffi_export]
 pub fn fmi2ExitInitializationMode(slave: &mut Slave) -> Fmi2Status {
     let ret = slave
-        .rpc
+        .dispatcher
         .invoke_command(&Fmi2Command::Fmi2ExitInitializationMode);
 
     match ret {
@@ -345,7 +353,7 @@ pub fn fmi2ExitInitializationMode(slave: &mut Slave) -> Fmi2Status {
 
 #[ffi_export]
 pub fn fmi2Terminate(slave: &mut Slave) -> Fmi2Status {
-    let ret = slave.rpc.invoke_command(&Fmi2Command::Fmi2Terminate);
+    let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2Terminate);
 
     match ret {
         rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
@@ -355,7 +363,7 @@ pub fn fmi2Terminate(slave: &mut Slave) -> Fmi2Status {
 
 #[ffi_export]
 pub fn fmi2Reset(slave: &mut Slave) -> Fmi2Status {
-    let ret = slave.rpc.invoke_command(&Fmi2Command::Fmi2Reset);
+    let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2Reset);
 
     match ret {
         rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
@@ -372,9 +380,7 @@ pub fn fmi2DoStep(
     step_size: c_double,
     no_step_prior: c_int,
 ) -> Fmi2Status {
-    todo!();
-
-    let ret = slave.rpc.invoke_command(&Fmi2Command::Fmi2DoStep {
+    let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2DoStep {
         current_time,
         step_size,
         no_step_prior: no_step_prior == 0,
@@ -388,7 +394,9 @@ pub fn fmi2DoStep(
 
 #[ffi_export]
 pub fn fmi2CancelStep(slave: &mut Slave) -> Fmi2Status {
-    let ret = slave.rpc.invoke_command(&Fmi2Command::Fmi2CancelStep);
+    let ret = slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2CancelStep);
 
     match ret {
         rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
@@ -410,7 +418,7 @@ pub fn fmi2GetReal(
     let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
 
     let res = slave
-        .rpc
+        .dispatcher
         .invoke_command(&Fmi2Command::Fmi2GetReal { references });
 
     match res {
@@ -628,7 +636,7 @@ pub fn fmi2GetRealOutputDerivatives(slave: &mut Slave) -> Fmi2Status {
 pub fn fmi2SetFMUstate(slave: &mut Slave, state: &SlaveState) -> Fmi2Status {
     todo!();
     let res = slave
-        .rpc
+        .dispatcher
         .invoke_command(&Fmi2Command::Fmi2ExtDeserializeSlave { state: state.bytes });
 
     // slave.rpc.deserialize(state.bytes.as_slice().into())

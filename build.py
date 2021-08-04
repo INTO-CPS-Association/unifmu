@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     s = platform.system()
 
-    binary_basename = "unifmu"
+    binary_basename = "fmi2api"
 
     # note that lib prefix is removed
     input_path, output_path = {
