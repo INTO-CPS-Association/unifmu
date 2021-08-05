@@ -255,7 +255,7 @@ if __name__ == "__main__":
 
                 with Chdir("wrapper"):
                     res = subprocess.run(
-                        args=["cargo", "test", "--", "--nocapture"]  #  "--show-output",
+                        args=["cargo", "test", "--package","wrapper-tests","--","--nocapture"]  #  "--show-output",
                     )
 
                     if res.returncode != 0:

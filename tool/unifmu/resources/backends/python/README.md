@@ -17,7 +17,7 @@ An overview of the role of each file is provided in the tree below:
  ┃ ┃ ┣ 📜unifmu_fmi2_pb2.py
  ┃ ┃ ┗ 📜unifmu_fmi2_pb2_grpc.py
  ┃ ┣ 📜backend_grpc.py # grpc based backend
- ┃ ┣ 📜backend_schemaless_rpc.py # zmq based backend
+ ┃ ┣ 📜socket_slave.py # zmq based backend
  ┃ ┣ 📜fmi2.py # FMI related class definitions
  ┃ ┣ 📜launch.toml* "OS specific commands to bootstrap backend"
  ┃ ┗ 📜model.py* "implementation of FMU"
@@ -39,10 +39,10 @@ macos = ["python3", "backend_grpc.py"]
 windows = ["python", "backend_grpc.py"]
 
 [zmq]
-linux = ["python3", "backend_schemaless_rpc.py"]
-macos = ["python3", "backend_schemaless_rpc.py"]
+linux = ["python3", "socket_slave.py"]
+macos = ["python3", "socket_slave.py"]
 serialization_format = "Pickle"
-windows = ["python", "backend_schemaless_rpc.py"]
+windows = ["python", "socket_slave.py"]
 ```
 
 By default the interpreter used on windows is `python` and `python3` on Linux and macOS.

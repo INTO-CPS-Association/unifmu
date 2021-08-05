@@ -125,7 +125,7 @@ For example the tree below shows the default FMU generated when implementing an 
  ┃ ┃ ┣ 📜unifmu_fmi2_pb2.py
  ┃ ┃ ┗ 📜unifmu_fmi2_pb2_grpc.py
  ┃ ┣ 📜backend_grpc.py # implementation of grpc backend
- ┃ ┣ 📜backend_schemaless_rpc.py # implementation of zmq backend
+ ┃ ┣ 📜socket_slave.py # implementation of zmq backend
  ┃ ┣ 📜fmi2.py # FMI related class definitions
  ┃ ┣ 📜launch.toml "OS specific commands to bootstrap backend"
  ┃ ┗ 📜model.py "implementation of FMU"

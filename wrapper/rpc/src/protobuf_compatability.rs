@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::{fmi2_proto, Fmi2Command, Fmi2Return};
 
 /// Defines trait facilitating the conversion between generated 'protobuf' code and handwritten rust code.
@@ -8,28 +10,37 @@ impl From<Fmi2Return> for fmi2_proto::fmi2_return::Result {
         match val {
             Fmi2Return::Fmi2StatusReturn { status } => {
                 fmi2_proto::fmi2_return::Result::Fmi2StatusReturn(fmi2_proto::Fmi2StatusReturn {
-                    status,
+                    status: status.try_into().unwrap(),
                 })
             }
             Fmi2Return::Fmi2GetRealReturn { status, values } => {
                 fmi2_proto::fmi2_return::Result::Fmi2GetRealReturn(fmi2_proto::Fmi2GetRealReturn {
-                    status,
+                    status: status.try_into().unwrap(),
                     values,
                 })
             }
             Fmi2Return::Fmi2GetIntegerReturn { status, values } => {
                 fmi2_proto::fmi2_return::Result::Fmi2GetIntegerReturn(
-                    fmi2_proto::Fmi2GetIntegerReturn { status, values },
+                    fmi2_proto::Fmi2GetIntegerReturn {
+                        status: status.try_into().unwrap(),
+                        values,
+                    },
                 )
             }
             Fmi2Return::Fmi2GetBooleanReturn { status, values } => {
                 fmi2_proto::fmi2_return::Result::Fmi2GetBooleanReturn(
-                    fmi2_proto::Fmi2GetBooleanReturn { status, values },
+                    fmi2_proto::Fmi2GetBooleanReturn {
+                        status: status.try_into().unwrap(),
+                        values,
+                    },
                 )
             }
             Fmi2Return::Fmi2GetStringReturn { status, values } => {
                 fmi2_proto::fmi2_return::Result::Fmi2GetStringReturn(
-                    fmi2_proto::Fmi2GetStringReturn { status, values },
+                    fmi2_proto::Fmi2GetStringReturn {
+                        status: status.try_into().unwrap(),
+                        values,
+                    },
                 )
             }
             Fmi2Return::Fmi2ExtHandshake => {
@@ -37,7 +48,10 @@ impl From<Fmi2Return> for fmi2_proto::fmi2_return::Result {
             }
             Fmi2Return::Fmi2ExtSerializeSlaveReturn { status, state } => {
                 fmi2_proto::fmi2_return::Result::Fmi2ExtSerializeSlaveReturn(
-                    fmi2_proto::Fmi2ExtSerializeSlaveReturn { status, state },
+                    fmi2_proto::Fmi2ExtSerializeSlaveReturn {
+                        status: status.try_into().unwrap(),
+                        state,
+                    },
                 )
             }
         }
@@ -49,36 +63,38 @@ impl From<fmi2_proto::Fmi2Return> for Fmi2Return {
     fn from(val: fmi2_proto::Fmi2Return) -> Self {
         match val.result.unwrap() {
             fmi2_proto::fmi2_return::Result::Fmi2StatusReturn(res) => {
-                Fmi2Return::Fmi2StatusReturn { status: res.status }
+                Fmi2Return::Fmi2StatusReturn {
+                    status: res.status.try_into().unwrap(),
+                }
             }
             fmi2_proto::fmi2_return::Result::Fmi2GetRealReturn(res) => {
                 Fmi2Return::Fmi2GetRealReturn {
-                    status: res.status,
+                    status: res.status.try_into().unwrap(),
                     values: res.values,
                 }
             }
             fmi2_proto::fmi2_return::Result::Fmi2GetIntegerReturn(res) => {
                 Fmi2Return::Fmi2GetIntegerReturn {
-                    status: res.status,
+                    status: res.status.try_into().unwrap(),
                     values: res.values,
                 }
             }
             fmi2_proto::fmi2_return::Result::Fmi2GetBooleanReturn(res) => {
                 Fmi2Return::Fmi2GetBooleanReturn {
-                    status: res.status,
+                    status: res.status.try_into().unwrap(),
                     values: res.values,
                 }
             }
             fmi2_proto::fmi2_return::Result::Fmi2GetStringReturn(res) => {
                 Fmi2Return::Fmi2GetStringReturn {
-                    status: res.status,
+                    status: res.status.try_into().unwrap(),
                     values: res.values,
                 }
             }
             fmi2_proto::fmi2_return::Result::Fmi2ExtHandshake(_) => Fmi2Return::Fmi2ExtHandshake {},
             fmi2_proto::fmi2_return::Result::Fmi2ExtSerializeSlaveReturn(res) => {
                 Fmi2Return::Fmi2ExtSerializeSlaveReturn {
-                    status: res.status,
+                    status: res.status.try_into().unwrap(),
                     state: res.state,
                 }
             }

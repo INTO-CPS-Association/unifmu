@@ -11,6 +11,7 @@ vendored-zmq = ['zmq/vendored']
 
 
 [dependencies]
+common = { path = "../common" }
 serde = { version = "1.0", features = ["derive"] }
 prost = "*"
 zmq = "*"

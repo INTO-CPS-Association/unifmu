@@ -2,10 +2,10 @@ active_dispatcher = "socket"
 
 [socket]
 type = "zmq"
-format = "pickle"
-linux = ["python3", "backend_schemaless_rpc.py"]
-macos = ["python3", "backend_schemaless_rpc.py"]
-windows = ["python", "backend_schemaless_rpc.py"]
+format = "json"
+linux = ["python3", "socket_slave.py"]
+macos = ["python3", "socket_slave.py"]
+windows = ["python", "socket_slave.py"]
 
 [grpc]
 linux = ["python3", "backend_grpc.py"]

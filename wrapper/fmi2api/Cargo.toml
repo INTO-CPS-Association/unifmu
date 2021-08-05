@@ -10,6 +10,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 rpc = { path = "../rpc" }
+common = { path = "../common" }
 safer-ffi = { version = "*", features = ["proc_macros"] }
 url = "*"
 num_enum = "*"

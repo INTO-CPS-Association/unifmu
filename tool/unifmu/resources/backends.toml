@@ -38,7 +38,7 @@ files = [
   ["backends/python/model.py", "resources/model.py"],
   ["backends/python/fmi2.py", "resources/fmi2.py"],
   ["backends/python/launch.toml", "resources/launch.toml"],
-  ["backends/python/backend_schemaless_rpc.py", "resources/backend_schemaless_rpc.py"],
+  ["backends/python/socket_slave.py", "resources/socket_slave.py"],
   ["backends/python/backend_grpc.py", "resources/backend_grpc.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2.py", "resources/schemas/unifmu_fmi2_pb2.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2_grpc.py", "resources/schemas/unifmu_fmi2_pb2_grpc.py"],

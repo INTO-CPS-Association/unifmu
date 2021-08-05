@@ -2,6 +2,7 @@
 use std::thread;
 
 mod slave;
+use common::Fmi2Status::Fmi2OK;
 use rpc::{
     socket_dispatcher::{Fmi2SocketDispatcher, SerializationFormat},
     Fmi2CommandDispatcher, Fmi2Return,
@@ -26,7 +27,7 @@ fn setup_preconnected(
     let buf = Fmi2Return::Fmi2ExtHandshake {}.serialize_as(&format);
     slave_socket.send(&buf, 0).unwrap();
 
-    dispatcher.recv_handshake();
+    dispatcher.await_handshake();
 
     let slave = Fmi2SlaveInstance::from_connected_socket(format, slave_socket);
 
@@ -55,34 +56,38 @@ mod tests {
                 stop_time: Some(1.0),
                 tolerance: Some(0.0),
             });
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(
+                ret == Fmi2Return::Fmi2StatusReturn {
+                    status: common::Fmi2Status::Fmi2OK
+                }
+            );
 
             let mut ret = dispatcher.invoke_command(&Fmi2EnterInitializationMode);
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2ExitInitializationMode);
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2EnterInitializationMode {});
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2SetReal {
                 references: vec![1, 2, 3],
                 values: vec![1.0, 2.0, 3.0],
             });
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2SetInteger {
                 references: vec![1, 2, 3],
                 values: vec![1, 2, 3],
             });
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2SetBoolean {
                 references: vec![1, 2, 3],
                 values: vec![false, true, false],
             });
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2SetString {
                 references: vec![1, 2, 3],
@@ -92,21 +97,21 @@ mod tests {
                     String::from("baz"),
                 ],
             });
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2DoStep {
                 current_time: 0.0,
                 step_size: 1.0,
                 no_step_prior: true,
             });
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2GetReal {
                 references: vec![1, 2, 3],
             });
             assert!(
                 ret == Fmi2Return::Fmi2GetRealReturn {
-                    status: 0,
+                    status: Fmi2OK,
                     values: (vec![0.0, 0.0, 0.0])
                 }
             );
@@ -116,7 +121,7 @@ mod tests {
             });
             assert!(
                 ret == Fmi2Return::Fmi2GetIntegerReturn {
-                    status: 0,
+                    status: Fmi2OK,
                     values: (vec![0, 0, 0])
                 }
             );
@@ -126,7 +131,7 @@ mod tests {
             });
             assert!(
                 ret == Fmi2Return::Fmi2GetBooleanReturn {
-                    status: 0,
+                    status: Fmi2OK,
                     values: (vec![false, true, false])
                 }
             );
@@ -136,7 +141,7 @@ mod tests {
             });
             assert!(
                 ret == Fmi2Return::Fmi2GetStringReturn {
-                    status: 0,
+                    status: Fmi2OK,
                     values: (vec![
                         String::from("foo"),
                         String::from("bar"),
@@ -148,7 +153,7 @@ mod tests {
             ret = dispatcher.invoke_command(&Fmi2ExtSerializeSlave);
             assert!(
                 ret == Fmi2Return::Fmi2ExtSerializeSlaveReturn {
-                    status: 0,
+                    status: Fmi2OK,
                     state: vec![0, 0, 0]
                 }
             );
@@ -159,16 +164,16 @@ mod tests {
             };
 
             ret = dispatcher.invoke_command(&Fmi2ExtDeserializeSlave { state });
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2Terminate);
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2Reset);
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
 
             ret = dispatcher.invoke_command(&Fmi2FreeInstance);
-            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: 0 });
+            assert!(ret == Fmi2Return::Fmi2StatusReturn { status: Fmi2OK });
         });
 
         let client_thread = thread::spawn(move || while worker.work() {});

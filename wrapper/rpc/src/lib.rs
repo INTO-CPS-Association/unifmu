@@ -2,6 +2,7 @@ pub mod fmi2_proto;
 mod protobuf_compatability;
 pub mod socket_dispatcher;
 
+use common::Fmi2Status;
 use serde::{Deserialize, Serialize};
 
 /// Trait implemented by objects that act like an in memory representation of an FMU.
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize};
 /// For instance the proxy may be dispatching calls to an FMU running in a seperate process via RPC.
 pub trait Fmi2CommandDispatcher {
     fn invoke_command(&mut self, command: &Fmi2Command) -> Fmi2Return;
-    fn recv_handshake(&mut self);
+    fn await_handshake(&mut self);
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -69,11 +70,28 @@ pub enum Fmi2Command {
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub enum Fmi2Return {
-    Fmi2StatusReturn { status: i32 },
-    Fmi2GetRealReturn { status: i32, values: Vec<f64> },
-    Fmi2GetIntegerReturn { status: i32, values: Vec<i32> },
-    Fmi2GetBooleanReturn { status: i32, values: Vec<bool> },
-    Fmi2GetStringReturn { status: i32, values: Vec<String> },
-    Fmi2ExtSerializeSlaveReturn { status: i32, state: Vec<u8> },
+    Fmi2StatusReturn {
+        status: Fmi2Status,
+    },
+    Fmi2GetRealReturn {
+        status: Fmi2Status,
+        values: Vec<f64>,
+    },
+    Fmi2GetIntegerReturn {
+        status: Fmi2Status,
+        values: Vec<i32>,
+    },
+    Fmi2GetBooleanReturn {
+        status: Fmi2Status,
+        values: Vec<bool>,
+    },
+    Fmi2GetStringReturn {
+        status: Fmi2Status,
+        values: Vec<String>,
+    },
+    Fmi2ExtSerializeSlaveReturn {
+        status: Fmi2Status,
+        state: Vec<u8>,
+    },
     Fmi2ExtHandshake,
 }

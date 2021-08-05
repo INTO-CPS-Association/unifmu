@@ -5,6 +5,7 @@
 
 pub mod config;
 
+use common::Fmi2Status;
 use libc::c_double;
 use libc::size_t;
 
@@ -75,30 +76,6 @@ pub struct Fmi2CallbackFunctions {
 }
 
 // ====================== config =======================
-
-/// Represents the possible status codes which are returned from the slave
-
-#[derive_ReprC]
-#[repr(i32)]
-#[derive(Debug, PartialEq)]
-
-pub enum Fmi2Status {
-    Fmi2OK,
-    Fmi2Warning,
-    Fmi2Discard,
-    Fmi2Error,
-    Fmi2Fatal,
-    Fmi2Pending,
-}
-
-#[derive_ReprC]
-#[repr(i32)]
-pub enum Fmi2StatusKind {
-    Fmi2DoStepStatus = 0,
-    Fmi2PendingStatus = 1,
-    Fmi2LastSuccessfulTime = 2,
-    Fmi2Terminated = 3,
-}
 
 #[derive_ReprC]
 #[repr(i32)]
@@ -253,7 +230,7 @@ pub fn fmi2Instantiate(
     .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", command));
 
     println!("awaiting handshake from slave");
-    dispatcher.recv_handshake();
+    dispatcher.await_handshake();
     println!("received handshake");
 
     Some(repr_c::Box::new(Slave::new(dispatcher, popen)))
@@ -334,7 +311,7 @@ pub fn fmi2EnterInitializationMode(slave: &mut Slave) -> Fmi2Status {
         .invoke_command(&Fmi2Command::Fmi2EnterInitializationMode);
 
     match ret {
-        rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
         _ => Fmi2Status::Fmi2Error,
     }
 }
@@ -346,7 +323,7 @@ pub fn fmi2ExitInitializationMode(slave: &mut Slave) -> Fmi2Status {
         .invoke_command(&Fmi2Command::Fmi2ExitInitializationMode);
 
     match ret {
-        rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
         _ => Fmi2Status::Fmi2Error,
     }
 }
@@ -356,7 +333,7 @@ pub fn fmi2Terminate(slave: &mut Slave) -> Fmi2Status {
     let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2Terminate);
 
     match ret {
-        rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
         _ => Fmi2Status::Fmi2Error,
     }
 }
@@ -366,7 +343,7 @@ pub fn fmi2Reset(slave: &mut Slave) -> Fmi2Status {
     let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2Reset);
 
     match ret {
-        rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
         _ => Fmi2Status::Fmi2Error,
     }
 }
