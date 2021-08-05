@@ -37,7 +37,12 @@ def silent_temp_dir(logger, prefix, keep):
     finally:
         if not keep:
             logger.debug(f"attempting to remove {temp_path}")
-            rmtree(temp_path, lambda func, path, exc_info: logger.warn(f"Failed to delete {path}: {func}, {exc_info}."))
+            rmtree(
+                temp_path,
+                lambda func, path, exc_info: logger.warn(
+                    f"Failed to delete {path}: {func}, {exc_info}."
+                ),
+            )
 
 
 if __name__ == "__main__":
@@ -89,7 +94,7 @@ if __name__ == "__main__":
         dest="keep_generated",
         action="store_true",
         help="Use with --test-integration. Keeps the temporary folders (useful for debugging).",
-        default=False
+        default=False,
     )
 
     parser.add_argument(
@@ -147,8 +152,6 @@ if __name__ == "__main__":
         logger.info("wrapper updated")
 
     if args.update_schemas:
-        schema = "unifmu_fmi2.proto"
-        schema_include_dir = "schemas"
 
         # the protoc compiler requires language specific extensions to generate grpc
         # code for different targets. The recommended way of getting these is using
@@ -161,59 +164,78 @@ if __name__ == "__main__":
         # For C# the compilation of *.proto files is integrated in build process
         # as such it must be copied into the resources for the C# backend.
 
-        def generate_python(outdir):
-            from grpc_tools.protoc import _protoc_compiler
+        # protoc -I=$SRC_DIR --python_out=$DST_DIR $SRC_DIR/addressbook.proto
 
-            """Generating rpc components requires a plugin for the protocol buffer compiler
-            The recommended way is to get the compiler bundled with a plugin trough 'grpc-tools' package on PyPI."""
-            protoc_args = [
-                s.encode()
-                for s in [
-                    f"--proto_path={schema_include_dir}",
-                    f"--python_out={outdir}",
-                    f"--grpc_python_out={outdir}",
-                    (
-                        Path(schema_include_dir) / schema
-                    ).__fspath__(),  # unlike invoking protoc, it seems schema needs absolute path
-                ]
+        subprocess.check_call(
+            [
+                "protoc",
+                "-I=schemas",
+                "--python_out=tool/unifmu/resources/backends/python/schemas",
+                # "--java_out=tool/unifmu/resources/backends/java/",
+                "unifmu_fmi2.proto",
             ]
-            _protoc_compiler.run_main(protoc_args)
-
-        def generate_java(outdir):
-            subprocess.run(
-                ["protoc", "-I", schema_include_dir, f"--java_out={outdir}", schema,]
-            ).check_returncode()
-
-        def generate_csharp(outdir):
-            shutil.copyfile(Path(schema_include_dir) / schema, Path(outdir) / schema)
-
-        generate_commands = [
-            ("python", "tool/unifmu/resources/backends/python/", generate_python),
-            (
-                "java",
-                "tool/unifmu/resources/backends/java/src/main/java/",
-                generate_java,
-            ),
-            (
-                "csharp",
-                "tool/unifmu/resources/backends/csharp/schemas",
-                generate_csharp,
-            ),
-        ]
-        logger.info(
-            f"updating schemas for target languages '{[lang for lang, _ ,_ in generate_commands]}'"
         )
-        for lang, outdir, cmd in generate_commands:
-            try:
-                makedirs(outdir, exist_ok=True)
-                cmd(outdir)
-                logger.info(f"Updated schemas for target '{lang}'")
-            except Exception:
-                logger.critical(
-                    f"Failed to update schemas for target language '{lang}', an exception was raised during the process.",
-                    exc_info=True,
-                )
-                sys.exit(1)
+
+        logger.info("updated schemas for python")
+
+        #     from grpc_tools.protoc import _protoc_compiler
+
+        #     """Generating rpc components requires a plugin for the protocol buffer compiler
+        #     The recommended way is to get the compiler bundled with a plugin trough 'grpc-tools' package on PyPI."""
+        #     protoc_args = [
+        #         s.encode()
+        #         for s in [
+        #             f"--proto_path={schema_include_dir}",
+        #             f"--python_out={outdir}",
+        #             # f"--grpc_python_out={outdir}",
+        #             (
+        #                 Path(schema_include_dir) / schema
+        #             ).__fspath__(),  # unlike invoking protoc, it seems schema needs absolute path
+        #         ]
+        #     ]
+        #     _protoc_compiler.run_main(protoc_args)
+
+        # def generate_java(outdir):
+        #     subprocess.run(
+        #         [
+        #             "protoc",
+        #             "-I",
+        #             schema_include_dir,
+        #             f"--java_out={outdir}",
+        #             schema,
+        #         ]
+        #     ).check_returncode()
+
+        # def generate_csharp(outdir):
+        #     shutil.copyfile(Path(schema_include_dir) / schema, Path(outdir) / schema)
+
+        # generate_commands = [
+        #     ("python", "tool/unifmu/resources/backends/python/", generate_python),
+        #     (
+        #         "java",
+        #         "tool/unifmu/resources/backends/java/src/main/java/",
+        #         generate_java,
+        #     ),
+        #     (
+        #         "csharp",
+        #         "tool/unifmu/resources/backends/csharp/schemas",
+        #         generate_csharp,
+        #     ),
+        # ]
+        # logger.info(
+        #     f"updating schemas for target languages '{[lang for lang, _ ,_ in generate_commands]}'"
+        # )
+        # for lang, outdir, cmd in generate_commands:
+        #     try:
+        #         makedirs(outdir, exist_ok=True)
+        #         cmd(outdir)
+        #         logger.info(f"Updated schemas for target '{lang}'")
+        #     except Exception:
+        #         logger.critical(
+        #             f"Failed to update schemas for target language '{lang}', an exception was raised during the process.",
+        #             exc_info=True,
+        #         )
+        #         sys.exit(1)
 
     ####################################### EXPORT FMU EXAMPLES #################################################
     if args.export_examples:
@@ -241,7 +263,9 @@ if __name__ == "__main__":
             f"Starting integration test of the following backends: {test_cases}"
         )
 
-        with silent_temp_dir(logger, prefix="unifmu_test", keep=args.keep_generated) as tmpdir:
+        with silent_temp_dir(
+            logger, prefix="unifmu_test", keep=args.keep_generated
+        ) as tmpdir:
             for backend in test_cases:
                 fmu_path = tmpdir / backend
                 generate_fmu_from_backend(backend, fmu_path)
@@ -255,7 +279,14 @@ if __name__ == "__main__":
 
                 with Chdir("wrapper"):
                     res = subprocess.run(
-                        args=["cargo", "test", "--package","wrapper-tests","--","--nocapture"]  #  "--show-output",
+                        args=[
+                            "cargo",
+                            "test",
+                            "--package",
+                            "wrapper-tests",
+                            "--",
+                            "--nocapture",
+                        ]  #  "--show-output",
                     )
 
                     if res.returncode != 0:
@@ -331,7 +362,16 @@ if __name__ == "__main__":
         choice = input("do you want to publish to test repo? [Y/n]")
 
         if choice == "" or strtobool(choice):
-            subprocess.run(["twine", "upload", "-r", "testpypi", "dist/*",], check=True)
+            subprocess.run(
+                [
+                    "twine",
+                    "upload",
+                    "-r",
+                    "testpypi",
+                    "dist/*",
+                ],
+                check=True,
+            )
         else:
             logger.info("skipping publish to test repo")
 

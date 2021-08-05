@@ -140,7 +140,7 @@ pub struct Fmi2ExtDeserializeSlave {
     pub state: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2ExtHandshake {}
+pub struct Fmi2ExtHandshakeReturn {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2ExtSerializeSlaveReturn {
     #[prost(enumeration = "Fmi2Status", tag = "1")]
@@ -219,7 +219,7 @@ pub mod fmi2_return {
         #[prost(message, tag = "5")]
         Fmi2GetStringReturn(super::Fmi2GetStringReturn),
         #[prost(message, tag = "6")]
-        Fmi2ExtHandshake(super::Fmi2ExtHandshake),
+        Fmi2ExtHandshakeReturn(super::Fmi2ExtHandshakeReturn),
         #[prost(message, tag = "7")]
         Fmi2ExtSerializeSlaveReturn(super::Fmi2ExtSerializeSlaveReturn),
     }

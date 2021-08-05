@@ -44,7 +44,9 @@ impl From<Fmi2Return> for fmi2_proto::fmi2_return::Result {
                 )
             }
             Fmi2Return::Fmi2ExtHandshake => {
-                fmi2_proto::fmi2_return::Result::Fmi2ExtHandshake(fmi2_proto::Fmi2ExtHandshake {})
+                fmi2_proto::fmi2_return::Result::Fmi2ExtHandshakeReturn(
+                    fmi2_proto::Fmi2ExtHandshakeReturn {},
+                )
             }
             Fmi2Return::Fmi2ExtSerializeSlaveReturn { status, state } => {
                 fmi2_proto::fmi2_return::Result::Fmi2ExtSerializeSlaveReturn(
@@ -91,7 +93,9 @@ impl From<fmi2_proto::Fmi2Return> for Fmi2Return {
                     values: res.values,
                 }
             }
-            fmi2_proto::fmi2_return::Result::Fmi2ExtHandshake(_) => Fmi2Return::Fmi2ExtHandshake {},
+            fmi2_proto::fmi2_return::Result::Fmi2ExtHandshakeReturn(_) => {
+                Fmi2Return::Fmi2ExtHandshake {}
+            }
             fmi2_proto::fmi2_return::Result::Fmi2ExtSerializeSlaveReturn(res) => {
                 Fmi2Return::Fmi2ExtSerializeSlaveReturn {
                     status: res.status.try_into().unwrap(),

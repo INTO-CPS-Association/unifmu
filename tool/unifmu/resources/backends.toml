@@ -41,7 +41,6 @@ files = [
   ["backends/python/socket_slave.py", "resources/socket_slave.py"],
   ["backends/python/backend_grpc.py", "resources/backend_grpc.py"],
   ["backends/python/schemas/unifmu_fmi2_pb2.py", "resources/schemas/unifmu_fmi2_pb2.py"],
-  ["backends/python/schemas/unifmu_fmi2_pb2_grpc.py", "resources/schemas/unifmu_fmi2_pb2_grpc.py"],
   ["backends/python/README.md", "README.md"],
   ["common/modelDescription.xml", "modelDescription.xml"],
 ]

@@ -21,6 +21,7 @@ use subprocess::Popen;
 use subprocess::PopenConfig;
 use url::Url;
 
+use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::read_to_string;
 use std::os::raw::c_char;
@@ -238,8 +239,6 @@ pub fn fmi2Instantiate(
 
 #[ffi_export]
 pub extern "C" fn fmi2FreeInstance(slave: Option<repr_c::Box<Slave>>) {
-    todo!();
-
     let mut slave = slave; // see issue: https://github.com/getditto/safer_ffi/issues/30
 
     match slave.as_mut() {
@@ -364,7 +363,7 @@ pub fn fmi2DoStep(
     });
 
     match ret {
-        rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
         _ => Fmi2Status::Fmi2Error,
     }
 }
@@ -376,7 +375,7 @@ pub fn fmi2CancelStep(slave: &mut Slave) -> Fmi2Status {
         .invoke_command(&Fmi2Command::Fmi2CancelStep);
 
     match ret {
-        rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
         _ => Fmi2Status::Fmi2Error,
     }
 }
@@ -390,68 +389,71 @@ pub fn fmi2GetReal(
     nvr: size_t,
     values: *mut c_double,
 ) -> Fmi2Status {
-    todo!();
-
     let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
 
     let res = slave
         .dispatcher
         .invoke_command(&Fmi2Command::Fmi2GetReal { references });
 
     match res {
-        rpc::Fmi2Return::Fmi2StatusReturn { status } => todo!(),
-        rpc::Fmi2Return::Fmi2GetRealReturn { status, values } => todo!(),
-        _ => todo!(),
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        rpc::Fmi2Return::Fmi2GetRealReturn { status, values } => {
+            values_out.copy_from_slice(values.as_slice());
+            status
+        }
+        _ => Fmi2Status::Fmi2Error,
     }
 }
 
 #[ffi_export]
 pub fn fmi2GetInteger(
     slave: &mut Slave,
-    vr: *const c_uint,
+    references: *const c_uint,
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
 
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    let res = slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2GetInteger { references });
 
-    // let (status, values_recv) = slave.rpc.fmi2GetInteger(references);
-
-    // // copy if status is less severe than discard "discard"
-    // match status {
-    //     Fmi2Status::Fmi2OK | Fmi2Status::Fmi2Warning => unsafe {
-    //         std::ptr::copy(values_recv.unwrap().as_ptr(), values, nvr);
-    //     },
-    //     _ => {}
-    // }
-
-    // status
+    match res {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        rpc::Fmi2Return::Fmi2GetIntegerReturn { status, values } => {
+            values_out.copy_from_slice(values.as_slice());
+            status
+        }
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 #[ffi_export]
 pub fn fmi2GetBoolean(
     slave: &mut Slave,
-    vr: *const c_uint,
+    references: *const c_uint,
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
 
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    let res = slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2GetBoolean { references });
 
-    // let (status, values_recv) = slave.rpc.fmi2GetBoolean(references);
+    match res {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        rpc::Fmi2Return::Fmi2GetBooleanReturn { status, values } => {
+            let values_i32: Vec<i32> = values.iter().map(|v| *v as i32).collect();
+            values_out.copy_from_slice(&values_i32);
 
-    // match status {
-    //     Fmi2Status::Fmi2OK | Fmi2Status::Fmi2Warning => unsafe {
-    //         for (idx, v) in values_recv.unwrap().iter().enumerate() {
-    //             std::ptr::write(values.offset(idx as isize), *v as c_int);
-    //         }
-    //     },
-    //     _ => {}
-    // }
-
-    // status
+            status
+        }
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 /// Reads strings from FMU
@@ -465,34 +467,30 @@ pub fn fmi2GetString(
     slave: &mut Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut *const c_char,
+    valuess: *mut *const c_char,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
 
-    // let references = unsafe { std::slice::from_raw_parts(references, nvr) };
+    match slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2GetString { references })
+    {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        rpc::Fmi2Return::Fmi2GetStringReturn { status, values } => {
+            slave.string_buffer = values
+                .iter()
+                .map(|s| CString::new(s.as_bytes()).unwrap())
+                .collect();
 
-    // let (status, values_recv) = slave.rpc.fmi2GetString(references);
-
-    // match status {
-    //     Fmi2Status::Fmi2OK | Fmi2Status::Fmi2Warning => {
-    //         // Convert rust strings to owned c-strings and store in a buffer
-    //         slave.string_buffer = values_recv
-    //             .unwrap()
-    //             .into_iter()
-    //             .map(|s| CString::new(s).unwrap())
-    //             .collect::<Vec<_>>();
-
-    //         // write pointers to the newly allocated strings into the buffer allocated above
-    //         unsafe {
-    //             for (idx, cstr) in slave.string_buffer.iter().enumerate() {
-    //                 std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
-    //             }
-    //         }
-    //     }
-    //     _ => {}
-    // }
-
-    // status
+            unsafe {
+                for (idx, cstr) in slave.string_buffer.iter().enumerate() {
+                    std::ptr::write(valuess.offset(idx as isize), cstr.as_ptr());
+                }
+            }
+            status
+        }
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 #[ffi_export]
@@ -502,12 +500,16 @@ pub fn fmi2SetReal(
     nvr: size_t,
     values: *const c_double,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
+    let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
+    let res = slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2SetReal { references, values });
 
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-    // let values = unsafe { std::slice::from_raw_parts(values, nvr) };
-
-    // slave.rpc.fmi2SetReal(references, values)
+    match res {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 #[ffi_export]
@@ -518,12 +520,16 @@ pub fn fmi2SetInteger(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
+    let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
+    let res = slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2SetInteger { references, values });
 
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
-    // let values = unsafe { std::slice::from_raw_parts(values, nvr) };
-
-    // slave.rpc.fmi2SetInteger(references, values)
+    match res {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 /// set boolean variables of FMU
@@ -537,15 +543,21 @@ pub fn fmi2SetBoolean(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let values_bool: Vec<bool> = unsafe { std::slice::from_raw_parts(values, nvr) }
+        .iter()
+        .map(|v| *v == 0)
+        .collect();
 
-    // let references = unsafe { std::slice::from_raw_parts(references, nvr) };
-    // let values: Vec<bool> = unsafe { std::slice::from_raw_parts(values, nvr) }
-    //     .iter()
-    //     .map(|v| *v != 0)
-    //     .collect();
-
-    // slave.rpc.fmi2SetBoolean(references, &values)
+    match slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2SetBoolean {
+            references,
+            values: values_bool,
+        }) {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 #[ffi_export]
@@ -555,22 +567,22 @@ pub fn fmi2SetString(
     nvr: size_t,
     values: *const *const c_char,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
 
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) };
+    let values: Vec<String> = unsafe {
+        std::slice::from_raw_parts(values, nvr)
+            .iter()
+            .map(|v| CStr::from_ptr(*v).to_str().unwrap().to_owned())
+            .collect()
+    };
 
-    // let mut values_vec: Vec<&str> = Vec::with_capacity(nvr);
-
-    // unsafe {
-    //     for i in 0..nvr {
-    //         let cstr = CStr::from_ptr(*values.offset(i as isize))
-    //             .to_str()
-    //             .expect("Unable to convert C-string to Rust compatible string");
-    //         values_vec.insert(i, cstr);
-    //     }
-    // }
-
-    // slave.rpc.fmi2SetString(references, &values_vec)
+    match slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2SetString { references, values })
+    {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
@@ -611,45 +623,43 @@ pub fn fmi2GetRealOutputDerivatives(slave: &mut Slave) -> Fmi2Status {
 
 #[ffi_export]
 pub fn fmi2SetFMUstate(slave: &mut Slave, state: &SlaveState) -> Fmi2Status {
-    todo!();
-    let res = slave
+    match slave
         .dispatcher
-        .invoke_command(&Fmi2Command::Fmi2ExtDeserializeSlave { state: state.bytes });
-
-    // slave.rpc.deserialize(state.bytes.as_slice().into())
+        .invoke_command(&Fmi2Command::Fmi2ExtDeserializeSlave {
+            state: state.bytes.to_owned(),
+        }) {
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 
 //#[ffi_export]
 #[no_mangle]
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
-pub extern "C" fn fmi2GetFMUstate(slave: &mut Slave, state: &mut Option<SlaveState>) -> Fmi2Status {
-    todo!();
+pub extern "C" fn fmi2GetFMUstate(
+    slave: &mut Slave,
+    statee: &mut Option<SlaveState>,
+) -> Fmi2Status {
+    let res = slave
+        .dispatcher
+        .invoke_command(&Fmi2Command::Fmi2ExtSerializeSlave);
 
-    // let (status, bytes) = slave.rpc.serialize();
-
-    // match status {
-    //     Fmi2Status::Fmi2OK | Fmi2Status::Fmi2Warning => {
-    //         let bytes = bytes.unwrap();
-
-    //         // Whether a new buffer should be allocated depends on state's value:
-    //         // * state points to null: allocate a new buffer and return a pointer to this
-    //         // * state points to existing state: overwrite that buffer with current state
-    //         match state.as_mut() {
-    //             Some(s) => s.bytes = bytes,
-    //             None => *state = Some(SlaveState::new(&bytes)),
-    //         }
-    //     }
-    //     _ => {}
-    // }
-
-    // status
+    match res {
+        rpc::Fmi2Return::Fmi2ExtSerializeSlaveReturn { status, state } => {
+            match statee.as_mut() {
+                Some(s) => s.bytes = state,
+                None => *statee = Some(SlaveState::new(&state)),
+            }
+            status
+        }
+        rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
+        _ => Fmi2Status::Fmi2Error,
+    }
 }
 /// Free previously recorded state of slave
 /// If state points to null the call is ignored as defined by the specification
 #[ffi_export]
 pub fn fmi2FreeFMUstate(slave: &mut Slave, state: Option<repr_c::Box<SlaveState>>) -> Fmi2Status {
-    todo!();
-
     match state {
         Some(s) => drop(s),
         None => {}
@@ -669,8 +679,6 @@ pub fn fmi2SerializeFMUstate(
     data: *mut u8,
     size: size_t,
 ) -> Fmi2Status {
-    todo!();
-
     let serialized_state_len = state.bytes.len();
 
     if serialized_state_len > size {
@@ -691,8 +699,6 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     size: size_t,
     state: &mut repr_c::Box<Option<SlaveState>>,
 ) -> Fmi2Status {
-    todo!();
-
     let serialized_state = unsafe { std::slice::from_raw_parts(serialized_state, size) };
 
     *state = repr_c::Box::new(Some(SlaveState::new(serialized_state)));
@@ -705,8 +711,6 @@ pub fn fmi2SerializedFMUstateSize(
     state: &SlaveState,
     size: &mut size_t,
 ) -> Fmi2Status {
-    todo!();
-
     *size = state.bytes.len();
     Fmi2Status::Fmi2OK
 }

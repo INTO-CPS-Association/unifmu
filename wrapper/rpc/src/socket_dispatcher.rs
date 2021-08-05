@@ -103,7 +103,7 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
         let buf = self.socket.recv_bytes();
         let ret = Fmi2Return::deserialize_from(&buf, &self.format);
         match ret {
-            Fmi2Return::Fmi2ExtHandshake => (),
+            Fmi2Return::Fmi2ExtHandshake => println!("Received handshake"),
             _ => panic!("unexpected message received"),
         }
     }

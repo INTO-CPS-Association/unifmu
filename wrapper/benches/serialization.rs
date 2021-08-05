@@ -39,7 +39,7 @@ fn pickle_no_alloc(buf: &mut Vec<u8>) {
     buf.clear();
     serde_pickle::to_writer(
         buf,
-        &&Fmi2Command::Fmi2DoStep {
+        &Fmi2Command::Fmi2DoStep {
             current_time: 0.0,
             step_size: 1.0,
             no_step_prior: false,

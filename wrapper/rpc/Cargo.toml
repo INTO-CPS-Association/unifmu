@@ -16,6 +16,7 @@ serde = { version = "1.0", features = ["derive"] }
 prost = "*"
 zmq = "*"
 serde_json = "*"
+serde_bytes = "*"
 serde-pickle = "*"
 
 [build-dependencies]

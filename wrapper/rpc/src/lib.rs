@@ -64,6 +64,7 @@ pub enum Fmi2Command {
 
     Fmi2ExtSerializeSlave,
     Fmi2ExtDeserializeSlave {
+        #[serde(with = "serde_bytes")]
         state: Vec<u8>,
     },
 }

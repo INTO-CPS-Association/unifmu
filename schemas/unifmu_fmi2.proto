@@ -1,196 +1,90 @@
 syntax = "proto3";
+
 package fmi2_proto;
 
+message Fmi2SetReal{
+  repeated uint32 references = 1;
+  repeated double values = 2;
+}
 
-// JAVA
-option java_multiple_files = false;
-//option java_package = "schemas";
-option java_outer_classname = "Fmi2Proto";
+message Fmi2SetInteger{
+  repeated uint32 references = 1;
+  repeated int32 values = 2;
+}
 
-// C#
-option csharp_namespace = "schemas.Fmi2Proto";
+message Fmi2SetBoolean{
+  repeated uint32 references = 1;
+  repeated bool values = 2;
+}
 
-// optimization
-option optimize_for = SPEED; // optimize the code to be fast, read https://developers.google.com/protocol-buffers/docs/proto#options 
+message Fmi2SetString{
+  repeated uint32 references = 1;
+  repeated string values = 2;
+}
+
+message Fmi2GetReal{
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetInteger{
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetBoolean{
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetString{
+  repeated uint32 references = 1;
+}
+
+message Fmi2DoStep {
+  double current_time = 1;
+  double step_size = 2;
+  bool no_step_prior = 3;
+}
+
+message Fmi2SetupExperiment{   
+  double start_time = 1;
+  double stop_time = 2;
+  double tolerance = 3;
+  bool has_stop_time = 4;
+  bool has_tolerance = 5;
+}
 
 
-//// Only related to Handshake between wrapper and FMU ////
-service Handshaker {
-    // Send a message for performing a handshake
-    rpc PerformHandshake (HandshakeInfo) returns (Void) {}
-  }
+message Fmi2CancelStep {}
   
-  // Message containing the handshake information
-  message HandshakeInfo {
-    string ip_address = 1;
-    string port = 2;
-  }
+message Fmi2EnterInitializationMode{}
+
+message Fmi2ExitInitializationMode{}
+
+
+message Fmi2FreeInstance{}
+
+message Fmi2Terminate{}
+
+message Fmi2Reset{}
 
 
 
+message Fmi2GetDirectionalDerivatives{}
 
-service SendCommand{
-    // Set and Get variable value methods
-    rpc Fmi2SetReal(SetReal) returns (StatusReturn) {}
-    rpc Fmi2GetReal(GetXXX) returns (GetRealReturn) {}
-    rpc Fmi2SetInteger(SetInteger) returns (StatusReturn) {}
-    rpc Fmi2GetInteger(GetXXX) returns (GetIntegerReturn) {}
-    rpc Fmi2SetBoolean(SetBoolean) returns (StatusReturn) {}
-    rpc Fmi2GetBoolean(GetXXX) returns (GetBooleanReturn) {}
-    rpc Fmi2SetString(SetString) returns (StatusReturn) {}
-    rpc Fmi2GetString(GetXXX) returns (GetStringReturn) {}
+message Fmi2SetInputDerivatives{}
 
-    // 2.1.6 Initialization, termination and resetting fmus
-    rpc Fmi2EnterInitializationMode(EnterInitializationMode) returns (StatusReturn) {}
-    rpc Fmi2ExitInitializationMode(ExitInitializationMode) returns (StatusReturn) {}
-    rpc Fmi2Terminate(Terminate) returns (StatusReturn) {}
-    rpc Fmi2Reset(Reset) returns (StatusReturn) {}
-    rpc Fmi2SetupExperiment(SetupExperiment) returns (StatusReturn) {}
+message Fmi2GetOutputDerivatives{}
 
-    // Creation, destruction and logging of fmu instances
-    rpc Fmi2FreeInstance(FreeInstance) returns (StatusReturn) {}
-    rpc Fmi2SetDebugLogging(SetDebugLogging) returns (StatusReturn) {}
-
-    /*
-    // 2.1.8 Setting and Getting complete fmu state
-    // rpc Fmi2SetFMUState(FMUState) returns (StatusReturn) {}
-    // rpc Fmi2GetFMUState(FMUState) returns (StatusReturn) {}
-    // rpc Fmi2FreeFMUState(FMUState) returns (StatusReturn) {}
-    
-
-    // Getting partial derivatives
-    // todo
-
-    // 4.2.1 Transfer of input/output values and parameters
-    // todo
-    */
-    
-
-    // 4.2.2 Computation
-    rpc Fmi2DoStep(DoStep) returns (StatusReturn) {}
-    rpc Fmi2CancelStep(CancelStep) returns (StatusReturn) {}
-
-    // 4.2.3 Retrieving status information from the slave
-    // todo
-
-    rpc Serialize(SerializeMessage) returns (SerializeReturn) {}
-    rpc Deserialize(DeserializeMessage) returns (StatusReturn) {} // TODO: check how this should be implemented
-}
-
-
-message SetReal{
-    repeated uint32 references = 1; // array of uint32 --> in rust is array of c_uint
-    repeated double values = 2;
-}
-
-message SetInteger{
-    repeated uint32 references = 1;
-    repeated int32 values = 2;
-}
-
-message SetBoolean{
-    repeated uint32 references = 1;
-    repeated bool values = 2;
-}
-
-message SetString{
-    repeated uint32 references = 1;
-    repeated string values = 2;
-}
-
-message GetXXX{
-    repeated uint32 references = 1;
-}
-
-message DoStep{
-    double current_time = 1;
-    double step_size = 2;
-    bool no_step_prior = 3;
-}
-
-
-message EnterInitializationMode{}
-
-message ExitInitializationMode{}
-
-message FreeInstance{}
-
-message Terminate{}
-
-message Reset{}
-
-message SetupExperiment{   
-    double start_time = 1;
-    // currently optional scalars are not supported by python
-    // until supported we will use extra bool fields
-    // stop_time: double=null;
-    // tolerance: double=null;
-    double stop_time = 2;
-    double tolerance = 3;
-    bool has_stop_time = 4;
-    bool has_tolerance = 5;
-}
-
-
-message SerializeMessage{}
-
-message DeserializeMessage{
-    bytes state = 1;
-}
-
-message GetDirectionalDerivatives{}
-
-message SetInputDerivatives{}
-
-message GetOutputDerivatives{}
-
-message CancelStep{}
 
 message GetXXXStatus{}
 
-message SetDebugLogging{
+message Fmi2SetDebugLogging{
     repeated string categories = 1;
     bool logging_on = 2;
 }
 
-message Fmi2Command{
-    oneof args {
-        // Field numbers between 1-15 only use one byte, therefore the functions that are called the most will be between 1-15
-        int32 DoStep = 1; // Co-sim
-        int32 SetReal = 2;
-        int32 SetInteger = 3;
-        int32 SetBoolean = 4;
-        int32 SetString = 5;
-        int32 GetReal = 6;
-        int32 GetInteger = 7;
-        int32 GetBoolean = 8;
-        int32 GetString = 9;
-        int32 SetDebugLogging = 10;
-        int32 SetupExperiment = 11;
-        int32 FreeInstance = 12;
-        int32 EnterInitializationMode = 13;
-        int32 ExitInitializationMode = 14;
-        int32 Terminate = 15;
-        int32 Reset = 16;
-        int32 Serialize = 17;
-        int32 Deserialize = 18;
-        // Co-sim
-        int32 GetDirectionalDerivatives = 19;
-        int32 SetInputDerivatives = 20;
-        int32 GetOutputDerivatives = 21;
-        int32 CancelStep = 22;
-        int32 GetXXXStatus = 23;
-    }
-}
 
 
-// return values
-// i.e. messages sent from fmu to wrapper
-
-// several FMI2 operations simply return a status
-// this is used as a common return type
-
-enum FmiStatus
+enum Fmi2Status
 {
     Ok = 0;
     Warning=1;
@@ -200,38 +94,99 @@ enum FmiStatus
     Pending=5;
 }
 
-message StatusReturn{
-    FmiStatus status = 1;
+// ----------------------- RETURN VALUES ----------------------
+
+message Fmi2StatusReturn{
+    Fmi2Status status = 1;
 }
 
-message GetRealReturn{
-    FmiStatus status = 1;
-    repeated double values = 2;
+message Fmi2GetRealReturn{
+  int32 status = 1;
+  repeated double values = 2;
 }
 
 
-message GetIntegerReturn{
-    FmiStatus status = 1;
+message Fmi2GetIntegerReturn{
+    Fmi2Status status = 1;
     repeated int32 values = 2;
 }
 
-message GetBooleanReturn{
-    FmiStatus status = 1;
+message Fmi2GetBooleanReturn{
+    Fmi2Status status = 1;
     repeated bool values = 2;
 }
 
-message GetStringReturn{
-    FmiStatus status = 1;
+message Fmi2GetStringReturn{
+    Fmi2Status status = 1;
     repeated string values = 2;
 }
 
-message SerializeReturn{
-    FmiStatus status = 1;
-    bytes state = 2;
+
+
+
+// ----------------------- Non FMI2 standard messages ----------------------
+
+message Fmi2ExtSerializeSlave{}
+
+message Fmi2ExtDeserializeSlave{
+    bytes state = 1;
+}
+
+message Fmi2ExtHandshakeReturn{}
+
+
+message Fmi2ExtSerializeSlaveReturn{
+  Fmi2Status status = 1;
+  bytes state = 2;
+}
+
+// enumeration listing all possible command that are sent from binary to slave
+message Fmi2Command
+{
+  oneof command
+  {
+    Fmi2DoStep Fmi2DoStep = 1;
+    Fmi2SetReal Fmi2SetReal = 2;
+    Fmi2SetInteger Fmi2SetInteger = 3;
+    Fmi2SetBoolean Fmi2SetBoolean = 4;
+    Fmi2SetString Fmi2SetString = 5;
+    Fmi2GetReal Fmi2GetReal = 6;
+    Fmi2GetInteger Fmi2GetInteger = 7;
+    Fmi2GetBoolean Fmi2GetBoolean = 8;
+    Fmi2GetString Fmi2GetString = 9;
+  
+    Fmi2SetupExperiment Fmi2SetupExperiment = 10;
+    Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 11;
+    Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 12;
+    Fmi2FreeInstance Fmi2FreeInstance = 13;
+
+    Fmi2Reset Fmi2Reset = 14;
+    Fmi2Terminate Fmi2Terminate = 15;
+    Fmi2CancelStep Fmi2CancelStep = 16;
+    
+    Fmi2ExtSerializeSlave Fmi2ExtSerializeSlave =17;
+    Fmi2ExtDeserializeSlave Fmi2ExtDeserializeSlave =18;
+  }
 }
 
 
-//  cannot define void return message, see https://groups.google.com/g/protobuf/c/4SCxInAktSc?pli=1 
-message Void{
 
+
+message Fmi2Return
+{
+
+
+  oneof result 
+  {
+    Fmi2StatusReturn Fmi2StatusReturn = 1;
+    Fmi2GetRealReturn Fmi2GetRealReturn = 2;
+    Fmi2GetIntegerReturn Fmi2GetIntegerReturn = 3;
+    Fmi2GetBooleanReturn Fmi2GetBooleanReturn = 4;
+    Fmi2GetStringReturn Fmi2GetStringReturn = 5;
+    Fmi2ExtHandshakeReturn Fmi2ExtHandshakeReturn = 6;
+    Fmi2ExtSerializeSlaveReturn Fmi2ExtSerializeSlaveReturn = 7; 
+    
+  }
+  
+  
 }

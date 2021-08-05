@@ -2,7 +2,7 @@ active_dispatcher = "socket"
 
 [socket]
 type = "zmq"
-format = "json"
+format = "protobuf"
 linux = ["python3", "socket_slave.py"]
 macos = ["python3", "socket_slave.py"]
 windows = ["python", "socket_slave.py"]
