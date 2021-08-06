@@ -56,13 +56,14 @@ if __name__ == "__main__":
 
     s = platform.system()
 
-    binary_basename = "fmi2api"
+    binary_basename_in = "fmi2api"
+    binary_basename_out = "unifmu"
 
     # note that lib prefix is removed
     input_path, output_path = {
-        "Linux": (f"lib{binary_basename}.so", f"linux64/{binary_basename}.so"),
-        "Windows": (f"{binary_basename}.dll", f"win64/{binary_basename}.dll"),
-        "Darwin": (f"lib{binary_basename}.dylib", f"darwin64/{binary_basename}.dylib"),
+        "Linux": (f"lib{binary_basename_in}.so", f"linux64/{binary_basename_out}.so"),
+        "Windows": (f"{binary_basename_in}.dll", f"win64/{binary_basename_out}.dll"),
+        "Darwin": (f"lib{binary_basename_in}.dylib", f"darwin64/{binary_basename_out}.dylib"),
     }[s]
 
     wrapper_in = Path(f"wrapper/target/debug/{input_path}").absolute().__fspath__()
@@ -171,12 +172,13 @@ if __name__ == "__main__":
                 "protoc",
                 "-I=schemas",
                 "--python_out=tool/unifmu/resources/backends/python/schemas",
+                "--csharp_out=tool/unifmu/resources/backends/csharp/schemas",
                 # "--java_out=tool/unifmu/resources/backends/java/",
                 "unifmu_fmi2.proto",
             ]
         )
 
-        logger.info("updated schemas for python")
+        logger.info("updated schemas")
 
         #     from grpc_tools.protoc import _protoc_compiler
 

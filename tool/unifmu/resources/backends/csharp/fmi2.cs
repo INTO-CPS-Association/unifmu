@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Linq;
 
-public enum Fmi2Status : ushort
+public enum Fmi2Status
 {
     /// Represents the status of the FMU or the results of function calls.
     /// Values:
@@ -36,7 +36,7 @@ public enum Fmi2Status : ushort
 ///     * terminated: ask the slave if it wants to terminate the simulation. This can be called after the 
 ///                    step function returns the discard status.
 /// </summary>
-public enum Fmi2StatusKind : ushort
+public enum Fmi2StatusKind
 {
     do_step_status = 0,
     pending_status = 1,
@@ -69,23 +69,27 @@ public abstract class Fmi2FMU
 
     protected void SetPropertyValue(uint valueReference, object value)
     {
-        try{
+        try
+        {
             this.GetType().GetProperty(referenceToAttr[valueReference]).SetValue(this, value);
         }
-        catch {
+        catch
+        {
             throw new ArgumentException("Could not set value of property with value reference {0}", valueReference.ToString());
         }
     }
 
     protected object GetPropertyValue(uint valueReference)
     {
-        try {
+        try
+        {
             return this.GetType().GetProperty(referenceToAttr[valueReference]).GetValue(this, null);
         }
-        catch{
+        catch
+        {
             throw new ArgumentException("Could not get value of property with value reference {0}", valueReference.ToString());
         }
-        
+
     }
 
 
@@ -146,8 +150,9 @@ public abstract class Fmi2FMU
     /********************************************************* Getters and Setters implemented **********************************************************/
     public virtual (Fmi2Status, IEnumerable<double>) GetReal(IEnumerable<uint> valueReferences)
     {
-        try {
-            IList<double> values = new List<double>(){};
+        try
+        {
+            IList<double> values = new List<double>() { };
             int i = 0;
             foreach (uint vref in valueReferences)
             {
@@ -156,61 +161,69 @@ public abstract class Fmi2FMU
                 sw.WriteLine("Got value: {0}", values[i++]);
             }
             sw.WriteLine("Got values: {0}", values);
-            return (Fmi2Status.Ok,values);
+            return (Fmi2Status.Ok, values);
         }
-        catch{
+        catch
+        {
             this.sw.WriteLine("Unable to read variable from slave, the variable is not declared as an attribute of the C# object");
             return (Fmi2Status.Error, null);
         }
     }
     public virtual (Fmi2Status, IEnumerable<int>) GetInt(IEnumerable<uint> valueReferences)
     {
-        try {
-            IList<int> values = new List<int>(){};
+        try
+        {
+            IList<int> values = new List<int>() { };
             foreach (uint vref in valueReferences)
             {
                 values.Add((int)GetPropertyValue(vref));
             }
-            return (Fmi2Status.Ok,values);
+            return (Fmi2Status.Ok, values);
         }
-        catch{
+        catch
+        {
             this.sw.WriteLine("Unable to read variable from slave, the variable is not declared as an attribute of the C# object");
             return (Fmi2Status.Error, null);
         }
     }
-    public virtual (Fmi2Status,IEnumerable<bool>) GetBool(IEnumerable<uint> valueReferences)
+    public virtual (Fmi2Status, IEnumerable<bool>) GetBool(IEnumerable<uint> valueReferences)
     {
-        try {
-            IList<bool> values = new List<bool>(){};
+        try
+        {
+            IList<bool> values = new List<bool>() { };
             foreach (uint vref in valueReferences)
             {
                 values.Add((bool)GetPropertyValue(vref));
             }
-            return (Fmi2Status.Ok,values);
+            return (Fmi2Status.Ok, values);
         }
-        catch{
+        catch
+        {
             this.sw.WriteLine("Unable to read variable from slave, the variable is not declared as an attribute of the C# object");
             return (Fmi2Status.Error, null);
         }
     }
-    public virtual (Fmi2Status,IEnumerable<string>) GetString(IEnumerable<uint> valueReferences)
+    public virtual (Fmi2Status, IEnumerable<string>) GetString(IEnumerable<uint> valueReferences)
     {
-        try {
-            IList<string> values = new List<string>(){};
+        try
+        {
+            IList<string> values = new List<string>() { };
             foreach (uint vref in valueReferences)
             {
                 values.Add((string)GetPropertyValue(vref));
             }
-            return (Fmi2Status.Ok,values);
+            return (Fmi2Status.Ok, values);
         }
-        catch{
+        catch
+        {
             this.sw.WriteLine("Unable to read variable from slave, the variable is not declared as an attribute of the C# object");
             return (Fmi2Status.Error, null);
         }
     }
     public virtual Fmi2Status SetReal(IEnumerable<uint> valueReferences, IEnumerable<double> values)
     {
-        try {
+        try
+        {
             for (int i = 0; i < valueReferences.Count(); ++i)
             {
                 //sw.WriteLine("valuereferece");
@@ -218,7 +231,8 @@ public abstract class Fmi2FMU
             }
             return Fmi2Status.Ok;
         }
-        catch{
+        catch
+        {
             sw.WriteLine("Unable to set variable on slave, the variable is not declated as an attribute of the C# object.");
             return Fmi2Status.Error;
         }
@@ -226,14 +240,16 @@ public abstract class Fmi2FMU
 
     public virtual Fmi2Status SetInt(IEnumerable<uint> valueReferences, IEnumerable<int> values)
     {
-        try {
+        try
+        {
             for (int i = 0; i < valueReferences.Count(); ++i)
             {
                 this.SetPropertyValue(valueReferences.ElementAt(i), values.ElementAt(i));
             }
             return Fmi2Status.Ok;
         }
-        catch{
+        catch
+        {
             sw.WriteLine("Unable to set variable on slave, the variable is not declated as an attribute of the C# object.");
             return Fmi2Status.Error;
         }
@@ -241,14 +257,16 @@ public abstract class Fmi2FMU
 
     public virtual Fmi2Status SetBool(IEnumerable<uint> valueReferences, IEnumerable<bool> values)
     {
-        try {
+        try
+        {
             for (int i = 0; i < valueReferences.Count(); ++i)
             {
                 this.SetPropertyValue(valueReferences.ElementAt(i), values.ElementAt(i));
             }
             return Fmi2Status.Ok;
         }
-        catch{
+        catch
+        {
             sw.WriteLine("Unable to set variable on slave, the variable is not declated as an attribute of the C# object.");
             return Fmi2Status.Error;
         }
@@ -256,14 +274,16 @@ public abstract class Fmi2FMU
 
     public virtual Fmi2Status SetString(IEnumerable<uint> valueReferences, IEnumerable<string> values)
     {
-        try {
+        try
+        {
             for (int i = 0; i < valueReferences.Count(); ++i)
             {
                 this.SetPropertyValue(valueReferences.ElementAt(i), values.ElementAt(i));
             }
             return Fmi2Status.Ok;
         }
-        catch{
+        catch
+        {
             sw.WriteLine("Unable to set variable on slave, the variable is not declated as an attribute of the C# object.");
             return Fmi2Status.Error;
         }
