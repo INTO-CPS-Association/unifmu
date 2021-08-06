@@ -104,7 +104,7 @@ pub struct Fmi2StatusReturn {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2GetRealReturn {
-    #[prost(int32, tag = "1")]
+    #[prost(enumeration = "Fmi2Status", tag = "1")]
     pub status: i32,
     #[prost(double, repeated, tag = "2")]
     pub values: ::prost::alloc::vec::Vec<f64>,

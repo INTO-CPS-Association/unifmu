@@ -45,54 +45,54 @@ namespace Fmi2Proto {
             "dmVzIg4KDEdldFhYWFN0YXR1cyI9ChNGbWkyU2V0RGVidWdMb2dnaW5nEhIK",
             "CmNhdGVnb3JpZXMYASADKAkSEgoKbG9nZ2luZ19vbhgCIAEoCCI6ChBGbWky",
             "U3RhdHVzUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1p",
-            "MlN0YXR1cyIzChFGbWkyR2V0UmVhbFJldHVybhIOCgZzdGF0dXMYASABKAUS",
-            "DgoGdmFsdWVzGAIgAygBIk4KFEZtaTJHZXRJbnRlZ2VyUmV0dXJuEiYKBnN0",
-            "YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIOCgZ2YWx1ZXMY",
-            "AiADKAUiTgoURm1pMkdldEJvb2xlYW5SZXR1cm4SJgoGc3RhdHVzGAEgASgO",
-            "MhYuZm1pMl9wcm90by5GbWkyU3RhdHVzEg4KBnZhbHVlcxgCIAMoCCJNChNG",
-            "bWkyR2V0U3RyaW5nUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJv",
-            "dG8uRm1pMlN0YXR1cxIOCgZ2YWx1ZXMYAiADKAkiFwoVRm1pMkV4dFNlcmlh",
-            "bGl6ZVNsYXZlIigKF0ZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlEg0KBXN0YXRl",
-            "GAEgASgMIhgKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4iVAobRm1pMkV4dFNl",
-            "cmlhbGl6ZVNsYXZlUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJv",
-            "dG8uRm1pMlN0YXR1cxINCgVzdGF0ZRgCIAEoDCKgCAoLRm1pMkNvbW1hbmQS",
-            "LAoKRm1pMkRvU3RlcBgBIAEoCzIWLmZtaTJfcHJvdG8uRm1pMkRvU3RlcEgA",
-            "Ei4KC0ZtaTJTZXRSZWFsGAIgASgLMhcuZm1pMl9wcm90by5GbWkyU2V0UmVh",
-            "bEgAEjQKDkZtaTJTZXRJbnRlZ2VyGAMgASgLMhouZm1pMl9wcm90by5GbWky",
-            "U2V0SW50ZWdlckgAEjQKDkZtaTJTZXRCb29sZWFuGAQgASgLMhouZm1pMl9w",
-            "cm90by5GbWkyU2V0Qm9vbGVhbkgAEjIKDUZtaTJTZXRTdHJpbmcYBSABKAsy",
-            "GS5mbWkyX3Byb3RvLkZtaTJTZXRTdHJpbmdIABIuCgtGbWkyR2V0UmVhbBgG",
-            "IAEoCzIXLmZtaTJfcHJvdG8uRm1pMkdldFJlYWxIABI0Cg5GbWkyR2V0SW50",
-            "ZWdlchgHIAEoCzIaLmZtaTJfcHJvdG8uRm1pMkdldEludGVnZXJIABI0Cg5G",
-            "bWkyR2V0Qm9vbGVhbhgIIAEoCzIaLmZtaTJfcHJvdG8uRm1pMkdldEJvb2xl",
-            "YW5IABIyCg1GbWkyR2V0U3RyaW5nGAkgASgLMhkuZm1pMl9wcm90by5GbWky",
-            "R2V0U3RyaW5nSAASPgoTRm1pMlNldHVwRXhwZXJpbWVudBgKIAEoCzIfLmZt",
-            "aTJfcHJvdG8uRm1pMlNldHVwRXhwZXJpbWVudEgAEk4KG0ZtaTJFbnRlcklu",
-            "aXRpYWxpemF0aW9uTW9kZRgLIAEoCzInLmZtaTJfcHJvdG8uRm1pMkVudGVy",
-            "SW5pdGlhbGl6YXRpb25Nb2RlSAASTAoaRm1pMkV4aXRJbml0aWFsaXphdGlv",
-            "bk1vZGUYDCABKAsyJi5mbWkyX3Byb3RvLkZtaTJFeGl0SW5pdGlhbGl6YXRp",
-            "b25Nb2RlSAASOAoQRm1pMkZyZWVJbnN0YW5jZRgNIAEoCzIcLmZtaTJfcHJv",
-            "dG8uRm1pMkZyZWVJbnN0YW5jZUgAEioKCUZtaTJSZXNldBgOIAEoCzIVLmZt",
-            "aTJfcHJvdG8uRm1pMlJlc2V0SAASMgoNRm1pMlRlcm1pbmF0ZRgPIAEoCzIZ",
-            "LmZtaTJfcHJvdG8uRm1pMlRlcm1pbmF0ZUgAEjQKDkZtaTJDYW5jZWxTdGVw",
-            "GBAgASgLMhouZm1pMl9wcm90by5GbWkyQ2FuY2VsU3RlcEgAEkIKFUZtaTJF",
-            "eHRTZXJpYWxpemVTbGF2ZRgRIAEoCzIhLmZtaTJfcHJvdG8uRm1pMkV4dFNl",
-            "cmlhbGl6ZVNsYXZlSAASRgoXRm1pMkV4dERlc2VyaWFsaXplU2xhdmUYEiAB",
-            "KAsyIy5mbWkyX3Byb3RvLkZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlSABCCQoH",
-            "Y29tbWFuZCLmAwoKRm1pMlJldHVybhI4ChBGbWkyU3RhdHVzUmV0dXJuGAEg",
-            "ASgLMhwuZm1pMl9wcm90by5GbWkyU3RhdHVzUmV0dXJuSAASOgoRRm1pMkdl",
-            "dFJlYWxSZXR1cm4YAiABKAsyHS5mbWkyX3Byb3RvLkZtaTJHZXRSZWFsUmV0",
-            "dXJuSAASQAoURm1pMkdldEludGVnZXJSZXR1cm4YAyABKAsyIC5mbWkyX3By",
-            "b3RvLkZtaTJHZXRJbnRlZ2VyUmV0dXJuSAASQAoURm1pMkdldEJvb2xlYW5S",
-            "ZXR1cm4YBCABKAsyIC5mbWkyX3Byb3RvLkZtaTJHZXRCb29sZWFuUmV0dXJu",
-            "SAASPgoTRm1pMkdldFN0cmluZ1JldHVybhgFIAEoCzIfLmZtaTJfcHJvdG8u",
-            "Rm1pMkdldFN0cmluZ1JldHVybkgAEkQKFkZtaTJFeHRIYW5kc2hha2VSZXR1",
-            "cm4YBiABKAsyIi5mbWkyX3Byb3RvLkZtaTJFeHRIYW5kc2hha2VSZXR1cm5I",
-            "ABJOChtGbWkyRXh0U2VyaWFsaXplU2xhdmVSZXR1cm4YByABKAsyJy5mbWky",
-            "X3Byb3RvLkZtaTJFeHRTZXJpYWxpemVTbGF2ZVJldHVybkgAQggKBnJlc3Vs",
-            "dCpRCgpGbWkyU3RhdHVzEgYKAk9rEAASCwoHV2FybmluZxABEgsKB0Rpc2Nh",
-            "cmQQAhIJCgVFcnJvchADEgkKBUZhdGFsEAQSCwoHUGVuZGluZxAFYgZwcm90",
-            "bzM="));
+            "MlN0YXR1cyJLChFGbWkyR2V0UmVhbFJldHVybhImCgZzdGF0dXMYASABKA4y",
+            "Fi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMSDgoGdmFsdWVzGAIgAygBIk4KFEZt",
+            "aTJHZXRJbnRlZ2VyUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJv",
+            "dG8uRm1pMlN0YXR1cxIOCgZ2YWx1ZXMYAiADKAUiTgoURm1pMkdldEJvb2xl",
+            "YW5SZXR1cm4SJgoGc3RhdHVzGAEgASgOMhYuZm1pMl9wcm90by5GbWkyU3Rh",
+            "dHVzEg4KBnZhbHVlcxgCIAMoCCJNChNGbWkyR2V0U3RyaW5nUmV0dXJuEiYK",
+            "BnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIOCgZ2YWx1",
+            "ZXMYAiADKAkiFwoVRm1pMkV4dFNlcmlhbGl6ZVNsYXZlIigKF0ZtaTJFeHRE",
+            "ZXNlcmlhbGl6ZVNsYXZlEg0KBXN0YXRlGAEgASgMIhgKFkZtaTJFeHRIYW5k",
+            "c2hha2VSZXR1cm4iVAobRm1pMkV4dFNlcmlhbGl6ZVNsYXZlUmV0dXJuEiYK",
+            "BnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxINCgVzdGF0",
+            "ZRgCIAEoDCKgCAoLRm1pMkNvbW1hbmQSLAoKRm1pMkRvU3RlcBgBIAEoCzIW",
+            "LmZtaTJfcHJvdG8uRm1pMkRvU3RlcEgAEi4KC0ZtaTJTZXRSZWFsGAIgASgL",
+            "MhcuZm1pMl9wcm90by5GbWkyU2V0UmVhbEgAEjQKDkZtaTJTZXRJbnRlZ2Vy",
+            "GAMgASgLMhouZm1pMl9wcm90by5GbWkyU2V0SW50ZWdlckgAEjQKDkZtaTJT",
+            "ZXRCb29sZWFuGAQgASgLMhouZm1pMl9wcm90by5GbWkyU2V0Qm9vbGVhbkgA",
+            "EjIKDUZtaTJTZXRTdHJpbmcYBSABKAsyGS5mbWkyX3Byb3RvLkZtaTJTZXRT",
+            "dHJpbmdIABIuCgtGbWkyR2V0UmVhbBgGIAEoCzIXLmZtaTJfcHJvdG8uRm1p",
+            "MkdldFJlYWxIABI0Cg5GbWkyR2V0SW50ZWdlchgHIAEoCzIaLmZtaTJfcHJv",
+            "dG8uRm1pMkdldEludGVnZXJIABI0Cg5GbWkyR2V0Qm9vbGVhbhgIIAEoCzIa",
+            "LmZtaTJfcHJvdG8uRm1pMkdldEJvb2xlYW5IABIyCg1GbWkyR2V0U3RyaW5n",
+            "GAkgASgLMhkuZm1pMl9wcm90by5GbWkyR2V0U3RyaW5nSAASPgoTRm1pMlNl",
+            "dHVwRXhwZXJpbWVudBgKIAEoCzIfLmZtaTJfcHJvdG8uRm1pMlNldHVwRXhw",
+            "ZXJpbWVudEgAEk4KG0ZtaTJFbnRlckluaXRpYWxpemF0aW9uTW9kZRgLIAEo",
+            "CzInLmZtaTJfcHJvdG8uRm1pMkVudGVySW5pdGlhbGl6YXRpb25Nb2RlSAAS",
+            "TAoaRm1pMkV4aXRJbml0aWFsaXphdGlvbk1vZGUYDCABKAsyJi5mbWkyX3By",
+            "b3RvLkZtaTJFeGl0SW5pdGlhbGl6YXRpb25Nb2RlSAASOAoQRm1pMkZyZWVJ",
+            "bnN0YW5jZRgNIAEoCzIcLmZtaTJfcHJvdG8uRm1pMkZyZWVJbnN0YW5jZUgA",
+            "EioKCUZtaTJSZXNldBgOIAEoCzIVLmZtaTJfcHJvdG8uRm1pMlJlc2V0SAAS",
+            "MgoNRm1pMlRlcm1pbmF0ZRgPIAEoCzIZLmZtaTJfcHJvdG8uRm1pMlRlcm1p",
+            "bmF0ZUgAEjQKDkZtaTJDYW5jZWxTdGVwGBAgASgLMhouZm1pMl9wcm90by5G",
+            "bWkyQ2FuY2VsU3RlcEgAEkIKFUZtaTJFeHRTZXJpYWxpemVTbGF2ZRgRIAEo",
+            "CzIhLmZtaTJfcHJvdG8uRm1pMkV4dFNlcmlhbGl6ZVNsYXZlSAASRgoXRm1p",
+            "MkV4dERlc2VyaWFsaXplU2xhdmUYEiABKAsyIy5mbWkyX3Byb3RvLkZtaTJF",
+            "eHREZXNlcmlhbGl6ZVNsYXZlSABCCQoHY29tbWFuZCLmAwoKRm1pMlJldHVy",
+            "bhI4ChBGbWkyU3RhdHVzUmV0dXJuGAEgASgLMhwuZm1pMl9wcm90by5GbWky",
+            "U3RhdHVzUmV0dXJuSAASOgoRRm1pMkdldFJlYWxSZXR1cm4YAiABKAsyHS5m",
+            "bWkyX3Byb3RvLkZtaTJHZXRSZWFsUmV0dXJuSAASQAoURm1pMkdldEludGVn",
+            "ZXJSZXR1cm4YAyABKAsyIC5mbWkyX3Byb3RvLkZtaTJHZXRJbnRlZ2VyUmV0",
+            "dXJuSAASQAoURm1pMkdldEJvb2xlYW5SZXR1cm4YBCABKAsyIC5mbWkyX3By",
+            "b3RvLkZtaTJHZXRCb29sZWFuUmV0dXJuSAASPgoTRm1pMkdldFN0cmluZ1Jl",
+            "dHVybhgFIAEoCzIfLmZtaTJfcHJvdG8uRm1pMkdldFN0cmluZ1JldHVybkgA",
+            "EkQKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4YBiABKAsyIi5mbWkyX3Byb3Rv",
+            "LkZtaTJFeHRIYW5kc2hha2VSZXR1cm5IABJOChtGbWkyRXh0U2VyaWFsaXpl",
+            "U2xhdmVSZXR1cm4YByABKAsyJy5mbWkyX3Byb3RvLkZtaTJFeHRTZXJpYWxp",
+            "emVTbGF2ZVJldHVybkgAQggKBnJlc3VsdCpRCgpGbWkyU3RhdHVzEgYKAk9r",
+            "EAASCwoHV2FybmluZxABEgsKB0Rpc2NhcmQQAhIJCgVFcnJvchADEgkKBUZh",
+            "dGFsEAQSCwoHUGVuZGluZxAFYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Fmi2Proto.Fmi2Status), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -4267,10 +4267,10 @@ namespace Fmi2Proto {
 
     /// <summary>Field number for the "status" field.</summary>
     public const int StatusFieldNumber = 1;
-    private int status_;
+    private global::Fmi2Proto.Fmi2Status status_ = global::Fmi2Proto.Fmi2Status.Ok;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int Status {
+    public global::Fmi2Proto.Fmi2Status Status {
       get { return status_; }
       set {
         status_ = value;
@@ -4312,7 +4312,7 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Status != 0) hash ^= Status.GetHashCode();
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) hash ^= Status.GetHashCode();
       hash ^= values_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -4332,9 +4332,9 @@ namespace Fmi2Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Status != 0) {
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
         output.WriteRawTag(8);
-        output.WriteInt32(Status);
+        output.WriteEnum((int) Status);
       }
       values_.WriteTo(output, _repeated_values_codec);
       if (_unknownFields != null) {
@@ -4347,9 +4347,9 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Status != 0) {
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
         output.WriteRawTag(8);
-        output.WriteInt32(Status);
+        output.WriteEnum((int) Status);
       }
       values_.WriteTo(ref output, _repeated_values_codec);
       if (_unknownFields != null) {
@@ -4362,8 +4362,8 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Status != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Status);
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Status);
       }
       size += values_.CalculateSize(_repeated_values_codec);
       if (_unknownFields != null) {
@@ -4378,7 +4378,7 @@ namespace Fmi2Proto {
       if (other == null) {
         return;
       }
-      if (other.Status != 0) {
+      if (other.Status != global::Fmi2Proto.Fmi2Status.Ok) {
         Status = other.Status;
       }
       values_.Add(other.values_);
@@ -4398,7 +4398,7 @@ namespace Fmi2Proto {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 8: {
-            Status = input.ReadInt32();
+            Status = (global::Fmi2Proto.Fmi2Status) input.ReadEnum();
             break;
           }
           case 18:
@@ -4422,7 +4422,7 @@ namespace Fmi2Proto {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 8: {
-            Status = input.ReadInt32();
+            Status = (global::Fmi2Proto.Fmi2Status) input.ReadEnum();
             break;
           }
           case 18:

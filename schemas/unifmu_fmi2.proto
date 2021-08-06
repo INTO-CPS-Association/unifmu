@@ -101,7 +101,7 @@ message Fmi2StatusReturn{
 }
 
 message Fmi2GetRealReturn{
-  int32 status = 1;
+  Fmi2Status status = 1;
   repeated double values = 2;
 }
 
