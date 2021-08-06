@@ -181,12 +181,21 @@ pub fn fmi2Instantiate(
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
     let (endpoint, mut dispatcher) = new_boxed_socket_dispatcher(Protobuf);
+    let endpoint_port = endpoint.split(":").last().expect("There should be a port after the colon").to_owned();
 
     // set environment variables
     let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
     env_vars.push((
+        OsString::from("UNIFMU_GUID"),
+        OsString::from(_fmu_guid.to_str()),
+    ));
+    env_vars.push((
         OsString::from("UNIFMU_DISPATCHER_ENDPOINT"),
         OsString::from(endpoint),
+    ));
+    env_vars.push((
+        OsString::from("UNIFMU_DISPATCHER_ENDPOINT_PORT"),
+        OsString::from(endpoint_port),
     ));
     if config.linux.is_some() {
         env_vars.push((

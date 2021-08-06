@@ -40,8 +40,8 @@ if __name__ == "__main__":
 
     ret = Fmi2Return()
     ret.Fmi2ExtHandshakeReturn.SetInParent()
-    bytes = ret.SerializeToString()
-    socket.send(bytes)
+    state = ret.SerializeToString()
+    socket.send(state)
 
     # create slave object then use model description to create a mapping between fmi value references and attribute names of FMU
 
@@ -72,7 +72,6 @@ if __name__ == "__main__":
         data = getattr(command, command.WhichOneof("command"))
 
         if group == "Fmi2SetupExperiment":
-
             start_time = data.start_time
             stop_time = data.stop_time if data.has_stop_time else None
             tolerance = data.tolerance if data.has_tolerance else None
@@ -83,17 +82,14 @@ if __name__ == "__main__":
             result.Fmi2StatusReturn.status = slave.do_step(
                 data.current_time, data.step_size, data.no_step_prior
             )
-
         elif group == "Fmi2EnterInitializationMode":
             result.Fmi2StatusReturn.status = slave.enter_initialization_mode()
-
         elif group == "Fmi2ExitInitializationMode":
-
             result.Fmi2StatusReturn.status = slave.exit_initialization_mode()
         elif group == "Fmi2ExtSerializeSlave":
-            (status, bytes) = slave.serialize()
+            (status, state) = slave.serialize()
             result.Fmi2ExtSerializeSlaveReturn.status = status
-            result.Fmi2ExtSerializeSlaveReturn.state = bytes
+            result.Fmi2ExtSerializeSlaveReturn.state = state
         elif group == "Fmi2ExtDeserializeSlave":
             state = command.Fmi2ExtDeserializeSlave.state
             result.Fmi2StatusReturn.status = slave.deserialize(state)
@@ -101,7 +97,6 @@ if __name__ == "__main__":
             status, values = slave.get_xxx(command.Fmi2GetReal.references)
             result.Fmi2GetRealReturn.status = status
             result.Fmi2GetRealReturn.values[:] = values
-
         elif group == "Fmi2GetInteger":
             status, values = slave.get_xxx(command.Fmi2GetInteger.references)
             result.Fmi2GetIntegerReturn.status = status
@@ -114,19 +109,16 @@ if __name__ == "__main__":
             status, values = slave.get_xxx(command.Fmi2GetString.references)
             result.Fmi2GetStringReturn.status = status
             result.Fmi2GetStringReturn.values[:] = values
-
         elif group == "Fmi2SetReal":
             status = slave.set_xxx(
                 command.Fmi2SetReal.references, command.Fmi2SetReal.values
             )
             result.Fmi2StatusReturn.status = status
-
         elif group == "Fmi2SetInteger":
             status = slave.set_xxx(
                 command.Fmi2SetInteger.references, command.Fmi2SetInteger.values
             )
             result.Fmi2StatusReturn.status = status
-
         elif group == "Fmi2SetBoolean":
             status = slave.set_xxx(
                 command.Fmi2SetBoolean.references, command.Fmi2SetBoolean.values
@@ -146,36 +138,13 @@ if __name__ == "__main__":
             result.Fmi2StatusReturn.status = (
                 0  # TODO Fmi2FreeInstance should not return a value
             )
-            bytes = result.SerializeToString()
+            state = result.SerializeToString()
 
-            socket.send(bytes)
+            socket.send(state)
             sys.exit(0)
         else:
             logger.error(f"unrecognized command '{group}' received, shutting down")
             sys.exit(-1)
 
-        bytes = result.SerializeToString()
-        socket.send(bytes)
-
-
-# Fmi2DoStep Fmi2DoStep = 1;
-#     Fmi2SetReal Fmi2SetReal = 2;
-#     Fmi2SetInteger Fmi2SetInteger = 3;
-#     Fmi2SetBoolean Fmi2SetBoolean = 4;
-#     Fmi2SetString Fmi2SetString = 5;
-#     Fmi2GetReal Fmi2GetReal = 6;
-#     Fmi2GetInteger Fmi2GetInteger = 7;
-#     Fmi2GetBoolean Fmi2GetBoolean = 8;
-#     Fmi2GetString Fmi2GetString = 9;
-
-#     Fmi2SetupExperiment Fmi2SetupExperiment = 10;
-#     Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 11;
-#     Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 12;
-#     Fmi2FreeInstance Fmi2FreeInstance = 13;
-
-#     Fmi2Reset Fmi2Reset = 14;
-#     Fmi2Terminate Fmi2Terminate = 15;
-#     Fmi2CancelStep Fmi2CancelStep = 16;
-
-#     Fmi2ExtSerializeSlave Fmi2ExtSerializeSlave =17;
-#     Fmi2ExtDeserializeSlave Fmi2ExtDeserializeSlave =18;
+        state = result.SerializeToString()
+        socket.send(state)

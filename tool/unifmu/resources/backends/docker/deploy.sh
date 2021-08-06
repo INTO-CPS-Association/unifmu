@@ -1,14 +1,12 @@
 #!/bin/sh
 
-# fmu identifier from model description
-uid=$(grep -oP 'guid="\K[^"]+' ../modelDescription.xml)
-
+# move model description 
 cp ../modelDescription.xml container_bundle/modelDescription.xml
 
-echo "build container for $uid"
+echo "build container for $UNIFMU_GUID"
 
 # build image
-docker build -t "$uid" .
+docker build -t "$UNIFMU_GUID" .
 
 # run container
-docker run --net=host --add-host=host.docker.internal:host-gateway --rm "$uid" python3 bootstrap.py "$@"
+docker run -p "$UNIFMU_DISPATCHER_ENDPOINT_PORT":"$UNIFMU_DISPATCHER_ENDPOINT_PORT" --rm "$UNIFMU_GUID" "$UNIFMU_LAUNCH_LINUX"
