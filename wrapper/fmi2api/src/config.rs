@@ -1,4 +1,3 @@
-use rpc::socket_dispatcher::SerializationFormat;
 use serde::Deserialize;
 
 // #[derive(Deserialize)]

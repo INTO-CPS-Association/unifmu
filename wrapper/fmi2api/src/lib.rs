@@ -4,6 +4,7 @@
 #![allow(dead_code)]
 
 pub mod config;
+pub mod md;
 
 use common::Fmi2Status;
 use libc::c_double;
@@ -36,9 +37,11 @@ use std::os::raw::c_ulonglong;
 use std::os::raw::c_void;
 use std::panic::RefUnwindSafe;
 use std::panic::UnwindSafe;
+use std::path::Path;
 use std::ptr::null_mut;
 
 use crate::config::LaunchConfig;
+use crate::md::parse_model_description;
 
 ///
 /// Represents the function signature of the logging callback function passsed
@@ -181,7 +184,11 @@ pub fn fmi2Instantiate(
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
     let (endpoint, mut dispatcher) = new_boxed_socket_dispatcher(Protobuf);
-    let endpoint_port = endpoint.split(":").last().expect("There should be a port after the colon").to_owned();
+    let endpoint_port = endpoint
+        .split(":")
+        .last()
+        .expect("There should be a port after the colon")
+        .to_owned();
 
     // set environment variables
     let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
@@ -214,6 +221,33 @@ pub fn fmi2Instantiate(
             OsString::from("UNIFMU_LAUNCH_MACOS"),
             OsString::from(serde_json::to_string(&config.macos).unwrap()),
         ));
+    }
+    match resources_dir.parent() {
+        Some(p) => match parse_model_description(&p.join("modelDescription.xml")) {
+            Ok(md) => {
+                let ref_to_attr: HashMap<u32, String> = md
+                    .model_variables
+                    .variables
+                    .iter()
+                    .map(|v| (v.value_reference, v.name.to_owned()))
+                    .collect();
+
+                env_vars.push((
+                    OsString::from("UNIFMU_REFS_TO_ATTRS"),
+                    OsString::from(serde_json::to_string(&ref_to_attr).unwrap()),
+                ));
+                println!("the 'modelDescription.xml' was succefully parsed and it's results used to populate 'UNIFMU_REFS_TO_ATTRS'")
+            }
+            Err(e) => match e {
+                md::ModelDescriptionError::UnableToRead => {
+                    println!("the 'modelDescription.xml' file was not found")
+                }
+                md::ModelDescriptionError::UnableToParse => {
+                    println!("the 'modelDescription.xml' file was found but could not be parsed")
+                }
+            },
+        },
+        None => println!("resources directory has no parent"),
     }
 
     // grab launch command for host os
