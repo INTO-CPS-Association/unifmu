@@ -26,13 +26,7 @@ namespace Launch
 
       // read environment variables
       string dispatcher_endpoint = System.Environment.GetEnvironmentVariable("UNIFMU_DISPATCHER_ENDPOINT");
-      string references_to_values = System.Environment.GetEnvironmentVariable("UNIFMU_REFS_TO_ATTRS");
 
-      if (references_to_values == null)
-      {
-        Console.WriteLine("the environment variable 'UNIFMU_REFS_TO_ATTRS' was not set, shutting down.");
-        Environment.Exit(-1);
-      }
 
       var socket = new RequestSocket();
       socket.Connect(dispatcher_endpoint);
@@ -89,25 +83,25 @@ namespace Launch
 
           case Fmi2Command.CommandOneofCase.Fmi2DoStep:
             result.Fmi2StatusReturn = new Fmi2StatusReturn();
-            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.DoStep(command.Fmi2DoStep.CurrentTime, command.Fmi2DoStep.StepSize, command.Fmi2DoStep.NoStepPrior);
+            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.Fmi2DoStep(command.Fmi2DoStep.CurrentTime, command.Fmi2DoStep.StepSize, command.Fmi2DoStep.NoStepPrior);
             break;
 
           case Fmi2Command.CommandOneofCase.Fmi2SetReal:
             result.Fmi2StatusReturn = new Fmi2StatusReturn();
-            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.SetReal(command.Fmi2SetReal.References, command.Fmi2SetReal.Values);
+            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.FmiSetReal(command.Fmi2SetReal.References, command.Fmi2SetReal.Values);
             break;
 
 
           case Fmi2Command.CommandOneofCase.Fmi2SetInteger:
             result.Fmi2StatusReturn = new Fmi2StatusReturn();
-            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.SetInt(
+            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.Fmi2SetInteger(
                 command.Fmi2SetInteger.References,
                 command.Fmi2SetInteger.Values);
             break;
 
           case Fmi2Command.CommandOneofCase.Fmi2SetBoolean:
             result.Fmi2StatusReturn = new Fmi2StatusReturn();
-            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.SetBool(
+            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.Fmi2SetBoolean(
                 command.Fmi2SetBoolean.References,
                 command.Fmi2SetBoolean.Values
             );
@@ -116,13 +110,13 @@ namespace Launch
 
           case Fmi2Command.CommandOneofCase.Fmi2SetString:
             result.Fmi2StatusReturn = new Fmi2StatusReturn();
-            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.SetString(command.Fmi2SetInteger.References, command.Fmi2SetString.Values);
+            result.Fmi2StatusReturn.Status = (Fmi2Proto.Fmi2Status)model.Fmi2SetString(command.Fmi2SetInteger.References, command.Fmi2SetString.Values);
             break;
 
           case Fmi2Command.CommandOneofCase.Fmi2GetReal:
             {
               result.Fmi2GetRealReturn = new Fmi2GetRealReturn();
-              (var status, var values) = model.GetReal(command.Fmi2GetReal.References);
+              (var status, var values) = model.Fmi2GetReal(command.Fmi2GetReal.References);
               result.Fmi2GetRealReturn.Values.AddRange(values);
               result.Fmi2GetRealReturn.Status = (Fmi2Proto.Fmi2Status)status;
             }
@@ -131,7 +125,7 @@ namespace Launch
           case Fmi2Command.CommandOneofCase.Fmi2GetInteger:
             {
               result.Fmi2GetIntegerReturn = new Fmi2GetIntegerReturn();
-              (var status, var values) = model.GetInt(command.Fmi2GetInteger.References);
+              (var status, var values) = model.Fmi2GetInteger(command.Fmi2GetInteger.References);
               result.Fmi2GetIntegerReturn.Values.AddRange(values);
               result.Fmi2GetIntegerReturn.Status = (Fmi2Proto.Fmi2Status)status;
             }
@@ -140,7 +134,7 @@ namespace Launch
           case Fmi2Command.CommandOneofCase.Fmi2GetBoolean:
             {
               result.Fmi2GetBooleanReturn = new Fmi2GetBooleanReturn();
-              (var status, var values) = model.GetBool(command.Fmi2GetBoolean.References);
+              (var status, var values) = model.Fmi2GetBoolean(command.Fmi2GetBoolean.References);
               result.Fmi2GetBooleanReturn.Values.AddRange(values);
               result.Fmi2GetBooleanReturn.Status = (Fmi2Proto.Fmi2Status)status;
             }
@@ -149,7 +143,7 @@ namespace Launch
           case Fmi2Command.CommandOneofCase.Fmi2GetString:
             {
               result.Fmi2GetStringReturn = new Fmi2GetStringReturn();
-              (var status, var values) = model.GetString(command.Fmi2GetString.References);
+              (var status, var values) = model.Fmi2GetString(command.Fmi2GetString.References);
               result.Fmi2GetStringReturn.Values.AddRange(values);
               result.Fmi2GetStringReturn.Status = (Fmi2Proto.Fmi2Status)status;
             }

@@ -21,3 +21,4 @@ serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 toml = "*"
 subprocess = "*"
+quick-xml = { version = "*", features = ["serialize"] }
