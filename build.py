@@ -63,7 +63,10 @@ if __name__ == "__main__":
     input_path, output_path = {
         "Linux": (f"lib{binary_basename_in}.so", f"linux64/{binary_basename_out}.so"),
         "Windows": (f"{binary_basename_in}.dll", f"win64/{binary_basename_out}.dll"),
-        "Darwin": (f"lib{binary_basename_in}.dylib", f"darwin64/{binary_basename_out}.dylib"),
+        "Darwin": (
+            f"lib{binary_basename_in}.dylib",
+            f"darwin64/{binary_basename_out}.dylib",
+        ),
     }[s]
 
     wrapper_in = Path(f"wrapper/target/debug/{input_path}").absolute().__fspath__()
@@ -154,19 +157,6 @@ if __name__ == "__main__":
 
     if args.update_schemas:
 
-        # the protoc compiler requires language specific extensions to generate grpc
-        # code for different targets. The recommended way of getting these is using
-        # the de-facto package manager of the language such.
-        #
-        # For example:
-        # * python: pip install grpc-tools
-        # * C#: dotnet add package Grpc.Tools
-        #
-        # For C# the compilation of *.proto files is integrated in build process
-        # as such it must be copied into the resources for the C# backend.
-
-        # protoc -I=$SRC_DIR --python_out=$DST_DIR $SRC_DIR/addressbook.proto
-
         subprocess.check_call(
             [
                 "protoc",
@@ -177,67 +167,7 @@ if __name__ == "__main__":
                 "unifmu_fmi2.proto",
             ]
         )
-
         logger.info("updated schemas")
-
-        #     from grpc_tools.protoc import _protoc_compiler
-
-        #     """Generating rpc components requires a plugin for the protocol buffer compiler
-        #     The recommended way is to get the compiler bundled with a plugin trough 'grpc-tools' package on PyPI."""
-        #     protoc_args = [
-        #         s.encode()
-        #         for s in [
-        #             f"--proto_path={schema_include_dir}",
-        #             f"--python_out={outdir}",
-        #             # f"--grpc_python_out={outdir}",
-        #             (
-        #                 Path(schema_include_dir) / schema
-        #             ).__fspath__(),  # unlike invoking protoc, it seems schema needs absolute path
-        #         ]
-        #     ]
-        #     _protoc_compiler.run_main(protoc_args)
-
-        # def generate_java(outdir):
-        #     subprocess.run(
-        #         [
-        #             "protoc",
-        #             "-I",
-        #             schema_include_dir,
-        #             f"--java_out={outdir}",
-        #             schema,
-        #         ]
-        #     ).check_returncode()
-
-        # def generate_csharp(outdir):
-        #     shutil.copyfile(Path(schema_include_dir) / schema, Path(outdir) / schema)
-
-        # generate_commands = [
-        #     ("python", "tool/unifmu/resources/backends/python/", generate_python),
-        #     (
-        #         "java",
-        #         "tool/unifmu/resources/backends/java/src/main/java/",
-        #         generate_java,
-        #     ),
-        #     (
-        #         "csharp",
-        #         "tool/unifmu/resources/backends/csharp/schemas",
-        #         generate_csharp,
-        #     ),
-        # ]
-        # logger.info(
-        #     f"updating schemas for target languages '{[lang for lang, _ ,_ in generate_commands]}'"
-        # )
-        # for lang, outdir, cmd in generate_commands:
-        #     try:
-        #         makedirs(outdir, exist_ok=True)
-        #         cmd(outdir)
-        #         logger.info(f"Updated schemas for target '{lang}'")
-        #     except Exception:
-        #         logger.critical(
-        #             f"Failed to update schemas for target language '{lang}', an exception was raised during the process.",
-        #             exc_info=True,
-        #         )
-        #         sys.exit(1)
 
     ####################################### EXPORT FMU EXAMPLES #################################################
     if args.export_examples:

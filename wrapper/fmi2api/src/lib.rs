@@ -11,18 +11,23 @@ use libc::size_t;
 
 use ::safer_ffi::prelude::*;
 use rpc::socket_dispatcher::new_boxed_socket_dispatcher;
+use rpc::socket_dispatcher::Fmi2SocketDispatcher;
+use rpc::socket_dispatcher::SerializationFormat::Protobuf;
 use rpc::Fmi2Command;
 use rpc::Fmi2CommandDispatcher;
 use safer_ffi::{
     c,
     char_p::{char_p_raw, char_p_ref},
 };
+use serde_json;
 use subprocess::Popen;
 use subprocess::PopenConfig;
 use url::Url;
 
+use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
+use std::ffi::OsString;
 use std::fs::read_to_string;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
@@ -31,6 +36,7 @@ use std::os::raw::c_ulonglong;
 use std::os::raw::c_void;
 use std::panic::RefUnwindSafe;
 use std::panic::UnwindSafe;
+use std::ptr::null_mut;
 
 use crate::config::LaunchConfig;
 
@@ -144,31 +150,6 @@ pub fn fmi2GetVersion() -> char_p_ref<'static> {
 /// Instantiates a slave instance by invoking a command in a new process
 /// the command is specified by the configuration file, launch.toml, that should be located in the resources directory
 /// fmi-commands are sent between the wrapper and slave(s) using a message queue library, specifically zmq.
-///
-/// The protocol for instantiating a slave can be defined as:
-/// 1. read the launch.toml file
-/// 2. wrapper creates a single handshake socket
-/// 2. wrapper invokes the launch-command defined for the specific OS, the handshake-endpoint is appended to the defined command
-/// 3. slave opens two socket, handshake and command
-/// 4. slave uses handshake-socket to send the a endpoint of the command socket back to the wrapper
-///
-///
-/// Now the connection has been establihed between the wrapper and the newly instantiated slave.
-/// The protocol for sending fmi-commands between wrapper and slave can be defined as
-/// 1. C-API fmi-function is invoked on wrapper
-/// 2. C-types are converted into native Rust-types
-/// 3. Rust types are serialized
-/// 4. Wrapper sends message to command_socket of slave
-/// 5. Slave deserializes message and responds
-/// 6. step 4+5 are repeated until fmi2FreeInstance
-///
-/// Notes:
-/// * The slave choses decides the following:
-///     * transport layer
-///     * port and endpoint
-///     * serialization format (Json, FlexBuffers, Pickle, etc)
-///
-
 #[ffi_export]
 pub fn fmi2Instantiate(
     _instance_name: char_p_ref, // not allowed to be null, also cannot be non-empty
@@ -199,36 +180,59 @@ pub fn fmi2Instantiate(
     let config: LaunchConfig = toml::from_str(config.as_str())
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
-    let (command, mut dispatcher) = match config.active_dispatcher {
-        config::ActiveDispatcher::Socket => {
-            let cfg = config.socket_config.unwrap();
-            match cfg.socket_type {
-                config::SocketType::Zmq => {
-                    let (endpoint, dispatcher) = new_boxed_socket_dispatcher(cfg.format);
+    let (endpoint, mut dispatcher) = new_boxed_socket_dispatcher(Protobuf);
 
-                    let mut cmds = match std::env::consts::OS {
-                        "windows" => cfg.windows,
-                        "macos" => cfg.macos,
-                        _ => cfg.linux,
-                    };
+    // set environment variables
+    let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
+    env_vars.push((
+        OsString::from("UNIFMU_DISPATCHER_ENDPOINT"),
+        OsString::from(endpoint),
+    ));
+    if config.linux.is_some() {
+        env_vars.push((
+            OsString::from("UNIFMU_LAUNCH_LINUX"),
+            OsString::from(serde_json::to_string(&config.linux).unwrap()),
+        ));
+    }
+    if config.windows.is_some() {
+        env_vars.push((
+            OsString::from("UNIFMU_LAUNCH_WINDOWS"),
+            OsString::from(serde_json::to_string(&config.windows).unwrap()),
+        ));
+    }
+    if config.macos.is_some() {
+        env_vars.push((
+            OsString::from("UNIFMU_LAUNCH_MACOS"),
+            OsString::from(serde_json::to_string(&config.macos).unwrap()),
+        ));
+    }
 
-                    cmds.append(&mut vec![String::from("--dispatcher-endpoint"), endpoint]);
-
-                    (cmds, dispatcher)
-                }
-            }
-        }
-        config::ActiveDispatcher::Grpc => todo!(),
+    // grab launch command for host os
+    let launch_command = match std::env::consts::OS {
+        "windows" => match config.windows {
+            Some(cmd) => cmd,
+            None => return None,
+        },
+        "macos" => match config.macos {
+            Some(cmd) => cmd,
+            None => return None,
+        },
+        _other => match config.linux {
+            Some(cmd) => cmd,
+            None => return None,
+        },
     };
 
+    // spawn process
     let popen = Popen::create(
-        &command,
+        &launch_command,
         PopenConfig {
             cwd: Some(resources_dir.as_os_str().to_owned()),
+            env: Some(env_vars),
             ..Default::default()
         },
     )
-    .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", command));
+    .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command));
 
     println!("awaiting handshake from slave");
     dispatcher.await_handshake();

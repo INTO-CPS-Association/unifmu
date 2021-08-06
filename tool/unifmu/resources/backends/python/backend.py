@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sys
 import xml.etree.ElementTree as ET
 from argparse import ArgumentParser
@@ -26,25 +27,16 @@ from model import Model
 
 if __name__ == "__main__":
 
-    parser = ArgumentParser()
-    parser.add_argument(
-        "--dispatcher-endpoint",
-        dest="dispatcher_endpoint",
-        type=str,
-        help="socket",
-        required=True,
-    )
-
-    args = parser.parse_args()
-
     # initializing message queue
     context = zmq.Context()
 
     socket = context.socket(zmq.REQ)
 
-    logger.info(f"dispatcher endpoint received: {args.dispatcher_endpoint}")
+    dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
 
-    socket.connect(args.dispatcher_endpoint)
+    logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
+
+    socket.connect(dispatcher_endpoint)
 
     ret = Fmi2Return()
     ret.Fmi2ExtHandshakeReturn.SetInParent()

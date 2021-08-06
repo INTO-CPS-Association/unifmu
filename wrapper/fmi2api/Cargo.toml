@@ -16,6 +16,8 @@ url = "*"
 num_enum = "*"
 libc = "*"
 
+
 serde = { version = "*", features = ["derive"] }
+serde_json = "*"
 toml = "*"
 subprocess = "*"

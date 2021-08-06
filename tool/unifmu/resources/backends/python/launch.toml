@@ -1,13 +1,3 @@
-active_dispatcher = "socket"
-
-[socket]
-type = "zmq"
-format = "protobuf"
 linux = ["python3", "backend.py"]
 macos = ["python3", "backend.py"]
 windows = ["python", "backend.py"]
-
-[grpc]
-linux = ["python3", "backend_grpc.py"]
-macos = ["python3", "backend_grpc.py"]
-windows = ["python", "backend_grpc.py"]
