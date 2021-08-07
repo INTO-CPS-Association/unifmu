@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
         # with TemporaryDirectory() as tmpdir:
 
-        test_cases = ["csharp"]
+        test_cases = ["python"]
         logger.info(
             f"Starting integration test of the following backends: {test_cases}"
         )

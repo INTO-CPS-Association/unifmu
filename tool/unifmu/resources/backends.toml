@@ -86,10 +86,6 @@ files = [
     "resources/model.py",
   ],
   [
-    "backends/python/fmi2.py",
-    "resources/fmi2.py",
-  ],
-  [
     "backends/python/launch.toml",
     "resources/launch.toml",
   ],
