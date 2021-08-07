@@ -46,10 +46,10 @@ message Fmi2DoStep {
 
 message Fmi2SetupExperiment{   
   double start_time = 1;
-  double stop_time = 2;
-  double tolerance = 3;
-  bool has_stop_time = 4;
-  bool has_tolerance = 5;
+  optional double stop_time = 2;
+  optional double tolerance = 3;
+  // bool has_stop_time = 4;
+  // bool has_tolerance = 5;
 }
 
 message Fmi2CancelStep {}

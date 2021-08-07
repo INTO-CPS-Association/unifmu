@@ -1,6 +1,14 @@
 use std::convert::TryFrom;
 
-use crate::{fmi2_proto, Fmi2Command, Fmi2CommandDispatcher, Fmi2Return};
+use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
+
+use crate::fmi2_proto::fmi2_command::Command as c_enum;
+use crate::fmi2_proto::{
+    self, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
+    Fmi2ExtSerializeSlaveReturn, Fmi2GetReal, Fmi2GetRealReturn, Fmi2SetupExperiment,
+};
+use crate::fmi2_proto::{Fmi2Command as c_obj, Fmi2ExtSerializeSlave};
+
 use common::Fmi2Status;
 use prost::Message;
 use serde::Deserialize;
@@ -9,10 +17,6 @@ use serde::Deserialize;
 
 #[derive(Clone, Copy, Deserialize)]
 pub enum SerializationFormat {
-    #[serde(alias = "pickle")]
-    Pickle,
-    #[serde(alias = "json")]
-    Json,
     #[serde(alias = "protobuf")]
     Protobuf,
 }
@@ -39,6 +43,10 @@ pub fn new_boxed_socket_dispatcher(
     socket.bind("tcp://*:0").unwrap();
     let endpoint = socket.get_last_endpoint().unwrap().unwrap();
 
+    let command = fmi2_proto::Fmi2Command {
+        ..Default::default()
+    };
+
     let dispatcher = Fmi2SocketDispatcher { format, socket };
 
     (endpoint, Box::new(dispatcher))
@@ -57,42 +65,200 @@ impl<T: FramedSocket> Fmi2SocketDispatcher<T> {
         (endpoint, dispatcher)
     }
 
-    /// Creates a client from a socket that has already been connected to a rpc server.
-    pub fn from_connected_socket(
-        format: SerializationFormat,
-        command_socket: T,
-    ) -> Fmi2SocketDispatcher<T> {
-        Self {
-            format: format,
-            socket: command_socket,
+    pub fn send_and_recv<S: Message, R: Message + Default>(
+        &mut self,
+        msg: &S,
+    ) -> Result<R, Fmi2CommandDispatcherError> {
+        let bytes_send = msg.encode_to_vec();
+        self.socket.send(&bytes_send);
+        let bytes_recv = self.socket.recv_bytes();
+
+        match R::decode(bytes_recv.as_ref()) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(Fmi2CommandDispatcherError::DecodeError(e)),
+        }
+    }
+}
+
+impl From<fmi2_proto::Fmi2StatusReturn> for Fmi2Status {
+    fn from(src: fmi2_proto::Fmi2StatusReturn) -> Self {
+        match src.status() {
+            fmi2_proto::Fmi2Status::Ok => Self::Fmi2OK,
+            fmi2_proto::Fmi2Status::Warning => Self::Fmi2Warning,
+            fmi2_proto::Fmi2Status::Discard => Self::Fmi2Discard,
+            fmi2_proto::Fmi2Status::Error => Self::Fmi2Error,
+            fmi2_proto::Fmi2Status::Fatal => Self::Fmi2Fatal,
+            fmi2_proto::Fmi2Status::Pending => Self::Fmi2Pending,
         }
     }
 }
 
 impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
-    fn invoke_command(&mut self, command: &Fmi2Command) -> Fmi2Return {
-        println!("sending command: {:?}", command);
-        let buf = command.serialize_as(&self.format);
-        self.socket.send(&buf);
-        let res = self.socket.recv_bytes();
-        Fmi2Return::deserialize_from(&res, &self.format)
-    }
-
-    fn await_handshake(&mut self) {
+    fn await_handshake(&mut self) -> Result<(), Fmi2CommandDispatcherError> {
         let buf = self.socket.recv_bytes();
-        let ret = Fmi2Return::deserialize_from(&buf, &self.format);
-        match ret {
-            Fmi2Return::Fmi2ExtHandshakeReturn => println!("Received handshake"),
-            _ => panic!("unexpected message received"),
-        }
+        fmi2_proto::Fmi2ExtHandshakeReturn::decode(buf.as_ref())
+            .map(|_| ())
+            .map_err(|e| Fmi2CommandDispatcherError::DecodeError(e))
     }
-}
 
-impl Into<Fmi2Return> for fmi2_proto::Fmi2StatusReturn {
-    fn into(self) -> Fmi2Return {
-        Fmi2Return::Fmi2StatusReturn {
-            status: Fmi2Status::try_from(self.status).unwrap(),
-        }
+    fn fmi2EnterInitializationMode(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2ExitInitializationMode(
+                Fmi2ExitInitializationMode {},
+            )),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    fn fmi2ExitInitializationMode(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2EnterInitializationMode(
+                Fmi2EnterInitializationMode {},
+            )),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    fn fmi2DoStep(
+        &mut self,
+        current_time: f64,
+        step_size: f64,
+        no_step_prior: bool,
+    ) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2DoStep(Fmi2DoStep {
+                current_time,
+                step_size,
+                no_step_prior,
+            })),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    fn fmi2SetupExperiment(
+        &mut self,
+        start_time: f64,
+        stop_time: Option<f64>,
+        tolerance: Option<f64>,
+    ) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2SetupExperiment(Fmi2SetupExperiment {
+                start_time,
+                stop_time,
+                tolerance,
+            })),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    fn fmi2ExtSerializeSlave(
+        &mut self,
+    ) -> Result<(Fmi2Status, Vec<u8>), Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2ExtSerializeSlave(Fmi2ExtSerializeSlave {})),
+        };
+        self.send_and_recv::<_, Fmi2ExtSerializeSlaveReturn>(&cmd)
+            .map(|res| (Fmi2Status::try_from(res.status).unwrap(), res.state))
+    }
+
+    fn fmi2ExtDeserializeSlave(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2CancelStep(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2Terminate(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2Reset(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2FreeInstance(&mut self) -> Result<(), Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2SetReal(
+        &mut self,
+        references: &[u32],
+        values: &[f64],
+    ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!();
+    }
+
+    fn fmi2SetInteger(
+        &mut self,
+        references: &[u32],
+        values: &[i32],
+    ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2SetBoolean(
+        &mut self,
+        references: &[u32],
+        values: &[bool],
+    ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2SetString(
+        &mut self,
+        references: &[u32],
+        values: &[String],
+    ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2GetReal(
+        &mut self,
+        references: &[u32],
+    ) -> Result<(Fmi2Status, Option<Vec<f64>>), Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2GetReal(Fmi2GetReal {
+                references: references.to_owned(),
+            })),
+        };
+        self.send_and_recv::<_, Fmi2GetRealReturn>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi2Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    fn fmi2GetInteger(
+        &mut self,
+        references: &[u32],
+    ) -> Result<(Fmi2Status, Option<Vec<i32>>), Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2GetBoolean(
+        &mut self,
+        references: &[u32],
+    ) -> Result<(Fmi2Status, Option<Vec<bool>>), Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2GetString(
+        &mut self,
+        references: &[u32],
+    ) -> Result<(Fmi2Status, Option<Vec<String>>), Fmi2CommandDispatcherError> {
+        todo!()
     }
 }
 
@@ -101,73 +267,16 @@ impl Into<Fmi2Return> for fmi2_proto::Fmi2StatusReturn {
 /// * Message queues such as zmq, for which framing is a natural part of the abstraction.
 /// * TCP socket paired with a framing protocol.
 pub trait FramedSocket {
-    fn recv_into(&self, buf: &mut [u8]) -> std::io::Result<usize>;
     fn send(&self, buf: &[u8]);
     fn recv_bytes(&self) -> Vec<u8>;
 }
 
 impl FramedSocket for zmq::Socket {
-    fn recv_into(&self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let size = zmq::Socket::recv_into(&self, buf, 0).unwrap();
-        assert!(
-            buf.len() >= size,
-            "number of bytes received '{:?}' by 'recv_into' exceeds the size '{:?}' of the provided buffer",size,buf.len()
-        );
-
-        Ok(size)
-    }
-
     fn send(&self, buf: &[u8]) {
         zmq::Socket::send(self, buf, 0).unwrap()
     }
 
     fn recv_bytes(&self) -> Vec<u8> {
         self.recv_bytes(0).unwrap()
-    }
-}
-
-pub trait FormattedSerialize {
-    fn serialize_as(&self, format: &SerializationFormat) -> Vec<u8>;
-}
-
-impl Fmi2Return {
-    pub fn deserialize_from(buf: &[u8], format: &SerializationFormat) -> Fmi2Return {
-        match format {
-            SerializationFormat::Pickle => serde_pickle::from_slice(buf).unwrap(),
-            SerializationFormat::Json => serde_json::from_slice(buf).unwrap(),
-            SerializationFormat::Protobuf => fmi2_proto::Fmi2Return::decode(buf).unwrap().into(),
-        }
-    }
-
-    pub fn serialize_as(&self, format: &SerializationFormat) -> Vec<u8> {
-        match format {
-            SerializationFormat::Pickle => serde_pickle::to_vec(self, true).unwrap(),
-            SerializationFormat::Json => serde_json::to_vec(self).unwrap(),
-            SerializationFormat::Protobuf => {
-                let ret = fmi2_proto::Fmi2Return::from(self.to_owned());
-                ret.encode_to_vec()
-            }
-        }
-    }
-}
-
-impl Fmi2Command {
-    pub fn serialize_as(&self, format: &SerializationFormat) -> Vec<u8> {
-        match format {
-            SerializationFormat::Pickle => serde_pickle::to_vec(self, true).unwrap(),
-            SerializationFormat::Json => serde_json::to_vec(self).unwrap(),
-            SerializationFormat::Protobuf => {
-                let command = Some(fmi2_proto::fmi2_command::Command::from(self.to_owned()));
-                fmi2_proto::Fmi2Command { command }.encode_to_vec()
-            }
-        }
-    }
-
-    pub fn deserialize_from(buf: &[u8], format: &SerializationFormat) -> Fmi2Command {
-        match format {
-            SerializationFormat::Pickle => serde_pickle::from_slice(buf).unwrap(),
-            SerializationFormat::Json => serde_json::from_slice(buf).unwrap(),
-            SerializationFormat::Protobuf => fmi2_proto::Fmi2Command::decode(buf).unwrap().into(),
-        }
     }
 }

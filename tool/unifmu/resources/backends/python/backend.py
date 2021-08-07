@@ -1,7 +1,13 @@
 import logging
 import os
 import sys
-from schemas.unifmu_fmi2_pb2 import Fmi2Command, Fmi2Return
+from schemas.unifmu_fmi2_pb2 import (
+    Fmi2Command,
+    Fmi2Return,
+    Fmi2ExtHandshakeReturn,
+    Fmi2ExtSerializeSlaveReturn,
+    Fmi2StatusReturn,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
@@ -29,16 +35,15 @@ if __name__ == "__main__":
     logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
     socket.connect(dispatcher_endpoint)
 
-    result = Fmi2Return()
-    result.Fmi2ExtHandshakeReturn.SetInParent()
-    state = result.SerializeToString()
+    # result = Fmi2Return()
+    # result.Fmi2ExtHandshakeReturn.SetInParent()
+
+    state = Fmi2ExtHandshakeReturn().SerializeToString()
     socket.send(state)
 
     command = Fmi2Command()
 
     while True:
-
-        result.Clear()
 
         msg = socket.recv()
         command.ParseFromString(msg)
@@ -46,26 +51,26 @@ if __name__ == "__main__":
         group = command.WhichOneof("command")
 
         data = getattr(command, command.WhichOneof("command"))
-
         if group == "Fmi2SetupExperiment":
-            start_time = data.start_time
-            stop_time = data.stop_time if data.has_stop_time else None
-            tolerance = data.tolerance if data.has_tolerance else None
-            result.Fmi2StatusReturn.status = slave.fmi2SetupExperiment(
-                start_time, stop_time, tolerance
+            result = Fmi2StatusReturn()
+            result.status = slave.fmi2SetupExperiment(
+                data.start_time, data.stop_time, data.tolerance
             )
+
         elif group == "Fmi2DoStep":
-            result.Fmi2StatusReturn.status = slave.fmi2DoStep(
+            result = Fmi2StatusReturn()
+            result.status = slave.fmi2DoStep(
                 data.current_time, data.step_size, data.no_step_prior
             )
         elif group == "Fmi2EnterInitializationMode":
-            result.Fmi2StatusReturn.status = slave.fmi2EnterInitializationMode()
+            result = Fmi2StatusReturn()
+            result.status = slave.fmi2EnterInitializationMode()
         elif group == "Fmi2ExitInitializationMode":
-            result.Fmi2StatusReturn.status = slave.fmi2ExitInitializationMode()
+            result = Fmi2StatusReturn()
+            result.status = slave.fmi2ExitInitializationMode()
         elif group == "Fmi2ExtSerializeSlave":
-            (status, state) = slave.fmi2ExtSerialize()
-            result.Fmi2ExtSerializeSlaveReturn.status = status
-            result.Fmi2ExtSerializeSlaveReturn.state = state
+            result = Fmi2ExtSerializeSlaveReturn()
+            (result.status, result.state) = slave.fmi2ExtSerialize()
         elif group == "Fmi2ExtDeserializeSlave":
             state = command.Fmi2ExtDeserializeSlave.state
             result.Fmi2StatusReturn.status = slave.fmi2ExtDeserialize(state)

@@ -34,67 +34,67 @@ namespace Fmi2Proto {
             "DSIkCg5GbWkyR2V0Qm9vbGVhbhISCgpyZWZlcmVuY2VzGAEgAygNIiMKDUZt",
             "aTJHZXRTdHJpbmcSEgoKcmVmZXJlbmNlcxgBIAMoDSJMCgpGbWkyRG9TdGVw",
             "EhQKDGN1cnJlbnRfdGltZRgBIAEoARIRCglzdGVwX3NpemUYAiABKAESFQoN",
-            "bm9fc3RlcF9wcmlvchgDIAEoCCJ9ChNGbWkyU2V0dXBFeHBlcmltZW50EhIK",
-            "CnN0YXJ0X3RpbWUYASABKAESEQoJc3RvcF90aW1lGAIgASgBEhEKCXRvbGVy",
-            "YW5jZRgDIAEoARIVCg1oYXNfc3RvcF90aW1lGAQgASgIEhUKDWhhc190b2xl",
-            "cmFuY2UYBSABKAgiEAoORm1pMkNhbmNlbFN0ZXAiHQobRm1pMkVudGVySW5p",
-            "dGlhbGl6YXRpb25Nb2RlIhwKGkZtaTJFeGl0SW5pdGlhbGl6YXRpb25Nb2Rl",
-            "IhIKEEZtaTJGcmVlSW5zdGFuY2UiDwoNRm1pMlRlcm1pbmF0ZSILCglGbWky",
-            "UmVzZXQiHwodRm1pMkdldERpcmVjdGlvbmFsRGVyaXZhdGl2ZXMiGQoXRm1p",
-            "MlNldElucHV0RGVyaXZhdGl2ZXMiGgoYRm1pMkdldE91dHB1dERlcml2YXRp",
-            "dmVzIg4KDEdldFhYWFN0YXR1cyI9ChNGbWkyU2V0RGVidWdMb2dnaW5nEhIK",
-            "CmNhdGVnb3JpZXMYASADKAkSEgoKbG9nZ2luZ19vbhgCIAEoCCI6ChBGbWky",
-            "U3RhdHVzUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1p",
-            "MlN0YXR1cyJLChFGbWkyR2V0UmVhbFJldHVybhImCgZzdGF0dXMYASABKA4y",
-            "Fi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMSDgoGdmFsdWVzGAIgAygBIk4KFEZt",
-            "aTJHZXRJbnRlZ2VyUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJv",
-            "dG8uRm1pMlN0YXR1cxIOCgZ2YWx1ZXMYAiADKAUiTgoURm1pMkdldEJvb2xl",
-            "YW5SZXR1cm4SJgoGc3RhdHVzGAEgASgOMhYuZm1pMl9wcm90by5GbWkyU3Rh",
-            "dHVzEg4KBnZhbHVlcxgCIAMoCCJNChNGbWkyR2V0U3RyaW5nUmV0dXJuEiYK",
-            "BnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIOCgZ2YWx1",
-            "ZXMYAiADKAkiGAoWRm1pMkZyZWVJbnN0YW5jZVJldHVybiIXChVGbWkyRXh0",
-            "U2VyaWFsaXplU2xhdmUiKAoXRm1pMkV4dERlc2VyaWFsaXplU2xhdmUSDQoF",
-            "c3RhdGUYASABKAwiGAoWRm1pMkV4dEhhbmRzaGFrZVJldHVybiJUChtGbWky",
-            "RXh0U2VyaWFsaXplU2xhdmVSZXR1cm4SJgoGc3RhdHVzGAEgASgOMhYuZm1p",
-            "Ml9wcm90by5GbWkyU3RhdHVzEg0KBXN0YXRlGAIgASgMIqAICgtGbWkyQ29t",
-            "bWFuZBIsCgpGbWkyRG9TdGVwGAEgASgLMhYuZm1pMl9wcm90by5GbWkyRG9T",
-            "dGVwSAASLgoLRm1pMlNldFJlYWwYAiABKAsyFy5mbWkyX3Byb3RvLkZtaTJT",
-            "ZXRSZWFsSAASNAoORm1pMlNldEludGVnZXIYAyABKAsyGi5mbWkyX3Byb3Rv",
-            "LkZtaTJTZXRJbnRlZ2VySAASNAoORm1pMlNldEJvb2xlYW4YBCABKAsyGi5m",
-            "bWkyX3Byb3RvLkZtaTJTZXRCb29sZWFuSAASMgoNRm1pMlNldFN0cmluZxgF",
-            "IAEoCzIZLmZtaTJfcHJvdG8uRm1pMlNldFN0cmluZ0gAEi4KC0ZtaTJHZXRS",
-            "ZWFsGAYgASgLMhcuZm1pMl9wcm90by5GbWkyR2V0UmVhbEgAEjQKDkZtaTJH",
-            "ZXRJbnRlZ2VyGAcgASgLMhouZm1pMl9wcm90by5GbWkyR2V0SW50ZWdlckgA",
-            "EjQKDkZtaTJHZXRCb29sZWFuGAggASgLMhouZm1pMl9wcm90by5GbWkyR2V0",
-            "Qm9vbGVhbkgAEjIKDUZtaTJHZXRTdHJpbmcYCSABKAsyGS5mbWkyX3Byb3Rv",
-            "LkZtaTJHZXRTdHJpbmdIABI+ChNGbWkyU2V0dXBFeHBlcmltZW50GAogASgL",
-            "Mh8uZm1pMl9wcm90by5GbWkyU2V0dXBFeHBlcmltZW50SAASTgobRm1pMkVu",
-            "dGVySW5pdGlhbGl6YXRpb25Nb2RlGAsgASgLMicuZm1pMl9wcm90by5GbWky",
-            "RW50ZXJJbml0aWFsaXphdGlvbk1vZGVIABJMChpGbWkyRXhpdEluaXRpYWxp",
-            "emF0aW9uTW9kZRgMIAEoCzImLmZtaTJfcHJvdG8uRm1pMkV4aXRJbml0aWFs",
-            "aXphdGlvbk1vZGVIABI4ChBGbWkyRnJlZUluc3RhbmNlGA0gASgLMhwuZm1p",
-            "Ml9wcm90by5GbWkyRnJlZUluc3RhbmNlSAASKgoJRm1pMlJlc2V0GA4gASgL",
-            "MhUuZm1pMl9wcm90by5GbWkyUmVzZXRIABIyCg1GbWkyVGVybWluYXRlGA8g",
-            "ASgLMhkuZm1pMl9wcm90by5GbWkyVGVybWluYXRlSAASNAoORm1pMkNhbmNl",
-            "bFN0ZXAYECABKAsyGi5mbWkyX3Byb3RvLkZtaTJDYW5jZWxTdGVwSAASQgoV",
-            "Rm1pMkV4dFNlcmlhbGl6ZVNsYXZlGBEgASgLMiEuZm1pMl9wcm90by5GbWky",
-            "RXh0U2VyaWFsaXplU2xhdmVIABJGChdGbWkyRXh0RGVzZXJpYWxpemVTbGF2",
-            "ZRgSIAEoCzIjLmZtaTJfcHJvdG8uRm1pMkV4dERlc2VyaWFsaXplU2xhdmVI",
-            "AEIJCgdjb21tYW5kIqwECgpGbWkyUmV0dXJuEjgKEEZtaTJTdGF0dXNSZXR1",
-            "cm4YASABKAsyHC5mbWkyX3Byb3RvLkZtaTJTdGF0dXNSZXR1cm5IABI6ChFG",
-            "bWkyR2V0UmVhbFJldHVybhgCIAEoCzIdLmZtaTJfcHJvdG8uRm1pMkdldFJl",
-            "YWxSZXR1cm5IABJAChRGbWkyR2V0SW50ZWdlclJldHVybhgDIAEoCzIgLmZt",
-            "aTJfcHJvdG8uRm1pMkdldEludGVnZXJSZXR1cm5IABJAChRGbWkyR2V0Qm9v",
-            "bGVhblJldHVybhgEIAEoCzIgLmZtaTJfcHJvdG8uRm1pMkdldEJvb2xlYW5S",
-            "ZXR1cm5IABI+ChNGbWkyR2V0U3RyaW5nUmV0dXJuGAUgASgLMh8uZm1pMl9w",
-            "cm90by5GbWkyR2V0U3RyaW5nUmV0dXJuSAASRAoWRm1pMkZyZWVJbnN0YW5j",
-            "ZVJldHVybhgGIAEoCzIiLmZtaTJfcHJvdG8uRm1pMkZyZWVJbnN0YW5jZVJl",
-            "dHVybkgAEkQKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4YByABKAsyIi5mbWky",
-            "X3Byb3RvLkZtaTJFeHRIYW5kc2hha2VSZXR1cm5IABJOChtGbWkyRXh0U2Vy",
-            "aWFsaXplU2xhdmVSZXR1cm4YCCABKAsyJy5mbWkyX3Byb3RvLkZtaTJFeHRT",
-            "ZXJpYWxpemVTbGF2ZVJldHVybkgAQggKBnJlc3VsdCpRCgpGbWkyU3RhdHVz",
-            "EgYKAk9rEAASCwoHV2FybmluZxABEgsKB0Rpc2NhcmQQAhIJCgVFcnJvchAD",
-            "EgkKBUZhdGFsEAQSCwoHUGVuZGluZxAFYgZwcm90bzM="));
+            "bm9fc3RlcF9wcmlvchgDIAEoCCJ1ChNGbWkyU2V0dXBFeHBlcmltZW50EhIK",
+            "CnN0YXJ0X3RpbWUYASABKAESFgoJc3RvcF90aW1lGAIgASgBSACIAQESFgoJ",
+            "dG9sZXJhbmNlGAMgASgBSAGIAQFCDAoKX3N0b3BfdGltZUIMCgpfdG9sZXJh",
+            "bmNlIhAKDkZtaTJDYW5jZWxTdGVwIh0KG0ZtaTJFbnRlckluaXRpYWxpemF0",
+            "aW9uTW9kZSIcChpGbWkyRXhpdEluaXRpYWxpemF0aW9uTW9kZSISChBGbWky",
+            "RnJlZUluc3RhbmNlIg8KDUZtaTJUZXJtaW5hdGUiCwoJRm1pMlJlc2V0Ih8K",
+            "HUZtaTJHZXREaXJlY3Rpb25hbERlcml2YXRpdmVzIhkKF0ZtaTJTZXRJbnB1",
+            "dERlcml2YXRpdmVzIhoKGEZtaTJHZXRPdXRwdXREZXJpdmF0aXZlcyIOCgxH",
+            "ZXRYWFhTdGF0dXMiPQoTRm1pMlNldERlYnVnTG9nZ2luZxISCgpjYXRlZ29y",
+            "aWVzGAEgAygJEhIKCmxvZ2dpbmdfb24YAiABKAgiOgoQRm1pMlN0YXR1c1Jl",
+            "dHVybhImCgZzdGF0dXMYASABKA4yFi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMi",
+            "SwoRRm1pMkdldFJlYWxSZXR1cm4SJgoGc3RhdHVzGAEgASgOMhYuZm1pMl9w",
+            "cm90by5GbWkyU3RhdHVzEg4KBnZhbHVlcxgCIAMoASJOChRGbWkyR2V0SW50",
+            "ZWdlclJldHVybhImCgZzdGF0dXMYASABKA4yFi5mbWkyX3Byb3RvLkZtaTJT",
+            "dGF0dXMSDgoGdmFsdWVzGAIgAygFIk4KFEZtaTJHZXRCb29sZWFuUmV0dXJu",
+            "EiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIOCgZ2",
+            "YWx1ZXMYAiADKAgiTQoTRm1pMkdldFN0cmluZ1JldHVybhImCgZzdGF0dXMY",
+            "ASABKA4yFi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMSDgoGdmFsdWVzGAIgAygJ",
+            "IhgKFkZtaTJGcmVlSW5zdGFuY2VSZXR1cm4iFwoVRm1pMkV4dFNlcmlhbGl6",
+            "ZVNsYXZlIigKF0ZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlEg0KBXN0YXRlGAEg",
+            "ASgMIhgKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4iVAobRm1pMkV4dFNlcmlh",
+            "bGl6ZVNsYXZlUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8u",
+            "Rm1pMlN0YXR1cxINCgVzdGF0ZRgCIAEoDCKgCAoLRm1pMkNvbW1hbmQSLAoK",
+            "Rm1pMkRvU3RlcBgBIAEoCzIWLmZtaTJfcHJvdG8uRm1pMkRvU3RlcEgAEi4K",
+            "C0ZtaTJTZXRSZWFsGAIgASgLMhcuZm1pMl9wcm90by5GbWkyU2V0UmVhbEgA",
+            "EjQKDkZtaTJTZXRJbnRlZ2VyGAMgASgLMhouZm1pMl9wcm90by5GbWkyU2V0",
+            "SW50ZWdlckgAEjQKDkZtaTJTZXRCb29sZWFuGAQgASgLMhouZm1pMl9wcm90",
+            "by5GbWkyU2V0Qm9vbGVhbkgAEjIKDUZtaTJTZXRTdHJpbmcYBSABKAsyGS5m",
+            "bWkyX3Byb3RvLkZtaTJTZXRTdHJpbmdIABIuCgtGbWkyR2V0UmVhbBgGIAEo",
+            "CzIXLmZtaTJfcHJvdG8uRm1pMkdldFJlYWxIABI0Cg5GbWkyR2V0SW50ZWdl",
+            "chgHIAEoCzIaLmZtaTJfcHJvdG8uRm1pMkdldEludGVnZXJIABI0Cg5GbWky",
+            "R2V0Qm9vbGVhbhgIIAEoCzIaLmZtaTJfcHJvdG8uRm1pMkdldEJvb2xlYW5I",
+            "ABIyCg1GbWkyR2V0U3RyaW5nGAkgASgLMhkuZm1pMl9wcm90by5GbWkyR2V0",
+            "U3RyaW5nSAASPgoTRm1pMlNldHVwRXhwZXJpbWVudBgKIAEoCzIfLmZtaTJf",
+            "cHJvdG8uRm1pMlNldHVwRXhwZXJpbWVudEgAEk4KG0ZtaTJFbnRlckluaXRp",
+            "YWxpemF0aW9uTW9kZRgLIAEoCzInLmZtaTJfcHJvdG8uRm1pMkVudGVySW5p",
+            "dGlhbGl6YXRpb25Nb2RlSAASTAoaRm1pMkV4aXRJbml0aWFsaXphdGlvbk1v",
+            "ZGUYDCABKAsyJi5mbWkyX3Byb3RvLkZtaTJFeGl0SW5pdGlhbGl6YXRpb25N",
+            "b2RlSAASOAoQRm1pMkZyZWVJbnN0YW5jZRgNIAEoCzIcLmZtaTJfcHJvdG8u",
+            "Rm1pMkZyZWVJbnN0YW5jZUgAEioKCUZtaTJSZXNldBgOIAEoCzIVLmZtaTJf",
+            "cHJvdG8uRm1pMlJlc2V0SAASMgoNRm1pMlRlcm1pbmF0ZRgPIAEoCzIZLmZt",
+            "aTJfcHJvdG8uRm1pMlRlcm1pbmF0ZUgAEjQKDkZtaTJDYW5jZWxTdGVwGBAg",
+            "ASgLMhouZm1pMl9wcm90by5GbWkyQ2FuY2VsU3RlcEgAEkIKFUZtaTJFeHRT",
+            "ZXJpYWxpemVTbGF2ZRgRIAEoCzIhLmZtaTJfcHJvdG8uRm1pMkV4dFNlcmlh",
+            "bGl6ZVNsYXZlSAASRgoXRm1pMkV4dERlc2VyaWFsaXplU2xhdmUYEiABKAsy",
+            "Iy5mbWkyX3Byb3RvLkZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlSABCCQoHY29t",
+            "bWFuZCKsBAoKRm1pMlJldHVybhI4ChBGbWkyU3RhdHVzUmV0dXJuGAEgASgL",
+            "MhwuZm1pMl9wcm90by5GbWkyU3RhdHVzUmV0dXJuSAASOgoRRm1pMkdldFJl",
+            "YWxSZXR1cm4YAiABKAsyHS5mbWkyX3Byb3RvLkZtaTJHZXRSZWFsUmV0dXJu",
+            "SAASQAoURm1pMkdldEludGVnZXJSZXR1cm4YAyABKAsyIC5mbWkyX3Byb3Rv",
+            "LkZtaTJHZXRJbnRlZ2VyUmV0dXJuSAASQAoURm1pMkdldEJvb2xlYW5SZXR1",
+            "cm4YBCABKAsyIC5mbWkyX3Byb3RvLkZtaTJHZXRCb29sZWFuUmV0dXJuSAAS",
+            "PgoTRm1pMkdldFN0cmluZ1JldHVybhgFIAEoCzIfLmZtaTJfcHJvdG8uRm1p",
+            "MkdldFN0cmluZ1JldHVybkgAEkQKFkZtaTJGcmVlSW5zdGFuY2VSZXR1cm4Y",
+            "BiABKAsyIi5mbWkyX3Byb3RvLkZtaTJGcmVlSW5zdGFuY2VSZXR1cm5IABJE",
+            "ChZGbWkyRXh0SGFuZHNoYWtlUmV0dXJuGAcgASgLMiIuZm1pMl9wcm90by5G",
+            "bWkyRXh0SGFuZHNoYWtlUmV0dXJuSAASTgobRm1pMkV4dFNlcmlhbGl6ZVNs",
+            "YXZlUmV0dXJuGAggASgLMicuZm1pMl9wcm90by5GbWkyRXh0U2VyaWFsaXpl",
+            "U2xhdmVSZXR1cm5IAEIICgZyZXN1bHQqUQoKRm1pMlN0YXR1cxIGCgJPaxAA",
+            "EgsKB1dhcm5pbmcQARILCgdEaXNjYXJkEAISCQoFRXJyb3IQAxIJCgVGYXRh",
+            "bBAEEgsKB1BlbmRpbmcQBWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Fmi2Proto.Fmi2Status), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -107,7 +107,7 @@ namespace Fmi2Proto {
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetBoolean), global::Fmi2Proto.Fmi2GetBoolean.Parser, new[]{ "References" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetString), global::Fmi2Proto.Fmi2GetString.Parser, new[]{ "References" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2DoStep), global::Fmi2Proto.Fmi2DoStep.Parser, new[]{ "CurrentTime", "StepSize", "NoStepPrior" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2SetupExperiment), global::Fmi2Proto.Fmi2SetupExperiment.Parser, new[]{ "StartTime", "StopTime", "Tolerance", "HasStopTime", "HasTolerance" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2SetupExperiment), global::Fmi2Proto.Fmi2SetupExperiment.Parser, new[]{ "StartTime", "StopTime", "Tolerance" }, new[]{ "StopTime", "Tolerance" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2CancelStep), global::Fmi2Proto.Fmi2CancelStep.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2EnterInitializationMode), global::Fmi2Proto.Fmi2EnterInitializationMode.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExitInitializationMode), global::Fmi2Proto.Fmi2ExitInitializationMode.Parser, null, null, null, null, null),
@@ -1969,6 +1969,7 @@ namespace Fmi2Proto {
   {
     private static readonly pb::MessageParser<Fmi2SetupExperiment> _parser = new pb::MessageParser<Fmi2SetupExperiment>(() => new Fmi2SetupExperiment());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<Fmi2SetupExperiment> Parser { get { return _parser; } }
@@ -1996,11 +1997,10 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public Fmi2SetupExperiment(Fmi2SetupExperiment other) : this() {
+      _hasBits0 = other._hasBits0;
       startTime_ = other.startTime_;
       stopTime_ = other.stopTime_;
       tolerance_ = other.tolerance_;
-      hasStopTime_ = other.hasStopTime_;
-      hasTolerance_ = other.hasTolerance_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2028,46 +2028,52 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public double StopTime {
-      get { return stopTime_; }
+      get { if ((_hasBits0 & 1) != 0) { return stopTime_; } else { return 0D; } }
       set {
+        _hasBits0 |= 1;
         stopTime_ = value;
       }
+    }
+    /// <summary>Gets whether the "stop_time" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasStopTime {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "stop_time" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearStopTime() {
+      _hasBits0 &= ~1;
     }
 
     /// <summary>Field number for the "tolerance" field.</summary>
     public const int ToleranceFieldNumber = 3;
     private double tolerance_;
+    /// <summary>
+    /// bool has_stop_time = 4;
+    /// bool has_tolerance = 5;
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public double Tolerance {
-      get { return tolerance_; }
+      get { if ((_hasBits0 & 2) != 0) { return tolerance_; } else { return 0D; } }
       set {
+        _hasBits0 |= 2;
         tolerance_ = value;
       }
     }
-
-    /// <summary>Field number for the "has_stop_time" field.</summary>
-    public const int HasStopTimeFieldNumber = 4;
-    private bool hasStopTime_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasStopTime {
-      get { return hasStopTime_; }
-      set {
-        hasStopTime_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "has_tolerance" field.</summary>
-    public const int HasToleranceFieldNumber = 5;
-    private bool hasTolerance_;
+    /// <summary>Gets whether the "tolerance" field is set</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasTolerance {
-      get { return hasTolerance_; }
-      set {
-        hasTolerance_ = value;
-      }
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "tolerance" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTolerance() {
+      _hasBits0 &= ~2;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2088,8 +2094,6 @@ namespace Fmi2Proto {
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(StartTime, other.StartTime)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(StopTime, other.StopTime)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Tolerance, other.Tolerance)) return false;
-      if (HasStopTime != other.HasStopTime) return false;
-      if (HasTolerance != other.HasTolerance) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2098,10 +2102,8 @@ namespace Fmi2Proto {
     public override int GetHashCode() {
       int hash = 1;
       if (StartTime != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(StartTime);
-      if (StopTime != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(StopTime);
-      if (Tolerance != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Tolerance);
-      if (HasStopTime != false) hash ^= HasStopTime.GetHashCode();
-      if (HasTolerance != false) hash ^= HasTolerance.GetHashCode();
+      if (HasStopTime) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(StopTime);
+      if (HasTolerance) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Tolerance);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2124,21 +2126,13 @@ namespace Fmi2Proto {
         output.WriteRawTag(9);
         output.WriteDouble(StartTime);
       }
-      if (StopTime != 0D) {
+      if (HasStopTime) {
         output.WriteRawTag(17);
         output.WriteDouble(StopTime);
       }
-      if (Tolerance != 0D) {
+      if (HasTolerance) {
         output.WriteRawTag(25);
         output.WriteDouble(Tolerance);
-      }
-      if (HasStopTime != false) {
-        output.WriteRawTag(32);
-        output.WriteBool(HasStopTime);
-      }
-      if (HasTolerance != false) {
-        output.WriteRawTag(40);
-        output.WriteBool(HasTolerance);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -2154,21 +2148,13 @@ namespace Fmi2Proto {
         output.WriteRawTag(9);
         output.WriteDouble(StartTime);
       }
-      if (StopTime != 0D) {
+      if (HasStopTime) {
         output.WriteRawTag(17);
         output.WriteDouble(StopTime);
       }
-      if (Tolerance != 0D) {
+      if (HasTolerance) {
         output.WriteRawTag(25);
         output.WriteDouble(Tolerance);
-      }
-      if (HasStopTime != false) {
-        output.WriteRawTag(32);
-        output.WriteBool(HasStopTime);
-      }
-      if (HasTolerance != false) {
-        output.WriteRawTag(40);
-        output.WriteBool(HasTolerance);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -2183,17 +2169,11 @@ namespace Fmi2Proto {
       if (StartTime != 0D) {
         size += 1 + 8;
       }
-      if (StopTime != 0D) {
+      if (HasStopTime) {
         size += 1 + 8;
       }
-      if (Tolerance != 0D) {
+      if (HasTolerance) {
         size += 1 + 8;
-      }
-      if (HasStopTime != false) {
-        size += 1 + 1;
-      }
-      if (HasTolerance != false) {
-        size += 1 + 1;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2210,17 +2190,11 @@ namespace Fmi2Proto {
       if (other.StartTime != 0D) {
         StartTime = other.StartTime;
       }
-      if (other.StopTime != 0D) {
+      if (other.HasStopTime) {
         StopTime = other.StopTime;
       }
-      if (other.Tolerance != 0D) {
+      if (other.HasTolerance) {
         Tolerance = other.Tolerance;
-      }
-      if (other.HasStopTime != false) {
-        HasStopTime = other.HasStopTime;
-      }
-      if (other.HasTolerance != false) {
-        HasTolerance = other.HasTolerance;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2249,14 +2223,6 @@ namespace Fmi2Proto {
             Tolerance = input.ReadDouble();
             break;
           }
-          case 32: {
-            HasStopTime = input.ReadBool();
-            break;
-          }
-          case 40: {
-            HasTolerance = input.ReadBool();
-            break;
-          }
         }
       }
     #endif
@@ -2282,14 +2248,6 @@ namespace Fmi2Proto {
           }
           case 25: {
             Tolerance = input.ReadDouble();
-            break;
-          }
-          case 32: {
-            HasStopTime = input.ReadBool();
-            break;
-          }
-          case 40: {
-            HasTolerance = input.ReadBool();
             break;
           }
         }

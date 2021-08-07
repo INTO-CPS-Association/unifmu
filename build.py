@@ -163,7 +163,7 @@ if __name__ == "__main__":
                 "-I=schemas",
                 "--python_out=tool/unifmu/resources/backends/python/schemas",
                 "--csharp_out=tool/unifmu/resources/backends/csharp/schemas",
-                # "--java_out=tool/unifmu/resources/backends/java/",
+                # "--java_out=tool/unifmu/resources/backends/java/schemas",
                 "unifmu_fmi2.proto",
             ]
         )
