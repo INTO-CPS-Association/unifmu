@@ -134,10 +134,6 @@ files = [
     "resources/csharp.csproj",
   ],
   [
-    "backends/csharp/fmi2.cs",
-    "resources/fmi2.cs",
-  ],
-  [
     "backends/csharp/backend.cs",
     "resources/backend.cs",
   ],

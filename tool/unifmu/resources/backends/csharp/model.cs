@@ -3,42 +3,124 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-public class Model : Fmi2FMU
+
+using Newtonsoft.Json;
+using System.Linq;
+using Fmi2Proto;
+
+public class Model
 {
-  // Make all class variables properties, in order to access them all in a similar manner. 
-  public double real_a { get; set; }
-  public double real_b { get; set; }
-  public double real_c { get; set; }
-  public int integer_a { get; set; }
-  public int integer_b { get; set; }
-  public int integer_c { get; set; }
-  public bool boolean_a { get; set; }
-  public bool boolean_b { get; set; }
-  public bool boolean_c { get; set; }
-  public string string_a { get; set; }
-  public string string_b { get; set; }
-  public string string_c { get; set; }
+  public double real_a { get; set; } = 0.0f;
+  public double real_b { get; set; } = 0.0f;
+  public double real_c { get; set; } = 0.0f;
+  public int integer_a { get; set; } = 0;
+  public int integer_b { get; set; } = 0;
+  public int integer_c { get; set; } = 0;
+  public bool boolean_a { get; set; } = false;
+  public bool boolean_b { get; set; } = false;
+  public bool boolean_c { get; set; } = false;
+  public string string_a { get; set; } = "";
+  public string string_b { get; set; } = "";
+  public string string_c { get; set; } = "";
+
+  private Dictionary<uint, PropertyInfo> reference_to_attributes = new Dictionary<uint, PropertyInfo>();
 
 
-  public Model(Dictionary<uint, string> referenceToAttr) : base(referenceToAttr)
+  public Model()
   {
-    this.real_a = 0.0f;
-    this.real_b = 0.0f;
+    // Populate map from value reference to attributes of the model.
+    string references_to_values = System.Environment.GetEnvironmentVariable("UNIFMU_REFS_TO_ATTRS");
+    if (references_to_values == null)
+    {
+      Console.WriteLine("the environment variable 'UNIFMU_REFS_TO_ATTRS' was not set");
+      Environment.Exit(-1);
+    }
+    var dict = JsonConvert.DeserializeObject<Dictionary<uint, String>>(references_to_values);
+    foreach (var (vref, variable) in dict)
+    {
+      this.reference_to_attributes.Add(vref, this.GetType().GetProperty(variable));
+    }
 
-    this.integer_a = 0;
-    this.integer_b = 0;
-
-    this.boolean_a = false;
-    this.boolean_b = false;
-
-    this.string_a = "";
-    this.string_b = "";
-
+  }
+  public Fmi2Status Fmi2DoStep(double currentTime, double stepSize, bool noStepPrior)
+  {
     UpdateOutputs();
+    return Fmi2Status.Ok;
   }
 
+  public Fmi2Status Fmi2SetupExperiment(double startTime, double? stopTime, double? tolerance)
+  {
+    return Fmi2Status.Ok;
+  }
 
-  public override (byte[], Fmi2Status) Serialize()
+  public Fmi2Status Fmi2EnterInitializationMode()
+  {
+    return Fmi2Status.Ok;
+  }
+
+  public Fmi2Status Fmi2ExitInitializationMode()
+  {
+    this.UpdateOutputs();
+    return Fmi2Status.Ok;
+  }
+
+  public Fmi2Status FmiSetReal(IEnumerable<uint> references, IEnumerable<double> values)
+  {
+    return this.SetValueReflection(references, values);
+  }
+
+  public Fmi2Status Fmi2SetInteger(IEnumerable<uint> references, IEnumerable<int> values)
+  {
+    return this.SetValueReflection(references, values);
+  }
+
+  public Fmi2Status Fmi2SetBoolean(IEnumerable<uint> references, IEnumerable<bool> values)
+  {
+    return this.SetValueReflection(references, values);
+  }
+
+  public Fmi2Status Fmi2SetString(IEnumerable<uint> references, IEnumerable<string> values)
+  {
+    return this.SetValueReflection(references, values);
+
+  }
+
+  public (Fmi2Status, IEnumerable<double>) Fmi2GetReal(IEnumerable<uint> references)
+  {
+    return this.GetValueReflection<double>(references);
+  }
+
+  public (Fmi2Status, IEnumerable<int>) Fmi2GetInteger(IEnumerable<uint> references)
+  {
+    return this.GetValueReflection<int>(references);
+  }
+
+  public (Fmi2Status, IEnumerable<bool>) Fmi2GetBoolean(IEnumerable<uint> references)
+  {
+    return this.GetValueReflection<bool>(references);
+  }
+
+  public (Fmi2Status, IEnumerable<String>) Fmi2GetString(IEnumerable<uint> references)
+  {
+    return this.GetValueReflection<String>(references);
+  }
+
+  public Fmi2Status Fmi2CancelStep()
+  {
+    return Fmi2Status.Ok;
+  }
+
+  public Fmi2Status Fmi2Reset()
+  {
+    return Fmi2Status.Ok;
+  }
+
+  public Fmi2Status Fmi2Terminate()
+  {
+    return Fmi2Status.Ok;
+  }
+
+  public (Fmi2Status, byte[]) Fmi2ExtSerialize()
   {
     using (MemoryStream m = new MemoryStream())
     {
@@ -57,11 +139,11 @@ public class Model : Fmi2FMU
         writer.Write(string_b);
         writer.Write(string_c);
       }
-      return (m.ToArray(), Fmi2Status.Ok);
+      return (Fmi2Status.Ok, m.ToArray());
     }
   }
 
-  public override Fmi2Status Deserialize(byte[] state)
+  public Fmi2Status Fmi2ExtDeserialize(byte[] state)
   {
     using (MemoryStream m = new MemoryStream(state))
     {
@@ -84,32 +166,6 @@ public class Model : Fmi2FMU
     return Fmi2Status.Ok;
   }
 
-  // Implementation of properties
-
-  // public double real_c
-  // {
-  //     get { return this.real_a + this.real_b; }
-  //     set { }
-  // }
-
-  // public int integer_c
-  // {
-  //     get { return this.integer_a + this.integer_b; }
-  //     set { }
-  // }
-
-  // public bool boolean_c
-  // {
-  //     get { return this.boolean_a & this.boolean_b; }
-  //     set { }
-  // }
-
-  // public string string_c
-  // {
-  //     get { return this.string_a + this.string_b; }
-  //     set { }
-  // }
-
   private void UpdateOutputs()
   {
     this.real_c = real_a + real_b;
@@ -118,10 +174,28 @@ public class Model : Fmi2FMU
     this.string_c = string_a + string_b;
   }
 
-  public override Fmi2Status Fmi2DoStep(double currentTime, double stepSize, bool noStepPrior)
+  private Fmi2Status SetValueReflection<T>(IEnumerable<uint> references, IEnumerable<T> values)
   {
-    UpdateOutputs();
+    foreach (var (r, v) in references.Zip(values))
+    {
+      this.reference_to_attributes[r].SetValue(this, (object)v);
+    }
+
     return Fmi2Status.Ok;
   }
+
+  private (Fmi2Status, IEnumerable<T>) GetValueReflection<T>(IEnumerable<uint> references)
+  {
+
+    var values = new List<T>(references.Count());
+
+    foreach (var r in references)
+    {
+      values.Add((T)this.reference_to_attributes[r].GetValue(this));
+    }
+
+    return (Fmi2Status.Ok, values);
+  }
+
 
 }
