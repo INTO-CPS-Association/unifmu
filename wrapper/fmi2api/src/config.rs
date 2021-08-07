@@ -1,12 +1,5 @@
 use serde::Deserialize;
 
-// #[derive(Deserialize)]
-// pub enum ActiveDispatcher {
-//     #[serde(alias = "socket")]
-//     Socket,
-//     #[serde(alias = "grpc")]
-//     Grpc,
-// }
 
 #[derive(Deserialize)]
 pub struct LaunchConfig {

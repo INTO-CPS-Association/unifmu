@@ -31,27 +31,6 @@ pub struct Fmi2SocketDispatcher<T: FramedSocket> {
     socket: T,
 }
 
-// type mytype = Box<dyn FnOnce() -> Box<dyn Fmi2CommandDispatcher>>;
-
-// pub fn from_new_zmq_socket_dynamic(
-//     format: SerializationFormat,
-// ) -> (String, Box<dyn Fmi2CommandDispatcher>) {
-//     let ctx = zmq::Context::new();
-//     let socket = ctx.socket(zmq::SocketType::REP).unwrap();
-//     socket.bind("tcp://*:0").unwrap();
-//     let endpoint = socket.get_last_endpoint().unwrap().unwrap();
-
-//     let func = move || {
-//         socket.recv_bytes(0).unwrap();
-//         let a: Box<dyn Fmi2CommandDispatcher> = Box::new(
-//             Fmi2SocketDispatcher::<zmq::Socket>::from_connected_socket(format, socket),
-//         );
-//         a
-//     };
-
-//     (endpoint, Box::new(func))
-// }
-
 pub fn new_boxed_socket_dispatcher(
     format: SerializationFormat,
 ) -> (String, Box<dyn Fmi2CommandDispatcher>) {
@@ -103,7 +82,7 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
         let buf = self.socket.recv_bytes();
         let ret = Fmi2Return::deserialize_from(&buf, &self.format);
         match ret {
-            Fmi2Return::Fmi2ExtHandshake => println!("Received handshake"),
+            Fmi2Return::Fmi2ExtHandshakeReturn => println!("Received handshake"),
             _ => panic!("unexpected message received"),
         }
     }

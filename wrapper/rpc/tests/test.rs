@@ -24,7 +24,7 @@ fn setup_preconnected(
     slave_socket.connect(&endpoint).unwrap();
 
     // send handshake from slave to dispatcher
-    let buf = Fmi2Return::Fmi2ExtHandshake {}.serialize_as(&format);
+    let buf = Fmi2Return::Fmi2ExtHandshakeReturn {}.serialize_as(&format);
     slave_socket.send(&buf, 0).unwrap();
 
     dispatcher.await_handshake();

@@ -94,5 +94,6 @@ pub enum Fmi2Return {
         status: Fmi2Status,
         state: Vec<u8>,
     },
-    Fmi2ExtHandshake,
+    Fmi2ExtHandshakeReturn,
+    Fmi2FreeInstanceReturn,
 }

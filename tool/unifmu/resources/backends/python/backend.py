@@ -20,30 +20,22 @@ from model import Model
 
 if __name__ == "__main__":
 
-    # initializing message queue
-    context = zmq.Context()
-
-    socket = context.socket(zmq.REQ)
-
-    dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
-
-    logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
-
-    socket.connect(dispatcher_endpoint)
-
-    ret = Fmi2Return()
-    ret.Fmi2ExtHandshakeReturn.SetInParent()
-    state = ret.SerializeToString()
-    socket.send(state)
-
-    # create slave object then use model description to create a mapping between fmi value references and attribute names of FMU
-
     slave = Model()
 
-    command = Fmi2Command()
-    result = Fmi2Return()
+    # initializing message queue
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
+    logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
+    socket.connect(dispatcher_endpoint)
 
-    # event loop
+    result = Fmi2Return()
+    result.Fmi2ExtHandshakeReturn.SetInParent()
+    state = result.SerializeToString()
+    socket.send(state)
+
+    command = Fmi2Command()
+
     while True:
 
         result.Clear()
@@ -118,7 +110,7 @@ if __name__ == "__main__":
         elif group == "Fmi2Reset":
             result.Fmi2StatusReturn.status = slave.fmi2Reset()
         elif group == "Fmi2FreeInstance":
-            result.Fmi2StatusReturn.status = 0
+            result.Fmi2FreeInstanceReturn.SetInParent()
             pass
         else:
             logger.error(f"unrecognized command '{group}' received, shutting down")

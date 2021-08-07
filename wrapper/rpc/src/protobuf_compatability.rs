@@ -43,7 +43,7 @@ impl From<Fmi2Return> for fmi2_proto::fmi2_return::Result {
                     },
                 )
             }
-            Fmi2Return::Fmi2ExtHandshake => {
+            Fmi2Return::Fmi2ExtHandshakeReturn => {
                 fmi2_proto::fmi2_return::Result::Fmi2ExtHandshakeReturn(
                     fmi2_proto::Fmi2ExtHandshakeReturn {},
                 )
@@ -54,6 +54,11 @@ impl From<Fmi2Return> for fmi2_proto::fmi2_return::Result {
                         status: status.try_into().unwrap(),
                         state,
                     },
+                )
+            }
+            Fmi2Return::Fmi2FreeInstanceReturn => {
+                fmi2_proto::fmi2_return::Result::Fmi2FreeInstanceReturn(
+                    fmi2_proto::Fmi2FreeInstanceReturn {},
                 )
             }
         }
@@ -94,13 +99,16 @@ impl From<fmi2_proto::Fmi2Return> for Fmi2Return {
                 }
             }
             fmi2_proto::fmi2_return::Result::Fmi2ExtHandshakeReturn(_) => {
-                Fmi2Return::Fmi2ExtHandshake {}
+                Fmi2Return::Fmi2ExtHandshakeReturn {}
             }
             fmi2_proto::fmi2_return::Result::Fmi2ExtSerializeSlaveReturn(res) => {
                 Fmi2Return::Fmi2ExtSerializeSlaveReturn {
                     status: res.status.try_into().unwrap(),
                     state: res.state,
                 }
+            }
+            fmi2_proto::fmi2_return::Result::Fmi2FreeInstanceReturn(_) => {
+                Fmi2Return::Fmi2FreeInstanceReturn
             }
         }
     }

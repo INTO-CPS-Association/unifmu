@@ -130,6 +130,8 @@ pub struct Fmi2GetStringReturn {
     #[prost(string, repeated, tag = "2")]
     pub values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi2FreeInstanceReturn {}
 // ----------------------- Non FMI2 standard messages ----------------------
 
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -201,7 +203,7 @@ pub mod fmi2_command {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2Return {
-    #[prost(oneof = "fmi2_return::Result", tags = "1, 2, 3, 4, 5, 6, 7")]
+    #[prost(oneof = "fmi2_return::Result", tags = "1, 2, 3, 4, 5, 6, 7, 8")]
     pub result: ::core::option::Option<fmi2_return::Result>,
 }
 /// Nested message and enum types in `Fmi2Return`.
@@ -219,8 +221,10 @@ pub mod fmi2_return {
         #[prost(message, tag = "5")]
         Fmi2GetStringReturn(super::Fmi2GetStringReturn),
         #[prost(message, tag = "6")]
-        Fmi2ExtHandshakeReturn(super::Fmi2ExtHandshakeReturn),
+        Fmi2FreeInstanceReturn(super::Fmi2FreeInstanceReturn),
         #[prost(message, tag = "7")]
+        Fmi2ExtHandshakeReturn(super::Fmi2ExtHandshakeReturn),
+        #[prost(message, tag = "8")]
         Fmi2ExtSerializeSlaveReturn(super::Fmi2ExtSerializeSlaveReturn),
     }
 }

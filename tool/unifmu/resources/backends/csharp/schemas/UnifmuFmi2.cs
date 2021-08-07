@@ -52,47 +52,49 @@ namespace Fmi2Proto {
             "YW5SZXR1cm4SJgoGc3RhdHVzGAEgASgOMhYuZm1pMl9wcm90by5GbWkyU3Rh",
             "dHVzEg4KBnZhbHVlcxgCIAMoCCJNChNGbWkyR2V0U3RyaW5nUmV0dXJuEiYK",
             "BnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIOCgZ2YWx1",
-            "ZXMYAiADKAkiFwoVRm1pMkV4dFNlcmlhbGl6ZVNsYXZlIigKF0ZtaTJFeHRE",
-            "ZXNlcmlhbGl6ZVNsYXZlEg0KBXN0YXRlGAEgASgMIhgKFkZtaTJFeHRIYW5k",
-            "c2hha2VSZXR1cm4iVAobRm1pMkV4dFNlcmlhbGl6ZVNsYXZlUmV0dXJuEiYK",
-            "BnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxINCgVzdGF0",
-            "ZRgCIAEoDCKgCAoLRm1pMkNvbW1hbmQSLAoKRm1pMkRvU3RlcBgBIAEoCzIW",
-            "LmZtaTJfcHJvdG8uRm1pMkRvU3RlcEgAEi4KC0ZtaTJTZXRSZWFsGAIgASgL",
-            "MhcuZm1pMl9wcm90by5GbWkyU2V0UmVhbEgAEjQKDkZtaTJTZXRJbnRlZ2Vy",
-            "GAMgASgLMhouZm1pMl9wcm90by5GbWkyU2V0SW50ZWdlckgAEjQKDkZtaTJT",
-            "ZXRCb29sZWFuGAQgASgLMhouZm1pMl9wcm90by5GbWkyU2V0Qm9vbGVhbkgA",
-            "EjIKDUZtaTJTZXRTdHJpbmcYBSABKAsyGS5mbWkyX3Byb3RvLkZtaTJTZXRT",
-            "dHJpbmdIABIuCgtGbWkyR2V0UmVhbBgGIAEoCzIXLmZtaTJfcHJvdG8uRm1p",
-            "MkdldFJlYWxIABI0Cg5GbWkyR2V0SW50ZWdlchgHIAEoCzIaLmZtaTJfcHJv",
-            "dG8uRm1pMkdldEludGVnZXJIABI0Cg5GbWkyR2V0Qm9vbGVhbhgIIAEoCzIa",
-            "LmZtaTJfcHJvdG8uRm1pMkdldEJvb2xlYW5IABIyCg1GbWkyR2V0U3RyaW5n",
-            "GAkgASgLMhkuZm1pMl9wcm90by5GbWkyR2V0U3RyaW5nSAASPgoTRm1pMlNl",
-            "dHVwRXhwZXJpbWVudBgKIAEoCzIfLmZtaTJfcHJvdG8uRm1pMlNldHVwRXhw",
-            "ZXJpbWVudEgAEk4KG0ZtaTJFbnRlckluaXRpYWxpemF0aW9uTW9kZRgLIAEo",
-            "CzInLmZtaTJfcHJvdG8uRm1pMkVudGVySW5pdGlhbGl6YXRpb25Nb2RlSAAS",
-            "TAoaRm1pMkV4aXRJbml0aWFsaXphdGlvbk1vZGUYDCABKAsyJi5mbWkyX3By",
-            "b3RvLkZtaTJFeGl0SW5pdGlhbGl6YXRpb25Nb2RlSAASOAoQRm1pMkZyZWVJ",
-            "bnN0YW5jZRgNIAEoCzIcLmZtaTJfcHJvdG8uRm1pMkZyZWVJbnN0YW5jZUgA",
-            "EioKCUZtaTJSZXNldBgOIAEoCzIVLmZtaTJfcHJvdG8uRm1pMlJlc2V0SAAS",
-            "MgoNRm1pMlRlcm1pbmF0ZRgPIAEoCzIZLmZtaTJfcHJvdG8uRm1pMlRlcm1p",
-            "bmF0ZUgAEjQKDkZtaTJDYW5jZWxTdGVwGBAgASgLMhouZm1pMl9wcm90by5G",
-            "bWkyQ2FuY2VsU3RlcEgAEkIKFUZtaTJFeHRTZXJpYWxpemVTbGF2ZRgRIAEo",
-            "CzIhLmZtaTJfcHJvdG8uRm1pMkV4dFNlcmlhbGl6ZVNsYXZlSAASRgoXRm1p",
-            "MkV4dERlc2VyaWFsaXplU2xhdmUYEiABKAsyIy5mbWkyX3Byb3RvLkZtaTJF",
-            "eHREZXNlcmlhbGl6ZVNsYXZlSABCCQoHY29tbWFuZCLmAwoKRm1pMlJldHVy",
-            "bhI4ChBGbWkyU3RhdHVzUmV0dXJuGAEgASgLMhwuZm1pMl9wcm90by5GbWky",
-            "U3RhdHVzUmV0dXJuSAASOgoRRm1pMkdldFJlYWxSZXR1cm4YAiABKAsyHS5m",
-            "bWkyX3Byb3RvLkZtaTJHZXRSZWFsUmV0dXJuSAASQAoURm1pMkdldEludGVn",
-            "ZXJSZXR1cm4YAyABKAsyIC5mbWkyX3Byb3RvLkZtaTJHZXRJbnRlZ2VyUmV0",
-            "dXJuSAASQAoURm1pMkdldEJvb2xlYW5SZXR1cm4YBCABKAsyIC5mbWkyX3By",
-            "b3RvLkZtaTJHZXRCb29sZWFuUmV0dXJuSAASPgoTRm1pMkdldFN0cmluZ1Jl",
-            "dHVybhgFIAEoCzIfLmZtaTJfcHJvdG8uRm1pMkdldFN0cmluZ1JldHVybkgA",
-            "EkQKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4YBiABKAsyIi5mbWkyX3Byb3Rv",
-            "LkZtaTJFeHRIYW5kc2hha2VSZXR1cm5IABJOChtGbWkyRXh0U2VyaWFsaXpl",
-            "U2xhdmVSZXR1cm4YByABKAsyJy5mbWkyX3Byb3RvLkZtaTJFeHRTZXJpYWxp",
-            "emVTbGF2ZVJldHVybkgAQggKBnJlc3VsdCpRCgpGbWkyU3RhdHVzEgYKAk9r",
-            "EAASCwoHV2FybmluZxABEgsKB0Rpc2NhcmQQAhIJCgVFcnJvchADEgkKBUZh",
-            "dGFsEAQSCwoHUGVuZGluZxAFYgZwcm90bzM="));
+            "ZXMYAiADKAkiGAoWRm1pMkZyZWVJbnN0YW5jZVJldHVybiIXChVGbWkyRXh0",
+            "U2VyaWFsaXplU2xhdmUiKAoXRm1pMkV4dERlc2VyaWFsaXplU2xhdmUSDQoF",
+            "c3RhdGUYASABKAwiGAoWRm1pMkV4dEhhbmRzaGFrZVJldHVybiJUChtGbWky",
+            "RXh0U2VyaWFsaXplU2xhdmVSZXR1cm4SJgoGc3RhdHVzGAEgASgOMhYuZm1p",
+            "Ml9wcm90by5GbWkyU3RhdHVzEg0KBXN0YXRlGAIgASgMIqAICgtGbWkyQ29t",
+            "bWFuZBIsCgpGbWkyRG9TdGVwGAEgASgLMhYuZm1pMl9wcm90by5GbWkyRG9T",
+            "dGVwSAASLgoLRm1pMlNldFJlYWwYAiABKAsyFy5mbWkyX3Byb3RvLkZtaTJT",
+            "ZXRSZWFsSAASNAoORm1pMlNldEludGVnZXIYAyABKAsyGi5mbWkyX3Byb3Rv",
+            "LkZtaTJTZXRJbnRlZ2VySAASNAoORm1pMlNldEJvb2xlYW4YBCABKAsyGi5m",
+            "bWkyX3Byb3RvLkZtaTJTZXRCb29sZWFuSAASMgoNRm1pMlNldFN0cmluZxgF",
+            "IAEoCzIZLmZtaTJfcHJvdG8uRm1pMlNldFN0cmluZ0gAEi4KC0ZtaTJHZXRS",
+            "ZWFsGAYgASgLMhcuZm1pMl9wcm90by5GbWkyR2V0UmVhbEgAEjQKDkZtaTJH",
+            "ZXRJbnRlZ2VyGAcgASgLMhouZm1pMl9wcm90by5GbWkyR2V0SW50ZWdlckgA",
+            "EjQKDkZtaTJHZXRCb29sZWFuGAggASgLMhouZm1pMl9wcm90by5GbWkyR2V0",
+            "Qm9vbGVhbkgAEjIKDUZtaTJHZXRTdHJpbmcYCSABKAsyGS5mbWkyX3Byb3Rv",
+            "LkZtaTJHZXRTdHJpbmdIABI+ChNGbWkyU2V0dXBFeHBlcmltZW50GAogASgL",
+            "Mh8uZm1pMl9wcm90by5GbWkyU2V0dXBFeHBlcmltZW50SAASTgobRm1pMkVu",
+            "dGVySW5pdGlhbGl6YXRpb25Nb2RlGAsgASgLMicuZm1pMl9wcm90by5GbWky",
+            "RW50ZXJJbml0aWFsaXphdGlvbk1vZGVIABJMChpGbWkyRXhpdEluaXRpYWxp",
+            "emF0aW9uTW9kZRgMIAEoCzImLmZtaTJfcHJvdG8uRm1pMkV4aXRJbml0aWFs",
+            "aXphdGlvbk1vZGVIABI4ChBGbWkyRnJlZUluc3RhbmNlGA0gASgLMhwuZm1p",
+            "Ml9wcm90by5GbWkyRnJlZUluc3RhbmNlSAASKgoJRm1pMlJlc2V0GA4gASgL",
+            "MhUuZm1pMl9wcm90by5GbWkyUmVzZXRIABIyCg1GbWkyVGVybWluYXRlGA8g",
+            "ASgLMhkuZm1pMl9wcm90by5GbWkyVGVybWluYXRlSAASNAoORm1pMkNhbmNl",
+            "bFN0ZXAYECABKAsyGi5mbWkyX3Byb3RvLkZtaTJDYW5jZWxTdGVwSAASQgoV",
+            "Rm1pMkV4dFNlcmlhbGl6ZVNsYXZlGBEgASgLMiEuZm1pMl9wcm90by5GbWky",
+            "RXh0U2VyaWFsaXplU2xhdmVIABJGChdGbWkyRXh0RGVzZXJpYWxpemVTbGF2",
+            "ZRgSIAEoCzIjLmZtaTJfcHJvdG8uRm1pMkV4dERlc2VyaWFsaXplU2xhdmVI",
+            "AEIJCgdjb21tYW5kIqwECgpGbWkyUmV0dXJuEjgKEEZtaTJTdGF0dXNSZXR1",
+            "cm4YASABKAsyHC5mbWkyX3Byb3RvLkZtaTJTdGF0dXNSZXR1cm5IABI6ChFG",
+            "bWkyR2V0UmVhbFJldHVybhgCIAEoCzIdLmZtaTJfcHJvdG8uRm1pMkdldFJl",
+            "YWxSZXR1cm5IABJAChRGbWkyR2V0SW50ZWdlclJldHVybhgDIAEoCzIgLmZt",
+            "aTJfcHJvdG8uRm1pMkdldEludGVnZXJSZXR1cm5IABJAChRGbWkyR2V0Qm9v",
+            "bGVhblJldHVybhgEIAEoCzIgLmZtaTJfcHJvdG8uRm1pMkdldEJvb2xlYW5S",
+            "ZXR1cm5IABI+ChNGbWkyR2V0U3RyaW5nUmV0dXJuGAUgASgLMh8uZm1pMl9w",
+            "cm90by5GbWkyR2V0U3RyaW5nUmV0dXJuSAASRAoWRm1pMkZyZWVJbnN0YW5j",
+            "ZVJldHVybhgGIAEoCzIiLmZtaTJfcHJvdG8uRm1pMkZyZWVJbnN0YW5jZVJl",
+            "dHVybkgAEkQKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4YByABKAsyIi5mbWky",
+            "X3Byb3RvLkZtaTJFeHRIYW5kc2hha2VSZXR1cm5IABJOChtGbWkyRXh0U2Vy",
+            "aWFsaXplU2xhdmVSZXR1cm4YCCABKAsyJy5mbWkyX3Byb3RvLkZtaTJFeHRT",
+            "ZXJpYWxpemVTbGF2ZVJldHVybkgAQggKBnJlc3VsdCpRCgpGbWkyU3RhdHVz",
+            "EgYKAk9rEAASCwoHV2FybmluZxABEgsKB0Rpc2NhcmQQAhIJCgVFcnJvchAD",
+            "EgkKBUZhdGFsEAQSCwoHUGVuZGluZxAFYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Fmi2Proto.Fmi2Status), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -122,12 +124,13 @@ namespace Fmi2Proto {
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetIntegerReturn), global::Fmi2Proto.Fmi2GetIntegerReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetBooleanReturn), global::Fmi2Proto.Fmi2GetBooleanReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetStringReturn), global::Fmi2Proto.Fmi2GetStringReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2FreeInstanceReturn), global::Fmi2Proto.Fmi2FreeInstanceReturn.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtSerializeSlave), global::Fmi2Proto.Fmi2ExtSerializeSlave.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtDeserializeSlave), global::Fmi2Proto.Fmi2ExtDeserializeSlave.Parser, new[]{ "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtHandshakeReturn), global::Fmi2Proto.Fmi2ExtHandshakeReturn.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn), global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn.Parser, new[]{ "Status", "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Command), global::Fmi2Proto.Fmi2Command.Parser, new[]{ "Fmi2DoStep", "Fmi2SetReal", "Fmi2SetInteger", "Fmi2SetBoolean", "Fmi2SetString", "Fmi2GetReal", "Fmi2GetInteger", "Fmi2GetBoolean", "Fmi2GetString", "Fmi2SetupExperiment", "Fmi2EnterInitializationMode", "Fmi2ExitInitializationMode", "Fmi2FreeInstance", "Fmi2Reset", "Fmi2Terminate", "Fmi2CancelStep", "Fmi2ExtSerializeSlave", "Fmi2ExtDeserializeSlave" }, new[]{ "Command" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Return), global::Fmi2Proto.Fmi2Return.Parser, new[]{ "Fmi2StatusReturn", "Fmi2GetRealReturn", "Fmi2GetIntegerReturn", "Fmi2GetBooleanReturn", "Fmi2GetStringReturn", "Fmi2ExtHandshakeReturn", "Fmi2ExtSerializeSlaveReturn" }, new[]{ "Result" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Return), global::Fmi2Proto.Fmi2Return.Parser, new[]{ "Fmi2StatusReturn", "Fmi2GetRealReturn", "Fmi2GetIntegerReturn", "Fmi2GetBooleanReturn", "Fmi2GetStringReturn", "Fmi2FreeInstanceReturn", "Fmi2ExtHandshakeReturn", "Fmi2ExtSerializeSlaveReturn" }, new[]{ "Result" }, null, null, null)
           }));
     }
     #endregion
@@ -5086,6 +5089,158 @@ namespace Fmi2Proto {
 
   }
 
+  public sealed partial class Fmi2FreeInstanceReturn : pb::IMessage<Fmi2FreeInstanceReturn>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<Fmi2FreeInstanceReturn> _parser = new pb::MessageParser<Fmi2FreeInstanceReturn>(() => new Fmi2FreeInstanceReturn());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<Fmi2FreeInstanceReturn> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[26]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2FreeInstanceReturn() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2FreeInstanceReturn(Fmi2FreeInstanceReturn other) : this() {
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2FreeInstanceReturn Clone() {
+      return new Fmi2FreeInstanceReturn(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as Fmi2FreeInstanceReturn);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(Fmi2FreeInstanceReturn other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(Fmi2FreeInstanceReturn other) {
+      if (other == null) {
+        return;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+        }
+      }
+    }
+    #endif
+
+  }
+
   public sealed partial class Fmi2ExtSerializeSlave : pb::IMessage<Fmi2ExtSerializeSlave>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -5100,7 +5255,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[26]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[27]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5252,7 +5407,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[27]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[28]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5441,7 +5596,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[28]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[29]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5593,7 +5748,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[29]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[30]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5822,7 +5977,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[30]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[31]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6955,7 +7110,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[31]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[32]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6990,6 +7145,9 @@ namespace Fmi2Proto {
           break;
         case ResultOneofCase.Fmi2GetStringReturn:
           Fmi2GetStringReturn = other.Fmi2GetStringReturn.Clone();
+          break;
+        case ResultOneofCase.Fmi2FreeInstanceReturn:
+          Fmi2FreeInstanceReturn = other.Fmi2FreeInstanceReturn.Clone();
           break;
         case ResultOneofCase.Fmi2ExtHandshakeReturn:
           Fmi2ExtHandshakeReturn = other.Fmi2ExtHandshakeReturn.Clone();
@@ -7068,8 +7226,20 @@ namespace Fmi2Proto {
       }
     }
 
+    /// <summary>Field number for the "Fmi2FreeInstanceReturn" field.</summary>
+    public const int Fmi2FreeInstanceReturnFieldNumber = 6;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Fmi2Proto.Fmi2FreeInstanceReturn Fmi2FreeInstanceReturn {
+      get { return resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn ? (global::Fmi2Proto.Fmi2FreeInstanceReturn) result_ : null; }
+      set {
+        result_ = value;
+        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2FreeInstanceReturn;
+      }
+    }
+
     /// <summary>Field number for the "Fmi2ExtHandshakeReturn" field.</summary>
-    public const int Fmi2ExtHandshakeReturnFieldNumber = 6;
+    public const int Fmi2ExtHandshakeReturnFieldNumber = 7;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::Fmi2Proto.Fmi2ExtHandshakeReturn Fmi2ExtHandshakeReturn {
@@ -7081,7 +7251,7 @@ namespace Fmi2Proto {
     }
 
     /// <summary>Field number for the "Fmi2ExtSerializeSlaveReturn" field.</summary>
-    public const int Fmi2ExtSerializeSlaveReturnFieldNumber = 7;
+    public const int Fmi2ExtSerializeSlaveReturnFieldNumber = 8;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn Fmi2ExtSerializeSlaveReturn {
@@ -7101,8 +7271,9 @@ namespace Fmi2Proto {
       Fmi2GetIntegerReturn = 3,
       Fmi2GetBooleanReturn = 4,
       Fmi2GetStringReturn = 5,
-      Fmi2ExtHandshakeReturn = 6,
-      Fmi2ExtSerializeSlaveReturn = 7,
+      Fmi2FreeInstanceReturn = 6,
+      Fmi2ExtHandshakeReturn = 7,
+      Fmi2ExtSerializeSlaveReturn = 8,
     }
     private ResultOneofCase resultCase_ = ResultOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -7138,6 +7309,7 @@ namespace Fmi2Proto {
       if (!object.Equals(Fmi2GetIntegerReturn, other.Fmi2GetIntegerReturn)) return false;
       if (!object.Equals(Fmi2GetBooleanReturn, other.Fmi2GetBooleanReturn)) return false;
       if (!object.Equals(Fmi2GetStringReturn, other.Fmi2GetStringReturn)) return false;
+      if (!object.Equals(Fmi2FreeInstanceReturn, other.Fmi2FreeInstanceReturn)) return false;
       if (!object.Equals(Fmi2ExtHandshakeReturn, other.Fmi2ExtHandshakeReturn)) return false;
       if (!object.Equals(Fmi2ExtSerializeSlaveReturn, other.Fmi2ExtSerializeSlaveReturn)) return false;
       if (ResultCase != other.ResultCase) return false;
@@ -7153,6 +7325,7 @@ namespace Fmi2Proto {
       if (resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn) hash ^= Fmi2GetIntegerReturn.GetHashCode();
       if (resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn) hash ^= Fmi2GetBooleanReturn.GetHashCode();
       if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) hash ^= Fmi2GetStringReturn.GetHashCode();
+      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) hash ^= Fmi2FreeInstanceReturn.GetHashCode();
       if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) hash ^= Fmi2ExtHandshakeReturn.GetHashCode();
       if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) hash ^= Fmi2ExtSerializeSlaveReturn.GetHashCode();
       hash ^= (int) resultCase_;
@@ -7194,12 +7367,16 @@ namespace Fmi2Proto {
         output.WriteRawTag(42);
         output.WriteMessage(Fmi2GetStringReturn);
       }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
+      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
         output.WriteRawTag(50);
+        output.WriteMessage(Fmi2FreeInstanceReturn);
+      }
+      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
+        output.WriteRawTag(58);
         output.WriteMessage(Fmi2ExtHandshakeReturn);
       }
       if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
-        output.WriteRawTag(58);
+        output.WriteRawTag(66);
         output.WriteMessage(Fmi2ExtSerializeSlaveReturn);
       }
       if (_unknownFields != null) {
@@ -7232,12 +7409,16 @@ namespace Fmi2Proto {
         output.WriteRawTag(42);
         output.WriteMessage(Fmi2GetStringReturn);
       }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
+      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
         output.WriteRawTag(50);
+        output.WriteMessage(Fmi2FreeInstanceReturn);
+      }
+      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
+        output.WriteRawTag(58);
         output.WriteMessage(Fmi2ExtHandshakeReturn);
       }
       if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
-        output.WriteRawTag(58);
+        output.WriteRawTag(66);
         output.WriteMessage(Fmi2ExtSerializeSlaveReturn);
       }
       if (_unknownFields != null) {
@@ -7264,6 +7445,9 @@ namespace Fmi2Proto {
       }
       if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2GetStringReturn);
+      }
+      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2FreeInstanceReturn);
       }
       if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2ExtHandshakeReturn);
@@ -7313,6 +7497,12 @@ namespace Fmi2Proto {
             Fmi2GetStringReturn = new global::Fmi2Proto.Fmi2GetStringReturn();
           }
           Fmi2GetStringReturn.MergeFrom(other.Fmi2GetStringReturn);
+          break;
+        case ResultOneofCase.Fmi2FreeInstanceReturn:
+          if (Fmi2FreeInstanceReturn == null) {
+            Fmi2FreeInstanceReturn = new global::Fmi2Proto.Fmi2FreeInstanceReturn();
+          }
+          Fmi2FreeInstanceReturn.MergeFrom(other.Fmi2FreeInstanceReturn);
           break;
         case ResultOneofCase.Fmi2ExtHandshakeReturn:
           if (Fmi2ExtHandshakeReturn == null) {
@@ -7389,6 +7579,15 @@ namespace Fmi2Proto {
             break;
           }
           case 50: {
+            global::Fmi2Proto.Fmi2FreeInstanceReturn subBuilder = new global::Fmi2Proto.Fmi2FreeInstanceReturn();
+            if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
+              subBuilder.MergeFrom(Fmi2FreeInstanceReturn);
+            }
+            input.ReadMessage(subBuilder);
+            Fmi2FreeInstanceReturn = subBuilder;
+            break;
+          }
+          case 58: {
             global::Fmi2Proto.Fmi2ExtHandshakeReturn subBuilder = new global::Fmi2Proto.Fmi2ExtHandshakeReturn();
             if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
               subBuilder.MergeFrom(Fmi2ExtHandshakeReturn);
@@ -7397,7 +7596,7 @@ namespace Fmi2Proto {
             Fmi2ExtHandshakeReturn = subBuilder;
             break;
           }
-          case 58: {
+          case 66: {
             global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn subBuilder = new global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn();
             if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
               subBuilder.MergeFrom(Fmi2ExtSerializeSlaveReturn);
@@ -7467,6 +7666,15 @@ namespace Fmi2Proto {
             break;
           }
           case 50: {
+            global::Fmi2Proto.Fmi2FreeInstanceReturn subBuilder = new global::Fmi2Proto.Fmi2FreeInstanceReturn();
+            if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
+              subBuilder.MergeFrom(Fmi2FreeInstanceReturn);
+            }
+            input.ReadMessage(subBuilder);
+            Fmi2FreeInstanceReturn = subBuilder;
+            break;
+          }
+          case 58: {
             global::Fmi2Proto.Fmi2ExtHandshakeReturn subBuilder = new global::Fmi2Proto.Fmi2ExtHandshakeReturn();
             if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
               subBuilder.MergeFrom(Fmi2ExtHandshakeReturn);
@@ -7475,7 +7683,7 @@ namespace Fmi2Proto {
             Fmi2ExtHandshakeReturn = subBuilder;
             break;
           }
-          case 58: {
+          case 66: {
             global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn subBuilder = new global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn();
             if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
               subBuilder.MergeFrom(Fmi2ExtSerializeSlaveReturn);

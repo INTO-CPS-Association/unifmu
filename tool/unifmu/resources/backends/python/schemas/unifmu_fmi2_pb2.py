@@ -7,81 +7,64 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
+
+
 DESCRIPTOR = _descriptor.FileDescriptor(
-    name="unifmu_fmi2.proto",
-    package="fmi2_proto",
-    syntax="proto3",
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-    serialized_pb=b'\n\x11unifmu_fmi2.proto\x12\nfmi2_proto"1\n\x0b\x46mi2SetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x01"4\n\x0e\x46mi2SetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x05"4\n\x0e\x46mi2SetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x08"3\n\rFmi2SetString\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\t"!\n\x0b\x46mi2GetReal\x12\x12\n\nreferences\x18\x01 \x03(\r"$\n\x0e\x46mi2GetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r"$\n\x0e\x46mi2GetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r"#\n\rFmi2GetString\x12\x12\n\nreferences\x18\x01 \x03(\r"L\n\nFmi2DoStep\x12\x14\n\x0c\x63urrent_time\x18\x01 \x01(\x01\x12\x11\n\tstep_size\x18\x02 \x01(\x01\x12\x15\n\rno_step_prior\x18\x03 \x01(\x08"}\n\x13\x46mi2SetupExperiment\x12\x12\n\nstart_time\x18\x01 \x01(\x01\x12\x11\n\tstop_time\x18\x02 \x01(\x01\x12\x11\n\ttolerance\x18\x03 \x01(\x01\x12\x15\n\rhas_stop_time\x18\x04 \x01(\x08\x12\x15\n\rhas_tolerance\x18\x05 \x01(\x08"\x10\n\x0e\x46mi2CancelStep"\x1d\n\x1b\x46mi2EnterInitializationMode"\x1c\n\x1a\x46mi2ExitInitializationMode"\x12\n\x10\x46mi2FreeInstance"\x0f\n\rFmi2Terminate"\x0b\n\tFmi2Reset"\x1f\n\x1d\x46mi2GetDirectionalDerivatives"\x19\n\x17\x46mi2SetInputDerivatives"\x1a\n\x18\x46mi2GetOutputDerivatives"\x0e\n\x0cGetXXXStatus"=\n\x13\x46mi2SetDebugLogging\x12\x12\n\ncategories\x18\x01 \x03(\t\x12\x12\n\nlogging_on\x18\x02 \x01(\x08":\n\x10\x46mi2StatusReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status"K\n\x11\x46mi2GetRealReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x01"N\n\x14\x46mi2GetIntegerReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x05"N\n\x14\x46mi2GetBooleanReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x08"M\n\x13\x46mi2GetStringReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\t"\x17\n\x15\x46mi2ExtSerializeSlave"(\n\x17\x46mi2ExtDeserializeSlave\x12\r\n\x05state\x18\x01 \x01(\x0c"\x18\n\x16\x46mi2ExtHandshakeReturn"T\n\x1b\x46mi2ExtSerializeSlaveReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\r\n\x05state\x18\x02 \x01(\x0c"\xa0\x08\n\x0b\x46mi2Command\x12,\n\nFmi2DoStep\x18\x01 \x01(\x0b\x32\x16.fmi2_proto.Fmi2DoStepH\x00\x12.\n\x0b\x46mi2SetReal\x18\x02 \x01(\x0b\x32\x17.fmi2_proto.Fmi2SetRealH\x00\x12\x34\n\x0e\x46mi2SetInteger\x18\x03 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetIntegerH\x00\x12\x34\n\x0e\x46mi2SetBoolean\x18\x04 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetBooleanH\x00\x12\x32\n\rFmi2SetString\x18\x05 \x01(\x0b\x32\x19.fmi2_proto.Fmi2SetStringH\x00\x12.\n\x0b\x46mi2GetReal\x18\x06 \x01(\x0b\x32\x17.fmi2_proto.Fmi2GetRealH\x00\x12\x34\n\x0e\x46mi2GetInteger\x18\x07 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetIntegerH\x00\x12\x34\n\x0e\x46mi2GetBoolean\x18\x08 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetBooleanH\x00\x12\x32\n\rFmi2GetString\x18\t \x01(\x0b\x32\x19.fmi2_proto.Fmi2GetStringH\x00\x12>\n\x13\x46mi2SetupExperiment\x18\n \x01(\x0b\x32\x1f.fmi2_proto.Fmi2SetupExperimentH\x00\x12N\n\x1b\x46mi2EnterInitializationMode\x18\x0b \x01(\x0b\x32\'.fmi2_proto.Fmi2EnterInitializationModeH\x00\x12L\n\x1a\x46mi2ExitInitializationMode\x18\x0c \x01(\x0b\x32&.fmi2_proto.Fmi2ExitInitializationModeH\x00\x12\x38\n\x10\x46mi2FreeInstance\x18\r \x01(\x0b\x32\x1c.fmi2_proto.Fmi2FreeInstanceH\x00\x12*\n\tFmi2Reset\x18\x0e \x01(\x0b\x32\x15.fmi2_proto.Fmi2ResetH\x00\x12\x32\n\rFmi2Terminate\x18\x0f \x01(\x0b\x32\x19.fmi2_proto.Fmi2TerminateH\x00\x12\x34\n\x0e\x46mi2CancelStep\x18\x10 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2CancelStepH\x00\x12\x42\n\x15\x46mi2ExtSerializeSlave\x18\x11 \x01(\x0b\x32!.fmi2_proto.Fmi2ExtSerializeSlaveH\x00\x12\x46\n\x17\x46mi2ExtDeserializeSlave\x18\x12 \x01(\x0b\x32#.fmi2_proto.Fmi2ExtDeserializeSlaveH\x00\x42\t\n\x07\x63ommand"\xe6\x03\n\nFmi2Return\x12\x38\n\x10\x46mi2StatusReturn\x18\x01 \x01(\x0b\x32\x1c.fmi2_proto.Fmi2StatusReturnH\x00\x12:\n\x11\x46mi2GetRealReturn\x18\x02 \x01(\x0b\x32\x1d.fmi2_proto.Fmi2GetRealReturnH\x00\x12@\n\x14\x46mi2GetIntegerReturn\x18\x03 \x01(\x0b\x32 .fmi2_proto.Fmi2GetIntegerReturnH\x00\x12@\n\x14\x46mi2GetBooleanReturn\x18\x04 \x01(\x0b\x32 .fmi2_proto.Fmi2GetBooleanReturnH\x00\x12>\n\x13\x46mi2GetStringReturn\x18\x05 \x01(\x0b\x32\x1f.fmi2_proto.Fmi2GetStringReturnH\x00\x12\x44\n\x16\x46mi2ExtHandshakeReturn\x18\x06 \x01(\x0b\x32".fmi2_proto.Fmi2ExtHandshakeReturnH\x00\x12N\n\x1b\x46mi2ExtSerializeSlaveReturn\x18\x07 \x01(\x0b\x32\'.fmi2_proto.Fmi2ExtSerializeSlaveReturnH\x00\x42\x08\n\x06result*Q\n\nFmi2Status\x12\x06\n\x02Ok\x10\x00\x12\x0b\n\x07Warning\x10\x01\x12\x0b\n\x07\x44iscard\x10\x02\x12\t\n\x05\x45rror\x10\x03\x12\t\n\x05\x46\x61tal\x10\x04\x12\x0b\n\x07Pending\x10\x05\x62\x06proto3',
+  name='unifmu_fmi2.proto',
+  package='fmi2_proto',
+  syntax='proto3',
+  serialized_options=None,
+  create_key=_descriptor._internal_create_key,
+  serialized_pb=b'\n\x11unifmu_fmi2.proto\x12\nfmi2_proto\"1\n\x0b\x46mi2SetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x01\"4\n\x0e\x46mi2SetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x05\"4\n\x0e\x46mi2SetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x08\"3\n\rFmi2SetString\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\t\"!\n\x0b\x46mi2GetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\"$\n\x0e\x46mi2GetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\"$\n\x0e\x46mi2GetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\"#\n\rFmi2GetString\x12\x12\n\nreferences\x18\x01 \x03(\r\"L\n\nFmi2DoStep\x12\x14\n\x0c\x63urrent_time\x18\x01 \x01(\x01\x12\x11\n\tstep_size\x18\x02 \x01(\x01\x12\x15\n\rno_step_prior\x18\x03 \x01(\x08\"}\n\x13\x46mi2SetupExperiment\x12\x12\n\nstart_time\x18\x01 \x01(\x01\x12\x11\n\tstop_time\x18\x02 \x01(\x01\x12\x11\n\ttolerance\x18\x03 \x01(\x01\x12\x15\n\rhas_stop_time\x18\x04 \x01(\x08\x12\x15\n\rhas_tolerance\x18\x05 \x01(\x08\"\x10\n\x0e\x46mi2CancelStep\"\x1d\n\x1b\x46mi2EnterInitializationMode\"\x1c\n\x1a\x46mi2ExitInitializationMode\"\x12\n\x10\x46mi2FreeInstance\"\x0f\n\rFmi2Terminate\"\x0b\n\tFmi2Reset\"\x1f\n\x1d\x46mi2GetDirectionalDerivatives\"\x19\n\x17\x46mi2SetInputDerivatives\"\x1a\n\x18\x46mi2GetOutputDerivatives\"\x0e\n\x0cGetXXXStatus\"=\n\x13\x46mi2SetDebugLogging\x12\x12\n\ncategories\x18\x01 \x03(\t\x12\x12\n\nlogging_on\x18\x02 \x01(\x08\":\n\x10\x46mi2StatusReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\"K\n\x11\x46mi2GetRealReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x01\"N\n\x14\x46mi2GetIntegerReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x05\"N\n\x14\x46mi2GetBooleanReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x08\"M\n\x13\x46mi2GetStringReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\t\"\x18\n\x16\x46mi2FreeInstanceReturn\"\x17\n\x15\x46mi2ExtSerializeSlave\"(\n\x17\x46mi2ExtDeserializeSlave\x12\r\n\x05state\x18\x01 \x01(\x0c\"\x18\n\x16\x46mi2ExtHandshakeReturn\"T\n\x1b\x46mi2ExtSerializeSlaveReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\r\n\x05state\x18\x02 \x01(\x0c\"\xa0\x08\n\x0b\x46mi2Command\x12,\n\nFmi2DoStep\x18\x01 \x01(\x0b\x32\x16.fmi2_proto.Fmi2DoStepH\x00\x12.\n\x0b\x46mi2SetReal\x18\x02 \x01(\x0b\x32\x17.fmi2_proto.Fmi2SetRealH\x00\x12\x34\n\x0e\x46mi2SetInteger\x18\x03 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetIntegerH\x00\x12\x34\n\x0e\x46mi2SetBoolean\x18\x04 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetBooleanH\x00\x12\x32\n\rFmi2SetString\x18\x05 \x01(\x0b\x32\x19.fmi2_proto.Fmi2SetStringH\x00\x12.\n\x0b\x46mi2GetReal\x18\x06 \x01(\x0b\x32\x17.fmi2_proto.Fmi2GetRealH\x00\x12\x34\n\x0e\x46mi2GetInteger\x18\x07 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetIntegerH\x00\x12\x34\n\x0e\x46mi2GetBoolean\x18\x08 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetBooleanH\x00\x12\x32\n\rFmi2GetString\x18\t \x01(\x0b\x32\x19.fmi2_proto.Fmi2GetStringH\x00\x12>\n\x13\x46mi2SetupExperiment\x18\n \x01(\x0b\x32\x1f.fmi2_proto.Fmi2SetupExperimentH\x00\x12N\n\x1b\x46mi2EnterInitializationMode\x18\x0b \x01(\x0b\x32\'.fmi2_proto.Fmi2EnterInitializationModeH\x00\x12L\n\x1a\x46mi2ExitInitializationMode\x18\x0c \x01(\x0b\x32&.fmi2_proto.Fmi2ExitInitializationModeH\x00\x12\x38\n\x10\x46mi2FreeInstance\x18\r \x01(\x0b\x32\x1c.fmi2_proto.Fmi2FreeInstanceH\x00\x12*\n\tFmi2Reset\x18\x0e \x01(\x0b\x32\x15.fmi2_proto.Fmi2ResetH\x00\x12\x32\n\rFmi2Terminate\x18\x0f \x01(\x0b\x32\x19.fmi2_proto.Fmi2TerminateH\x00\x12\x34\n\x0e\x46mi2CancelStep\x18\x10 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2CancelStepH\x00\x12\x42\n\x15\x46mi2ExtSerializeSlave\x18\x11 \x01(\x0b\x32!.fmi2_proto.Fmi2ExtSerializeSlaveH\x00\x12\x46\n\x17\x46mi2ExtDeserializeSlave\x18\x12 \x01(\x0b\x32#.fmi2_proto.Fmi2ExtDeserializeSlaveH\x00\x42\t\n\x07\x63ommand\"\xac\x04\n\nFmi2Return\x12\x38\n\x10\x46mi2StatusReturn\x18\x01 \x01(\x0b\x32\x1c.fmi2_proto.Fmi2StatusReturnH\x00\x12:\n\x11\x46mi2GetRealReturn\x18\x02 \x01(\x0b\x32\x1d.fmi2_proto.Fmi2GetRealReturnH\x00\x12@\n\x14\x46mi2GetIntegerReturn\x18\x03 \x01(\x0b\x32 .fmi2_proto.Fmi2GetIntegerReturnH\x00\x12@\n\x14\x46mi2GetBooleanReturn\x18\x04 \x01(\x0b\x32 .fmi2_proto.Fmi2GetBooleanReturnH\x00\x12>\n\x13\x46mi2GetStringReturn\x18\x05 \x01(\x0b\x32\x1f.fmi2_proto.Fmi2GetStringReturnH\x00\x12\x44\n\x16\x46mi2FreeInstanceReturn\x18\x06 \x01(\x0b\x32\".fmi2_proto.Fmi2FreeInstanceReturnH\x00\x12\x44\n\x16\x46mi2ExtHandshakeReturn\x18\x07 \x01(\x0b\x32\".fmi2_proto.Fmi2ExtHandshakeReturnH\x00\x12N\n\x1b\x46mi2ExtSerializeSlaveReturn\x18\x08 \x01(\x0b\x32\'.fmi2_proto.Fmi2ExtSerializeSlaveReturnH\x00\x42\x08\n\x06result*Q\n\nFmi2Status\x12\x06\n\x02Ok\x10\x00\x12\x0b\n\x07Warning\x10\x01\x12\x0b\n\x07\x44iscard\x10\x02\x12\t\n\x05\x45rror\x10\x03\x12\t\n\x05\x46\x61tal\x10\x04\x12\x0b\n\x07Pending\x10\x05\x62\x06proto3'
 )
 
 _FMI2STATUS = _descriptor.EnumDescriptor(
-    name="Fmi2Status",
-    full_name="fmi2_proto.Fmi2Status",
-    filename=None,
-    file=DESCRIPTOR,
-    create_key=_descriptor._internal_create_key,
-    values=[
-        _descriptor.EnumValueDescriptor(
-            name="Ok",
-            index=0,
-            number=0,
-            serialized_options=None,
-            type=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.EnumValueDescriptor(
-            name="Warning",
-            index=1,
-            number=1,
-            serialized_options=None,
-            type=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.EnumValueDescriptor(
-            name="Discard",
-            index=2,
-            number=2,
-            serialized_options=None,
-            type=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.EnumValueDescriptor(
-            name="Error",
-            index=3,
-            number=3,
-            serialized_options=None,
-            type=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.EnumValueDescriptor(
-            name="Fatal",
-            index=4,
-            number=4,
-            serialized_options=None,
-            type=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.EnumValueDescriptor(
-            name="Pending",
-            index=5,
-            number=5,
-            serialized_options=None,
-            type=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    containing_type=None,
-    serialized_options=None,
-    serialized_start=2997,
-    serialized_end=3078,
+  name='Fmi2Status',
+  full_name='fmi2_proto.Fmi2Status',
+  filename=None,
+  file=DESCRIPTOR,
+  create_key=_descriptor._internal_create_key,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='Ok', index=0, number=0,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='Warning', index=1, number=1,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='Discard', index=2, number=2,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='Error', index=3, number=3,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='Fatal', index=4, number=4,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='Pending', index=5, number=5,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=3093,
+  serialized_end=3174,
 )
 _sym_db.RegisterEnumDescriptor(_FMI2STATUS)
 
@@ -94,2422 +77,1636 @@ Fatal = 4
 Pending = 5
 
 
+
 _FMI2SETREAL = _descriptor.Descriptor(
-    name="Fmi2SetReal",
-    full_name="fmi2_proto.Fmi2SetReal",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2SetReal.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2SetReal.values",
-            index=1,
-            number=2,
-            type=1,
-            cpp_type=5,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=33,
-    serialized_end=82,
+  name='Fmi2SetReal',
+  full_name='fmi2_proto.Fmi2SetReal',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2SetReal.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2SetReal.values', index=1,
+      number=2, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=33,
+  serialized_end=82,
 )
 
 
 _FMI2SETINTEGER = _descriptor.Descriptor(
-    name="Fmi2SetInteger",
-    full_name="fmi2_proto.Fmi2SetInteger",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2SetInteger.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2SetInteger.values",
-            index=1,
-            number=2,
-            type=5,
-            cpp_type=1,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=84,
-    serialized_end=136,
+  name='Fmi2SetInteger',
+  full_name='fmi2_proto.Fmi2SetInteger',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2SetInteger.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2SetInteger.values', index=1,
+      number=2, type=5, cpp_type=1, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=84,
+  serialized_end=136,
 )
 
 
 _FMI2SETBOOLEAN = _descriptor.Descriptor(
-    name="Fmi2SetBoolean",
-    full_name="fmi2_proto.Fmi2SetBoolean",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2SetBoolean.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2SetBoolean.values",
-            index=1,
-            number=2,
-            type=8,
-            cpp_type=7,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=138,
-    serialized_end=190,
+  name='Fmi2SetBoolean',
+  full_name='fmi2_proto.Fmi2SetBoolean',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2SetBoolean.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2SetBoolean.values', index=1,
+      number=2, type=8, cpp_type=7, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=138,
+  serialized_end=190,
 )
 
 
 _FMI2SETSTRING = _descriptor.Descriptor(
-    name="Fmi2SetString",
-    full_name="fmi2_proto.Fmi2SetString",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2SetString.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2SetString.values",
-            index=1,
-            number=2,
-            type=9,
-            cpp_type=9,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=192,
-    serialized_end=243,
+  name='Fmi2SetString',
+  full_name='fmi2_proto.Fmi2SetString',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2SetString.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2SetString.values', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=192,
+  serialized_end=243,
 )
 
 
 _FMI2GETREAL = _descriptor.Descriptor(
-    name="Fmi2GetReal",
-    full_name="fmi2_proto.Fmi2GetReal",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2GetReal.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=245,
-    serialized_end=278,
+  name='Fmi2GetReal',
+  full_name='fmi2_proto.Fmi2GetReal',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2GetReal.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=245,
+  serialized_end=278,
 )
 
 
 _FMI2GETINTEGER = _descriptor.Descriptor(
-    name="Fmi2GetInteger",
-    full_name="fmi2_proto.Fmi2GetInteger",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2GetInteger.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=280,
-    serialized_end=316,
+  name='Fmi2GetInteger',
+  full_name='fmi2_proto.Fmi2GetInteger',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2GetInteger.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=280,
+  serialized_end=316,
 )
 
 
 _FMI2GETBOOLEAN = _descriptor.Descriptor(
-    name="Fmi2GetBoolean",
-    full_name="fmi2_proto.Fmi2GetBoolean",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2GetBoolean.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=318,
-    serialized_end=354,
+  name='Fmi2GetBoolean',
+  full_name='fmi2_proto.Fmi2GetBoolean',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2GetBoolean.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=318,
+  serialized_end=354,
 )
 
 
 _FMI2GETSTRING = _descriptor.Descriptor(
-    name="Fmi2GetString",
-    full_name="fmi2_proto.Fmi2GetString",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="references",
-            full_name="fmi2_proto.Fmi2GetString.references",
-            index=0,
-            number=1,
-            type=13,
-            cpp_type=3,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=356,
-    serialized_end=391,
+  name='Fmi2GetString',
+  full_name='fmi2_proto.Fmi2GetString',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2GetString.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=356,
+  serialized_end=391,
 )
 
 
 _FMI2DOSTEP = _descriptor.Descriptor(
-    name="Fmi2DoStep",
-    full_name="fmi2_proto.Fmi2DoStep",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="current_time",
-            full_name="fmi2_proto.Fmi2DoStep.current_time",
-            index=0,
-            number=1,
-            type=1,
-            cpp_type=5,
-            label=1,
-            has_default_value=False,
-            default_value=float(0),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="step_size",
-            full_name="fmi2_proto.Fmi2DoStep.step_size",
-            index=1,
-            number=2,
-            type=1,
-            cpp_type=5,
-            label=1,
-            has_default_value=False,
-            default_value=float(0),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="no_step_prior",
-            full_name="fmi2_proto.Fmi2DoStep.no_step_prior",
-            index=2,
-            number=3,
-            type=8,
-            cpp_type=7,
-            label=1,
-            has_default_value=False,
-            default_value=False,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=393,
-    serialized_end=469,
+  name='Fmi2DoStep',
+  full_name='fmi2_proto.Fmi2DoStep',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='current_time', full_name='fmi2_proto.Fmi2DoStep.current_time', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='step_size', full_name='fmi2_proto.Fmi2DoStep.step_size', index=1,
+      number=2, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='no_step_prior', full_name='fmi2_proto.Fmi2DoStep.no_step_prior', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=393,
+  serialized_end=469,
 )
 
 
 _FMI2SETUPEXPERIMENT = _descriptor.Descriptor(
-    name="Fmi2SetupExperiment",
-    full_name="fmi2_proto.Fmi2SetupExperiment",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="start_time",
-            full_name="fmi2_proto.Fmi2SetupExperiment.start_time",
-            index=0,
-            number=1,
-            type=1,
-            cpp_type=5,
-            label=1,
-            has_default_value=False,
-            default_value=float(0),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="stop_time",
-            full_name="fmi2_proto.Fmi2SetupExperiment.stop_time",
-            index=1,
-            number=2,
-            type=1,
-            cpp_type=5,
-            label=1,
-            has_default_value=False,
-            default_value=float(0),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="tolerance",
-            full_name="fmi2_proto.Fmi2SetupExperiment.tolerance",
-            index=2,
-            number=3,
-            type=1,
-            cpp_type=5,
-            label=1,
-            has_default_value=False,
-            default_value=float(0),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="has_stop_time",
-            full_name="fmi2_proto.Fmi2SetupExperiment.has_stop_time",
-            index=3,
-            number=4,
-            type=8,
-            cpp_type=7,
-            label=1,
-            has_default_value=False,
-            default_value=False,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="has_tolerance",
-            full_name="fmi2_proto.Fmi2SetupExperiment.has_tolerance",
-            index=4,
-            number=5,
-            type=8,
-            cpp_type=7,
-            label=1,
-            has_default_value=False,
-            default_value=False,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=471,
-    serialized_end=596,
+  name='Fmi2SetupExperiment',
+  full_name='fmi2_proto.Fmi2SetupExperiment',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='start_time', full_name='fmi2_proto.Fmi2SetupExperiment.start_time', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='stop_time', full_name='fmi2_proto.Fmi2SetupExperiment.stop_time', index=1,
+      number=2, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='tolerance', full_name='fmi2_proto.Fmi2SetupExperiment.tolerance', index=2,
+      number=3, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='has_stop_time', full_name='fmi2_proto.Fmi2SetupExperiment.has_stop_time', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='has_tolerance', full_name='fmi2_proto.Fmi2SetupExperiment.has_tolerance', index=4,
+      number=5, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=471,
+  serialized_end=596,
 )
 
 
 _FMI2CANCELSTEP = _descriptor.Descriptor(
-    name="Fmi2CancelStep",
-    full_name="fmi2_proto.Fmi2CancelStep",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=598,
-    serialized_end=614,
+  name='Fmi2CancelStep',
+  full_name='fmi2_proto.Fmi2CancelStep',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=598,
+  serialized_end=614,
 )
 
 
 _FMI2ENTERINITIALIZATIONMODE = _descriptor.Descriptor(
-    name="Fmi2EnterInitializationMode",
-    full_name="fmi2_proto.Fmi2EnterInitializationMode",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=616,
-    serialized_end=645,
+  name='Fmi2EnterInitializationMode',
+  full_name='fmi2_proto.Fmi2EnterInitializationMode',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=616,
+  serialized_end=645,
 )
 
 
 _FMI2EXITINITIALIZATIONMODE = _descriptor.Descriptor(
-    name="Fmi2ExitInitializationMode",
-    full_name="fmi2_proto.Fmi2ExitInitializationMode",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=647,
-    serialized_end=675,
+  name='Fmi2ExitInitializationMode',
+  full_name='fmi2_proto.Fmi2ExitInitializationMode',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=647,
+  serialized_end=675,
 )
 
 
 _FMI2FREEINSTANCE = _descriptor.Descriptor(
-    name="Fmi2FreeInstance",
-    full_name="fmi2_proto.Fmi2FreeInstance",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=677,
-    serialized_end=695,
+  name='Fmi2FreeInstance',
+  full_name='fmi2_proto.Fmi2FreeInstance',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=677,
+  serialized_end=695,
 )
 
 
 _FMI2TERMINATE = _descriptor.Descriptor(
-    name="Fmi2Terminate",
-    full_name="fmi2_proto.Fmi2Terminate",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=697,
-    serialized_end=712,
+  name='Fmi2Terminate',
+  full_name='fmi2_proto.Fmi2Terminate',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=697,
+  serialized_end=712,
 )
 
 
 _FMI2RESET = _descriptor.Descriptor(
-    name="Fmi2Reset",
-    full_name="fmi2_proto.Fmi2Reset",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=714,
-    serialized_end=725,
+  name='Fmi2Reset',
+  full_name='fmi2_proto.Fmi2Reset',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=714,
+  serialized_end=725,
 )
 
 
 _FMI2GETDIRECTIONALDERIVATIVES = _descriptor.Descriptor(
-    name="Fmi2GetDirectionalDerivatives",
-    full_name="fmi2_proto.Fmi2GetDirectionalDerivatives",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=727,
-    serialized_end=758,
+  name='Fmi2GetDirectionalDerivatives',
+  full_name='fmi2_proto.Fmi2GetDirectionalDerivatives',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=727,
+  serialized_end=758,
 )
 
 
 _FMI2SETINPUTDERIVATIVES = _descriptor.Descriptor(
-    name="Fmi2SetInputDerivatives",
-    full_name="fmi2_proto.Fmi2SetInputDerivatives",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=760,
-    serialized_end=785,
+  name='Fmi2SetInputDerivatives',
+  full_name='fmi2_proto.Fmi2SetInputDerivatives',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=760,
+  serialized_end=785,
 )
 
 
 _FMI2GETOUTPUTDERIVATIVES = _descriptor.Descriptor(
-    name="Fmi2GetOutputDerivatives",
-    full_name="fmi2_proto.Fmi2GetOutputDerivatives",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=787,
-    serialized_end=813,
+  name='Fmi2GetOutputDerivatives',
+  full_name='fmi2_proto.Fmi2GetOutputDerivatives',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=787,
+  serialized_end=813,
 )
 
 
 _GETXXXSTATUS = _descriptor.Descriptor(
-    name="GetXXXStatus",
-    full_name="fmi2_proto.GetXXXStatus",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=815,
-    serialized_end=829,
+  name='GetXXXStatus',
+  full_name='fmi2_proto.GetXXXStatus',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=815,
+  serialized_end=829,
 )
 
 
 _FMI2SETDEBUGLOGGING = _descriptor.Descriptor(
-    name="Fmi2SetDebugLogging",
-    full_name="fmi2_proto.Fmi2SetDebugLogging",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="categories",
-            full_name="fmi2_proto.Fmi2SetDebugLogging.categories",
-            index=0,
-            number=1,
-            type=9,
-            cpp_type=9,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="logging_on",
-            full_name="fmi2_proto.Fmi2SetDebugLogging.logging_on",
-            index=1,
-            number=2,
-            type=8,
-            cpp_type=7,
-            label=1,
-            has_default_value=False,
-            default_value=False,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=831,
-    serialized_end=892,
+  name='Fmi2SetDebugLogging',
+  full_name='fmi2_proto.Fmi2SetDebugLogging',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='categories', full_name='fmi2_proto.Fmi2SetDebugLogging.categories', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='logging_on', full_name='fmi2_proto.Fmi2SetDebugLogging.logging_on', index=1,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=831,
+  serialized_end=892,
 )
 
 
 _FMI2STATUSRETURN = _descriptor.Descriptor(
-    name="Fmi2StatusReturn",
-    full_name="fmi2_proto.Fmi2StatusReturn",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="status",
-            full_name="fmi2_proto.Fmi2StatusReturn.status",
-            index=0,
-            number=1,
-            type=14,
-            cpp_type=8,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=894,
-    serialized_end=952,
+  name='Fmi2StatusReturn',
+  full_name='fmi2_proto.Fmi2StatusReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2StatusReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=894,
+  serialized_end=952,
 )
 
 
 _FMI2GETREALRETURN = _descriptor.Descriptor(
-    name="Fmi2GetRealReturn",
-    full_name="fmi2_proto.Fmi2GetRealReturn",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="status",
-            full_name="fmi2_proto.Fmi2GetRealReturn.status",
-            index=0,
-            number=1,
-            type=14,
-            cpp_type=8,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2GetRealReturn.values",
-            index=1,
-            number=2,
-            type=1,
-            cpp_type=5,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=954,
-    serialized_end=1029,
+  name='Fmi2GetRealReturn',
+  full_name='fmi2_proto.Fmi2GetRealReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2GetRealReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2GetRealReturn.values', index=1,
+      number=2, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=954,
+  serialized_end=1029,
 )
 
 
 _FMI2GETINTEGERRETURN = _descriptor.Descriptor(
-    name="Fmi2GetIntegerReturn",
-    full_name="fmi2_proto.Fmi2GetIntegerReturn",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="status",
-            full_name="fmi2_proto.Fmi2GetIntegerReturn.status",
-            index=0,
-            number=1,
-            type=14,
-            cpp_type=8,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2GetIntegerReturn.values",
-            index=1,
-            number=2,
-            type=5,
-            cpp_type=1,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=1031,
-    serialized_end=1109,
+  name='Fmi2GetIntegerReturn',
+  full_name='fmi2_proto.Fmi2GetIntegerReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2GetIntegerReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2GetIntegerReturn.values', index=1,
+      number=2, type=5, cpp_type=1, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1031,
+  serialized_end=1109,
 )
 
 
 _FMI2GETBOOLEANRETURN = _descriptor.Descriptor(
-    name="Fmi2GetBooleanReturn",
-    full_name="fmi2_proto.Fmi2GetBooleanReturn",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="status",
-            full_name="fmi2_proto.Fmi2GetBooleanReturn.status",
-            index=0,
-            number=1,
-            type=14,
-            cpp_type=8,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2GetBooleanReturn.values",
-            index=1,
-            number=2,
-            type=8,
-            cpp_type=7,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=1111,
-    serialized_end=1189,
+  name='Fmi2GetBooleanReturn',
+  full_name='fmi2_proto.Fmi2GetBooleanReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2GetBooleanReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2GetBooleanReturn.values', index=1,
+      number=2, type=8, cpp_type=7, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1111,
+  serialized_end=1189,
 )
 
 
 _FMI2GETSTRINGRETURN = _descriptor.Descriptor(
-    name="Fmi2GetStringReturn",
-    full_name="fmi2_proto.Fmi2GetStringReturn",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="status",
-            full_name="fmi2_proto.Fmi2GetStringReturn.status",
-            index=0,
-            number=1,
-            type=14,
-            cpp_type=8,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="values",
-            full_name="fmi2_proto.Fmi2GetStringReturn.values",
-            index=1,
-            number=2,
-            type=9,
-            cpp_type=9,
-            label=3,
-            has_default_value=False,
-            default_value=[],
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=1191,
-    serialized_end=1268,
+  name='Fmi2GetStringReturn',
+  full_name='fmi2_proto.Fmi2GetStringReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2GetStringReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2GetStringReturn.values', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1191,
+  serialized_end=1268,
+)
+
+
+_FMI2FREEINSTANCERETURN = _descriptor.Descriptor(
+  name='Fmi2FreeInstanceReturn',
+  full_name='fmi2_proto.Fmi2FreeInstanceReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1270,
+  serialized_end=1294,
 )
 
 
 _FMI2EXTSERIALIZESLAVE = _descriptor.Descriptor(
-    name="Fmi2ExtSerializeSlave",
-    full_name="fmi2_proto.Fmi2ExtSerializeSlave",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=1270,
-    serialized_end=1293,
+  name='Fmi2ExtSerializeSlave',
+  full_name='fmi2_proto.Fmi2ExtSerializeSlave',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1296,
+  serialized_end=1319,
 )
 
 
 _FMI2EXTDESERIALIZESLAVE = _descriptor.Descriptor(
-    name="Fmi2ExtDeserializeSlave",
-    full_name="fmi2_proto.Fmi2ExtDeserializeSlave",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="state",
-            full_name="fmi2_proto.Fmi2ExtDeserializeSlave.state",
-            index=0,
-            number=1,
-            type=12,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"",
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=1295,
-    serialized_end=1335,
+  name='Fmi2ExtDeserializeSlave',
+  full_name='fmi2_proto.Fmi2ExtDeserializeSlave',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='state', full_name='fmi2_proto.Fmi2ExtDeserializeSlave.state', index=0,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1321,
+  serialized_end=1361,
 )
 
 
 _FMI2EXTHANDSHAKERETURN = _descriptor.Descriptor(
-    name="Fmi2ExtHandshakeReturn",
-    full_name="fmi2_proto.Fmi2ExtHandshakeReturn",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=1337,
-    serialized_end=1361,
+  name='Fmi2ExtHandshakeReturn',
+  full_name='fmi2_proto.Fmi2ExtHandshakeReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1363,
+  serialized_end=1387,
 )
 
 
 _FMI2EXTSERIALIZESLAVERETURN = _descriptor.Descriptor(
-    name="Fmi2ExtSerializeSlaveReturn",
-    full_name="fmi2_proto.Fmi2ExtSerializeSlaveReturn",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="status",
-            full_name="fmi2_proto.Fmi2ExtSerializeSlaveReturn.status",
-            index=0,
-            number=1,
-            type=14,
-            cpp_type=8,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="state",
-            full_name="fmi2_proto.Fmi2ExtSerializeSlaveReturn.state",
-            index=1,
-            number=2,
-            type=12,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"",
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=1363,
-    serialized_end=1447,
+  name='Fmi2ExtSerializeSlaveReturn',
+  full_name='fmi2_proto.Fmi2ExtSerializeSlaveReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2ExtSerializeSlaveReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='state', full_name='fmi2_proto.Fmi2ExtSerializeSlaveReturn.state', index=1,
+      number=2, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1389,
+  serialized_end=1473,
 )
 
 
 _FMI2COMMAND = _descriptor.Descriptor(
-    name="Fmi2Command",
-    full_name="fmi2_proto.Fmi2Command",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="Fmi2DoStep",
-            full_name="fmi2_proto.Fmi2Command.Fmi2DoStep",
-            index=0,
-            number=1,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2SetReal",
-            full_name="fmi2_proto.Fmi2Command.Fmi2SetReal",
-            index=1,
-            number=2,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2SetInteger",
-            full_name="fmi2_proto.Fmi2Command.Fmi2SetInteger",
-            index=2,
-            number=3,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2SetBoolean",
-            full_name="fmi2_proto.Fmi2Command.Fmi2SetBoolean",
-            index=3,
-            number=4,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2SetString",
-            full_name="fmi2_proto.Fmi2Command.Fmi2SetString",
-            index=4,
-            number=5,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetReal",
-            full_name="fmi2_proto.Fmi2Command.Fmi2GetReal",
-            index=5,
-            number=6,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetInteger",
-            full_name="fmi2_proto.Fmi2Command.Fmi2GetInteger",
-            index=6,
-            number=7,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetBoolean",
-            full_name="fmi2_proto.Fmi2Command.Fmi2GetBoolean",
-            index=7,
-            number=8,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetString",
-            full_name="fmi2_proto.Fmi2Command.Fmi2GetString",
-            index=8,
-            number=9,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2SetupExperiment",
-            full_name="fmi2_proto.Fmi2Command.Fmi2SetupExperiment",
-            index=9,
-            number=10,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2EnterInitializationMode",
-            full_name="fmi2_proto.Fmi2Command.Fmi2EnterInitializationMode",
-            index=10,
-            number=11,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2ExitInitializationMode",
-            full_name="fmi2_proto.Fmi2Command.Fmi2ExitInitializationMode",
-            index=11,
-            number=12,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2FreeInstance",
-            full_name="fmi2_proto.Fmi2Command.Fmi2FreeInstance",
-            index=12,
-            number=13,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2Reset",
-            full_name="fmi2_proto.Fmi2Command.Fmi2Reset",
-            index=13,
-            number=14,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2Terminate",
-            full_name="fmi2_proto.Fmi2Command.Fmi2Terminate",
-            index=14,
-            number=15,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2CancelStep",
-            full_name="fmi2_proto.Fmi2Command.Fmi2CancelStep",
-            index=15,
-            number=16,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2ExtSerializeSlave",
-            full_name="fmi2_proto.Fmi2Command.Fmi2ExtSerializeSlave",
-            index=16,
-            number=17,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2ExtDeserializeSlave",
-            full_name="fmi2_proto.Fmi2Command.Fmi2ExtDeserializeSlave",
-            index=17,
-            number=18,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[
-        _descriptor.OneofDescriptor(
-            name="command",
-            full_name="fmi2_proto.Fmi2Command.command",
-            index=0,
-            containing_type=None,
-            create_key=_descriptor._internal_create_key,
-            fields=[],
-        ),
-    ],
-    serialized_start=1450,
-    serialized_end=2506,
+  name='Fmi2Command',
+  full_name='fmi2_proto.Fmi2Command',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='Fmi2DoStep', full_name='fmi2_proto.Fmi2Command.Fmi2DoStep', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2SetReal', full_name='fmi2_proto.Fmi2Command.Fmi2SetReal', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2SetInteger', full_name='fmi2_proto.Fmi2Command.Fmi2SetInteger', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2SetBoolean', full_name='fmi2_proto.Fmi2Command.Fmi2SetBoolean', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2SetString', full_name='fmi2_proto.Fmi2Command.Fmi2SetString', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetReal', full_name='fmi2_proto.Fmi2Command.Fmi2GetReal', index=5,
+      number=6, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetInteger', full_name='fmi2_proto.Fmi2Command.Fmi2GetInteger', index=6,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetBoolean', full_name='fmi2_proto.Fmi2Command.Fmi2GetBoolean', index=7,
+      number=8, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetString', full_name='fmi2_proto.Fmi2Command.Fmi2GetString', index=8,
+      number=9, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2SetupExperiment', full_name='fmi2_proto.Fmi2Command.Fmi2SetupExperiment', index=9,
+      number=10, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2EnterInitializationMode', full_name='fmi2_proto.Fmi2Command.Fmi2EnterInitializationMode', index=10,
+      number=11, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2ExitInitializationMode', full_name='fmi2_proto.Fmi2Command.Fmi2ExitInitializationMode', index=11,
+      number=12, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2FreeInstance', full_name='fmi2_proto.Fmi2Command.Fmi2FreeInstance', index=12,
+      number=13, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2Reset', full_name='fmi2_proto.Fmi2Command.Fmi2Reset', index=13,
+      number=14, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2Terminate', full_name='fmi2_proto.Fmi2Command.Fmi2Terminate', index=14,
+      number=15, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2CancelStep', full_name='fmi2_proto.Fmi2Command.Fmi2CancelStep', index=15,
+      number=16, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2ExtSerializeSlave', full_name='fmi2_proto.Fmi2Command.Fmi2ExtSerializeSlave', index=16,
+      number=17, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2ExtDeserializeSlave', full_name='fmi2_proto.Fmi2Command.Fmi2ExtDeserializeSlave', index=17,
+      number=18, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='command', full_name='fmi2_proto.Fmi2Command.command',
+      index=0, containing_type=None,
+      create_key=_descriptor._internal_create_key,
+    fields=[]),
+  ],
+  serialized_start=1476,
+  serialized_end=2532,
 )
 
 
 _FMI2RETURN = _descriptor.Descriptor(
-    name="Fmi2Return",
-    full_name="fmi2_proto.Fmi2Return",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="Fmi2StatusReturn",
-            full_name="fmi2_proto.Fmi2Return.Fmi2StatusReturn",
-            index=0,
-            number=1,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetRealReturn",
-            full_name="fmi2_proto.Fmi2Return.Fmi2GetRealReturn",
-            index=1,
-            number=2,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetIntegerReturn",
-            full_name="fmi2_proto.Fmi2Return.Fmi2GetIntegerReturn",
-            index=2,
-            number=3,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetBooleanReturn",
-            full_name="fmi2_proto.Fmi2Return.Fmi2GetBooleanReturn",
-            index=3,
-            number=4,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2GetStringReturn",
-            full_name="fmi2_proto.Fmi2Return.Fmi2GetStringReturn",
-            index=4,
-            number=5,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2ExtHandshakeReturn",
-            full_name="fmi2_proto.Fmi2Return.Fmi2ExtHandshakeReturn",
-            index=5,
-            number=6,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="Fmi2ExtSerializeSlaveReturn",
-            full_name="fmi2_proto.Fmi2Return.Fmi2ExtSerializeSlaveReturn",
-            index=6,
-            number=7,
-            type=11,
-            cpp_type=10,
-            label=1,
-            has_default_value=False,
-            default_value=None,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[
-        _descriptor.OneofDescriptor(
-            name="result",
-            full_name="fmi2_proto.Fmi2Return.result",
-            index=0,
-            containing_type=None,
-            create_key=_descriptor._internal_create_key,
-            fields=[],
-        ),
-    ],
-    serialized_start=2509,
-    serialized_end=2995,
+  name='Fmi2Return',
+  full_name='fmi2_proto.Fmi2Return',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='Fmi2StatusReturn', full_name='fmi2_proto.Fmi2Return.Fmi2StatusReturn', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetRealReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetRealReturn', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetIntegerReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetIntegerReturn', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetBooleanReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetBooleanReturn', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetStringReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetStringReturn', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2FreeInstanceReturn', full_name='fmi2_proto.Fmi2Return.Fmi2FreeInstanceReturn', index=5,
+      number=6, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2ExtHandshakeReturn', full_name='fmi2_proto.Fmi2Return.Fmi2ExtHandshakeReturn', index=6,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2ExtSerializeSlaveReturn', full_name='fmi2_proto.Fmi2Return.Fmi2ExtSerializeSlaveReturn', index=7,
+      number=8, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='result', full_name='fmi2_proto.Fmi2Return.result',
+      index=0, containing_type=None,
+      create_key=_descriptor._internal_create_key,
+    fields=[]),
+  ],
+  serialized_start=2535,
+  serialized_end=3091,
 )
 
-_FMI2STATUSRETURN.fields_by_name["status"].enum_type = _FMI2STATUS
-_FMI2GETREALRETURN.fields_by_name["status"].enum_type = _FMI2STATUS
-_FMI2GETINTEGERRETURN.fields_by_name["status"].enum_type = _FMI2STATUS
-_FMI2GETBOOLEANRETURN.fields_by_name["status"].enum_type = _FMI2STATUS
-_FMI2GETSTRINGRETURN.fields_by_name["status"].enum_type = _FMI2STATUS
-_FMI2EXTSERIALIZESLAVERETURN.fields_by_name["status"].enum_type = _FMI2STATUS
-_FMI2COMMAND.fields_by_name["Fmi2DoStep"].message_type = _FMI2DOSTEP
-_FMI2COMMAND.fields_by_name["Fmi2SetReal"].message_type = _FMI2SETREAL
-_FMI2COMMAND.fields_by_name["Fmi2SetInteger"].message_type = _FMI2SETINTEGER
-_FMI2COMMAND.fields_by_name["Fmi2SetBoolean"].message_type = _FMI2SETBOOLEAN
-_FMI2COMMAND.fields_by_name["Fmi2SetString"].message_type = _FMI2SETSTRING
-_FMI2COMMAND.fields_by_name["Fmi2GetReal"].message_type = _FMI2GETREAL
-_FMI2COMMAND.fields_by_name["Fmi2GetInteger"].message_type = _FMI2GETINTEGER
-_FMI2COMMAND.fields_by_name["Fmi2GetBoolean"].message_type = _FMI2GETBOOLEAN
-_FMI2COMMAND.fields_by_name["Fmi2GetString"].message_type = _FMI2GETSTRING
-_FMI2COMMAND.fields_by_name["Fmi2SetupExperiment"].message_type = _FMI2SETUPEXPERIMENT
-_FMI2COMMAND.fields_by_name[
-    "Fmi2EnterInitializationMode"
-].message_type = _FMI2ENTERINITIALIZATIONMODE
-_FMI2COMMAND.fields_by_name[
-    "Fmi2ExitInitializationMode"
-].message_type = _FMI2EXITINITIALIZATIONMODE
-_FMI2COMMAND.fields_by_name["Fmi2FreeInstance"].message_type = _FMI2FREEINSTANCE
-_FMI2COMMAND.fields_by_name["Fmi2Reset"].message_type = _FMI2RESET
-_FMI2COMMAND.fields_by_name["Fmi2Terminate"].message_type = _FMI2TERMINATE
-_FMI2COMMAND.fields_by_name["Fmi2CancelStep"].message_type = _FMI2CANCELSTEP
-_FMI2COMMAND.fields_by_name[
-    "Fmi2ExtSerializeSlave"
-].message_type = _FMI2EXTSERIALIZESLAVE
-_FMI2COMMAND.fields_by_name[
-    "Fmi2ExtDeserializeSlave"
-].message_type = _FMI2EXTDESERIALIZESLAVE
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2DoStep"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2DoStep"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2SetReal"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2SetReal"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2SetInteger"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2SetInteger"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2SetBoolean"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2SetBoolean"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2SetString"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2SetString"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2GetReal"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2GetReal"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2GetInteger"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2GetInteger"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2GetBoolean"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2GetBoolean"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2GetString"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2GetString"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2SetupExperiment"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2SetupExperiment"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2EnterInitializationMode"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2EnterInitializationMode"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2ExitInitializationMode"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2ExitInitializationMode"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2FreeInstance"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2FreeInstance"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2Reset"]
-)
-_FMI2COMMAND.fields_by_name["Fmi2Reset"].containing_oneof = _FMI2COMMAND.oneofs_by_name[
-    "command"
-]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2Terminate"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2Terminate"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2CancelStep"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2CancelStep"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2ExtSerializeSlave"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2ExtSerializeSlave"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2COMMAND.oneofs_by_name["command"].fields.append(
-    _FMI2COMMAND.fields_by_name["Fmi2ExtDeserializeSlave"]
-)
-_FMI2COMMAND.fields_by_name[
-    "Fmi2ExtDeserializeSlave"
-].containing_oneof = _FMI2COMMAND.oneofs_by_name["command"]
-_FMI2RETURN.fields_by_name["Fmi2StatusReturn"].message_type = _FMI2STATUSRETURN
-_FMI2RETURN.fields_by_name["Fmi2GetRealReturn"].message_type = _FMI2GETREALRETURN
-_FMI2RETURN.fields_by_name["Fmi2GetIntegerReturn"].message_type = _FMI2GETINTEGERRETURN
-_FMI2RETURN.fields_by_name["Fmi2GetBooleanReturn"].message_type = _FMI2GETBOOLEANRETURN
-_FMI2RETURN.fields_by_name["Fmi2GetStringReturn"].message_type = _FMI2GETSTRINGRETURN
-_FMI2RETURN.fields_by_name[
-    "Fmi2ExtHandshakeReturn"
-].message_type = _FMI2EXTHANDSHAKERETURN
-_FMI2RETURN.fields_by_name[
-    "Fmi2ExtSerializeSlaveReturn"
-].message_type = _FMI2EXTSERIALIZESLAVERETURN
-_FMI2RETURN.oneofs_by_name["result"].fields.append(
-    _FMI2RETURN.fields_by_name["Fmi2StatusReturn"]
-)
-_FMI2RETURN.fields_by_name[
-    "Fmi2StatusReturn"
-].containing_oneof = _FMI2RETURN.oneofs_by_name["result"]
-_FMI2RETURN.oneofs_by_name["result"].fields.append(
-    _FMI2RETURN.fields_by_name["Fmi2GetRealReturn"]
-)
-_FMI2RETURN.fields_by_name[
-    "Fmi2GetRealReturn"
-].containing_oneof = _FMI2RETURN.oneofs_by_name["result"]
-_FMI2RETURN.oneofs_by_name["result"].fields.append(
-    _FMI2RETURN.fields_by_name["Fmi2GetIntegerReturn"]
-)
-_FMI2RETURN.fields_by_name[
-    "Fmi2GetIntegerReturn"
-].containing_oneof = _FMI2RETURN.oneofs_by_name["result"]
-_FMI2RETURN.oneofs_by_name["result"].fields.append(
-    _FMI2RETURN.fields_by_name["Fmi2GetBooleanReturn"]
-)
-_FMI2RETURN.fields_by_name[
-    "Fmi2GetBooleanReturn"
-].containing_oneof = _FMI2RETURN.oneofs_by_name["result"]
-_FMI2RETURN.oneofs_by_name["result"].fields.append(
-    _FMI2RETURN.fields_by_name["Fmi2GetStringReturn"]
-)
-_FMI2RETURN.fields_by_name[
-    "Fmi2GetStringReturn"
-].containing_oneof = _FMI2RETURN.oneofs_by_name["result"]
-_FMI2RETURN.oneofs_by_name["result"].fields.append(
-    _FMI2RETURN.fields_by_name["Fmi2ExtHandshakeReturn"]
-)
-_FMI2RETURN.fields_by_name[
-    "Fmi2ExtHandshakeReturn"
-].containing_oneof = _FMI2RETURN.oneofs_by_name["result"]
-_FMI2RETURN.oneofs_by_name["result"].fields.append(
-    _FMI2RETURN.fields_by_name["Fmi2ExtSerializeSlaveReturn"]
-)
-_FMI2RETURN.fields_by_name[
-    "Fmi2ExtSerializeSlaveReturn"
-].containing_oneof = _FMI2RETURN.oneofs_by_name["result"]
-DESCRIPTOR.message_types_by_name["Fmi2SetReal"] = _FMI2SETREAL
-DESCRIPTOR.message_types_by_name["Fmi2SetInteger"] = _FMI2SETINTEGER
-DESCRIPTOR.message_types_by_name["Fmi2SetBoolean"] = _FMI2SETBOOLEAN
-DESCRIPTOR.message_types_by_name["Fmi2SetString"] = _FMI2SETSTRING
-DESCRIPTOR.message_types_by_name["Fmi2GetReal"] = _FMI2GETREAL
-DESCRIPTOR.message_types_by_name["Fmi2GetInteger"] = _FMI2GETINTEGER
-DESCRIPTOR.message_types_by_name["Fmi2GetBoolean"] = _FMI2GETBOOLEAN
-DESCRIPTOR.message_types_by_name["Fmi2GetString"] = _FMI2GETSTRING
-DESCRIPTOR.message_types_by_name["Fmi2DoStep"] = _FMI2DOSTEP
-DESCRIPTOR.message_types_by_name["Fmi2SetupExperiment"] = _FMI2SETUPEXPERIMENT
-DESCRIPTOR.message_types_by_name["Fmi2CancelStep"] = _FMI2CANCELSTEP
-DESCRIPTOR.message_types_by_name[
-    "Fmi2EnterInitializationMode"
-] = _FMI2ENTERINITIALIZATIONMODE
-DESCRIPTOR.message_types_by_name[
-    "Fmi2ExitInitializationMode"
-] = _FMI2EXITINITIALIZATIONMODE
-DESCRIPTOR.message_types_by_name["Fmi2FreeInstance"] = _FMI2FREEINSTANCE
-DESCRIPTOR.message_types_by_name["Fmi2Terminate"] = _FMI2TERMINATE
-DESCRIPTOR.message_types_by_name["Fmi2Reset"] = _FMI2RESET
-DESCRIPTOR.message_types_by_name[
-    "Fmi2GetDirectionalDerivatives"
-] = _FMI2GETDIRECTIONALDERIVATIVES
-DESCRIPTOR.message_types_by_name["Fmi2SetInputDerivatives"] = _FMI2SETINPUTDERIVATIVES
-DESCRIPTOR.message_types_by_name["Fmi2GetOutputDerivatives"] = _FMI2GETOUTPUTDERIVATIVES
-DESCRIPTOR.message_types_by_name["GetXXXStatus"] = _GETXXXSTATUS
-DESCRIPTOR.message_types_by_name["Fmi2SetDebugLogging"] = _FMI2SETDEBUGLOGGING
-DESCRIPTOR.message_types_by_name["Fmi2StatusReturn"] = _FMI2STATUSRETURN
-DESCRIPTOR.message_types_by_name["Fmi2GetRealReturn"] = _FMI2GETREALRETURN
-DESCRIPTOR.message_types_by_name["Fmi2GetIntegerReturn"] = _FMI2GETINTEGERRETURN
-DESCRIPTOR.message_types_by_name["Fmi2GetBooleanReturn"] = _FMI2GETBOOLEANRETURN
-DESCRIPTOR.message_types_by_name["Fmi2GetStringReturn"] = _FMI2GETSTRINGRETURN
-DESCRIPTOR.message_types_by_name["Fmi2ExtSerializeSlave"] = _FMI2EXTSERIALIZESLAVE
-DESCRIPTOR.message_types_by_name["Fmi2ExtDeserializeSlave"] = _FMI2EXTDESERIALIZESLAVE
-DESCRIPTOR.message_types_by_name["Fmi2ExtHandshakeReturn"] = _FMI2EXTHANDSHAKERETURN
-DESCRIPTOR.message_types_by_name[
-    "Fmi2ExtSerializeSlaveReturn"
-] = _FMI2EXTSERIALIZESLAVERETURN
-DESCRIPTOR.message_types_by_name["Fmi2Command"] = _FMI2COMMAND
-DESCRIPTOR.message_types_by_name["Fmi2Return"] = _FMI2RETURN
-DESCRIPTOR.enum_types_by_name["Fmi2Status"] = _FMI2STATUS
+_FMI2STATUSRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2GETREALRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2GETINTEGERRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2GETBOOLEANRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2GETSTRINGRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2EXTSERIALIZESLAVERETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2COMMAND.fields_by_name['Fmi2DoStep'].message_type = _FMI2DOSTEP
+_FMI2COMMAND.fields_by_name['Fmi2SetReal'].message_type = _FMI2SETREAL
+_FMI2COMMAND.fields_by_name['Fmi2SetInteger'].message_type = _FMI2SETINTEGER
+_FMI2COMMAND.fields_by_name['Fmi2SetBoolean'].message_type = _FMI2SETBOOLEAN
+_FMI2COMMAND.fields_by_name['Fmi2SetString'].message_type = _FMI2SETSTRING
+_FMI2COMMAND.fields_by_name['Fmi2GetReal'].message_type = _FMI2GETREAL
+_FMI2COMMAND.fields_by_name['Fmi2GetInteger'].message_type = _FMI2GETINTEGER
+_FMI2COMMAND.fields_by_name['Fmi2GetBoolean'].message_type = _FMI2GETBOOLEAN
+_FMI2COMMAND.fields_by_name['Fmi2GetString'].message_type = _FMI2GETSTRING
+_FMI2COMMAND.fields_by_name['Fmi2SetupExperiment'].message_type = _FMI2SETUPEXPERIMENT
+_FMI2COMMAND.fields_by_name['Fmi2EnterInitializationMode'].message_type = _FMI2ENTERINITIALIZATIONMODE
+_FMI2COMMAND.fields_by_name['Fmi2ExitInitializationMode'].message_type = _FMI2EXITINITIALIZATIONMODE
+_FMI2COMMAND.fields_by_name['Fmi2FreeInstance'].message_type = _FMI2FREEINSTANCE
+_FMI2COMMAND.fields_by_name['Fmi2Reset'].message_type = _FMI2RESET
+_FMI2COMMAND.fields_by_name['Fmi2Terminate'].message_type = _FMI2TERMINATE
+_FMI2COMMAND.fields_by_name['Fmi2CancelStep'].message_type = _FMI2CANCELSTEP
+_FMI2COMMAND.fields_by_name['Fmi2ExtSerializeSlave'].message_type = _FMI2EXTSERIALIZESLAVE
+_FMI2COMMAND.fields_by_name['Fmi2ExtDeserializeSlave'].message_type = _FMI2EXTDESERIALIZESLAVE
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2DoStep'])
+_FMI2COMMAND.fields_by_name['Fmi2DoStep'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2SetReal'])
+_FMI2COMMAND.fields_by_name['Fmi2SetReal'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2SetInteger'])
+_FMI2COMMAND.fields_by_name['Fmi2SetInteger'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2SetBoolean'])
+_FMI2COMMAND.fields_by_name['Fmi2SetBoolean'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2SetString'])
+_FMI2COMMAND.fields_by_name['Fmi2SetString'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2GetReal'])
+_FMI2COMMAND.fields_by_name['Fmi2GetReal'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2GetInteger'])
+_FMI2COMMAND.fields_by_name['Fmi2GetInteger'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2GetBoolean'])
+_FMI2COMMAND.fields_by_name['Fmi2GetBoolean'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2GetString'])
+_FMI2COMMAND.fields_by_name['Fmi2GetString'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2SetupExperiment'])
+_FMI2COMMAND.fields_by_name['Fmi2SetupExperiment'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2EnterInitializationMode'])
+_FMI2COMMAND.fields_by_name['Fmi2EnterInitializationMode'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2ExitInitializationMode'])
+_FMI2COMMAND.fields_by_name['Fmi2ExitInitializationMode'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2FreeInstance'])
+_FMI2COMMAND.fields_by_name['Fmi2FreeInstance'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2Reset'])
+_FMI2COMMAND.fields_by_name['Fmi2Reset'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2Terminate'])
+_FMI2COMMAND.fields_by_name['Fmi2Terminate'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2CancelStep'])
+_FMI2COMMAND.fields_by_name['Fmi2CancelStep'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2ExtSerializeSlave'])
+_FMI2COMMAND.fields_by_name['Fmi2ExtSerializeSlave'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2ExtDeserializeSlave'])
+_FMI2COMMAND.fields_by_name['Fmi2ExtDeserializeSlave'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2RETURN.fields_by_name['Fmi2StatusReturn'].message_type = _FMI2STATUSRETURN
+_FMI2RETURN.fields_by_name['Fmi2GetRealReturn'].message_type = _FMI2GETREALRETURN
+_FMI2RETURN.fields_by_name['Fmi2GetIntegerReturn'].message_type = _FMI2GETINTEGERRETURN
+_FMI2RETURN.fields_by_name['Fmi2GetBooleanReturn'].message_type = _FMI2GETBOOLEANRETURN
+_FMI2RETURN.fields_by_name['Fmi2GetStringReturn'].message_type = _FMI2GETSTRINGRETURN
+_FMI2RETURN.fields_by_name['Fmi2FreeInstanceReturn'].message_type = _FMI2FREEINSTANCERETURN
+_FMI2RETURN.fields_by_name['Fmi2ExtHandshakeReturn'].message_type = _FMI2EXTHANDSHAKERETURN
+_FMI2RETURN.fields_by_name['Fmi2ExtSerializeSlaveReturn'].message_type = _FMI2EXTSERIALIZESLAVERETURN
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2StatusReturn'])
+_FMI2RETURN.fields_by_name['Fmi2StatusReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2GetRealReturn'])
+_FMI2RETURN.fields_by_name['Fmi2GetRealReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2GetIntegerReturn'])
+_FMI2RETURN.fields_by_name['Fmi2GetIntegerReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2GetBooleanReturn'])
+_FMI2RETURN.fields_by_name['Fmi2GetBooleanReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2GetStringReturn'])
+_FMI2RETURN.fields_by_name['Fmi2GetStringReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2FreeInstanceReturn'])
+_FMI2RETURN.fields_by_name['Fmi2FreeInstanceReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2ExtHandshakeReturn'])
+_FMI2RETURN.fields_by_name['Fmi2ExtHandshakeReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2RETURN.oneofs_by_name['result'].fields.append(
+  _FMI2RETURN.fields_by_name['Fmi2ExtSerializeSlaveReturn'])
+_FMI2RETURN.fields_by_name['Fmi2ExtSerializeSlaveReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+DESCRIPTOR.message_types_by_name['Fmi2SetReal'] = _FMI2SETREAL
+DESCRIPTOR.message_types_by_name['Fmi2SetInteger'] = _FMI2SETINTEGER
+DESCRIPTOR.message_types_by_name['Fmi2SetBoolean'] = _FMI2SETBOOLEAN
+DESCRIPTOR.message_types_by_name['Fmi2SetString'] = _FMI2SETSTRING
+DESCRIPTOR.message_types_by_name['Fmi2GetReal'] = _FMI2GETREAL
+DESCRIPTOR.message_types_by_name['Fmi2GetInteger'] = _FMI2GETINTEGER
+DESCRIPTOR.message_types_by_name['Fmi2GetBoolean'] = _FMI2GETBOOLEAN
+DESCRIPTOR.message_types_by_name['Fmi2GetString'] = _FMI2GETSTRING
+DESCRIPTOR.message_types_by_name['Fmi2DoStep'] = _FMI2DOSTEP
+DESCRIPTOR.message_types_by_name['Fmi2SetupExperiment'] = _FMI2SETUPEXPERIMENT
+DESCRIPTOR.message_types_by_name['Fmi2CancelStep'] = _FMI2CANCELSTEP
+DESCRIPTOR.message_types_by_name['Fmi2EnterInitializationMode'] = _FMI2ENTERINITIALIZATIONMODE
+DESCRIPTOR.message_types_by_name['Fmi2ExitInitializationMode'] = _FMI2EXITINITIALIZATIONMODE
+DESCRIPTOR.message_types_by_name['Fmi2FreeInstance'] = _FMI2FREEINSTANCE
+DESCRIPTOR.message_types_by_name['Fmi2Terminate'] = _FMI2TERMINATE
+DESCRIPTOR.message_types_by_name['Fmi2Reset'] = _FMI2RESET
+DESCRIPTOR.message_types_by_name['Fmi2GetDirectionalDerivatives'] = _FMI2GETDIRECTIONALDERIVATIVES
+DESCRIPTOR.message_types_by_name['Fmi2SetInputDerivatives'] = _FMI2SETINPUTDERIVATIVES
+DESCRIPTOR.message_types_by_name['Fmi2GetOutputDerivatives'] = _FMI2GETOUTPUTDERIVATIVES
+DESCRIPTOR.message_types_by_name['GetXXXStatus'] = _GETXXXSTATUS
+DESCRIPTOR.message_types_by_name['Fmi2SetDebugLogging'] = _FMI2SETDEBUGLOGGING
+DESCRIPTOR.message_types_by_name['Fmi2StatusReturn'] = _FMI2STATUSRETURN
+DESCRIPTOR.message_types_by_name['Fmi2GetRealReturn'] = _FMI2GETREALRETURN
+DESCRIPTOR.message_types_by_name['Fmi2GetIntegerReturn'] = _FMI2GETINTEGERRETURN
+DESCRIPTOR.message_types_by_name['Fmi2GetBooleanReturn'] = _FMI2GETBOOLEANRETURN
+DESCRIPTOR.message_types_by_name['Fmi2GetStringReturn'] = _FMI2GETSTRINGRETURN
+DESCRIPTOR.message_types_by_name['Fmi2FreeInstanceReturn'] = _FMI2FREEINSTANCERETURN
+DESCRIPTOR.message_types_by_name['Fmi2ExtSerializeSlave'] = _FMI2EXTSERIALIZESLAVE
+DESCRIPTOR.message_types_by_name['Fmi2ExtDeserializeSlave'] = _FMI2EXTDESERIALIZESLAVE
+DESCRIPTOR.message_types_by_name['Fmi2ExtHandshakeReturn'] = _FMI2EXTHANDSHAKERETURN
+DESCRIPTOR.message_types_by_name['Fmi2ExtSerializeSlaveReturn'] = _FMI2EXTSERIALIZESLAVERETURN
+DESCRIPTOR.message_types_by_name['Fmi2Command'] = _FMI2COMMAND
+DESCRIPTOR.message_types_by_name['Fmi2Return'] = _FMI2RETURN
+DESCRIPTOR.enum_types_by_name['Fmi2Status'] = _FMI2STATUS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-Fmi2SetReal = _reflection.GeneratedProtocolMessageType(
-    "Fmi2SetReal",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2SETREAL,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetReal)
-    },
-)
+Fmi2SetReal = _reflection.GeneratedProtocolMessageType('Fmi2SetReal', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETREAL,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetReal)
+  })
 _sym_db.RegisterMessage(Fmi2SetReal)
 
-Fmi2SetInteger = _reflection.GeneratedProtocolMessageType(
-    "Fmi2SetInteger",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2SETINTEGER,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetInteger)
-    },
-)
+Fmi2SetInteger = _reflection.GeneratedProtocolMessageType('Fmi2SetInteger', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETINTEGER,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetInteger)
+  })
 _sym_db.RegisterMessage(Fmi2SetInteger)
 
-Fmi2SetBoolean = _reflection.GeneratedProtocolMessageType(
-    "Fmi2SetBoolean",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2SETBOOLEAN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetBoolean)
-    },
-)
+Fmi2SetBoolean = _reflection.GeneratedProtocolMessageType('Fmi2SetBoolean', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETBOOLEAN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetBoolean)
+  })
 _sym_db.RegisterMessage(Fmi2SetBoolean)
 
-Fmi2SetString = _reflection.GeneratedProtocolMessageType(
-    "Fmi2SetString",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2SETSTRING,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetString)
-    },
-)
+Fmi2SetString = _reflection.GeneratedProtocolMessageType('Fmi2SetString', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETSTRING,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetString)
+  })
 _sym_db.RegisterMessage(Fmi2SetString)
 
-Fmi2GetReal = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetReal",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETREAL,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetReal)
-    },
-)
+Fmi2GetReal = _reflection.GeneratedProtocolMessageType('Fmi2GetReal', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETREAL,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetReal)
+  })
 _sym_db.RegisterMessage(Fmi2GetReal)
 
-Fmi2GetInteger = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetInteger",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETINTEGER,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetInteger)
-    },
-)
+Fmi2GetInteger = _reflection.GeneratedProtocolMessageType('Fmi2GetInteger', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETINTEGER,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetInteger)
+  })
 _sym_db.RegisterMessage(Fmi2GetInteger)
 
-Fmi2GetBoolean = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetBoolean",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETBOOLEAN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetBoolean)
-    },
-)
+Fmi2GetBoolean = _reflection.GeneratedProtocolMessageType('Fmi2GetBoolean', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETBOOLEAN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetBoolean)
+  })
 _sym_db.RegisterMessage(Fmi2GetBoolean)
 
-Fmi2GetString = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetString",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETSTRING,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetString)
-    },
-)
+Fmi2GetString = _reflection.GeneratedProtocolMessageType('Fmi2GetString', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETSTRING,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetString)
+  })
 _sym_db.RegisterMessage(Fmi2GetString)
 
-Fmi2DoStep = _reflection.GeneratedProtocolMessageType(
-    "Fmi2DoStep",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2DOSTEP,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2DoStep)
-    },
-)
+Fmi2DoStep = _reflection.GeneratedProtocolMessageType('Fmi2DoStep', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2DOSTEP,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2DoStep)
+  })
 _sym_db.RegisterMessage(Fmi2DoStep)
 
-Fmi2SetupExperiment = _reflection.GeneratedProtocolMessageType(
-    "Fmi2SetupExperiment",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2SETUPEXPERIMENT,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetupExperiment)
-    },
-)
+Fmi2SetupExperiment = _reflection.GeneratedProtocolMessageType('Fmi2SetupExperiment', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETUPEXPERIMENT,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetupExperiment)
+  })
 _sym_db.RegisterMessage(Fmi2SetupExperiment)
 
-Fmi2CancelStep = _reflection.GeneratedProtocolMessageType(
-    "Fmi2CancelStep",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2CANCELSTEP,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2CancelStep)
-    },
-)
+Fmi2CancelStep = _reflection.GeneratedProtocolMessageType('Fmi2CancelStep', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2CANCELSTEP,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2CancelStep)
+  })
 _sym_db.RegisterMessage(Fmi2CancelStep)
 
-Fmi2EnterInitializationMode = _reflection.GeneratedProtocolMessageType(
-    "Fmi2EnterInitializationMode",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2ENTERINITIALIZATIONMODE,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2EnterInitializationMode)
-    },
-)
+Fmi2EnterInitializationMode = _reflection.GeneratedProtocolMessageType('Fmi2EnterInitializationMode', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2ENTERINITIALIZATIONMODE,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2EnterInitializationMode)
+  })
 _sym_db.RegisterMessage(Fmi2EnterInitializationMode)
 
-Fmi2ExitInitializationMode = _reflection.GeneratedProtocolMessageType(
-    "Fmi2ExitInitializationMode",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2EXITINITIALIZATIONMODE,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExitInitializationMode)
-    },
-)
+Fmi2ExitInitializationMode = _reflection.GeneratedProtocolMessageType('Fmi2ExitInitializationMode', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2EXITINITIALIZATIONMODE,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExitInitializationMode)
+  })
 _sym_db.RegisterMessage(Fmi2ExitInitializationMode)
 
-Fmi2FreeInstance = _reflection.GeneratedProtocolMessageType(
-    "Fmi2FreeInstance",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2FREEINSTANCE,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2FreeInstance)
-    },
-)
+Fmi2FreeInstance = _reflection.GeneratedProtocolMessageType('Fmi2FreeInstance', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2FREEINSTANCE,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2FreeInstance)
+  })
 _sym_db.RegisterMessage(Fmi2FreeInstance)
 
-Fmi2Terminate = _reflection.GeneratedProtocolMessageType(
-    "Fmi2Terminate",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2TERMINATE,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Terminate)
-    },
-)
+Fmi2Terminate = _reflection.GeneratedProtocolMessageType('Fmi2Terminate', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2TERMINATE,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Terminate)
+  })
 _sym_db.RegisterMessage(Fmi2Terminate)
 
-Fmi2Reset = _reflection.GeneratedProtocolMessageType(
-    "Fmi2Reset",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2RESET,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Reset)
-    },
-)
+Fmi2Reset = _reflection.GeneratedProtocolMessageType('Fmi2Reset', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2RESET,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Reset)
+  })
 _sym_db.RegisterMessage(Fmi2Reset)
 
-Fmi2GetDirectionalDerivatives = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetDirectionalDerivatives",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETDIRECTIONALDERIVATIVES,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetDirectionalDerivatives)
-    },
-)
+Fmi2GetDirectionalDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2GetDirectionalDerivatives', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETDIRECTIONALDERIVATIVES,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetDirectionalDerivatives)
+  })
 _sym_db.RegisterMessage(Fmi2GetDirectionalDerivatives)
 
-Fmi2SetInputDerivatives = _reflection.GeneratedProtocolMessageType(
-    "Fmi2SetInputDerivatives",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2SETINPUTDERIVATIVES,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetInputDerivatives)
-    },
-)
+Fmi2SetInputDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2SetInputDerivatives', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETINPUTDERIVATIVES,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetInputDerivatives)
+  })
 _sym_db.RegisterMessage(Fmi2SetInputDerivatives)
 
-Fmi2GetOutputDerivatives = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetOutputDerivatives",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETOUTPUTDERIVATIVES,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetOutputDerivatives)
-    },
-)
+Fmi2GetOutputDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2GetOutputDerivatives', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETOUTPUTDERIVATIVES,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetOutputDerivatives)
+  })
 _sym_db.RegisterMessage(Fmi2GetOutputDerivatives)
 
-GetXXXStatus = _reflection.GeneratedProtocolMessageType(
-    "GetXXXStatus",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _GETXXXSTATUS,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.GetXXXStatus)
-    },
-)
+GetXXXStatus = _reflection.GeneratedProtocolMessageType('GetXXXStatus', (_message.Message,), {
+  'DESCRIPTOR' : _GETXXXSTATUS,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.GetXXXStatus)
+  })
 _sym_db.RegisterMessage(GetXXXStatus)
 
-Fmi2SetDebugLogging = _reflection.GeneratedProtocolMessageType(
-    "Fmi2SetDebugLogging",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2SETDEBUGLOGGING,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetDebugLogging)
-    },
-)
+Fmi2SetDebugLogging = _reflection.GeneratedProtocolMessageType('Fmi2SetDebugLogging', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETDEBUGLOGGING,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetDebugLogging)
+  })
 _sym_db.RegisterMessage(Fmi2SetDebugLogging)
 
-Fmi2StatusReturn = _reflection.GeneratedProtocolMessageType(
-    "Fmi2StatusReturn",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2STATUSRETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2StatusReturn)
-    },
-)
+Fmi2StatusReturn = _reflection.GeneratedProtocolMessageType('Fmi2StatusReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2STATUSRETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2StatusReturn)
+  })
 _sym_db.RegisterMessage(Fmi2StatusReturn)
 
-Fmi2GetRealReturn = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetRealReturn",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETREALRETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetRealReturn)
-    },
-)
+Fmi2GetRealReturn = _reflection.GeneratedProtocolMessageType('Fmi2GetRealReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETREALRETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetRealReturn)
+  })
 _sym_db.RegisterMessage(Fmi2GetRealReturn)
 
-Fmi2GetIntegerReturn = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetIntegerReturn",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETINTEGERRETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetIntegerReturn)
-    },
-)
+Fmi2GetIntegerReturn = _reflection.GeneratedProtocolMessageType('Fmi2GetIntegerReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETINTEGERRETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetIntegerReturn)
+  })
 _sym_db.RegisterMessage(Fmi2GetIntegerReturn)
 
-Fmi2GetBooleanReturn = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetBooleanReturn",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETBOOLEANRETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetBooleanReturn)
-    },
-)
+Fmi2GetBooleanReturn = _reflection.GeneratedProtocolMessageType('Fmi2GetBooleanReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETBOOLEANRETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetBooleanReturn)
+  })
 _sym_db.RegisterMessage(Fmi2GetBooleanReturn)
 
-Fmi2GetStringReturn = _reflection.GeneratedProtocolMessageType(
-    "Fmi2GetStringReturn",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2GETSTRINGRETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetStringReturn)
-    },
-)
+Fmi2GetStringReturn = _reflection.GeneratedProtocolMessageType('Fmi2GetStringReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETSTRINGRETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetStringReturn)
+  })
 _sym_db.RegisterMessage(Fmi2GetStringReturn)
 
-Fmi2ExtSerializeSlave = _reflection.GeneratedProtocolMessageType(
-    "Fmi2ExtSerializeSlave",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2EXTSERIALIZESLAVE,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtSerializeSlave)
-    },
-)
+Fmi2FreeInstanceReturn = _reflection.GeneratedProtocolMessageType('Fmi2FreeInstanceReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2FREEINSTANCERETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2FreeInstanceReturn)
+  })
+_sym_db.RegisterMessage(Fmi2FreeInstanceReturn)
+
+Fmi2ExtSerializeSlave = _reflection.GeneratedProtocolMessageType('Fmi2ExtSerializeSlave', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2EXTSERIALIZESLAVE,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtSerializeSlave)
+  })
 _sym_db.RegisterMessage(Fmi2ExtSerializeSlave)
 
-Fmi2ExtDeserializeSlave = _reflection.GeneratedProtocolMessageType(
-    "Fmi2ExtDeserializeSlave",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2EXTDESERIALIZESLAVE,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtDeserializeSlave)
-    },
-)
+Fmi2ExtDeserializeSlave = _reflection.GeneratedProtocolMessageType('Fmi2ExtDeserializeSlave', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2EXTDESERIALIZESLAVE,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtDeserializeSlave)
+  })
 _sym_db.RegisterMessage(Fmi2ExtDeserializeSlave)
 
-Fmi2ExtHandshakeReturn = _reflection.GeneratedProtocolMessageType(
-    "Fmi2ExtHandshakeReturn",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2EXTHANDSHAKERETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtHandshakeReturn)
-    },
-)
+Fmi2ExtHandshakeReturn = _reflection.GeneratedProtocolMessageType('Fmi2ExtHandshakeReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2EXTHANDSHAKERETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtHandshakeReturn)
+  })
 _sym_db.RegisterMessage(Fmi2ExtHandshakeReturn)
 
-Fmi2ExtSerializeSlaveReturn = _reflection.GeneratedProtocolMessageType(
-    "Fmi2ExtSerializeSlaveReturn",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2EXTSERIALIZESLAVERETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtSerializeSlaveReturn)
-    },
-)
+Fmi2ExtSerializeSlaveReturn = _reflection.GeneratedProtocolMessageType('Fmi2ExtSerializeSlaveReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2EXTSERIALIZESLAVERETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2ExtSerializeSlaveReturn)
+  })
 _sym_db.RegisterMessage(Fmi2ExtSerializeSlaveReturn)
 
-Fmi2Command = _reflection.GeneratedProtocolMessageType(
-    "Fmi2Command",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2COMMAND,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Command)
-    },
-)
+Fmi2Command = _reflection.GeneratedProtocolMessageType('Fmi2Command', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2COMMAND,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Command)
+  })
 _sym_db.RegisterMessage(Fmi2Command)
 
-Fmi2Return = _reflection.GeneratedProtocolMessageType(
-    "Fmi2Return",
-    (_message.Message,),
-    {
-        "DESCRIPTOR": _FMI2RETURN,
-        "__module__": "unifmu_fmi2_pb2"
-        # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Return)
-    },
-)
+Fmi2Return = _reflection.GeneratedProtocolMessageType('Fmi2Return', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2RETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Return)
+  })
 _sym_db.RegisterMessage(Fmi2Return)
 
 
