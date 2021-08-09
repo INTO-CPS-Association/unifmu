@@ -152,13 +152,13 @@ pub fn fmi2GetVersion() -> char_p_ref<'static> {
 /// fmi-commands are sent between the wrapper and slave(s) using a message queue library, specifically zmq.
 #[ffi_export]
 pub fn fmi2Instantiate(
-    _instance_name: char_p_ref, // not allowed to be null, also cannot be non-empty
+    instance_name: char_p_ref, // neither allowed to be null or empty string
     _fmu_type: Fmi2Type,
-    _fmu_guid: char_p_ref, // not allowed to be null,
+    fmu_guid: char_p_ref, // not allowed to be null,
     fmu_resource_location: char_p_ref,
     _functions: &Fmi2CallbackFunctions,
-    _visible: c_int,
-    _logging_on: c_int,
+    visible: c_int,
+    logging_on: c_int,
 ) -> Option<repr_c::Box<Slave>> {
     let resource_uri = Url::parse(fmu_resource_location.to_str()).expect(&format!(
         "Unable to parse the specified file URI, got: '{:?}'.",
@@ -191,7 +191,26 @@ pub fn fmi2Instantiate(
     let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
     env_vars.push((
         OsString::from("UNIFMU_GUID"),
-        OsString::from(_fmu_guid.to_str()),
+        OsString::from(fmu_guid.to_str()),
+    ));
+
+    env_vars.push((
+        OsString::from("UNIFMU_INSTANCE_NAME"),
+        OsString::from(instance_name.to_str()),
+    ));
+    env_vars.push((
+        OsString::from("UNIFMU_VISIBLE"),
+        OsString::from(match visible {
+            0 => "false",
+            _ => "true",
+        }),
+    ));
+    env_vars.push((
+        OsString::from("UNIFMU_VISIBLE"),
+        OsString::from(match logging_on {
+            0 => "false",
+            _ => "true",
+        }),
     ));
     env_vars.push((
         OsString::from("UNIFMU_DISPATCHER_ENDPOINT"),
@@ -247,19 +266,27 @@ pub fn fmi2Instantiate(
     };
 
     // spawn process
-    let popen = Popen::create(
+    let popen = match Popen::create(
         &launch_command,
         PopenConfig {
             cwd: Some(resources_dir.as_os_str().to_owned()),
             env: Some(env_vars),
             ..Default::default()
         },
-    )
-    .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command));
+    ) {
+        Ok(popen) => popen,
+        Err(e) => {
+            eprintln!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command);
+            return None;
+        }
+    };
 
     match dispatcher.await_handshake() {
         Ok(handshake) => println!("Received handshake"),
-        Err(e) => eprint!("Error ocurred during handshake"),
+        Err(e) => {
+            eprint!("Error ocurred during handshake");
+            return None;
+        }
     };
 
     Some(repr_c::Box::new(Slave::new(dispatcher, popen)))
