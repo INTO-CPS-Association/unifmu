@@ -201,24 +201,7 @@ pub fn fmi2Instantiate(
         OsString::from("UNIFMU_DISPATCHER_ENDPOINT_PORT"),
         OsString::from(endpoint_port),
     ));
-    if config.linux.is_some() {
-        env_vars.push((
-            OsString::from("UNIFMU_LAUNCH_LINUX"),
-            OsString::from(serde_json::to_string(&config.linux).unwrap()),
-        ));
-    }
-    if config.windows.is_some() {
-        env_vars.push((
-            OsString::from("UNIFMU_LAUNCH_WINDOWS"),
-            OsString::from(serde_json::to_string(&config.windows).unwrap()),
-        ));
-    }
-    if config.macos.is_some() {
-        env_vars.push((
-            OsString::from("UNIFMU_LAUNCH_MACOS"),
-            OsString::from(serde_json::to_string(&config.macos).unwrap()),
-        ));
-    }
+
     match resources_dir.parent() {
         Some(p) => match parse_model_description(&p.join("modelDescription.xml")) {
             Ok(md) => {
@@ -274,23 +257,29 @@ pub fn fmi2Instantiate(
     )
     .expect(&format!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command));
 
-    dispatcher.await_handshake();
+    match dispatcher.await_handshake() {
+        Ok(handshake) => println!("Received handshake"),
+        Err(e) => eprint!("Error ocurred during handshake"),
+    };
 
     Some(repr_c::Box::new(Slave::new(dispatcher, popen)))
 }
 
 #[ffi_export]
 pub extern "C" fn fmi2FreeInstance(slave: Option<repr_c::Box<Slave>>) {
-    todo!();
-    // let mut slave = slave; // see issue: https://github.com/getditto/safer_ffi/issues/30
+    let mut slave = slave; // see issue: https://github.com/getditto/safer_ffi/issues/30
 
-    // match slave.as_mut() {
-    //     Some(s) => {
-    //         s.dispatcher.invoke_command(&Fmi2Command::Fmi2FreeInstance);
-    //         drop(slave)
-    //     }
-    //     None => {}
-    // }
+    match slave.as_mut() {
+        Some(s) => {
+            match s.dispatcher.fmi2FreeInstance() {
+                Ok(result) => (),
+                Err(e) => eprintln!("An error ocurred when freeing slave"),
+            };
+
+            drop(slave)
+        }
+        None => {}
+    }
 }
 
 #[ffi_export]
@@ -359,24 +348,18 @@ pub fn fmi2ExitInitializationMode(slave: &mut Slave) -> Fmi2Status {
 
 #[ffi_export]
 pub fn fmi2Terminate(slave: &mut Slave) -> Fmi2Status {
-    todo!();
-    // let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2Terminate);
-
-    // match ret {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2Terminate()
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 #[ffi_export]
 pub fn fmi2Reset(slave: &mut Slave) -> Fmi2Status {
-    todo!();
-    // let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2Reset);
-
-    // match ret {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2Reset()
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
@@ -388,30 +371,18 @@ pub fn fmi2DoStep(
     step_size: c_double,
     no_step_prior: c_int,
 ) -> Fmi2Status {
-    todo!();
-    // let ret = slave.dispatcher.invoke_command(&Fmi2Command::Fmi2DoStep {
-    //     current_time,
-    //     step_size,
-    //     no_step_prior: no_step_prior == 0,
-    // });
-
-    // match ret {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2DoStep(current_time, step_size, no_step_prior != 0)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 #[ffi_export]
 pub fn fmi2CancelStep(slave: &mut Slave) -> Fmi2Status {
-    todo!();
-    // let ret = slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2CancelStep);
-
-    // match ret {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2CancelStep()
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
@@ -445,22 +416,19 @@ pub fn fmi2GetInteger(
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    todo!();
-    // let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
-    // let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
 
-    // let res = slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2GetInteger { references });
-
-    // match res {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     rpc::Fmi2Return::Fmi2GetIntegerReturn { status, values } => {
-    //         values_out.copy_from_slice(values.as_slice());
-    //         status
-    //     }
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    match slave.dispatcher.fmi2GetInteger(&references) {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi2Status::Fmi2Error,
+    }
 }
 
 #[ffi_export]
@@ -470,24 +438,19 @@ pub fn fmi2GetBoolean(
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    todo!();
-    // let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
-    // let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
 
-    // let res = slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2GetBoolean { references });
-
-    // match res {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     rpc::Fmi2Return::Fmi2GetBooleanReturn { status, values } => {
-    //         let values_i32: Vec<i32> = values.iter().map(|v| *v as i32).collect();
-    //         values_out.copy_from_slice(&values_i32);
-
-    //         status
-    //     }
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    match slave.dispatcher.fmi2GetInteger(&references) {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi2Status::Fmi2Error,
+    }
 }
 
 /// Reads strings from FMU
@@ -501,31 +464,31 @@ pub fn fmi2GetString(
     slave: &mut Slave,
     references: *const c_uint,
     nvr: size_t,
-    valuess: *mut *const c_char,
+    values: *mut *const c_char,
 ) -> Fmi2Status {
-    todo!();
-    // let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
 
-    // match slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2GetString { references })
-    // {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     rpc::Fmi2Return::Fmi2GetStringReturn { status, values } => {
-    //         slave.string_buffer = values
-    //             .iter()
-    //             .map(|s| CString::new(s.as_bytes()).unwrap())
-    //             .collect();
+    match slave.dispatcher.fmi2GetString(&references) {
+        Ok((status, vals)) => {
+            match vals {
+                Some(vals) => {
+                    slave.string_buffer = vals
+                        .iter()
+                        .map(|s| CString::new(s.as_bytes()).unwrap())
+                        .collect();
 
-    //         unsafe {
-    //             for (idx, cstr) in slave.string_buffer.iter().enumerate() {
-    //                 std::ptr::write(valuess.offset(idx as isize), cstr.as_ptr());
-    //             }
-    //         }
-    //         status
-    //     }
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+                    unsafe {
+                        for (idx, cstr) in slave.string_buffer.iter().enumerate() {
+                            std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
+                        }
+                    }
+                }
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi2Status::Fmi2Error,
+    }
 }
 
 #[ffi_export]
@@ -535,17 +498,13 @@ pub fn fmi2SetReal(
     nvr: size_t,
     values: *const c_double,
 ) -> Fmi2Status {
-    todo!();
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
-    // let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
-    // let res = slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2SetReal { references, values });
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
+    let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
 
-    // match res {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2SetReal(&references, &values)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 #[ffi_export]
@@ -556,17 +515,13 @@ pub fn fmi2SetInteger(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    todo!();
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
-    // let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
-    // let res = slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2SetInteger { references, values });
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
+    let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
 
-    // match res {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2SetInteger(&references, &values)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 /// set boolean variables of FMU
@@ -580,22 +535,16 @@ pub fn fmi2SetBoolean(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    todo!();
-    // let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
-    // let values_bool: Vec<bool> = unsafe { std::slice::from_raw_parts(values, nvr) }
-    //     .iter()
-    //     .map(|v| *v == 0)
-    //     .collect();
+    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let values: Vec<bool> = unsafe { std::slice::from_raw_parts(values, nvr) }
+        .iter()
+        .map(|v| *v == 0)
+        .collect();
 
-    // match slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2SetBoolean {
-    //         references,
-    //         values: values_bool,
-    //     }) {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2SetBoolean(&references, &values)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 #[ffi_export]
@@ -605,23 +554,18 @@ pub fn fmi2SetString(
     nvr: size_t,
     values: *const *const c_char,
 ) -> Fmi2Status {
-    todo!();
-    // let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
+    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
 
-    // let values: Vec<String> = unsafe {
-    //     std::slice::from_raw_parts(values, nvr)
-    //         .iter()
-    //         .map(|v| CStr::from_ptr(*v).to_str().unwrap().to_owned())
-    //         .collect()
-    // };
-
-    // match slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2SetString { references, values })
-    // {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    let values: Vec<String> = unsafe {
+        std::slice::from_raw_parts(values, nvr)
+            .iter()
+            .map(|v| CStr::from_ptr(*v).to_str().unwrap().to_owned())
+            .collect()
+    };
+    slave
+        .dispatcher
+        .fmi2SetString(&references, &values)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
@@ -659,15 +603,10 @@ pub fn fmi2GetRealOutputDerivatives(slave: &mut Slave) -> Fmi2Status {
 
 #[ffi_export]
 pub fn fmi2SetFMUstate(slave: &mut Slave, state: &SlaveState) -> Fmi2Status {
-    todo!();
-    // match slave
-    //     .dispatcher
-    //     .invoke_command(&Fmi2Command::Fmi2ExtDeserializeSlave {
-    //         state: state.bytes.to_owned(),
-    //     }) {
-    //     rpc::Fmi2Return::Fmi2StatusReturn { status } => status,
-    //     _ => Fmi2Status::Fmi2Error,
-    // }
+    slave
+        .dispatcher
+        .fmi2ExtDeserializeSlave(&state.bytes)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 //#[ffi_export]

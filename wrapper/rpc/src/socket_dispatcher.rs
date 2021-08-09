@@ -1,11 +1,14 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 
 use crate::fmi2_proto::fmi2_command::Command as c_enum;
 use crate::fmi2_proto::{
-    self, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
-    Fmi2ExtSerializeSlaveReturn, Fmi2GetReal, Fmi2GetRealReturn, Fmi2SetupExperiment,
+    self, Fmi2CancelStep, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
+    Fmi2ExtDeserializeSlave, Fmi2ExtSerializeSlaveReturn, Fmi2FreeInstance, Fmi2GetBoolean,
+    Fmi2GetBooleanReturn, Fmi2GetInteger, Fmi2GetIntegerReturn, Fmi2GetReal, Fmi2GetRealReturn,
+    Fmi2GetString, Fmi2GetStringReturn, Fmi2Reset, Fmi2SetBoolean, Fmi2SetInteger, Fmi2SetReal,
+    Fmi2SetString, Fmi2SetupExperiment, Fmi2StatusReturn, Fmi2Terminate,
 };
 use crate::fmi2_proto::{Fmi2Command as c_obj, Fmi2ExtSerializeSlave};
 
@@ -169,24 +172,54 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
             .map(|res| (Fmi2Status::try_from(res.status).unwrap(), res.state))
     }
 
-    fn fmi2ExtDeserializeSlave(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
+    fn fmi2ExtDeserializeSlave(
+        &mut self,
+        state: &[u8],
+    ) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2ExtDeserializeSlave(Fmi2ExtDeserializeSlave {
+                state: state.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     fn fmi2CancelStep(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2CancelStep(Fmi2CancelStep {})),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     fn fmi2Terminate(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2Terminate(Fmi2Terminate {})),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     fn fmi2Reset(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2Reset(Fmi2Reset {})),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     fn fmi2FreeInstance(&mut self) -> Result<(), Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2FreeInstance(Fmi2FreeInstance {})),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2FreeInstanceReturn>(&cmd)
+            .map(|_| ())
     }
 
     fn fmi2SetReal(
@@ -194,7 +227,15 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
         references: &[u32],
         values: &[f64],
     ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!();
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2SetReal(Fmi2SetReal {
+                references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| Fmi2Status::try_from(s.status).unwrap())
     }
 
     fn fmi2SetInteger(
@@ -202,7 +243,15 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
         references: &[u32],
         values: &[i32],
     ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2SetInteger(Fmi2SetInteger {
+                references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| Fmi2Status::try_from(s.status).unwrap())
     }
 
     fn fmi2SetBoolean(
@@ -210,7 +259,15 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
         references: &[u32],
         values: &[bool],
     ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2SetBoolean(Fmi2SetBoolean {
+                references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| Fmi2Status::try_from(s.status).unwrap())
     }
 
     fn fmi2SetString(
@@ -218,7 +275,15 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
         references: &[u32],
         values: &[String],
     ) -> Result<common::Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2SetString(Fmi2SetString {
+                references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| Fmi2Status::try_from(s.status).unwrap())
     }
 
     fn fmi2GetReal(
@@ -244,21 +309,57 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
         &mut self,
         references: &[u32],
     ) -> Result<(Fmi2Status, Option<Vec<i32>>), Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2GetInteger(Fmi2GetInteger {
+                references: references.to_owned(),
+            })),
+        };
+        self.send_and_recv::<_, Fmi2GetIntegerReturn>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi2Status::try_from(result.status).unwrap(), values)
+            })
     }
 
     fn fmi2GetBoolean(
         &mut self,
         references: &[u32],
     ) -> Result<(Fmi2Status, Option<Vec<bool>>), Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2GetBoolean(Fmi2GetBoolean {
+                references: references.to_owned(),
+            })),
+        };
+        self.send_and_recv::<_, Fmi2GetBooleanReturn>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi2Status::try_from(result.status).unwrap(), values)
+            })
     }
 
     fn fmi2GetString(
         &mut self,
         references: &[u32],
     ) -> Result<(Fmi2Status, Option<Vec<String>>), Fmi2CommandDispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2GetString(Fmi2GetString {
+                references: references.to_owned(),
+            })),
+        };
+        self.send_and_recv::<_, Fmi2GetStringReturn>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi2Status::try_from(result.status).unwrap(), values)
+            })
     }
 }
 

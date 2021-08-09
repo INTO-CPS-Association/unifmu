@@ -40,7 +40,10 @@ pub trait Fmi2CommandDispatcher {
         &mut self,
     ) -> Result<(Fmi2Status, Vec<u8>), Fmi2CommandDispatcherError>;
 
-    fn fmi2ExtDeserializeSlave(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
+    fn fmi2ExtDeserializeSlave(
+        &mut self,
+        state: &[u8],
+    ) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
 
     fn fmi2CancelStep(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
     fn fmi2Terminate(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
