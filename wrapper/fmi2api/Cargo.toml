@@ -17,7 +17,7 @@ num_enum = "*"
 libc = "*"
 
 
-serde = { version = "*", features = ["derive"] }
+serde = { version = "1.0.127", features = ["derive"] }
 serde_json = "*"
 toml = "*"
 subprocess = "*"

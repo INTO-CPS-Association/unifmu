@@ -4,7 +4,10 @@ use quick_xml::de::from_str;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct MdCoSimulation {}
+pub struct MdCoSimulation {
+    #[serde(rename = "canRunAsynchronuously")]
+    pub can_run_asynchronously: bool,
+}
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct MdScalarVariable {

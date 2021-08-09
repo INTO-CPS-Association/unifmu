@@ -7,6 +7,7 @@ pub mod config;
 pub mod md;
 
 use common::Fmi2Status;
+use common::Fmi2StatusKind;
 use libc::c_double;
 use libc::size_t;
 
@@ -105,6 +106,9 @@ pub struct Slave {
     dispatcher: Box<dyn Fmi2CommandDispatcher>,
 
     popen: Popen,
+
+    last_successful_time: Option<f64>,
+    pending_message: Option<String>,
 }
 //  + Send + UnwindSafe + RefUnwindSafe
 impl RefUnwindSafe for Slave {}
@@ -117,6 +121,8 @@ impl Slave {
             dispatcher,
             string_buffer: Vec::new(),
             popen,
+            last_successful_time: None,
+            pending_message: None,
         }
     }
 }
@@ -133,6 +139,8 @@ impl SlaveState {
         }
     }
 }
+
+// ------------------------------------- Errors -------------------------------------
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 #[ffi_export]
@@ -398,10 +406,19 @@ pub fn fmi2DoStep(
     step_size: c_double,
     no_step_prior: c_int,
 ) -> Fmi2Status {
-    slave
+    match slave
         .dispatcher
         .fmi2DoStep(current_time, step_size, no_step_prior != 0)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+    {
+        Ok(s) => match s {
+            Fmi2Status::Fmi2OK | Fmi2Status::Fmi2Warning => {
+                slave.last_successful_time = Some(current_time + step_size);
+                s
+            }
+            s => s,
+        },
+        Err(e) => Fmi2Status::Fmi2Error,
+    }
 }
 
 #[ffi_export]
@@ -621,15 +638,28 @@ pub fn fmi2GetDirectionalDerivative(
     Fmi2Status::Fmi2Error
 }
 
+/// p. 104
 #[ffi_export]
-pub fn fmi2SetRealInputDerivatives(slave: &mut Slave, vr: *const c_uint) -> Fmi2Status {
+pub fn fmi2SetRealInputDerivatives(
+    slave: &mut Slave,
+    vr: *const c_uint,
+    nvr: size_t,
+    order: *const c_int,
+    values: *const c_double,
+) -> Fmi2Status {
     todo!();
 
     Fmi2Status::Fmi2Error
 }
 
+/// p. 104
 #[ffi_export]
-pub fn fmi2GetRealOutputDerivatives(slave: &mut Slave) -> Fmi2Status {
+pub fn fmi2GetRealOutputDerivatives(
+    slave: &mut Slave,
+    vr: *const c_uint,
+    nvr: size_t,
+    order: *const c_int,
+) -> Fmi2Status {
     todo!();
 
     Fmi2Status::Fmi2Error
@@ -725,99 +755,74 @@ pub fn fmi2SerializedFMUstateSize(
 // ------------------------------------- FMI FUNCTIONS (Status) --------------------------------
 
 #[ffi_export]
-pub fn fmi2GetRealStatus(
+pub fn fmi2GetStatus(
     slave: &mut Slave,
-    status_kind: c_int,
-    value: *mut c_double,
+    status_kind: Fmi2StatusKind,
+    value: *mut Fmi2Status,
 ) -> Fmi2Status {
-    todo!();
+    match status_kind {
+        Fmi2StatusKind::Fmi2DoStepStatus => {
+            let status = slave
+                .dispatcher
+                .fmi2GetStatus()
+                .unwrap_or(Fmi2Status::Fmi2Error);
 
-    // match catch_unwind(|| {
-    //     let handle = unsafe { *slave_handle };
-    //     let slaves = SLAVES.lock().unwrap();
-    //     let slave = slaves.get(&handle).unwrap();
-
-    //     let (status_value, status) = execute_fmi_command_return::<_, (f64, i32)>(
-    //         slave,
-    //         (FMI2FunctionCode::GetXXXStatus, status_kind),
-    //     )
-    //     .unwrap();
-    //     unsafe { *value = status_value };
-    //     status
-    // }) {
-    //     Ok(s) => s,
-    //     Err(_) => Fmi2Status::Fmi2Fatal as i32,
-    // }
+            unsafe { *value = status };
+            Fmi2Status::Fmi2OK
+        }
+        _ => {
+            eprintln!(
+                "'fmi2GetStatus' only accepts the status kind '{:?}'",
+                Fmi2StatusKind::Fmi2DoStepStatus
+            );
+            return Fmi2Status::Fmi2Error;
+        }
+    }
 }
 
 #[ffi_export]
-pub fn fmi2GetStatus(
-    slave_handle: *const c_int,
-    status_kind: c_int,
-    value: *mut c_int,
+pub fn fmi2GetRealStatus(
+    slave: &mut Slave,
+    status_kind: Fmi2StatusKind,
+    value: *mut c_double,
 ) -> Fmi2Status {
-    todo!();
-
-    // match catch_unwind(|| {
-    //     let handle = unsafe { *slave_handle };
-    //     let slaves = SLAVES.lock().unwrap();
-    //     let slave = slaves.get(&handle).unwrap();
-
-    //     let (status_value, status) = execute_fmi_command_return::<_, (i32, i32)>(
-    //         slave,
-    //         (FMI2FunctionCode::GetXXXStatus, status_kind),
-    //     )
-    //     .unwrap();
-    //     unsafe { *value = status_value };
-    //     status
-    // }) {
-    //     Ok(s) => s,
-    //     Err(_) => Fmi2Status::Fmi2Fatal as i32,
-    // }
+    match status_kind {
+        Fmi2StatusKind::Fmi2LastSuccessfulTime => match slave.last_successful_time {
+            Some(last_time) => {
+                unsafe {
+                    *value = last_time;
+                };
+                Fmi2Status::Fmi2OK
+            }
+            None => {
+                eprintln!("'fmi2GetRealStatus' can not be called before 'Fmi2DoStep'");
+                Fmi2Status::Fmi2Error
+            }
+        },
+        _ => {
+            eprintln!(
+                "'fmi2GetRealStatus' only accepts the status kind '{:?}'",
+                Fmi2StatusKind::Fmi2DoStepStatus
+            );
+            return Fmi2Status::Fmi2Error;
+        }
+    }
 }
 
 #[ffi_export]
 pub fn fmi2GetIntegerStatus(c: *const c_int, status_kind: c_int, value: *mut c_int) -> Fmi2Status {
-    todo!();
-
-    // match catch_unwind(|| {
-    //     let handle = unsafe { *c };
-    //     let slaves = SLAVES.lock().unwrap();
-    //     let slave = slaves.get(&handle).unwrap();
-
-    //     let (status_value, status) = execute_fmi_command_return::<_, (i32, i32)>(
-    //         slave,
-    //         (FMI2FunctionCode::GetXXXStatus, status_kind),
-    //     )
-    //     .unwrap();
-    //     unsafe { *value = status_value };
-    //     status
-    // }) {
-    //     Ok(s) => s,
-    //     Err(_) => Fmi2Status::Fmi2Fatal as i32,
-    // }
+    eprintln!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
+    return Fmi2Status::Fmi2Error;
 }
 
 #[ffi_export]
-pub fn fmi2GetBooleanStatus(c: *const c_int, status_kind: c_int, value: *mut c_int) -> Fmi2Status {
-    todo!();
-
-    // match catch_unwind(|| {
-    //     let handle = unsafe { *c };
-    //     let slaves = SLAVES.lock().unwrap();
-    //     let slave = slaves.get(&handle).unwrap();
-
-    //     let (status_value, status) = execute_fmi_command_return::<_, (bool, i32)>(
-    //         slave,
-    //         (FMI2FunctionCode::GetXXXStatus, status_kind),
-    //     )
-    //     .unwrap();
-    //     unsafe { *value = status_value as i32 };
-    //     status
-    // }) {
-    //     Ok(s) => s,
-    //     Err(_) => Fmi2Status::Fmi2Fatal as i32,
-    // }
+pub fn fmi2GetBooleanStatus(
+    slave: &mut Slave,
+    status_kind: Fmi2StatusKind,
+    value: *mut c_int,
+) -> Fmi2Status {
+    eprintln!("Not currently implemented by UniFMU");
+    return Fmi2Status::Fmi2Discard;
 }
 
 #[ffi_export]

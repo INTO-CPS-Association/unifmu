@@ -2,13 +2,13 @@ pub mod fmi2_proto;
 pub mod socket_dispatcher;
 
 use common::Fmi2Status;
-use fmi2_proto::{Fmi2ExtDeserializeSlave, Fmi2ExtSerializeSlaveReturn};
 
 pub enum Fmi2CommandDispatcherError {
     DecodeError(prost::DecodeError),
     EncodeError,
     SocketError,
     Timeout,
+    BackendImplementationError,
 }
 
 /// Trait implemented by objects that act like an in memory representation of an FMU.
@@ -93,4 +93,14 @@ pub trait Fmi2CommandDispatcher {
         &mut self,
         references: &[u32],
     ) -> Result<(Fmi2Status, Option<Vec<String>>), Fmi2CommandDispatcherError>;
+
+    fn fmi2GetStatus(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
+
+    fn fmi2GetRealStatus(&mut self) -> Result<f64, Fmi2CommandDispatcherError>;
+
+    fn fmi2GetIntegerStatus(&mut self) -> Result<i32, Fmi2CommandDispatcherError>;
+
+    fn fmi2GetBooleanStatus(&mut self) -> Result<bool, Fmi2CommandDispatcherError>;
+
+    fn fmi2GetStringStatus(&mut self) -> Result<String, Fmi2CommandDispatcherError>;
 }

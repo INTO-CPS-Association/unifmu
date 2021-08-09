@@ -361,6 +361,26 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
                 (Fmi2Status::try_from(result.status).unwrap(), values)
             })
     }
+
+    fn fmi2GetStatus(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2GetRealStatus(&mut self) -> Result<f64, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2GetIntegerStatus(&mut self) -> Result<i32, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2GetBooleanStatus(&mut self) -> Result<bool, Fmi2CommandDispatcherError> {
+        todo!()
+    }
+
+    fn fmi2GetStringStatus(&mut self) -> Result<String, Fmi2CommandDispatcherError> {
+        todo!()
+    }
 }
 
 /// A sender that implements framing.
