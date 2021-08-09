@@ -158,9 +158,8 @@ def dockerize(backend, fmu_path):
 
     docker_file = f"Dockerfile_{backend}"  # the "actual" Dockerfile
     all_docker_files = {
+        "resources/backends/docker/compose.yml": "compose.yml",
         "resources/backends/docker/launch.toml": "launch.toml",
-        "resources/backends/docker/deploy.ps1": "deploy.ps1",
-        "resources/backends/docker/deploy.sh": "deploy.sh",
         f"resources/backends/docker/{docker_file}": "Dockerfile",
     }
     for src, dest in all_docker_files.items():

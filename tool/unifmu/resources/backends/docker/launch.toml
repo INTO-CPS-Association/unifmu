@@ -1,4 +1,4 @@
 
-linux = ["/bin/bash", "deploy.sh"]
-macos = ["/bin/bash", "deploy.sh"]
-windows = ["powershell", ".\\deploy.ps1"]
+linux = ["docker-compose", "up"]
+macos = ["docker-compose", "up"]
+windows = ["docker-compose", "up"]

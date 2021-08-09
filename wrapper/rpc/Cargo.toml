@@ -18,4 +18,4 @@ zmq = "*"
 serde_bytes = "*"
 
 [build-dependencies]
-prost-build = "*"
+prost-build = "0.8.0"
