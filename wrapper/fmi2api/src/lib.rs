@@ -468,10 +468,19 @@ pub fn fmi2GetBoolean(
     let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
 
-    match slave.dispatcher.fmi2GetInteger(&references) {
+    match slave.dispatcher.fmi2GetBoolean(&references) {
         Ok((status, values)) => {
             match values {
-                Some(values) => values_out.copy_from_slice(&values),
+                Some(values) => {
+                    let values: Vec<i32> = values
+                        .iter()
+                        .map(|v| match v {
+                            false => 0,
+                            true => 1,
+                        })
+                        .collect();
+                    values_out.copy_from_slice(&values)
+                }
                 None => (),
             };
             status
