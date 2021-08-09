@@ -103,4 +103,10 @@ pub trait Fmi2CommandDispatcher {
     fn fmi2GetBooleanStatus(&mut self) -> Result<bool, Fmi2CommandDispatcherError>;
 
     fn fmi2GetStringStatus(&mut self) -> Result<String, Fmi2CommandDispatcherError>;
+
+    fn fmi2SetDebugLogging(
+        &mut self,
+        categories: &[String],
+        logging_on: bool,
+    ) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
 }

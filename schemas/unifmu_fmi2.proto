@@ -162,6 +162,7 @@ message Fmi2Command
     
     Fmi2ExtSerializeSlave Fmi2ExtSerializeSlave =17;
     Fmi2ExtDeserializeSlave Fmi2ExtDeserializeSlave =18;
+    Fmi2SetDebugLogging Fmi2SetDebugLogging = 19;
   }
 }
 

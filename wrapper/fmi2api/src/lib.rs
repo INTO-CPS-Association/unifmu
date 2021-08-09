@@ -19,7 +19,6 @@ use safer_ffi::{
     c,
     char_p::{char_p_raw, char_p_ref},
 };
-use serde::de::value;
 use serde_json;
 use subprocess::Popen;
 use subprocess::PopenConfig;
@@ -161,7 +160,7 @@ pub fn fmi2GetVersion() -> char_p_ref<'static> {
 #[ffi_export]
 pub fn fmi2Instantiate(
     instance_name: char_p_ref, // neither allowed to be null or empty string
-    _fmu_type: Fmi2Type,
+    fmu_type: Fmi2Type,
     fmu_guid: char_p_ref, // not allowed to be null,
     fmu_resource_location: char_p_ref,
     _functions: &Fmi2CallbackFunctions,
@@ -218,6 +217,13 @@ pub fn fmi2Instantiate(
         OsString::from(match logging_on {
             0 => "false",
             _ => "true",
+        }),
+    ));
+    env_vars.push((
+        OsString::from("UNIFMU_FMU_TYPE"),
+        OsString::from(match fmu_type {
+            Fmi2Type::Fmi2ModelExchange => "fmi2ModelExchange",
+            Fmi2Type::Fmi2CoSimulation => "fmi2CoSimulation",
         }),
     ));
     env_vars.push((
@@ -326,12 +332,15 @@ pub fn fmi2SetDebugLogging(
 ) -> Fmi2Status {
     todo!();
 
-    let categories: Vec<&str> = unsafe { core::slice::from_raw_parts(categories, n_categories) }
+    let categories: Vec<String> = unsafe { core::slice::from_raw_parts(categories, n_categories) }
         .iter()
-        .map(|s| s.to_str())
+        .map(|s| s.to_str().to_owned())
         .collect();
-    todo!();
-    // slave.rpc.fmi2SetDebugLogging(&categories, logging_on == 1)
+
+    slave
+        .dispatcher
+        .fmi2SetDebugLogging(&categories, logging_on != 0)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
 #[ffi_export]

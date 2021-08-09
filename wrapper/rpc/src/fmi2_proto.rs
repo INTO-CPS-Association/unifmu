@@ -164,7 +164,7 @@ pub struct Fmi2ExtSerializeSlaveReturn {
 /// enumeration listing all possible command that are sent from binary to slave
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2Command {
-    #[prost(oneof="fmi2_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18")]
+    #[prost(oneof="fmi2_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19")]
     pub command: ::core::option::Option<fmi2_command::Command>,
 }
 /// Nested message and enum types in `Fmi2Command`.
@@ -207,6 +207,8 @@ pub mod fmi2_command {
         Fmi2ExtSerializeSlave(super::Fmi2ExtSerializeSlave),
         #[prost(message, tag="18")]
         Fmi2ExtDeserializeSlave(super::Fmi2ExtDeserializeSlave),
+        #[prost(message, tag="19")]
+        Fmi2SetDebugLogging(super::Fmi2SetDebugLogging),
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]

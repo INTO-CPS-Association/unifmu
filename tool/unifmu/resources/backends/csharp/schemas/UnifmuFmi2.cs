@@ -56,7 +56,7 @@ namespace Fmi2Proto {
             "ZVNsYXZlIigKF0ZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlEg0KBXN0YXRlGAEg",
             "ASgMIhgKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4iVAobRm1pMkV4dFNlcmlh",
             "bGl6ZVNsYXZlUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8u",
-            "Rm1pMlN0YXR1cxINCgVzdGF0ZRgCIAEoDCKgCAoLRm1pMkNvbW1hbmQSLAoK",
+            "Rm1pMlN0YXR1cxINCgVzdGF0ZRgCIAEoDCLgCAoLRm1pMkNvbW1hbmQSLAoK",
             "Rm1pMkRvU3RlcBgBIAEoCzIWLmZtaTJfcHJvdG8uRm1pMkRvU3RlcEgAEi4K",
             "C0ZtaTJTZXRSZWFsGAIgASgLMhcuZm1pMl9wcm90by5GbWkyU2V0UmVhbEgA",
             "EjQKDkZtaTJTZXRJbnRlZ2VyGAMgASgLMhouZm1pMl9wcm90by5GbWkyU2V0",
@@ -79,22 +79,23 @@ namespace Fmi2Proto {
             "ASgLMhouZm1pMl9wcm90by5GbWkyQ2FuY2VsU3RlcEgAEkIKFUZtaTJFeHRT",
             "ZXJpYWxpemVTbGF2ZRgRIAEoCzIhLmZtaTJfcHJvdG8uRm1pMkV4dFNlcmlh",
             "bGl6ZVNsYXZlSAASRgoXRm1pMkV4dERlc2VyaWFsaXplU2xhdmUYEiABKAsy",
-            "Iy5mbWkyX3Byb3RvLkZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlSABCCQoHY29t",
-            "bWFuZCKsBAoKRm1pMlJldHVybhI4ChBGbWkyU3RhdHVzUmV0dXJuGAEgASgL",
-            "MhwuZm1pMl9wcm90by5GbWkyU3RhdHVzUmV0dXJuSAASOgoRRm1pMkdldFJl",
-            "YWxSZXR1cm4YAiABKAsyHS5mbWkyX3Byb3RvLkZtaTJHZXRSZWFsUmV0dXJu",
-            "SAASQAoURm1pMkdldEludGVnZXJSZXR1cm4YAyABKAsyIC5mbWkyX3Byb3Rv",
-            "LkZtaTJHZXRJbnRlZ2VyUmV0dXJuSAASQAoURm1pMkdldEJvb2xlYW5SZXR1",
-            "cm4YBCABKAsyIC5mbWkyX3Byb3RvLkZtaTJHZXRCb29sZWFuUmV0dXJuSAAS",
-            "PgoTRm1pMkdldFN0cmluZ1JldHVybhgFIAEoCzIfLmZtaTJfcHJvdG8uRm1p",
-            "MkdldFN0cmluZ1JldHVybkgAEkQKFkZtaTJGcmVlSW5zdGFuY2VSZXR1cm4Y",
-            "BiABKAsyIi5mbWkyX3Byb3RvLkZtaTJGcmVlSW5zdGFuY2VSZXR1cm5IABJE",
-            "ChZGbWkyRXh0SGFuZHNoYWtlUmV0dXJuGAcgASgLMiIuZm1pMl9wcm90by5G",
-            "bWkyRXh0SGFuZHNoYWtlUmV0dXJuSAASTgobRm1pMkV4dFNlcmlhbGl6ZVNs",
-            "YXZlUmV0dXJuGAggASgLMicuZm1pMl9wcm90by5GbWkyRXh0U2VyaWFsaXpl",
-            "U2xhdmVSZXR1cm5IAEIICgZyZXN1bHQqUQoKRm1pMlN0YXR1cxIGCgJPaxAA",
-            "EgsKB1dhcm5pbmcQARILCgdEaXNjYXJkEAISCQoFRXJyb3IQAxIJCgVGYXRh",
-            "bBAEEgsKB1BlbmRpbmcQBWIGcHJvdG8z"));
+            "Iy5mbWkyX3Byb3RvLkZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlSAASPgoTRm1p",
+            "MlNldERlYnVnTG9nZ2luZxgTIAEoCzIfLmZtaTJfcHJvdG8uRm1pMlNldERl",
+            "YnVnTG9nZ2luZ0gAQgkKB2NvbW1hbmQirAQKCkZtaTJSZXR1cm4SOAoQRm1p",
+            "MlN0YXR1c1JldHVybhgBIAEoCzIcLmZtaTJfcHJvdG8uRm1pMlN0YXR1c1Jl",
+            "dHVybkgAEjoKEUZtaTJHZXRSZWFsUmV0dXJuGAIgASgLMh0uZm1pMl9wcm90",
+            "by5GbWkyR2V0UmVhbFJldHVybkgAEkAKFEZtaTJHZXRJbnRlZ2VyUmV0dXJu",
+            "GAMgASgLMiAuZm1pMl9wcm90by5GbWkyR2V0SW50ZWdlclJldHVybkgAEkAK",
+            "FEZtaTJHZXRCb29sZWFuUmV0dXJuGAQgASgLMiAuZm1pMl9wcm90by5GbWky",
+            "R2V0Qm9vbGVhblJldHVybkgAEj4KE0ZtaTJHZXRTdHJpbmdSZXR1cm4YBSAB",
+            "KAsyHy5mbWkyX3Byb3RvLkZtaTJHZXRTdHJpbmdSZXR1cm5IABJEChZGbWky",
+            "RnJlZUluc3RhbmNlUmV0dXJuGAYgASgLMiIuZm1pMl9wcm90by5GbWkyRnJl",
+            "ZUluc3RhbmNlUmV0dXJuSAASRAoWRm1pMkV4dEhhbmRzaGFrZVJldHVybhgH",
+            "IAEoCzIiLmZtaTJfcHJvdG8uRm1pMkV4dEhhbmRzaGFrZVJldHVybkgAEk4K",
+            "G0ZtaTJFeHRTZXJpYWxpemVTbGF2ZVJldHVybhgIIAEoCzInLmZtaTJfcHJv",
+            "dG8uRm1pMkV4dFNlcmlhbGl6ZVNsYXZlUmV0dXJuSABCCAoGcmVzdWx0KlEK",
+            "CkZtaTJTdGF0dXMSBgoCT2sQABILCgdXYXJuaW5nEAESCwoHRGlzY2FyZBAC",
+            "EgkKBUVycm9yEAMSCQoFRmF0YWwQBBILCgdQZW5kaW5nEAViBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Fmi2Proto.Fmi2Status), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -129,7 +130,7 @@ namespace Fmi2Proto {
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtDeserializeSlave), global::Fmi2Proto.Fmi2ExtDeserializeSlave.Parser, new[]{ "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtHandshakeReturn), global::Fmi2Proto.Fmi2ExtHandshakeReturn.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn), global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn.Parser, new[]{ "Status", "State" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Command), global::Fmi2Proto.Fmi2Command.Parser, new[]{ "Fmi2DoStep", "Fmi2SetReal", "Fmi2SetInteger", "Fmi2SetBoolean", "Fmi2SetString", "Fmi2GetReal", "Fmi2GetInteger", "Fmi2GetBoolean", "Fmi2GetString", "Fmi2SetupExperiment", "Fmi2EnterInitializationMode", "Fmi2ExitInitializationMode", "Fmi2FreeInstance", "Fmi2Reset", "Fmi2Terminate", "Fmi2CancelStep", "Fmi2ExtSerializeSlave", "Fmi2ExtDeserializeSlave" }, new[]{ "Command" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Command), global::Fmi2Proto.Fmi2Command.Parser, new[]{ "Fmi2DoStep", "Fmi2SetReal", "Fmi2SetInteger", "Fmi2SetBoolean", "Fmi2SetString", "Fmi2GetReal", "Fmi2GetInteger", "Fmi2GetBoolean", "Fmi2GetString", "Fmi2SetupExperiment", "Fmi2EnterInitializationMode", "Fmi2ExitInitializationMode", "Fmi2FreeInstance", "Fmi2Reset", "Fmi2Terminate", "Fmi2CancelStep", "Fmi2ExtSerializeSlave", "Fmi2ExtDeserializeSlave", "Fmi2SetDebugLogging" }, new[]{ "Command" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Return), global::Fmi2Proto.Fmi2Return.Parser, new[]{ "Fmi2StatusReturn", "Fmi2GetRealReturn", "Fmi2GetIntegerReturn", "Fmi2GetBooleanReturn", "Fmi2GetStringReturn", "Fmi2FreeInstanceReturn", "Fmi2ExtHandshakeReturn", "Fmi2ExtSerializeSlaveReturn" }, new[]{ "Result" }, null, null, null)
           }));
     }
@@ -6010,6 +6011,9 @@ namespace Fmi2Proto {
         case CommandOneofCase.Fmi2ExtDeserializeSlave:
           Fmi2ExtDeserializeSlave = other.Fmi2ExtDeserializeSlave.Clone();
           break;
+        case CommandOneofCase.Fmi2SetDebugLogging:
+          Fmi2SetDebugLogging = other.Fmi2SetDebugLogging.Clone();
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -6237,6 +6241,18 @@ namespace Fmi2Proto {
       }
     }
 
+    /// <summary>Field number for the "Fmi2SetDebugLogging" field.</summary>
+    public const int Fmi2SetDebugLoggingFieldNumber = 19;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Fmi2Proto.Fmi2SetDebugLogging Fmi2SetDebugLogging {
+      get { return commandCase_ == CommandOneofCase.Fmi2SetDebugLogging ? (global::Fmi2Proto.Fmi2SetDebugLogging) command_ : null; }
+      set {
+        command_ = value;
+        commandCase_ = value == null ? CommandOneofCase.None : CommandOneofCase.Fmi2SetDebugLogging;
+      }
+    }
+
     private object command_;
     /// <summary>Enum of possible cases for the "command" oneof.</summary>
     public enum CommandOneofCase {
@@ -6259,6 +6275,7 @@ namespace Fmi2Proto {
       Fmi2CancelStep = 16,
       Fmi2ExtSerializeSlave = 17,
       Fmi2ExtDeserializeSlave = 18,
+      Fmi2SetDebugLogging = 19,
     }
     private CommandOneofCase commandCase_ = CommandOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6307,6 +6324,7 @@ namespace Fmi2Proto {
       if (!object.Equals(Fmi2CancelStep, other.Fmi2CancelStep)) return false;
       if (!object.Equals(Fmi2ExtSerializeSlave, other.Fmi2ExtSerializeSlave)) return false;
       if (!object.Equals(Fmi2ExtDeserializeSlave, other.Fmi2ExtDeserializeSlave)) return false;
+      if (!object.Equals(Fmi2SetDebugLogging, other.Fmi2SetDebugLogging)) return false;
       if (CommandCase != other.CommandCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -6333,6 +6351,7 @@ namespace Fmi2Proto {
       if (commandCase_ == CommandOneofCase.Fmi2CancelStep) hash ^= Fmi2CancelStep.GetHashCode();
       if (commandCase_ == CommandOneofCase.Fmi2ExtSerializeSlave) hash ^= Fmi2ExtSerializeSlave.GetHashCode();
       if (commandCase_ == CommandOneofCase.Fmi2ExtDeserializeSlave) hash ^= Fmi2ExtDeserializeSlave.GetHashCode();
+      if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) hash ^= Fmi2SetDebugLogging.GetHashCode();
       hash ^= (int) commandCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -6424,6 +6443,10 @@ namespace Fmi2Proto {
         output.WriteRawTag(146, 1);
         output.WriteMessage(Fmi2ExtDeserializeSlave);
       }
+      if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) {
+        output.WriteRawTag(154, 1);
+        output.WriteMessage(Fmi2SetDebugLogging);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -6506,6 +6529,10 @@ namespace Fmi2Proto {
         output.WriteRawTag(146, 1);
         output.WriteMessage(Fmi2ExtDeserializeSlave);
       }
+      if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) {
+        output.WriteRawTag(154, 1);
+        output.WriteMessage(Fmi2SetDebugLogging);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -6569,6 +6596,9 @@ namespace Fmi2Proto {
       }
       if (commandCase_ == CommandOneofCase.Fmi2ExtDeserializeSlave) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(Fmi2ExtDeserializeSlave);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(Fmi2SetDebugLogging);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -6690,6 +6720,12 @@ namespace Fmi2Proto {
             Fmi2ExtDeserializeSlave = new global::Fmi2Proto.Fmi2ExtDeserializeSlave();
           }
           Fmi2ExtDeserializeSlave.MergeFrom(other.Fmi2ExtDeserializeSlave);
+          break;
+        case CommandOneofCase.Fmi2SetDebugLogging:
+          if (Fmi2SetDebugLogging == null) {
+            Fmi2SetDebugLogging = new global::Fmi2Proto.Fmi2SetDebugLogging();
+          }
+          Fmi2SetDebugLogging.MergeFrom(other.Fmi2SetDebugLogging);
           break;
       }
 
@@ -6870,6 +6906,15 @@ namespace Fmi2Proto {
             Fmi2ExtDeserializeSlave = subBuilder;
             break;
           }
+          case 154: {
+            global::Fmi2Proto.Fmi2SetDebugLogging subBuilder = new global::Fmi2Proto.Fmi2SetDebugLogging();
+            if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) {
+              subBuilder.MergeFrom(Fmi2SetDebugLogging);
+            }
+            input.ReadMessage(subBuilder);
+            Fmi2SetDebugLogging = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -7045,6 +7090,15 @@ namespace Fmi2Proto {
             }
             input.ReadMessage(subBuilder);
             Fmi2ExtDeserializeSlave = subBuilder;
+            break;
+          }
+          case 154: {
+            global::Fmi2Proto.Fmi2SetDebugLogging subBuilder = new global::Fmi2Proto.Fmi2SetDebugLogging();
+            if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) {
+              subBuilder.MergeFrom(Fmi2SetDebugLogging);
+            }
+            input.ReadMessage(subBuilder);
+            Fmi2SetDebugLogging = subBuilder;
             break;
           }
         }
