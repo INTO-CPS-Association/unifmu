@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11unifmu_fmi2.proto\x12\nfmi2_proto\"1\n\x0b\x46mi2SetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x01\"4\n\x0e\x46mi2SetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x05\"4\n\x0e\x46mi2SetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x08\"3\n\rFmi2SetString\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\t\"!\n\x0b\x46mi2GetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\"$\n\x0e\x46mi2GetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\"$\n\x0e\x46mi2GetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\"#\n\rFmi2GetString\x12\x12\n\nreferences\x18\x01 \x03(\r\"L\n\nFmi2DoStep\x12\x14\n\x0c\x63urrent_time\x18\x01 \x01(\x01\x12\x11\n\tstep_size\x18\x02 \x01(\x01\x12\x15\n\rno_step_prior\x18\x03 \x01(\x08\"u\n\x13\x46mi2SetupExperiment\x12\x12\n\nstart_time\x18\x01 \x01(\x01\x12\x16\n\tstop_time\x18\x02 \x01(\x01H\x00\x88\x01\x01\x12\x16\n\ttolerance\x18\x03 \x01(\x01H\x01\x88\x01\x01\x42\x0c\n\n_stop_timeB\x0c\n\n_tolerance\"\x10\n\x0e\x46mi2CancelStep\"\x1d\n\x1b\x46mi2EnterInitializationMode\"\x1c\n\x1a\x46mi2ExitInitializationMode\"\x12\n\x10\x46mi2FreeInstance\"\x0f\n\rFmi2Terminate\"\x0b\n\tFmi2Reset\"\x1f\n\x1d\x46mi2GetDirectionalDerivatives\"\x19\n\x17\x46mi2SetInputDerivatives\"\x1a\n\x18\x46mi2GetOutputDerivatives\"\x0e\n\x0cGetXXXStatus\"=\n\x13\x46mi2SetDebugLogging\x12\x12\n\ncategories\x18\x01 \x03(\t\x12\x12\n\nlogging_on\x18\x02 \x01(\x08\":\n\x10\x46mi2StatusReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\"K\n\x11\x46mi2GetRealReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x01\"N\n\x14\x46mi2GetIntegerReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x05\"N\n\x14\x46mi2GetBooleanReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x08\"M\n\x13\x46mi2GetStringReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\t\"\x18\n\x16\x46mi2FreeInstanceReturn\"\x17\n\x15\x46mi2ExtSerializeSlave\"(\n\x17\x46mi2ExtDeserializeSlave\x12\r\n\x05state\x18\x01 \x01(\x0c\"\x18\n\x16\x46mi2ExtHandshakeReturn\"T\n\x1b\x46mi2ExtSerializeSlaveReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\r\n\x05state\x18\x02 \x01(\x0c\"\xe0\x08\n\x0b\x46mi2Command\x12,\n\nFmi2DoStep\x18\x01 \x01(\x0b\x32\x16.fmi2_proto.Fmi2DoStepH\x00\x12.\n\x0b\x46mi2SetReal\x18\x02 \x01(\x0b\x32\x17.fmi2_proto.Fmi2SetRealH\x00\x12\x34\n\x0e\x46mi2SetInteger\x18\x03 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetIntegerH\x00\x12\x34\n\x0e\x46mi2SetBoolean\x18\x04 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetBooleanH\x00\x12\x32\n\rFmi2SetString\x18\x05 \x01(\x0b\x32\x19.fmi2_proto.Fmi2SetStringH\x00\x12.\n\x0b\x46mi2GetReal\x18\x06 \x01(\x0b\x32\x17.fmi2_proto.Fmi2GetRealH\x00\x12\x34\n\x0e\x46mi2GetInteger\x18\x07 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetIntegerH\x00\x12\x34\n\x0e\x46mi2GetBoolean\x18\x08 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetBooleanH\x00\x12\x32\n\rFmi2GetString\x18\t \x01(\x0b\x32\x19.fmi2_proto.Fmi2GetStringH\x00\x12>\n\x13\x46mi2SetupExperiment\x18\n \x01(\x0b\x32\x1f.fmi2_proto.Fmi2SetupExperimentH\x00\x12N\n\x1b\x46mi2EnterInitializationMode\x18\x0b \x01(\x0b\x32\'.fmi2_proto.Fmi2EnterInitializationModeH\x00\x12L\n\x1a\x46mi2ExitInitializationMode\x18\x0c \x01(\x0b\x32&.fmi2_proto.Fmi2ExitInitializationModeH\x00\x12\x38\n\x10\x46mi2FreeInstance\x18\r \x01(\x0b\x32\x1c.fmi2_proto.Fmi2FreeInstanceH\x00\x12*\n\tFmi2Reset\x18\x0e \x01(\x0b\x32\x15.fmi2_proto.Fmi2ResetH\x00\x12\x32\n\rFmi2Terminate\x18\x0f \x01(\x0b\x32\x19.fmi2_proto.Fmi2TerminateH\x00\x12\x34\n\x0e\x46mi2CancelStep\x18\x10 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2CancelStepH\x00\x12\x42\n\x15\x46mi2ExtSerializeSlave\x18\x11 \x01(\x0b\x32!.fmi2_proto.Fmi2ExtSerializeSlaveH\x00\x12\x46\n\x17\x46mi2ExtDeserializeSlave\x18\x12 \x01(\x0b\x32#.fmi2_proto.Fmi2ExtDeserializeSlaveH\x00\x12>\n\x13\x46mi2SetDebugLogging\x18\x13 \x01(\x0b\x32\x1f.fmi2_proto.Fmi2SetDebugLoggingH\x00\x42\t\n\x07\x63ommand\"\xac\x04\n\nFmi2Return\x12\x38\n\x10\x46mi2StatusReturn\x18\x01 \x01(\x0b\x32\x1c.fmi2_proto.Fmi2StatusReturnH\x00\x12:\n\x11\x46mi2GetRealReturn\x18\x02 \x01(\x0b\x32\x1d.fmi2_proto.Fmi2GetRealReturnH\x00\x12@\n\x14\x46mi2GetIntegerReturn\x18\x03 \x01(\x0b\x32 .fmi2_proto.Fmi2GetIntegerReturnH\x00\x12@\n\x14\x46mi2GetBooleanReturn\x18\x04 \x01(\x0b\x32 .fmi2_proto.Fmi2GetBooleanReturnH\x00\x12>\n\x13\x46mi2GetStringReturn\x18\x05 \x01(\x0b\x32\x1f.fmi2_proto.Fmi2GetStringReturnH\x00\x12\x44\n\x16\x46mi2FreeInstanceReturn\x18\x06 \x01(\x0b\x32\".fmi2_proto.Fmi2FreeInstanceReturnH\x00\x12\x44\n\x16\x46mi2ExtHandshakeReturn\x18\x07 \x01(\x0b\x32\".fmi2_proto.Fmi2ExtHandshakeReturnH\x00\x12N\n\x1b\x46mi2ExtSerializeSlaveReturn\x18\x08 \x01(\x0b\x32\'.fmi2_proto.Fmi2ExtSerializeSlaveReturnH\x00\x42\x08\n\x06result*Q\n\nFmi2Status\x12\x06\n\x02Ok\x10\x00\x12\x0b\n\x07Warning\x10\x01\x12\x0b\n\x07\x44iscard\x10\x02\x12\t\n\x05\x45rror\x10\x03\x12\t\n\x05\x46\x61tal\x10\x04\x12\x0b\n\x07Pending\x10\x05\x62\x06proto3'
+  serialized_pb=b'\n\x11unifmu_fmi2.proto\x12\nfmi2_proto\"1\n\x0b\x46mi2SetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x01\"4\n\x0e\x46mi2SetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x05\"4\n\x0e\x46mi2SetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\x08\"3\n\rFmi2SetString\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06values\x18\x02 \x03(\t\"!\n\x0b\x46mi2GetReal\x12\x12\n\nreferences\x18\x01 \x03(\r\"$\n\x0e\x46mi2GetInteger\x12\x12\n\nreferences\x18\x01 \x03(\r\"$\n\x0e\x46mi2GetBoolean\x12\x12\n\nreferences\x18\x01 \x03(\r\"#\n\rFmi2GetString\x12\x12\n\nreferences\x18\x01 \x03(\r\"L\n\nFmi2DoStep\x12\x14\n\x0c\x63urrent_time\x18\x01 \x01(\x01\x12\x11\n\tstep_size\x18\x02 \x01(\x01\x12\x15\n\rno_step_prior\x18\x03 \x01(\x08\"u\n\x13\x46mi2SetupExperiment\x12\x12\n\nstart_time\x18\x01 \x01(\x01\x12\x16\n\tstop_time\x18\x02 \x01(\x01H\x00\x88\x01\x01\x12\x16\n\ttolerance\x18\x03 \x01(\x01H\x01\x88\x01\x01\x42\x0c\n\n_stop_timeB\x0c\n\n_tolerance\"\x10\n\x0e\x46mi2CancelStep\"\x1d\n\x1b\x46mi2EnterInitializationMode\"\x1c\n\x1a\x46mi2ExitInitializationMode\"\x12\n\x10\x46mi2FreeInstance\"\x0f\n\rFmi2Terminate\"\x0b\n\tFmi2Reset\"n\n\x1d\x46mi2GetDirectionalDerivatives\x12\x1a\n\x12references_unknown\x18\x01 \x03(\r\x12\x18\n\x10references_known\x18\x02 \x03(\r\x12\x17\n\x0f\x64irection_known\x18\x03 \x03(\x01\"Q\n\x1b\x46mi2SetRealInputDerivatives\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06orders\x18\x02 \x03(\x05\x12\x0e\n\x06values\x18\x03 \x03(\x01\"B\n\x1c\x46mi2GetRealOutputDerivatives\x12\x12\n\nreferences\x18\x01 \x03(\r\x12\x0e\n\x06orders\x18\x02 \x03(\x05\"=\n\x13\x46mi2SetDebugLogging\x12\x12\n\ncategories\x18\x01 \x03(\t\x12\x12\n\nlogging_on\x18\x02 \x01(\x08\":\n\x10\x46mi2StatusReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\"K\n\x11\x46mi2GetRealReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x01\"N\n\x14\x46mi2GetIntegerReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x05\"N\n\x14\x46mi2GetBooleanReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x08\"M\n\x13\x46mi2GetStringReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\t\"\x18\n\x16\x46mi2FreeInstanceReturn\"\\\n\"Fmi2GetRealOutputDerivativesReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x01\"]\n#Fmi2GetDirectionalDerivativesReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\x0e\n\x06values\x18\x02 \x03(\x01\"\x17\n\x15\x46mi2ExtSerializeSlave\"(\n\x17\x46mi2ExtDeserializeSlave\x12\r\n\x05state\x18\x01 \x01(\x0c\"\x18\n\x16\x46mi2ExtHandshakeReturn\"T\n\x1b\x46mi2ExtSerializeSlaveReturn\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.fmi2_proto.Fmi2Status\x12\r\n\x05state\x18\x02 \x01(\x0c\"\xd6\n\n\x0b\x46mi2Command\x12,\n\nFmi2DoStep\x18\x01 \x01(\x0b\x32\x16.fmi2_proto.Fmi2DoStepH\x00\x12.\n\x0b\x46mi2SetReal\x18\x02 \x01(\x0b\x32\x17.fmi2_proto.Fmi2SetRealH\x00\x12\x34\n\x0e\x46mi2SetInteger\x18\x03 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetIntegerH\x00\x12\x34\n\x0e\x46mi2SetBoolean\x18\x04 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2SetBooleanH\x00\x12\x32\n\rFmi2SetString\x18\x05 \x01(\x0b\x32\x19.fmi2_proto.Fmi2SetStringH\x00\x12.\n\x0b\x46mi2GetReal\x18\x06 \x01(\x0b\x32\x17.fmi2_proto.Fmi2GetRealH\x00\x12\x34\n\x0e\x46mi2GetInteger\x18\x07 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetIntegerH\x00\x12\x34\n\x0e\x46mi2GetBoolean\x18\x08 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2GetBooleanH\x00\x12\x32\n\rFmi2GetString\x18\t \x01(\x0b\x32\x19.fmi2_proto.Fmi2GetStringH\x00\x12>\n\x13\x46mi2SetupExperiment\x18\n \x01(\x0b\x32\x1f.fmi2_proto.Fmi2SetupExperimentH\x00\x12N\n\x1b\x46mi2EnterInitializationMode\x18\x0b \x01(\x0b\x32\'.fmi2_proto.Fmi2EnterInitializationModeH\x00\x12L\n\x1a\x46mi2ExitInitializationMode\x18\x0c \x01(\x0b\x32&.fmi2_proto.Fmi2ExitInitializationModeH\x00\x12\x38\n\x10\x46mi2FreeInstance\x18\r \x01(\x0b\x32\x1c.fmi2_proto.Fmi2FreeInstanceH\x00\x12*\n\tFmi2Reset\x18\x0e \x01(\x0b\x32\x15.fmi2_proto.Fmi2ResetH\x00\x12\x32\n\rFmi2Terminate\x18\x0f \x01(\x0b\x32\x19.fmi2_proto.Fmi2TerminateH\x00\x12\x34\n\x0e\x46mi2CancelStep\x18\x10 \x01(\x0b\x32\x1a.fmi2_proto.Fmi2CancelStepH\x00\x12\x42\n\x15\x46mi2ExtSerializeSlave\x18\x11 \x01(\x0b\x32!.fmi2_proto.Fmi2ExtSerializeSlaveH\x00\x12\x46\n\x17\x46mi2ExtDeserializeSlave\x18\x12 \x01(\x0b\x32#.fmi2_proto.Fmi2ExtDeserializeSlaveH\x00\x12>\n\x13\x46mi2SetDebugLogging\x18\x13 \x01(\x0b\x32\x1f.fmi2_proto.Fmi2SetDebugLoggingH\x00\x12P\n\x1c\x46mi2GetRealOutputDerivatives\x18\x14 \x01(\x0b\x32(.fmi2_proto.Fmi2GetRealOutputDerivativesH\x00\x12N\n\x1b\x46mi2SetRealInputDerivatives\x18\x15 \x01(\x0b\x32\'.fmi2_proto.Fmi2SetRealInputDerivativesH\x00\x12R\n\x1d\x46mi2GetDirectionalDerivatives\x18\x16 \x01(\x0b\x32).fmi2_proto.Fmi2GetDirectionalDerivativesH\x00\x42\t\n\x07\x63ommand*Q\n\nFmi2Status\x12\x06\n\x02Ok\x10\x00\x12\x0b\n\x07Warning\x10\x01\x12\x0b\n\x07\x44iscard\x10\x02\x12\t\n\x05\x45rror\x10\x03\x12\t\n\x05\x46\x61tal\x10\x04\x12\x0b\n\x07Pending\x10\x05\x62\x06proto3'
 )
 
 _FMI2STATUS = _descriptor.EnumDescriptor(
@@ -63,8 +63,8 @@ _FMI2STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3149,
-  serialized_end=3230,
+  serialized_start=3184,
+  serialized_end=3265,
 )
 _sym_db.RegisterEnumDescriptor(_FMI2STATUS)
 
@@ -622,6 +622,27 @@ _FMI2GETDIRECTIONALDERIVATIVES = _descriptor.Descriptor(
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
+    _descriptor.FieldDescriptor(
+      name='references_unknown', full_name='fmi2_proto.Fmi2GetDirectionalDerivatives.references_unknown', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='references_known', full_name='fmi2_proto.Fmi2GetDirectionalDerivatives.references_known', index=1,
+      number=2, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='direction_known', full_name='fmi2_proto.Fmi2GetDirectionalDerivatives.direction_known', index=2,
+      number=3, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -635,18 +656,39 @@ _FMI2GETDIRECTIONALDERIVATIVES = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=719,
-  serialized_end=750,
+  serialized_end=829,
 )
 
 
-_FMI2SETINPUTDERIVATIVES = _descriptor.Descriptor(
-  name='Fmi2SetInputDerivatives',
-  full_name='fmi2_proto.Fmi2SetInputDerivatives',
+_FMI2SETREALINPUTDERIVATIVES = _descriptor.Descriptor(
+  name='Fmi2SetRealInputDerivatives',
+  full_name='fmi2_proto.Fmi2SetRealInputDerivatives',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2SetRealInputDerivatives.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='orders', full_name='fmi2_proto.Fmi2SetRealInputDerivatives.orders', index=1,
+      number=2, type=5, cpp_type=1, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2SetRealInputDerivatives.values', index=2,
+      number=3, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -659,19 +701,33 @@ _FMI2SETINPUTDERIVATIVES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=752,
-  serialized_end=777,
+  serialized_start=831,
+  serialized_end=912,
 )
 
 
-_FMI2GETOUTPUTDERIVATIVES = _descriptor.Descriptor(
-  name='Fmi2GetOutputDerivatives',
-  full_name='fmi2_proto.Fmi2GetOutputDerivatives',
+_FMI2GETREALOUTPUTDERIVATIVES = _descriptor.Descriptor(
+  name='Fmi2GetRealOutputDerivatives',
+  full_name='fmi2_proto.Fmi2GetRealOutputDerivatives',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
+    _descriptor.FieldDescriptor(
+      name='references', full_name='fmi2_proto.Fmi2GetRealOutputDerivatives.references', index=0,
+      number=1, type=13, cpp_type=3, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='orders', full_name='fmi2_proto.Fmi2GetRealOutputDerivatives.orders', index=1,
+      number=2, type=5, cpp_type=1, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -684,33 +740,8 @@ _FMI2GETOUTPUTDERIVATIVES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=779,
-  serialized_end=805,
-)
-
-
-_GETXXXSTATUS = _descriptor.Descriptor(
-  name='GetXXXStatus',
-  full_name='fmi2_proto.GetXXXStatus',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=807,
-  serialized_end=821,
+  serialized_start=914,
+  serialized_end=980,
 )
 
 
@@ -748,8 +779,8 @@ _FMI2SETDEBUGLOGGING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=823,
-  serialized_end=884,
+  serialized_start=982,
+  serialized_end=1043,
 )
 
 
@@ -780,8 +811,8 @@ _FMI2STATUSRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=886,
-  serialized_end=944,
+  serialized_start=1045,
+  serialized_end=1103,
 )
 
 
@@ -819,8 +850,8 @@ _FMI2GETREALRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=946,
-  serialized_end=1021,
+  serialized_start=1105,
+  serialized_end=1180,
 )
 
 
@@ -858,8 +889,8 @@ _FMI2GETINTEGERRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1023,
-  serialized_end=1101,
+  serialized_start=1182,
+  serialized_end=1260,
 )
 
 
@@ -897,8 +928,8 @@ _FMI2GETBOOLEANRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1103,
-  serialized_end=1181,
+  serialized_start=1262,
+  serialized_end=1340,
 )
 
 
@@ -936,8 +967,8 @@ _FMI2GETSTRINGRETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1183,
-  serialized_end=1260,
+  serialized_start=1342,
+  serialized_end=1419,
 )
 
 
@@ -961,8 +992,86 @@ _FMI2FREEINSTANCERETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1262,
-  serialized_end=1286,
+  serialized_start=1421,
+  serialized_end=1445,
+)
+
+
+_FMI2GETREALOUTPUTDERIVATIVESRETURN = _descriptor.Descriptor(
+  name='Fmi2GetRealOutputDerivativesReturn',
+  full_name='fmi2_proto.Fmi2GetRealOutputDerivativesReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2GetRealOutputDerivativesReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2GetRealOutputDerivativesReturn.values', index=1,
+      number=2, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1447,
+  serialized_end=1539,
+)
+
+
+_FMI2GETDIRECTIONALDERIVATIVESRETURN = _descriptor.Descriptor(
+  name='Fmi2GetDirectionalDerivativesReturn',
+  full_name='fmi2_proto.Fmi2GetDirectionalDerivativesReturn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='fmi2_proto.Fmi2GetDirectionalDerivativesReturn.status', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='values', full_name='fmi2_proto.Fmi2GetDirectionalDerivativesReturn.values', index=1,
+      number=2, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1541,
+  serialized_end=1634,
 )
 
 
@@ -986,8 +1095,8 @@ _FMI2EXTSERIALIZESLAVE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1288,
-  serialized_end=1311,
+  serialized_start=1636,
+  serialized_end=1659,
 )
 
 
@@ -1018,8 +1127,8 @@ _FMI2EXTDESERIALIZESLAVE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1313,
-  serialized_end=1353,
+  serialized_start=1661,
+  serialized_end=1701,
 )
 
 
@@ -1043,8 +1152,8 @@ _FMI2EXTHANDSHAKERETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1355,
-  serialized_end=1379,
+  serialized_start=1703,
+  serialized_end=1727,
 )
 
 
@@ -1082,8 +1191,8 @@ _FMI2EXTSERIALIZESLAVERETURN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1381,
-  serialized_end=1465,
+  serialized_start=1729,
+  serialized_end=1813,
 )
 
 
@@ -1228,6 +1337,27 @@ _FMI2COMMAND = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetRealOutputDerivatives', full_name='fmi2_proto.Fmi2Command.Fmi2GetRealOutputDerivatives', index=19,
+      number=20, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2SetRealInputDerivatives', full_name='fmi2_proto.Fmi2Command.Fmi2SetRealInputDerivatives', index=20,
+      number=21, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Fmi2GetDirectionalDerivatives', full_name='fmi2_proto.Fmi2Command.Fmi2GetDirectionalDerivatives', index=21,
+      number=22, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -1245,94 +1375,8 @@ _FMI2COMMAND = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1468,
-  serialized_end=2588,
-)
-
-
-_FMI2RETURN = _descriptor.Descriptor(
-  name='Fmi2Return',
-  full_name='fmi2_proto.Fmi2Return',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='Fmi2StatusReturn', full_name='fmi2_proto.Fmi2Return.Fmi2StatusReturn', index=0,
-      number=1, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Fmi2GetRealReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetRealReturn', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Fmi2GetIntegerReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetIntegerReturn', index=2,
-      number=3, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Fmi2GetBooleanReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetBooleanReturn', index=3,
-      number=4, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Fmi2GetStringReturn', full_name='fmi2_proto.Fmi2Return.Fmi2GetStringReturn', index=4,
-      number=5, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Fmi2FreeInstanceReturn', full_name='fmi2_proto.Fmi2Return.Fmi2FreeInstanceReturn', index=5,
-      number=6, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Fmi2ExtHandshakeReturn', full_name='fmi2_proto.Fmi2Return.Fmi2ExtHandshakeReturn', index=6,
-      number=7, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Fmi2ExtSerializeSlaveReturn', full_name='fmi2_proto.Fmi2Return.Fmi2ExtSerializeSlaveReturn', index=7,
-      number=8, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-    _descriptor.OneofDescriptor(
-      name='result', full_name='fmi2_proto.Fmi2Return.result',
-      index=0, containing_type=None,
-      create_key=_descriptor._internal_create_key,
-    fields=[]),
-  ],
-  serialized_start=2591,
-  serialized_end=3147,
+  serialized_start=1816,
+  serialized_end=3182,
 )
 
 _FMI2SETUPEXPERIMENT.oneofs_by_name['_stop_time'].fields.append(
@@ -1346,6 +1390,8 @@ _FMI2GETREALRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
 _FMI2GETINTEGERRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
 _FMI2GETBOOLEANRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
 _FMI2GETSTRINGRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2GETREALOUTPUTDERIVATIVESRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
+_FMI2GETDIRECTIONALDERIVATIVESRETURN.fields_by_name['status'].enum_type = _FMI2STATUS
 _FMI2EXTSERIALIZESLAVERETURN.fields_by_name['status'].enum_type = _FMI2STATUS
 _FMI2COMMAND.fields_by_name['Fmi2DoStep'].message_type = _FMI2DOSTEP
 _FMI2COMMAND.fields_by_name['Fmi2SetReal'].message_type = _FMI2SETREAL
@@ -1366,6 +1412,9 @@ _FMI2COMMAND.fields_by_name['Fmi2CancelStep'].message_type = _FMI2CANCELSTEP
 _FMI2COMMAND.fields_by_name['Fmi2ExtSerializeSlave'].message_type = _FMI2EXTSERIALIZESLAVE
 _FMI2COMMAND.fields_by_name['Fmi2ExtDeserializeSlave'].message_type = _FMI2EXTDESERIALIZESLAVE
 _FMI2COMMAND.fields_by_name['Fmi2SetDebugLogging'].message_type = _FMI2SETDEBUGLOGGING
+_FMI2COMMAND.fields_by_name['Fmi2GetRealOutputDerivatives'].message_type = _FMI2GETREALOUTPUTDERIVATIVES
+_FMI2COMMAND.fields_by_name['Fmi2SetRealInputDerivatives'].message_type = _FMI2SETREALINPUTDERIVATIVES
+_FMI2COMMAND.fields_by_name['Fmi2GetDirectionalDerivatives'].message_type = _FMI2GETDIRECTIONALDERIVATIVES
 _FMI2COMMAND.oneofs_by_name['command'].fields.append(
   _FMI2COMMAND.fields_by_name['Fmi2DoStep'])
 _FMI2COMMAND.fields_by_name['Fmi2DoStep'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
@@ -1423,38 +1472,15 @@ _FMI2COMMAND.fields_by_name['Fmi2ExtDeserializeSlave'].containing_oneof = _FMI2C
 _FMI2COMMAND.oneofs_by_name['command'].fields.append(
   _FMI2COMMAND.fields_by_name['Fmi2SetDebugLogging'])
 _FMI2COMMAND.fields_by_name['Fmi2SetDebugLogging'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
-_FMI2RETURN.fields_by_name['Fmi2StatusReturn'].message_type = _FMI2STATUSRETURN
-_FMI2RETURN.fields_by_name['Fmi2GetRealReturn'].message_type = _FMI2GETREALRETURN
-_FMI2RETURN.fields_by_name['Fmi2GetIntegerReturn'].message_type = _FMI2GETINTEGERRETURN
-_FMI2RETURN.fields_by_name['Fmi2GetBooleanReturn'].message_type = _FMI2GETBOOLEANRETURN
-_FMI2RETURN.fields_by_name['Fmi2GetStringReturn'].message_type = _FMI2GETSTRINGRETURN
-_FMI2RETURN.fields_by_name['Fmi2FreeInstanceReturn'].message_type = _FMI2FREEINSTANCERETURN
-_FMI2RETURN.fields_by_name['Fmi2ExtHandshakeReturn'].message_type = _FMI2EXTHANDSHAKERETURN
-_FMI2RETURN.fields_by_name['Fmi2ExtSerializeSlaveReturn'].message_type = _FMI2EXTSERIALIZESLAVERETURN
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2StatusReturn'])
-_FMI2RETURN.fields_by_name['Fmi2StatusReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2GetRealReturn'])
-_FMI2RETURN.fields_by_name['Fmi2GetRealReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2GetIntegerReturn'])
-_FMI2RETURN.fields_by_name['Fmi2GetIntegerReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2GetBooleanReturn'])
-_FMI2RETURN.fields_by_name['Fmi2GetBooleanReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2GetStringReturn'])
-_FMI2RETURN.fields_by_name['Fmi2GetStringReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2FreeInstanceReturn'])
-_FMI2RETURN.fields_by_name['Fmi2FreeInstanceReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2ExtHandshakeReturn'])
-_FMI2RETURN.fields_by_name['Fmi2ExtHandshakeReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
-_FMI2RETURN.oneofs_by_name['result'].fields.append(
-  _FMI2RETURN.fields_by_name['Fmi2ExtSerializeSlaveReturn'])
-_FMI2RETURN.fields_by_name['Fmi2ExtSerializeSlaveReturn'].containing_oneof = _FMI2RETURN.oneofs_by_name['result']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2GetRealOutputDerivatives'])
+_FMI2COMMAND.fields_by_name['Fmi2GetRealOutputDerivatives'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2SetRealInputDerivatives'])
+_FMI2COMMAND.fields_by_name['Fmi2SetRealInputDerivatives'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
+_FMI2COMMAND.oneofs_by_name['command'].fields.append(
+  _FMI2COMMAND.fields_by_name['Fmi2GetDirectionalDerivatives'])
+_FMI2COMMAND.fields_by_name['Fmi2GetDirectionalDerivatives'].containing_oneof = _FMI2COMMAND.oneofs_by_name['command']
 DESCRIPTOR.message_types_by_name['Fmi2SetReal'] = _FMI2SETREAL
 DESCRIPTOR.message_types_by_name['Fmi2SetInteger'] = _FMI2SETINTEGER
 DESCRIPTOR.message_types_by_name['Fmi2SetBoolean'] = _FMI2SETBOOLEAN
@@ -1472,9 +1498,8 @@ DESCRIPTOR.message_types_by_name['Fmi2FreeInstance'] = _FMI2FREEINSTANCE
 DESCRIPTOR.message_types_by_name['Fmi2Terminate'] = _FMI2TERMINATE
 DESCRIPTOR.message_types_by_name['Fmi2Reset'] = _FMI2RESET
 DESCRIPTOR.message_types_by_name['Fmi2GetDirectionalDerivatives'] = _FMI2GETDIRECTIONALDERIVATIVES
-DESCRIPTOR.message_types_by_name['Fmi2SetInputDerivatives'] = _FMI2SETINPUTDERIVATIVES
-DESCRIPTOR.message_types_by_name['Fmi2GetOutputDerivatives'] = _FMI2GETOUTPUTDERIVATIVES
-DESCRIPTOR.message_types_by_name['GetXXXStatus'] = _GETXXXSTATUS
+DESCRIPTOR.message_types_by_name['Fmi2SetRealInputDerivatives'] = _FMI2SETREALINPUTDERIVATIVES
+DESCRIPTOR.message_types_by_name['Fmi2GetRealOutputDerivatives'] = _FMI2GETREALOUTPUTDERIVATIVES
 DESCRIPTOR.message_types_by_name['Fmi2SetDebugLogging'] = _FMI2SETDEBUGLOGGING
 DESCRIPTOR.message_types_by_name['Fmi2StatusReturn'] = _FMI2STATUSRETURN
 DESCRIPTOR.message_types_by_name['Fmi2GetRealReturn'] = _FMI2GETREALRETURN
@@ -1482,12 +1507,13 @@ DESCRIPTOR.message_types_by_name['Fmi2GetIntegerReturn'] = _FMI2GETINTEGERRETURN
 DESCRIPTOR.message_types_by_name['Fmi2GetBooleanReturn'] = _FMI2GETBOOLEANRETURN
 DESCRIPTOR.message_types_by_name['Fmi2GetStringReturn'] = _FMI2GETSTRINGRETURN
 DESCRIPTOR.message_types_by_name['Fmi2FreeInstanceReturn'] = _FMI2FREEINSTANCERETURN
+DESCRIPTOR.message_types_by_name['Fmi2GetRealOutputDerivativesReturn'] = _FMI2GETREALOUTPUTDERIVATIVESRETURN
+DESCRIPTOR.message_types_by_name['Fmi2GetDirectionalDerivativesReturn'] = _FMI2GETDIRECTIONALDERIVATIVESRETURN
 DESCRIPTOR.message_types_by_name['Fmi2ExtSerializeSlave'] = _FMI2EXTSERIALIZESLAVE
 DESCRIPTOR.message_types_by_name['Fmi2ExtDeserializeSlave'] = _FMI2EXTDESERIALIZESLAVE
 DESCRIPTOR.message_types_by_name['Fmi2ExtHandshakeReturn'] = _FMI2EXTHANDSHAKERETURN
 DESCRIPTOR.message_types_by_name['Fmi2ExtSerializeSlaveReturn'] = _FMI2EXTSERIALIZESLAVERETURN
 DESCRIPTOR.message_types_by_name['Fmi2Command'] = _FMI2COMMAND
-DESCRIPTOR.message_types_by_name['Fmi2Return'] = _FMI2RETURN
 DESCRIPTOR.enum_types_by_name['Fmi2Status'] = _FMI2STATUS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -1610,26 +1636,19 @@ Fmi2GetDirectionalDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2Ge
   })
 _sym_db.RegisterMessage(Fmi2GetDirectionalDerivatives)
 
-Fmi2SetInputDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2SetInputDerivatives', (_message.Message,), {
-  'DESCRIPTOR' : _FMI2SETINPUTDERIVATIVES,
+Fmi2SetRealInputDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2SetRealInputDerivatives', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2SETREALINPUTDERIVATIVES,
   '__module__' : 'unifmu_fmi2_pb2'
-  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetInputDerivatives)
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2SetRealInputDerivatives)
   })
-_sym_db.RegisterMessage(Fmi2SetInputDerivatives)
+_sym_db.RegisterMessage(Fmi2SetRealInputDerivatives)
 
-Fmi2GetOutputDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2GetOutputDerivatives', (_message.Message,), {
-  'DESCRIPTOR' : _FMI2GETOUTPUTDERIVATIVES,
+Fmi2GetRealOutputDerivatives = _reflection.GeneratedProtocolMessageType('Fmi2GetRealOutputDerivatives', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETREALOUTPUTDERIVATIVES,
   '__module__' : 'unifmu_fmi2_pb2'
-  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetOutputDerivatives)
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetRealOutputDerivatives)
   })
-_sym_db.RegisterMessage(Fmi2GetOutputDerivatives)
-
-GetXXXStatus = _reflection.GeneratedProtocolMessageType('GetXXXStatus', (_message.Message,), {
-  'DESCRIPTOR' : _GETXXXSTATUS,
-  '__module__' : 'unifmu_fmi2_pb2'
-  # @@protoc_insertion_point(class_scope:fmi2_proto.GetXXXStatus)
-  })
-_sym_db.RegisterMessage(GetXXXStatus)
+_sym_db.RegisterMessage(Fmi2GetRealOutputDerivatives)
 
 Fmi2SetDebugLogging = _reflection.GeneratedProtocolMessageType('Fmi2SetDebugLogging', (_message.Message,), {
   'DESCRIPTOR' : _FMI2SETDEBUGLOGGING,
@@ -1680,6 +1699,20 @@ Fmi2FreeInstanceReturn = _reflection.GeneratedProtocolMessageType('Fmi2FreeInsta
   })
 _sym_db.RegisterMessage(Fmi2FreeInstanceReturn)
 
+Fmi2GetRealOutputDerivativesReturn = _reflection.GeneratedProtocolMessageType('Fmi2GetRealOutputDerivativesReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETREALOUTPUTDERIVATIVESRETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetRealOutputDerivativesReturn)
+  })
+_sym_db.RegisterMessage(Fmi2GetRealOutputDerivativesReturn)
+
+Fmi2GetDirectionalDerivativesReturn = _reflection.GeneratedProtocolMessageType('Fmi2GetDirectionalDerivativesReturn', (_message.Message,), {
+  'DESCRIPTOR' : _FMI2GETDIRECTIONALDERIVATIVESRETURN,
+  '__module__' : 'unifmu_fmi2_pb2'
+  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2GetDirectionalDerivativesReturn)
+  })
+_sym_db.RegisterMessage(Fmi2GetDirectionalDerivativesReturn)
+
 Fmi2ExtSerializeSlave = _reflection.GeneratedProtocolMessageType('Fmi2ExtSerializeSlave', (_message.Message,), {
   'DESCRIPTOR' : _FMI2EXTSERIALIZESLAVE,
   '__module__' : 'unifmu_fmi2_pb2'
@@ -1714,13 +1747,6 @@ Fmi2Command = _reflection.GeneratedProtocolMessageType('Fmi2Command', (_message.
   # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Command)
   })
 _sym_db.RegisterMessage(Fmi2Command)
-
-Fmi2Return = _reflection.GeneratedProtocolMessageType('Fmi2Return', (_message.Message,), {
-  'DESCRIPTOR' : _FMI2RETURN,
-  '__module__' : 'unifmu_fmi2_pb2'
-  # @@protoc_insertion_point(class_scope:fmi2_proto.Fmi2Return)
-  })
-_sym_db.RegisterMessage(Fmi2Return)
 
 
 # @@protoc_insertion_point(module_scope)

@@ -86,15 +86,28 @@ pub struct Fmi2Reset {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2GetDirectionalDerivatives {
+    #[prost(uint32, repeated, tag="1")]
+    pub references_unknown: ::prost::alloc::vec::Vec<u32>,
+    #[prost(uint32, repeated, tag="2")]
+    pub references_known: ::prost::alloc::vec::Vec<u32>,
+    #[prost(double, repeated, tag="3")]
+    pub direction_known: ::prost::alloc::vec::Vec<f64>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetInputDerivatives {
+pub struct Fmi2SetRealInputDerivatives {
+    #[prost(uint32, repeated, tag="1")]
+    pub references: ::prost::alloc::vec::Vec<u32>,
+    #[prost(int32, repeated, tag="2")]
+    pub orders: ::prost::alloc::vec::Vec<i32>,
+    #[prost(double, repeated, tag="3")]
+    pub values: ::prost::alloc::vec::Vec<f64>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetOutputDerivatives {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetXxxStatus {
+pub struct Fmi2GetRealOutputDerivatives {
+    #[prost(uint32, repeated, tag="1")]
+    pub references: ::prost::alloc::vec::Vec<u32>,
+    #[prost(int32, repeated, tag="2")]
+    pub orders: ::prost::alloc::vec::Vec<i32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2SetDebugLogging {
@@ -141,6 +154,20 @@ pub struct Fmi2GetStringReturn {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2FreeInstanceReturn {
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi2GetRealOutputDerivativesReturn {
+    #[prost(enumeration="Fmi2Status", tag="1")]
+    pub status: i32,
+    #[prost(double, repeated, tag="2")]
+    pub values: ::prost::alloc::vec::Vec<f64>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi2GetDirectionalDerivativesReturn {
+    #[prost(enumeration="Fmi2Status", tag="1")]
+    pub status: i32,
+    #[prost(double, repeated, tag="2")]
+    pub values: ::prost::alloc::vec::Vec<f64>,
+}
 // ----------------------- Non FMI2 standard messages ----------------------
 
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -164,7 +191,7 @@ pub struct Fmi2ExtSerializeSlaveReturn {
 /// enumeration listing all possible command that are sent from binary to slave
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2Command {
-    #[prost(oneof="fmi2_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19")]
+    #[prost(oneof="fmi2_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22")]
     pub command: ::core::option::Option<fmi2_command::Command>,
 }
 /// Nested message and enum types in `Fmi2Command`.
@@ -209,33 +236,12 @@ pub mod fmi2_command {
         Fmi2ExtDeserializeSlave(super::Fmi2ExtDeserializeSlave),
         #[prost(message, tag="19")]
         Fmi2SetDebugLogging(super::Fmi2SetDebugLogging),
-    }
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2Return {
-    #[prost(oneof="fmi2_return::Result", tags="1, 2, 3, 4, 5, 6, 7, 8")]
-    pub result: ::core::option::Option<fmi2_return::Result>,
-}
-/// Nested message and enum types in `Fmi2Return`.
-pub mod fmi2_return {
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Result {
-        #[prost(message, tag="1")]
-        Fmi2StatusReturn(super::Fmi2StatusReturn),
-        #[prost(message, tag="2")]
-        Fmi2GetRealReturn(super::Fmi2GetRealReturn),
-        #[prost(message, tag="3")]
-        Fmi2GetIntegerReturn(super::Fmi2GetIntegerReturn),
-        #[prost(message, tag="4")]
-        Fmi2GetBooleanReturn(super::Fmi2GetBooleanReturn),
-        #[prost(message, tag="5")]
-        Fmi2GetStringReturn(super::Fmi2GetStringReturn),
-        #[prost(message, tag="6")]
-        Fmi2FreeInstanceReturn(super::Fmi2FreeInstanceReturn),
-        #[prost(message, tag="7")]
-        Fmi2ExtHandshakeReturn(super::Fmi2ExtHandshakeReturn),
-        #[prost(message, tag="8")]
-        Fmi2ExtSerializeSlaveReturn(super::Fmi2ExtSerializeSlaveReturn),
+        #[prost(message, tag="20")]
+        Fmi2GetRealOutputDerivatives(super::Fmi2GetRealOutputDerivatives),
+        #[prost(message, tag="21")]
+        Fmi2SetRealInputDerivatives(super::Fmi2SetRealInputDerivatives),
+        #[prost(message, tag="22")]
+        Fmi2GetDirectionalDerivatives(super::Fmi2GetDirectionalDerivatives),
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]

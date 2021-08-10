@@ -4,7 +4,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 #[derive_ReprC]
 #[repr(i32)]
 #[derive(
-    Debug, PartialEq, Clone, Serialize_repr, Deserialize_repr, IntoPrimitive, TryFromPrimitive,
+    Debug, PartialEq, Clone, Copy, Serialize_repr, Deserialize_repr, IntoPrimitive, TryFromPrimitive,
 )]
 
 pub enum Fmi2Status {
@@ -19,7 +19,7 @@ pub enum Fmi2Status {
 #[derive_ReprC]
 #[repr(i32)]
 #[derive(
-    Debug, PartialEq, Clone, Serialize_repr, Deserialize_repr, IntoPrimitive, TryFromPrimitive,
+    Debug, PartialEq, Clone, Copy, Serialize_repr, Deserialize_repr, IntoPrimitive, TryFromPrimitive,
 )]
 pub enum Fmi2StatusKind {
     Fmi2DoStepStatus = 0,

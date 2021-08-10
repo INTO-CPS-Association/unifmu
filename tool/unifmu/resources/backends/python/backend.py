@@ -3,7 +3,6 @@ import os
 import sys
 from schemas.unifmu_fmi2_pb2 import (
     Fmi2Command,
-    Fmi2Return,
     Fmi2ExtHandshakeReturn,
     Fmi2ExtSerializeSlaveReturn,
     Fmi2StatusReturn,

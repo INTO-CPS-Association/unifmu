@@ -64,21 +64,27 @@ message Fmi2Terminate{}
 
 message Fmi2Reset{}
 
-message Fmi2GetDirectionalDerivatives{}
+message Fmi2GetDirectionalDerivatives{
+  repeated uint32 references_unknown = 1;
+  repeated uint32 references_known = 2;
+  repeated double direction_known = 3;
+}
 
-message Fmi2SetInputDerivatives{}
+message Fmi2SetRealInputDerivatives{
+  repeated uint32 references = 1;
+  repeated int32 orders = 2;
+  repeated double values = 3; 
+}
 
-message Fmi2GetOutputDerivatives{}
-
-
-message GetXXXStatus{}
+message Fmi2GetRealOutputDerivatives{
+  repeated uint32 references = 1;
+  repeated int32 orders = 2;
+}
 
 message Fmi2SetDebugLogging{
     repeated string categories = 1;
     bool logging_on = 2;
 }
-
-
 
 enum Fmi2Status
 {
@@ -118,6 +124,17 @@ message Fmi2GetStringReturn{
 }
 
 message Fmi2FreeInstanceReturn {}
+
+message Fmi2GetRealOutputDerivativesReturn {
+  Fmi2Status status = 1;
+  repeated double values = 2;
+}
+
+message Fmi2GetDirectionalDerivativesReturn {
+  Fmi2Status status = 1;
+  repeated double values = 2;
+}
+
 
 // ----------------------- Non FMI2 standard messages ----------------------
 
@@ -163,24 +180,9 @@ message Fmi2Command
     Fmi2ExtSerializeSlave Fmi2ExtSerializeSlave =17;
     Fmi2ExtDeserializeSlave Fmi2ExtDeserializeSlave =18;
     Fmi2SetDebugLogging Fmi2SetDebugLogging = 19;
+
+    Fmi2GetRealOutputDerivatives Fmi2GetRealOutputDerivatives = 20;
+    Fmi2SetRealInputDerivatives Fmi2SetRealInputDerivatives = 21;
+    Fmi2GetDirectionalDerivatives Fmi2GetDirectionalDerivatives = 22;
   }
-}
-
-
-
-
-message Fmi2Return
-{
-  oneof result 
-  {
-    Fmi2StatusReturn Fmi2StatusReturn = 1;
-    Fmi2GetRealReturn Fmi2GetRealReturn = 2;
-    Fmi2GetIntegerReturn Fmi2GetIntegerReturn = 3;
-    Fmi2GetBooleanReturn Fmi2GetBooleanReturn = 4;
-    Fmi2GetStringReturn Fmi2GetStringReturn = 5;
-    Fmi2FreeInstanceReturn Fmi2FreeInstanceReturn = 6;
-    Fmi2ExtHandshakeReturn Fmi2ExtHandshakeReturn = 7;
-    Fmi2ExtSerializeSlaveReturn Fmi2ExtSerializeSlaveReturn = 8;
-       
-  }  
 }

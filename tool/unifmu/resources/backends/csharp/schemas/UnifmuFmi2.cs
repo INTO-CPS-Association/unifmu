@@ -39,63 +39,64 @@ namespace Fmi2Proto {
             "dG9sZXJhbmNlGAMgASgBSAGIAQFCDAoKX3N0b3BfdGltZUIMCgpfdG9sZXJh",
             "bmNlIhAKDkZtaTJDYW5jZWxTdGVwIh0KG0ZtaTJFbnRlckluaXRpYWxpemF0",
             "aW9uTW9kZSIcChpGbWkyRXhpdEluaXRpYWxpemF0aW9uTW9kZSISChBGbWky",
-            "RnJlZUluc3RhbmNlIg8KDUZtaTJUZXJtaW5hdGUiCwoJRm1pMlJlc2V0Ih8K",
-            "HUZtaTJHZXREaXJlY3Rpb25hbERlcml2YXRpdmVzIhkKF0ZtaTJTZXRJbnB1",
-            "dERlcml2YXRpdmVzIhoKGEZtaTJHZXRPdXRwdXREZXJpdmF0aXZlcyIOCgxH",
-            "ZXRYWFhTdGF0dXMiPQoTRm1pMlNldERlYnVnTG9nZ2luZxISCgpjYXRlZ29y",
-            "aWVzGAEgAygJEhIKCmxvZ2dpbmdfb24YAiABKAgiOgoQRm1pMlN0YXR1c1Jl",
-            "dHVybhImCgZzdGF0dXMYASABKA4yFi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMi",
-            "SwoRRm1pMkdldFJlYWxSZXR1cm4SJgoGc3RhdHVzGAEgASgOMhYuZm1pMl9w",
-            "cm90by5GbWkyU3RhdHVzEg4KBnZhbHVlcxgCIAMoASJOChRGbWkyR2V0SW50",
-            "ZWdlclJldHVybhImCgZzdGF0dXMYASABKA4yFi5mbWkyX3Byb3RvLkZtaTJT",
-            "dGF0dXMSDgoGdmFsdWVzGAIgAygFIk4KFEZtaTJHZXRCb29sZWFuUmV0dXJu",
-            "EiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIOCgZ2",
-            "YWx1ZXMYAiADKAgiTQoTRm1pMkdldFN0cmluZ1JldHVybhImCgZzdGF0dXMY",
-            "ASABKA4yFi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMSDgoGdmFsdWVzGAIgAygJ",
-            "IhgKFkZtaTJGcmVlSW5zdGFuY2VSZXR1cm4iFwoVRm1pMkV4dFNlcmlhbGl6",
-            "ZVNsYXZlIigKF0ZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlEg0KBXN0YXRlGAEg",
-            "ASgMIhgKFkZtaTJFeHRIYW5kc2hha2VSZXR1cm4iVAobRm1pMkV4dFNlcmlh",
-            "bGl6ZVNsYXZlUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8u",
-            "Rm1pMlN0YXR1cxINCgVzdGF0ZRgCIAEoDCLgCAoLRm1pMkNvbW1hbmQSLAoK",
-            "Rm1pMkRvU3RlcBgBIAEoCzIWLmZtaTJfcHJvdG8uRm1pMkRvU3RlcEgAEi4K",
-            "C0ZtaTJTZXRSZWFsGAIgASgLMhcuZm1pMl9wcm90by5GbWkyU2V0UmVhbEgA",
-            "EjQKDkZtaTJTZXRJbnRlZ2VyGAMgASgLMhouZm1pMl9wcm90by5GbWkyU2V0",
-            "SW50ZWdlckgAEjQKDkZtaTJTZXRCb29sZWFuGAQgASgLMhouZm1pMl9wcm90",
-            "by5GbWkyU2V0Qm9vbGVhbkgAEjIKDUZtaTJTZXRTdHJpbmcYBSABKAsyGS5m",
-            "bWkyX3Byb3RvLkZtaTJTZXRTdHJpbmdIABIuCgtGbWkyR2V0UmVhbBgGIAEo",
-            "CzIXLmZtaTJfcHJvdG8uRm1pMkdldFJlYWxIABI0Cg5GbWkyR2V0SW50ZWdl",
-            "chgHIAEoCzIaLmZtaTJfcHJvdG8uRm1pMkdldEludGVnZXJIABI0Cg5GbWky",
-            "R2V0Qm9vbGVhbhgIIAEoCzIaLmZtaTJfcHJvdG8uRm1pMkdldEJvb2xlYW5I",
-            "ABIyCg1GbWkyR2V0U3RyaW5nGAkgASgLMhkuZm1pMl9wcm90by5GbWkyR2V0",
-            "U3RyaW5nSAASPgoTRm1pMlNldHVwRXhwZXJpbWVudBgKIAEoCzIfLmZtaTJf",
-            "cHJvdG8uRm1pMlNldHVwRXhwZXJpbWVudEgAEk4KG0ZtaTJFbnRlckluaXRp",
-            "YWxpemF0aW9uTW9kZRgLIAEoCzInLmZtaTJfcHJvdG8uRm1pMkVudGVySW5p",
-            "dGlhbGl6YXRpb25Nb2RlSAASTAoaRm1pMkV4aXRJbml0aWFsaXphdGlvbk1v",
-            "ZGUYDCABKAsyJi5mbWkyX3Byb3RvLkZtaTJFeGl0SW5pdGlhbGl6YXRpb25N",
-            "b2RlSAASOAoQRm1pMkZyZWVJbnN0YW5jZRgNIAEoCzIcLmZtaTJfcHJvdG8u",
-            "Rm1pMkZyZWVJbnN0YW5jZUgAEioKCUZtaTJSZXNldBgOIAEoCzIVLmZtaTJf",
-            "cHJvdG8uRm1pMlJlc2V0SAASMgoNRm1pMlRlcm1pbmF0ZRgPIAEoCzIZLmZt",
-            "aTJfcHJvdG8uRm1pMlRlcm1pbmF0ZUgAEjQKDkZtaTJDYW5jZWxTdGVwGBAg",
-            "ASgLMhouZm1pMl9wcm90by5GbWkyQ2FuY2VsU3RlcEgAEkIKFUZtaTJFeHRT",
-            "ZXJpYWxpemVTbGF2ZRgRIAEoCzIhLmZtaTJfcHJvdG8uRm1pMkV4dFNlcmlh",
-            "bGl6ZVNsYXZlSAASRgoXRm1pMkV4dERlc2VyaWFsaXplU2xhdmUYEiABKAsy",
-            "Iy5mbWkyX3Byb3RvLkZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlSAASPgoTRm1p",
-            "MlNldERlYnVnTG9nZ2luZxgTIAEoCzIfLmZtaTJfcHJvdG8uRm1pMlNldERl",
-            "YnVnTG9nZ2luZ0gAQgkKB2NvbW1hbmQirAQKCkZtaTJSZXR1cm4SOAoQRm1p",
-            "MlN0YXR1c1JldHVybhgBIAEoCzIcLmZtaTJfcHJvdG8uRm1pMlN0YXR1c1Jl",
-            "dHVybkgAEjoKEUZtaTJHZXRSZWFsUmV0dXJuGAIgASgLMh0uZm1pMl9wcm90",
-            "by5GbWkyR2V0UmVhbFJldHVybkgAEkAKFEZtaTJHZXRJbnRlZ2VyUmV0dXJu",
-            "GAMgASgLMiAuZm1pMl9wcm90by5GbWkyR2V0SW50ZWdlclJldHVybkgAEkAK",
-            "FEZtaTJHZXRCb29sZWFuUmV0dXJuGAQgASgLMiAuZm1pMl9wcm90by5GbWky",
-            "R2V0Qm9vbGVhblJldHVybkgAEj4KE0ZtaTJHZXRTdHJpbmdSZXR1cm4YBSAB",
-            "KAsyHy5mbWkyX3Byb3RvLkZtaTJHZXRTdHJpbmdSZXR1cm5IABJEChZGbWky",
-            "RnJlZUluc3RhbmNlUmV0dXJuGAYgASgLMiIuZm1pMl9wcm90by5GbWkyRnJl",
-            "ZUluc3RhbmNlUmV0dXJuSAASRAoWRm1pMkV4dEhhbmRzaGFrZVJldHVybhgH",
-            "IAEoCzIiLmZtaTJfcHJvdG8uRm1pMkV4dEhhbmRzaGFrZVJldHVybkgAEk4K",
-            "G0ZtaTJFeHRTZXJpYWxpemVTbGF2ZVJldHVybhgIIAEoCzInLmZtaTJfcHJv",
-            "dG8uRm1pMkV4dFNlcmlhbGl6ZVNsYXZlUmV0dXJuSABCCAoGcmVzdWx0KlEK",
-            "CkZtaTJTdGF0dXMSBgoCT2sQABILCgdXYXJuaW5nEAESCwoHRGlzY2FyZBAC",
-            "EgkKBUVycm9yEAMSCQoFRmF0YWwQBBILCgdQZW5kaW5nEAViBnByb3RvMw=="));
+            "RnJlZUluc3RhbmNlIg8KDUZtaTJUZXJtaW5hdGUiCwoJRm1pMlJlc2V0Im4K",
+            "HUZtaTJHZXREaXJlY3Rpb25hbERlcml2YXRpdmVzEhoKEnJlZmVyZW5jZXNf",
+            "dW5rbm93bhgBIAMoDRIYChByZWZlcmVuY2VzX2tub3duGAIgAygNEhcKD2Rp",
+            "cmVjdGlvbl9rbm93bhgDIAMoASJRChtGbWkyU2V0UmVhbElucHV0RGVyaXZh",
+            "dGl2ZXMSEgoKcmVmZXJlbmNlcxgBIAMoDRIOCgZvcmRlcnMYAiADKAUSDgoG",
+            "dmFsdWVzGAMgAygBIkIKHEZtaTJHZXRSZWFsT3V0cHV0RGVyaXZhdGl2ZXMS",
+            "EgoKcmVmZXJlbmNlcxgBIAMoDRIOCgZvcmRlcnMYAiADKAUiPQoTRm1pMlNl",
+            "dERlYnVnTG9nZ2luZxISCgpjYXRlZ29yaWVzGAEgAygJEhIKCmxvZ2dpbmdf",
+            "b24YAiABKAgiOgoQRm1pMlN0YXR1c1JldHVybhImCgZzdGF0dXMYASABKA4y",
+            "Fi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMiSwoRRm1pMkdldFJlYWxSZXR1cm4S",
+            "JgoGc3RhdHVzGAEgASgOMhYuZm1pMl9wcm90by5GbWkyU3RhdHVzEg4KBnZh",
+            "bHVlcxgCIAMoASJOChRGbWkyR2V0SW50ZWdlclJldHVybhImCgZzdGF0dXMY",
+            "ASABKA4yFi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMSDgoGdmFsdWVzGAIgAygF",
+            "Ik4KFEZtaTJHZXRCb29sZWFuUmV0dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZt",
+            "aTJfcHJvdG8uRm1pMlN0YXR1cxIOCgZ2YWx1ZXMYAiADKAgiTQoTRm1pMkdl",
+            "dFN0cmluZ1JldHVybhImCgZzdGF0dXMYASABKA4yFi5mbWkyX3Byb3RvLkZt",
+            "aTJTdGF0dXMSDgoGdmFsdWVzGAIgAygJIhgKFkZtaTJGcmVlSW5zdGFuY2VS",
+            "ZXR1cm4iXAoiRm1pMkdldFJlYWxPdXRwdXREZXJpdmF0aXZlc1JldHVybhIm",
+            "CgZzdGF0dXMYASABKA4yFi5mbWkyX3Byb3RvLkZtaTJTdGF0dXMSDgoGdmFs",
+            "dWVzGAIgAygBIl0KI0ZtaTJHZXREaXJlY3Rpb25hbERlcml2YXRpdmVzUmV0",
+            "dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIO",
+            "CgZ2YWx1ZXMYAiADKAEiFwoVRm1pMkV4dFNlcmlhbGl6ZVNsYXZlIigKF0Zt",
+            "aTJFeHREZXNlcmlhbGl6ZVNsYXZlEg0KBXN0YXRlGAEgASgMIhgKFkZtaTJF",
+            "eHRIYW5kc2hha2VSZXR1cm4iVAobRm1pMkV4dFNlcmlhbGl6ZVNsYXZlUmV0",
+            "dXJuEiYKBnN0YXR1cxgBIAEoDjIWLmZtaTJfcHJvdG8uRm1pMlN0YXR1cxIN",
+            "CgVzdGF0ZRgCIAEoDCLWCgoLRm1pMkNvbW1hbmQSLAoKRm1pMkRvU3RlcBgB",
+            "IAEoCzIWLmZtaTJfcHJvdG8uRm1pMkRvU3RlcEgAEi4KC0ZtaTJTZXRSZWFs",
+            "GAIgASgLMhcuZm1pMl9wcm90by5GbWkyU2V0UmVhbEgAEjQKDkZtaTJTZXRJ",
+            "bnRlZ2VyGAMgASgLMhouZm1pMl9wcm90by5GbWkyU2V0SW50ZWdlckgAEjQK",
+            "DkZtaTJTZXRCb29sZWFuGAQgASgLMhouZm1pMl9wcm90by5GbWkyU2V0Qm9v",
+            "bGVhbkgAEjIKDUZtaTJTZXRTdHJpbmcYBSABKAsyGS5mbWkyX3Byb3RvLkZt",
+            "aTJTZXRTdHJpbmdIABIuCgtGbWkyR2V0UmVhbBgGIAEoCzIXLmZtaTJfcHJv",
+            "dG8uRm1pMkdldFJlYWxIABI0Cg5GbWkyR2V0SW50ZWdlchgHIAEoCzIaLmZt",
+            "aTJfcHJvdG8uRm1pMkdldEludGVnZXJIABI0Cg5GbWkyR2V0Qm9vbGVhbhgI",
+            "IAEoCzIaLmZtaTJfcHJvdG8uRm1pMkdldEJvb2xlYW5IABIyCg1GbWkyR2V0",
+            "U3RyaW5nGAkgASgLMhkuZm1pMl9wcm90by5GbWkyR2V0U3RyaW5nSAASPgoT",
+            "Rm1pMlNldHVwRXhwZXJpbWVudBgKIAEoCzIfLmZtaTJfcHJvdG8uRm1pMlNl",
+            "dHVwRXhwZXJpbWVudEgAEk4KG0ZtaTJFbnRlckluaXRpYWxpemF0aW9uTW9k",
+            "ZRgLIAEoCzInLmZtaTJfcHJvdG8uRm1pMkVudGVySW5pdGlhbGl6YXRpb25N",
+            "b2RlSAASTAoaRm1pMkV4aXRJbml0aWFsaXphdGlvbk1vZGUYDCABKAsyJi5m",
+            "bWkyX3Byb3RvLkZtaTJFeGl0SW5pdGlhbGl6YXRpb25Nb2RlSAASOAoQRm1p",
+            "MkZyZWVJbnN0YW5jZRgNIAEoCzIcLmZtaTJfcHJvdG8uRm1pMkZyZWVJbnN0",
+            "YW5jZUgAEioKCUZtaTJSZXNldBgOIAEoCzIVLmZtaTJfcHJvdG8uRm1pMlJl",
+            "c2V0SAASMgoNRm1pMlRlcm1pbmF0ZRgPIAEoCzIZLmZtaTJfcHJvdG8uRm1p",
+            "MlRlcm1pbmF0ZUgAEjQKDkZtaTJDYW5jZWxTdGVwGBAgASgLMhouZm1pMl9w",
+            "cm90by5GbWkyQ2FuY2VsU3RlcEgAEkIKFUZtaTJFeHRTZXJpYWxpemVTbGF2",
+            "ZRgRIAEoCzIhLmZtaTJfcHJvdG8uRm1pMkV4dFNlcmlhbGl6ZVNsYXZlSAAS",
+            "RgoXRm1pMkV4dERlc2VyaWFsaXplU2xhdmUYEiABKAsyIy5mbWkyX3Byb3Rv",
+            "LkZtaTJFeHREZXNlcmlhbGl6ZVNsYXZlSAASPgoTRm1pMlNldERlYnVnTG9n",
+            "Z2luZxgTIAEoCzIfLmZtaTJfcHJvdG8uRm1pMlNldERlYnVnTG9nZ2luZ0gA",
+            "ElAKHEZtaTJHZXRSZWFsT3V0cHV0RGVyaXZhdGl2ZXMYFCABKAsyKC5mbWky",
+            "X3Byb3RvLkZtaTJHZXRSZWFsT3V0cHV0RGVyaXZhdGl2ZXNIABJOChtGbWky",
+            "U2V0UmVhbElucHV0RGVyaXZhdGl2ZXMYFSABKAsyJy5mbWkyX3Byb3RvLkZt",
+            "aTJTZXRSZWFsSW5wdXREZXJpdmF0aXZlc0gAElIKHUZtaTJHZXREaXJlY3Rp",
+            "b25hbERlcml2YXRpdmVzGBYgASgLMikuZm1pMl9wcm90by5GbWkyR2V0RGly",
+            "ZWN0aW9uYWxEZXJpdmF0aXZlc0gAQgkKB2NvbW1hbmQqUQoKRm1pMlN0YXR1",
+            "cxIGCgJPaxAAEgsKB1dhcm5pbmcQARILCgdEaXNjYXJkEAISCQoFRXJyb3IQ",
+            "AxIJCgVGYXRhbBAEEgsKB1BlbmRpbmcQBWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Fmi2Proto.Fmi2Status), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -115,10 +116,9 @@ namespace Fmi2Proto {
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2FreeInstance), global::Fmi2Proto.Fmi2FreeInstance.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Terminate), global::Fmi2Proto.Fmi2Terminate.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Reset), global::Fmi2Proto.Fmi2Reset.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetDirectionalDerivatives), global::Fmi2Proto.Fmi2GetDirectionalDerivatives.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2SetInputDerivatives), global::Fmi2Proto.Fmi2SetInputDerivatives.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetOutputDerivatives), global::Fmi2Proto.Fmi2GetOutputDerivatives.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.GetXXXStatus), global::Fmi2Proto.GetXXXStatus.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetDirectionalDerivatives), global::Fmi2Proto.Fmi2GetDirectionalDerivatives.Parser, new[]{ "ReferencesUnknown", "ReferencesKnown", "DirectionKnown" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2SetRealInputDerivatives), global::Fmi2Proto.Fmi2SetRealInputDerivatives.Parser, new[]{ "References", "Orders", "Values" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetRealOutputDerivatives), global::Fmi2Proto.Fmi2GetRealOutputDerivatives.Parser, new[]{ "References", "Orders" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2SetDebugLogging), global::Fmi2Proto.Fmi2SetDebugLogging.Parser, new[]{ "Categories", "LoggingOn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2StatusReturn), global::Fmi2Proto.Fmi2StatusReturn.Parser, new[]{ "Status" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetRealReturn), global::Fmi2Proto.Fmi2GetRealReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
@@ -126,12 +126,13 @@ namespace Fmi2Proto {
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetBooleanReturn), global::Fmi2Proto.Fmi2GetBooleanReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetStringReturn), global::Fmi2Proto.Fmi2GetStringReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2FreeInstanceReturn), global::Fmi2Proto.Fmi2FreeInstanceReturn.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetRealOutputDerivativesReturn), global::Fmi2Proto.Fmi2GetRealOutputDerivativesReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2GetDirectionalDerivativesReturn), global::Fmi2Proto.Fmi2GetDirectionalDerivativesReturn.Parser, new[]{ "Status", "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtSerializeSlave), global::Fmi2Proto.Fmi2ExtSerializeSlave.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtDeserializeSlave), global::Fmi2Proto.Fmi2ExtDeserializeSlave.Parser, new[]{ "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtHandshakeReturn), global::Fmi2Proto.Fmi2ExtHandshakeReturn.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn), global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn.Parser, new[]{ "Status", "State" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Command), global::Fmi2Proto.Fmi2Command.Parser, new[]{ "Fmi2DoStep", "Fmi2SetReal", "Fmi2SetInteger", "Fmi2SetBoolean", "Fmi2SetString", "Fmi2GetReal", "Fmi2GetInteger", "Fmi2GetBoolean", "Fmi2GetString", "Fmi2SetupExperiment", "Fmi2EnterInitializationMode", "Fmi2ExitInitializationMode", "Fmi2FreeInstance", "Fmi2Reset", "Fmi2Terminate", "Fmi2CancelStep", "Fmi2ExtSerializeSlave", "Fmi2ExtDeserializeSlave", "Fmi2SetDebugLogging" }, new[]{ "Command" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Return), global::Fmi2Proto.Fmi2Return.Parser, new[]{ "Fmi2StatusReturn", "Fmi2GetRealReturn", "Fmi2GetIntegerReturn", "Fmi2GetBooleanReturn", "Fmi2GetStringReturn", "Fmi2FreeInstanceReturn", "Fmi2ExtHandshakeReturn", "Fmi2ExtSerializeSlaveReturn" }, new[]{ "Result" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Fmi2Proto.Fmi2Command), global::Fmi2Proto.Fmi2Command.Parser, new[]{ "Fmi2DoStep", "Fmi2SetReal", "Fmi2SetInteger", "Fmi2SetBoolean", "Fmi2SetString", "Fmi2GetReal", "Fmi2GetInteger", "Fmi2GetBoolean", "Fmi2GetString", "Fmi2SetupExperiment", "Fmi2EnterInitializationMode", "Fmi2ExitInitializationMode", "Fmi2FreeInstance", "Fmi2Reset", "Fmi2Terminate", "Fmi2CancelStep", "Fmi2ExtSerializeSlave", "Fmi2ExtDeserializeSlave", "Fmi2SetDebugLogging", "Fmi2GetRealOutputDerivatives", "Fmi2SetRealInputDerivatives", "Fmi2GetDirectionalDerivatives" }, new[]{ "Command" }, null, null, null)
           }));
     }
     #endregion
@@ -3204,6 +3205,9 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public Fmi2GetDirectionalDerivatives(Fmi2GetDirectionalDerivatives other) : this() {
+      referencesUnknown_ = other.referencesUnknown_.Clone();
+      referencesKnown_ = other.referencesKnown_.Clone();
+      directionKnown_ = other.directionKnown_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -3211,6 +3215,39 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public Fmi2GetDirectionalDerivatives Clone() {
       return new Fmi2GetDirectionalDerivatives(this);
+    }
+
+    /// <summary>Field number for the "references_unknown" field.</summary>
+    public const int ReferencesUnknownFieldNumber = 1;
+    private static readonly pb::FieldCodec<uint> _repeated_referencesUnknown_codec
+        = pb::FieldCodec.ForUInt32(10);
+    private readonly pbc::RepeatedField<uint> referencesUnknown_ = new pbc::RepeatedField<uint>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<uint> ReferencesUnknown {
+      get { return referencesUnknown_; }
+    }
+
+    /// <summary>Field number for the "references_known" field.</summary>
+    public const int ReferencesKnownFieldNumber = 2;
+    private static readonly pb::FieldCodec<uint> _repeated_referencesKnown_codec
+        = pb::FieldCodec.ForUInt32(18);
+    private readonly pbc::RepeatedField<uint> referencesKnown_ = new pbc::RepeatedField<uint>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<uint> ReferencesKnown {
+      get { return referencesKnown_; }
+    }
+
+    /// <summary>Field number for the "direction_known" field.</summary>
+    public const int DirectionKnownFieldNumber = 3;
+    private static readonly pb::FieldCodec<double> _repeated_directionKnown_codec
+        = pb::FieldCodec.ForDouble(26);
+    private readonly pbc::RepeatedField<double> directionKnown_ = new pbc::RepeatedField<double>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<double> DirectionKnown {
+      get { return directionKnown_; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3228,6 +3265,9 @@ namespace Fmi2Proto {
       if (ReferenceEquals(other, this)) {
         return true;
       }
+      if(!referencesUnknown_.Equals(other.referencesUnknown_)) return false;
+      if(!referencesKnown_.Equals(other.referencesKnown_)) return false;
+      if(!directionKnown_.Equals(other.directionKnown_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3235,6 +3275,9 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
+      hash ^= referencesUnknown_.GetHashCode();
+      hash ^= referencesKnown_.GetHashCode();
+      hash ^= directionKnown_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3253,6 +3296,9 @@ namespace Fmi2Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
+      referencesUnknown_.WriteTo(output, _repeated_referencesUnknown_codec);
+      referencesKnown_.WriteTo(output, _repeated_referencesKnown_codec);
+      directionKnown_.WriteTo(output, _repeated_directionKnown_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3263,6 +3309,9 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      referencesUnknown_.WriteTo(ref output, _repeated_referencesUnknown_codec);
+      referencesKnown_.WriteTo(ref output, _repeated_referencesKnown_codec);
+      directionKnown_.WriteTo(ref output, _repeated_directionKnown_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3273,6 +3322,9 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
+      size += referencesUnknown_.CalculateSize(_repeated_referencesUnknown_codec);
+      size += referencesKnown_.CalculateSize(_repeated_referencesKnown_codec);
+      size += directionKnown_.CalculateSize(_repeated_directionKnown_codec);
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -3285,6 +3337,9 @@ namespace Fmi2Proto {
       if (other == null) {
         return;
       }
+      referencesUnknown_.Add(other.referencesUnknown_);
+      referencesKnown_.Add(other.referencesKnown_);
+      directionKnown_.Add(other.directionKnown_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -3300,6 +3355,21 @@ namespace Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
+          case 10:
+          case 8: {
+            referencesUnknown_.AddEntriesFrom(input, _repeated_referencesUnknown_codec);
+            break;
+          }
+          case 18:
+          case 16: {
+            referencesKnown_.AddEntriesFrom(input, _repeated_referencesKnown_codec);
+            break;
+          }
+          case 26:
+          case 25: {
+            directionKnown_.AddEntriesFrom(input, _repeated_directionKnown_codec);
+            break;
+          }
         }
       }
     #endif
@@ -3315,6 +3385,21 @@ namespace Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
+          case 10:
+          case 8: {
+            referencesUnknown_.AddEntriesFrom(ref input, _repeated_referencesUnknown_codec);
+            break;
+          }
+          case 18:
+          case 16: {
+            referencesKnown_.AddEntriesFrom(ref input, _repeated_referencesKnown_codec);
+            break;
+          }
+          case 26:
+          case 25: {
+            directionKnown_.AddEntriesFrom(ref input, _repeated_directionKnown_codec);
+            break;
+          }
         }
       }
     }
@@ -3322,16 +3407,16 @@ namespace Fmi2Proto {
 
   }
 
-  public sealed partial class Fmi2SetInputDerivatives : pb::IMessage<Fmi2SetInputDerivatives>
+  public sealed partial class Fmi2SetRealInputDerivatives : pb::IMessage<Fmi2SetRealInputDerivatives>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<Fmi2SetInputDerivatives> _parser = new pb::MessageParser<Fmi2SetInputDerivatives>(() => new Fmi2SetInputDerivatives());
+    private static readonly pb::MessageParser<Fmi2SetRealInputDerivatives> _parser = new pb::MessageParser<Fmi2SetRealInputDerivatives>(() => new Fmi2SetRealInputDerivatives());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<Fmi2SetInputDerivatives> Parser { get { return _parser; } }
+    public static pb::MessageParser<Fmi2SetRealInputDerivatives> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -3347,7 +3432,7 @@ namespace Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2SetInputDerivatives() {
+    public Fmi2SetRealInputDerivatives() {
       OnConstruction();
     }
 
@@ -3355,31 +3440,70 @@ namespace Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2SetInputDerivatives(Fmi2SetInputDerivatives other) : this() {
+    public Fmi2SetRealInputDerivatives(Fmi2SetRealInputDerivatives other) : this() {
+      references_ = other.references_.Clone();
+      orders_ = other.orders_.Clone();
+      values_ = other.values_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2SetInputDerivatives Clone() {
-      return new Fmi2SetInputDerivatives(this);
+    public Fmi2SetRealInputDerivatives Clone() {
+      return new Fmi2SetRealInputDerivatives(this);
+    }
+
+    /// <summary>Field number for the "references" field.</summary>
+    public const int ReferencesFieldNumber = 1;
+    private static readonly pb::FieldCodec<uint> _repeated_references_codec
+        = pb::FieldCodec.ForUInt32(10);
+    private readonly pbc::RepeatedField<uint> references_ = new pbc::RepeatedField<uint>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<uint> References {
+      get { return references_; }
+    }
+
+    /// <summary>Field number for the "orders" field.</summary>
+    public const int OrdersFieldNumber = 2;
+    private static readonly pb::FieldCodec<int> _repeated_orders_codec
+        = pb::FieldCodec.ForInt32(18);
+    private readonly pbc::RepeatedField<int> orders_ = new pbc::RepeatedField<int>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<int> Orders {
+      get { return orders_; }
+    }
+
+    /// <summary>Field number for the "values" field.</summary>
+    public const int ValuesFieldNumber = 3;
+    private static readonly pb::FieldCodec<double> _repeated_values_codec
+        = pb::FieldCodec.ForDouble(26);
+    private readonly pbc::RepeatedField<double> values_ = new pbc::RepeatedField<double>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<double> Values {
+      get { return values_; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as Fmi2SetInputDerivatives);
+      return Equals(other as Fmi2SetRealInputDerivatives);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(Fmi2SetInputDerivatives other) {
+    public bool Equals(Fmi2SetRealInputDerivatives other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
       if (ReferenceEquals(other, this)) {
         return true;
       }
+      if(!references_.Equals(other.references_)) return false;
+      if(!orders_.Equals(other.orders_)) return false;
+      if(!values_.Equals(other.values_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3387,6 +3511,9 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
+      hash ^= references_.GetHashCode();
+      hash ^= orders_.GetHashCode();
+      hash ^= values_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3405,6 +3532,9 @@ namespace Fmi2Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
+      references_.WriteTo(output, _repeated_references_codec);
+      orders_.WriteTo(output, _repeated_orders_codec);
+      values_.WriteTo(output, _repeated_values_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3415,6 +3545,9 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      references_.WriteTo(ref output, _repeated_references_codec);
+      orders_.WriteTo(ref output, _repeated_orders_codec);
+      values_.WriteTo(ref output, _repeated_values_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3425,6 +3558,9 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
+      size += references_.CalculateSize(_repeated_references_codec);
+      size += orders_.CalculateSize(_repeated_orders_codec);
+      size += values_.CalculateSize(_repeated_values_codec);
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -3433,10 +3569,13 @@ namespace Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(Fmi2SetInputDerivatives other) {
+    public void MergeFrom(Fmi2SetRealInputDerivatives other) {
       if (other == null) {
         return;
       }
+      references_.Add(other.references_);
+      orders_.Add(other.orders_);
+      values_.Add(other.values_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -3452,6 +3591,21 @@ namespace Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
+          case 10:
+          case 8: {
+            references_.AddEntriesFrom(input, _repeated_references_codec);
+            break;
+          }
+          case 18:
+          case 16: {
+            orders_.AddEntriesFrom(input, _repeated_orders_codec);
+            break;
+          }
+          case 26:
+          case 25: {
+            values_.AddEntriesFrom(input, _repeated_values_codec);
+            break;
+          }
         }
       }
     #endif
@@ -3467,6 +3621,21 @@ namespace Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
+          case 10:
+          case 8: {
+            references_.AddEntriesFrom(ref input, _repeated_references_codec);
+            break;
+          }
+          case 18:
+          case 16: {
+            orders_.AddEntriesFrom(ref input, _repeated_orders_codec);
+            break;
+          }
+          case 26:
+          case 25: {
+            values_.AddEntriesFrom(ref input, _repeated_values_codec);
+            break;
+          }
         }
       }
     }
@@ -3474,16 +3643,16 @@ namespace Fmi2Proto {
 
   }
 
-  public sealed partial class Fmi2GetOutputDerivatives : pb::IMessage<Fmi2GetOutputDerivatives>
+  public sealed partial class Fmi2GetRealOutputDerivatives : pb::IMessage<Fmi2GetRealOutputDerivatives>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<Fmi2GetOutputDerivatives> _parser = new pb::MessageParser<Fmi2GetOutputDerivatives>(() => new Fmi2GetOutputDerivatives());
+    private static readonly pb::MessageParser<Fmi2GetRealOutputDerivatives> _parser = new pb::MessageParser<Fmi2GetRealOutputDerivatives>(() => new Fmi2GetRealOutputDerivatives());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<Fmi2GetOutputDerivatives> Parser { get { return _parser; } }
+    public static pb::MessageParser<Fmi2GetRealOutputDerivatives> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -3499,7 +3668,7 @@ namespace Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2GetOutputDerivatives() {
+    public Fmi2GetRealOutputDerivatives() {
       OnConstruction();
     }
 
@@ -3507,31 +3676,57 @@ namespace Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2GetOutputDerivatives(Fmi2GetOutputDerivatives other) : this() {
+    public Fmi2GetRealOutputDerivatives(Fmi2GetRealOutputDerivatives other) : this() {
+      references_ = other.references_.Clone();
+      orders_ = other.orders_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2GetOutputDerivatives Clone() {
-      return new Fmi2GetOutputDerivatives(this);
+    public Fmi2GetRealOutputDerivatives Clone() {
+      return new Fmi2GetRealOutputDerivatives(this);
+    }
+
+    /// <summary>Field number for the "references" field.</summary>
+    public const int ReferencesFieldNumber = 1;
+    private static readonly pb::FieldCodec<uint> _repeated_references_codec
+        = pb::FieldCodec.ForUInt32(10);
+    private readonly pbc::RepeatedField<uint> references_ = new pbc::RepeatedField<uint>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<uint> References {
+      get { return references_; }
+    }
+
+    /// <summary>Field number for the "orders" field.</summary>
+    public const int OrdersFieldNumber = 2;
+    private static readonly pb::FieldCodec<int> _repeated_orders_codec
+        = pb::FieldCodec.ForInt32(18);
+    private readonly pbc::RepeatedField<int> orders_ = new pbc::RepeatedField<int>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<int> Orders {
+      get { return orders_; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as Fmi2GetOutputDerivatives);
+      return Equals(other as Fmi2GetRealOutputDerivatives);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(Fmi2GetOutputDerivatives other) {
+    public bool Equals(Fmi2GetRealOutputDerivatives other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
       if (ReferenceEquals(other, this)) {
         return true;
       }
+      if(!references_.Equals(other.references_)) return false;
+      if(!orders_.Equals(other.orders_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3539,6 +3734,8 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
+      hash ^= references_.GetHashCode();
+      hash ^= orders_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3557,6 +3754,8 @@ namespace Fmi2Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
+      references_.WriteTo(output, _repeated_references_codec);
+      orders_.WriteTo(output, _repeated_orders_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3567,6 +3766,8 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      references_.WriteTo(ref output, _repeated_references_codec);
+      orders_.WriteTo(ref output, _repeated_orders_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3577,6 +3778,8 @@ namespace Fmi2Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
+      size += references_.CalculateSize(_repeated_references_codec);
+      size += orders_.CalculateSize(_repeated_orders_codec);
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -3585,10 +3788,12 @@ namespace Fmi2Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(Fmi2GetOutputDerivatives other) {
+    public void MergeFrom(Fmi2GetRealOutputDerivatives other) {
       if (other == null) {
         return;
       }
+      references_.Add(other.references_);
+      orders_.Add(other.orders_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -3604,6 +3809,16 @@ namespace Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
+          case 10:
+          case 8: {
+            references_.AddEntriesFrom(input, _repeated_references_codec);
+            break;
+          }
+          case 18:
+          case 16: {
+            orders_.AddEntriesFrom(input, _repeated_orders_codec);
+            break;
+          }
         }
       }
     #endif
@@ -3619,158 +3834,16 @@ namespace Fmi2Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class GetXXXStatus : pb::IMessage<GetXXXStatus>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<GetXXXStatus> _parser = new pb::MessageParser<GetXXXStatus>(() => new GetXXXStatus());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<GetXXXStatus> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[19]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public GetXXXStatus() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public GetXXXStatus(GetXXXStatus other) : this() {
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public GetXXXStatus Clone() {
-      return new GetXXXStatus(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as GetXXXStatus);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(GetXXXStatus other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(GetXXXStatus other) {
-      if (other == null) {
-        return;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+          case 10:
+          case 8: {
+            references_.AddEntriesFrom(ref input, _repeated_references_codec);
             break;
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+          }
+          case 18:
+          case 16: {
+            orders_.AddEntriesFrom(ref input, _repeated_orders_codec);
             break;
+          }
         }
       }
     }
@@ -3792,7 +3865,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[20]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[19]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4007,7 +4080,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[21]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[20]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4196,7 +4269,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[22]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[21]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4413,7 +4486,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[23]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[22]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4630,7 +4703,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[24]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[23]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4847,7 +4920,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[25]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[24]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5062,7 +5135,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[26]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[25]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5200,6 +5273,440 @@ namespace Fmi2Proto {
 
   }
 
+  public sealed partial class Fmi2GetRealOutputDerivativesReturn : pb::IMessage<Fmi2GetRealOutputDerivativesReturn>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<Fmi2GetRealOutputDerivativesReturn> _parser = new pb::MessageParser<Fmi2GetRealOutputDerivativesReturn>(() => new Fmi2GetRealOutputDerivativesReturn());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<Fmi2GetRealOutputDerivativesReturn> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[26]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2GetRealOutputDerivativesReturn() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2GetRealOutputDerivativesReturn(Fmi2GetRealOutputDerivativesReturn other) : this() {
+      status_ = other.status_;
+      values_ = other.values_.Clone();
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2GetRealOutputDerivativesReturn Clone() {
+      return new Fmi2GetRealOutputDerivativesReturn(this);
+    }
+
+    /// <summary>Field number for the "status" field.</summary>
+    public const int StatusFieldNumber = 1;
+    private global::Fmi2Proto.Fmi2Status status_ = global::Fmi2Proto.Fmi2Status.Ok;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Fmi2Proto.Fmi2Status Status {
+      get { return status_; }
+      set {
+        status_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "values" field.</summary>
+    public const int ValuesFieldNumber = 2;
+    private static readonly pb::FieldCodec<double> _repeated_values_codec
+        = pb::FieldCodec.ForDouble(18);
+    private readonly pbc::RepeatedField<double> values_ = new pbc::RepeatedField<double>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<double> Values {
+      get { return values_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as Fmi2GetRealOutputDerivativesReturn);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(Fmi2GetRealOutputDerivativesReturn other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Status != other.Status) return false;
+      if(!values_.Equals(other.values_)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) hash ^= Status.GetHashCode();
+      hash ^= values_.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Status);
+      }
+      values_.WriteTo(output, _repeated_values_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Status);
+      }
+      values_.WriteTo(ref output, _repeated_values_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Status);
+      }
+      size += values_.CalculateSize(_repeated_values_codec);
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(Fmi2GetRealOutputDerivativesReturn other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        Status = other.Status;
+      }
+      values_.Add(other.values_);
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Status = (global::Fmi2Proto.Fmi2Status) input.ReadEnum();
+            break;
+          }
+          case 18:
+          case 17: {
+            values_.AddEntriesFrom(input, _repeated_values_codec);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Status = (global::Fmi2Proto.Fmi2Status) input.ReadEnum();
+            break;
+          }
+          case 18:
+          case 17: {
+            values_.AddEntriesFrom(ref input, _repeated_values_codec);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class Fmi2GetDirectionalDerivativesReturn : pb::IMessage<Fmi2GetDirectionalDerivativesReturn>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<Fmi2GetDirectionalDerivativesReturn> _parser = new pb::MessageParser<Fmi2GetDirectionalDerivativesReturn>(() => new Fmi2GetDirectionalDerivativesReturn());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<Fmi2GetDirectionalDerivativesReturn> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[27]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2GetDirectionalDerivativesReturn() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2GetDirectionalDerivativesReturn(Fmi2GetDirectionalDerivativesReturn other) : this() {
+      status_ = other.status_;
+      values_ = other.values_.Clone();
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Fmi2GetDirectionalDerivativesReturn Clone() {
+      return new Fmi2GetDirectionalDerivativesReturn(this);
+    }
+
+    /// <summary>Field number for the "status" field.</summary>
+    public const int StatusFieldNumber = 1;
+    private global::Fmi2Proto.Fmi2Status status_ = global::Fmi2Proto.Fmi2Status.Ok;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Fmi2Proto.Fmi2Status Status {
+      get { return status_; }
+      set {
+        status_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "values" field.</summary>
+    public const int ValuesFieldNumber = 2;
+    private static readonly pb::FieldCodec<double> _repeated_values_codec
+        = pb::FieldCodec.ForDouble(18);
+    private readonly pbc::RepeatedField<double> values_ = new pbc::RepeatedField<double>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<double> Values {
+      get { return values_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as Fmi2GetDirectionalDerivativesReturn);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(Fmi2GetDirectionalDerivativesReturn other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Status != other.Status) return false;
+      if(!values_.Equals(other.values_)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) hash ^= Status.GetHashCode();
+      hash ^= values_.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Status);
+      }
+      values_.WriteTo(output, _repeated_values_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Status);
+      }
+      values_.WriteTo(ref output, _repeated_values_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Status);
+      }
+      size += values_.CalculateSize(_repeated_values_codec);
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(Fmi2GetDirectionalDerivativesReturn other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Status != global::Fmi2Proto.Fmi2Status.Ok) {
+        Status = other.Status;
+      }
+      values_.Add(other.values_);
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Status = (global::Fmi2Proto.Fmi2Status) input.ReadEnum();
+            break;
+          }
+          case 18:
+          case 17: {
+            values_.AddEntriesFrom(input, _repeated_values_codec);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Status = (global::Fmi2Proto.Fmi2Status) input.ReadEnum();
+            break;
+          }
+          case 18:
+          case 17: {
+            values_.AddEntriesFrom(ref input, _repeated_values_codec);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   public sealed partial class Fmi2ExtSerializeSlave : pb::IMessage<Fmi2ExtSerializeSlave>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -5214,7 +5721,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[27]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[28]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5366,7 +5873,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[28]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[29]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5555,7 +6062,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[29]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[30]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5707,7 +6214,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[30]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[31]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -5936,7 +6443,7 @@ namespace Fmi2Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[31]; }
+      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[32]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6013,6 +6520,15 @@ namespace Fmi2Proto {
           break;
         case CommandOneofCase.Fmi2SetDebugLogging:
           Fmi2SetDebugLogging = other.Fmi2SetDebugLogging.Clone();
+          break;
+        case CommandOneofCase.Fmi2GetRealOutputDerivatives:
+          Fmi2GetRealOutputDerivatives = other.Fmi2GetRealOutputDerivatives.Clone();
+          break;
+        case CommandOneofCase.Fmi2SetRealInputDerivatives:
+          Fmi2SetRealInputDerivatives = other.Fmi2SetRealInputDerivatives.Clone();
+          break;
+        case CommandOneofCase.Fmi2GetDirectionalDerivatives:
+          Fmi2GetDirectionalDerivatives = other.Fmi2GetDirectionalDerivatives.Clone();
           break;
       }
 
@@ -6253,6 +6769,42 @@ namespace Fmi2Proto {
       }
     }
 
+    /// <summary>Field number for the "Fmi2GetRealOutputDerivatives" field.</summary>
+    public const int Fmi2GetRealOutputDerivativesFieldNumber = 20;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Fmi2Proto.Fmi2GetRealOutputDerivatives Fmi2GetRealOutputDerivatives {
+      get { return commandCase_ == CommandOneofCase.Fmi2GetRealOutputDerivatives ? (global::Fmi2Proto.Fmi2GetRealOutputDerivatives) command_ : null; }
+      set {
+        command_ = value;
+        commandCase_ = value == null ? CommandOneofCase.None : CommandOneofCase.Fmi2GetRealOutputDerivatives;
+      }
+    }
+
+    /// <summary>Field number for the "Fmi2SetRealInputDerivatives" field.</summary>
+    public const int Fmi2SetRealInputDerivativesFieldNumber = 21;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Fmi2Proto.Fmi2SetRealInputDerivatives Fmi2SetRealInputDerivatives {
+      get { return commandCase_ == CommandOneofCase.Fmi2SetRealInputDerivatives ? (global::Fmi2Proto.Fmi2SetRealInputDerivatives) command_ : null; }
+      set {
+        command_ = value;
+        commandCase_ = value == null ? CommandOneofCase.None : CommandOneofCase.Fmi2SetRealInputDerivatives;
+      }
+    }
+
+    /// <summary>Field number for the "Fmi2GetDirectionalDerivatives" field.</summary>
+    public const int Fmi2GetDirectionalDerivativesFieldNumber = 22;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Fmi2Proto.Fmi2GetDirectionalDerivatives Fmi2GetDirectionalDerivatives {
+      get { return commandCase_ == CommandOneofCase.Fmi2GetDirectionalDerivatives ? (global::Fmi2Proto.Fmi2GetDirectionalDerivatives) command_ : null; }
+      set {
+        command_ = value;
+        commandCase_ = value == null ? CommandOneofCase.None : CommandOneofCase.Fmi2GetDirectionalDerivatives;
+      }
+    }
+
     private object command_;
     /// <summary>Enum of possible cases for the "command" oneof.</summary>
     public enum CommandOneofCase {
@@ -6276,6 +6828,9 @@ namespace Fmi2Proto {
       Fmi2ExtSerializeSlave = 17,
       Fmi2ExtDeserializeSlave = 18,
       Fmi2SetDebugLogging = 19,
+      Fmi2GetRealOutputDerivatives = 20,
+      Fmi2SetRealInputDerivatives = 21,
+      Fmi2GetDirectionalDerivatives = 22,
     }
     private CommandOneofCase commandCase_ = CommandOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -6325,6 +6880,9 @@ namespace Fmi2Proto {
       if (!object.Equals(Fmi2ExtSerializeSlave, other.Fmi2ExtSerializeSlave)) return false;
       if (!object.Equals(Fmi2ExtDeserializeSlave, other.Fmi2ExtDeserializeSlave)) return false;
       if (!object.Equals(Fmi2SetDebugLogging, other.Fmi2SetDebugLogging)) return false;
+      if (!object.Equals(Fmi2GetRealOutputDerivatives, other.Fmi2GetRealOutputDerivatives)) return false;
+      if (!object.Equals(Fmi2SetRealInputDerivatives, other.Fmi2SetRealInputDerivatives)) return false;
+      if (!object.Equals(Fmi2GetDirectionalDerivatives, other.Fmi2GetDirectionalDerivatives)) return false;
       if (CommandCase != other.CommandCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -6352,6 +6910,9 @@ namespace Fmi2Proto {
       if (commandCase_ == CommandOneofCase.Fmi2ExtSerializeSlave) hash ^= Fmi2ExtSerializeSlave.GetHashCode();
       if (commandCase_ == CommandOneofCase.Fmi2ExtDeserializeSlave) hash ^= Fmi2ExtDeserializeSlave.GetHashCode();
       if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) hash ^= Fmi2SetDebugLogging.GetHashCode();
+      if (commandCase_ == CommandOneofCase.Fmi2GetRealOutputDerivatives) hash ^= Fmi2GetRealOutputDerivatives.GetHashCode();
+      if (commandCase_ == CommandOneofCase.Fmi2SetRealInputDerivatives) hash ^= Fmi2SetRealInputDerivatives.GetHashCode();
+      if (commandCase_ == CommandOneofCase.Fmi2GetDirectionalDerivatives) hash ^= Fmi2GetDirectionalDerivatives.GetHashCode();
       hash ^= (int) commandCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -6447,6 +7008,18 @@ namespace Fmi2Proto {
         output.WriteRawTag(154, 1);
         output.WriteMessage(Fmi2SetDebugLogging);
       }
+      if (commandCase_ == CommandOneofCase.Fmi2GetRealOutputDerivatives) {
+        output.WriteRawTag(162, 1);
+        output.WriteMessage(Fmi2GetRealOutputDerivatives);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2SetRealInputDerivatives) {
+        output.WriteRawTag(170, 1);
+        output.WriteMessage(Fmi2SetRealInputDerivatives);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2GetDirectionalDerivatives) {
+        output.WriteRawTag(178, 1);
+        output.WriteMessage(Fmi2GetDirectionalDerivatives);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -6533,6 +7106,18 @@ namespace Fmi2Proto {
         output.WriteRawTag(154, 1);
         output.WriteMessage(Fmi2SetDebugLogging);
       }
+      if (commandCase_ == CommandOneofCase.Fmi2GetRealOutputDerivatives) {
+        output.WriteRawTag(162, 1);
+        output.WriteMessage(Fmi2GetRealOutputDerivatives);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2SetRealInputDerivatives) {
+        output.WriteRawTag(170, 1);
+        output.WriteMessage(Fmi2SetRealInputDerivatives);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2GetDirectionalDerivatives) {
+        output.WriteRawTag(178, 1);
+        output.WriteMessage(Fmi2GetDirectionalDerivatives);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -6599,6 +7184,15 @@ namespace Fmi2Proto {
       }
       if (commandCase_ == CommandOneofCase.Fmi2SetDebugLogging) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(Fmi2SetDebugLogging);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2GetRealOutputDerivatives) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(Fmi2GetRealOutputDerivatives);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2SetRealInputDerivatives) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(Fmi2SetRealInputDerivatives);
+      }
+      if (commandCase_ == CommandOneofCase.Fmi2GetDirectionalDerivatives) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(Fmi2GetDirectionalDerivatives);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -6727,6 +7321,24 @@ namespace Fmi2Proto {
           }
           Fmi2SetDebugLogging.MergeFrom(other.Fmi2SetDebugLogging);
           break;
+        case CommandOneofCase.Fmi2GetRealOutputDerivatives:
+          if (Fmi2GetRealOutputDerivatives == null) {
+            Fmi2GetRealOutputDerivatives = new global::Fmi2Proto.Fmi2GetRealOutputDerivatives();
+          }
+          Fmi2GetRealOutputDerivatives.MergeFrom(other.Fmi2GetRealOutputDerivatives);
+          break;
+        case CommandOneofCase.Fmi2SetRealInputDerivatives:
+          if (Fmi2SetRealInputDerivatives == null) {
+            Fmi2SetRealInputDerivatives = new global::Fmi2Proto.Fmi2SetRealInputDerivatives();
+          }
+          Fmi2SetRealInputDerivatives.MergeFrom(other.Fmi2SetRealInputDerivatives);
+          break;
+        case CommandOneofCase.Fmi2GetDirectionalDerivatives:
+          if (Fmi2GetDirectionalDerivatives == null) {
+            Fmi2GetDirectionalDerivatives = new global::Fmi2Proto.Fmi2GetDirectionalDerivatives();
+          }
+          Fmi2GetDirectionalDerivatives.MergeFrom(other.Fmi2GetDirectionalDerivatives);
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -6915,6 +7527,33 @@ namespace Fmi2Proto {
             Fmi2SetDebugLogging = subBuilder;
             break;
           }
+          case 162: {
+            global::Fmi2Proto.Fmi2GetRealOutputDerivatives subBuilder = new global::Fmi2Proto.Fmi2GetRealOutputDerivatives();
+            if (commandCase_ == CommandOneofCase.Fmi2GetRealOutputDerivatives) {
+              subBuilder.MergeFrom(Fmi2GetRealOutputDerivatives);
+            }
+            input.ReadMessage(subBuilder);
+            Fmi2GetRealOutputDerivatives = subBuilder;
+            break;
+          }
+          case 170: {
+            global::Fmi2Proto.Fmi2SetRealInputDerivatives subBuilder = new global::Fmi2Proto.Fmi2SetRealInputDerivatives();
+            if (commandCase_ == CommandOneofCase.Fmi2SetRealInputDerivatives) {
+              subBuilder.MergeFrom(Fmi2SetRealInputDerivatives);
+            }
+            input.ReadMessage(subBuilder);
+            Fmi2SetRealInputDerivatives = subBuilder;
+            break;
+          }
+          case 178: {
+            global::Fmi2Proto.Fmi2GetDirectionalDerivatives subBuilder = new global::Fmi2Proto.Fmi2GetDirectionalDerivatives();
+            if (commandCase_ == CommandOneofCase.Fmi2GetDirectionalDerivatives) {
+              subBuilder.MergeFrom(Fmi2GetDirectionalDerivatives);
+            }
+            input.ReadMessage(subBuilder);
+            Fmi2GetDirectionalDerivatives = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -7101,607 +7740,31 @@ namespace Fmi2Proto {
             Fmi2SetDebugLogging = subBuilder;
             break;
           }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class Fmi2Return : pb::IMessage<Fmi2Return>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<Fmi2Return> _parser = new pb::MessageParser<Fmi2Return>(() => new Fmi2Return());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<Fmi2Return> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Fmi2Proto.UnifmuFmi2Reflection.Descriptor.MessageTypes[32]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2Return() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2Return(Fmi2Return other) : this() {
-      switch (other.ResultCase) {
-        case ResultOneofCase.Fmi2StatusReturn:
-          Fmi2StatusReturn = other.Fmi2StatusReturn.Clone();
-          break;
-        case ResultOneofCase.Fmi2GetRealReturn:
-          Fmi2GetRealReturn = other.Fmi2GetRealReturn.Clone();
-          break;
-        case ResultOneofCase.Fmi2GetIntegerReturn:
-          Fmi2GetIntegerReturn = other.Fmi2GetIntegerReturn.Clone();
-          break;
-        case ResultOneofCase.Fmi2GetBooleanReturn:
-          Fmi2GetBooleanReturn = other.Fmi2GetBooleanReturn.Clone();
-          break;
-        case ResultOneofCase.Fmi2GetStringReturn:
-          Fmi2GetStringReturn = other.Fmi2GetStringReturn.Clone();
-          break;
-        case ResultOneofCase.Fmi2FreeInstanceReturn:
-          Fmi2FreeInstanceReturn = other.Fmi2FreeInstanceReturn.Clone();
-          break;
-        case ResultOneofCase.Fmi2ExtHandshakeReturn:
-          Fmi2ExtHandshakeReturn = other.Fmi2ExtHandshakeReturn.Clone();
-          break;
-        case ResultOneofCase.Fmi2ExtSerializeSlaveReturn:
-          Fmi2ExtSerializeSlaveReturn = other.Fmi2ExtSerializeSlaveReturn.Clone();
-          break;
-      }
-
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Fmi2Return Clone() {
-      return new Fmi2Return(this);
-    }
-
-    /// <summary>Field number for the "Fmi2StatusReturn" field.</summary>
-    public const int Fmi2StatusReturnFieldNumber = 1;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2StatusReturn Fmi2StatusReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2StatusReturn ? (global::Fmi2Proto.Fmi2StatusReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2StatusReturn;
-      }
-    }
-
-    /// <summary>Field number for the "Fmi2GetRealReturn" field.</summary>
-    public const int Fmi2GetRealReturnFieldNumber = 2;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2GetRealReturn Fmi2GetRealReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2GetRealReturn ? (global::Fmi2Proto.Fmi2GetRealReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2GetRealReturn;
-      }
-    }
-
-    /// <summary>Field number for the "Fmi2GetIntegerReturn" field.</summary>
-    public const int Fmi2GetIntegerReturnFieldNumber = 3;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2GetIntegerReturn Fmi2GetIntegerReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn ? (global::Fmi2Proto.Fmi2GetIntegerReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2GetIntegerReturn;
-      }
-    }
-
-    /// <summary>Field number for the "Fmi2GetBooleanReturn" field.</summary>
-    public const int Fmi2GetBooleanReturnFieldNumber = 4;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2GetBooleanReturn Fmi2GetBooleanReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn ? (global::Fmi2Proto.Fmi2GetBooleanReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2GetBooleanReturn;
-      }
-    }
-
-    /// <summary>Field number for the "Fmi2GetStringReturn" field.</summary>
-    public const int Fmi2GetStringReturnFieldNumber = 5;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2GetStringReturn Fmi2GetStringReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2GetStringReturn ? (global::Fmi2Proto.Fmi2GetStringReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2GetStringReturn;
-      }
-    }
-
-    /// <summary>Field number for the "Fmi2FreeInstanceReturn" field.</summary>
-    public const int Fmi2FreeInstanceReturnFieldNumber = 6;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2FreeInstanceReturn Fmi2FreeInstanceReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn ? (global::Fmi2Proto.Fmi2FreeInstanceReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2FreeInstanceReturn;
-      }
-    }
-
-    /// <summary>Field number for the "Fmi2ExtHandshakeReturn" field.</summary>
-    public const int Fmi2ExtHandshakeReturnFieldNumber = 7;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2ExtHandshakeReturn Fmi2ExtHandshakeReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn ? (global::Fmi2Proto.Fmi2ExtHandshakeReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2ExtHandshakeReturn;
-      }
-    }
-
-    /// <summary>Field number for the "Fmi2ExtSerializeSlaveReturn" field.</summary>
-    public const int Fmi2ExtSerializeSlaveReturnFieldNumber = 8;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn Fmi2ExtSerializeSlaveReturn {
-      get { return resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn ? (global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn) result_ : null; }
-      set {
-        result_ = value;
-        resultCase_ = value == null ? ResultOneofCase.None : ResultOneofCase.Fmi2ExtSerializeSlaveReturn;
-      }
-    }
-
-    private object result_;
-    /// <summary>Enum of possible cases for the "result" oneof.</summary>
-    public enum ResultOneofCase {
-      None = 0,
-      Fmi2StatusReturn = 1,
-      Fmi2GetRealReturn = 2,
-      Fmi2GetIntegerReturn = 3,
-      Fmi2GetBooleanReturn = 4,
-      Fmi2GetStringReturn = 5,
-      Fmi2FreeInstanceReturn = 6,
-      Fmi2ExtHandshakeReturn = 7,
-      Fmi2ExtSerializeSlaveReturn = 8,
-    }
-    private ResultOneofCase resultCase_ = ResultOneofCase.None;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ResultOneofCase ResultCase {
-      get { return resultCase_; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearResult() {
-      resultCase_ = ResultOneofCase.None;
-      result_ = null;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as Fmi2Return);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(Fmi2Return other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(Fmi2StatusReturn, other.Fmi2StatusReturn)) return false;
-      if (!object.Equals(Fmi2GetRealReturn, other.Fmi2GetRealReturn)) return false;
-      if (!object.Equals(Fmi2GetIntegerReturn, other.Fmi2GetIntegerReturn)) return false;
-      if (!object.Equals(Fmi2GetBooleanReturn, other.Fmi2GetBooleanReturn)) return false;
-      if (!object.Equals(Fmi2GetStringReturn, other.Fmi2GetStringReturn)) return false;
-      if (!object.Equals(Fmi2FreeInstanceReturn, other.Fmi2FreeInstanceReturn)) return false;
-      if (!object.Equals(Fmi2ExtHandshakeReturn, other.Fmi2ExtHandshakeReturn)) return false;
-      if (!object.Equals(Fmi2ExtSerializeSlaveReturn, other.Fmi2ExtSerializeSlaveReturn)) return false;
-      if (ResultCase != other.ResultCase) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (resultCase_ == ResultOneofCase.Fmi2StatusReturn) hash ^= Fmi2StatusReturn.GetHashCode();
-      if (resultCase_ == ResultOneofCase.Fmi2GetRealReturn) hash ^= Fmi2GetRealReturn.GetHashCode();
-      if (resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn) hash ^= Fmi2GetIntegerReturn.GetHashCode();
-      if (resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn) hash ^= Fmi2GetBooleanReturn.GetHashCode();
-      if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) hash ^= Fmi2GetStringReturn.GetHashCode();
-      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) hash ^= Fmi2FreeInstanceReturn.GetHashCode();
-      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) hash ^= Fmi2ExtHandshakeReturn.GetHashCode();
-      if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) hash ^= Fmi2ExtSerializeSlaveReturn.GetHashCode();
-      hash ^= (int) resultCase_;
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (resultCase_ == ResultOneofCase.Fmi2StatusReturn) {
-        output.WriteRawTag(10);
-        output.WriteMessage(Fmi2StatusReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetRealReturn) {
-        output.WriteRawTag(18);
-        output.WriteMessage(Fmi2GetRealReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Fmi2GetIntegerReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn) {
-        output.WriteRawTag(34);
-        output.WriteMessage(Fmi2GetBooleanReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) {
-        output.WriteRawTag(42);
-        output.WriteMessage(Fmi2GetStringReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
-        output.WriteRawTag(50);
-        output.WriteMessage(Fmi2FreeInstanceReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
-        output.WriteRawTag(58);
-        output.WriteMessage(Fmi2ExtHandshakeReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
-        output.WriteRawTag(66);
-        output.WriteMessage(Fmi2ExtSerializeSlaveReturn);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (resultCase_ == ResultOneofCase.Fmi2StatusReturn) {
-        output.WriteRawTag(10);
-        output.WriteMessage(Fmi2StatusReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetRealReturn) {
-        output.WriteRawTag(18);
-        output.WriteMessage(Fmi2GetRealReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Fmi2GetIntegerReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn) {
-        output.WriteRawTag(34);
-        output.WriteMessage(Fmi2GetBooleanReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) {
-        output.WriteRawTag(42);
-        output.WriteMessage(Fmi2GetStringReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
-        output.WriteRawTag(50);
-        output.WriteMessage(Fmi2FreeInstanceReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
-        output.WriteRawTag(58);
-        output.WriteMessage(Fmi2ExtHandshakeReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
-        output.WriteRawTag(66);
-        output.WriteMessage(Fmi2ExtSerializeSlaveReturn);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (resultCase_ == ResultOneofCase.Fmi2StatusReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2StatusReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetRealReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2GetRealReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2GetIntegerReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2GetBooleanReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2GetStringReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2FreeInstanceReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2ExtHandshakeReturn);
-      }
-      if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Fmi2ExtSerializeSlaveReturn);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(Fmi2Return other) {
-      if (other == null) {
-        return;
-      }
-      switch (other.ResultCase) {
-        case ResultOneofCase.Fmi2StatusReturn:
-          if (Fmi2StatusReturn == null) {
-            Fmi2StatusReturn = new global::Fmi2Proto.Fmi2StatusReturn();
-          }
-          Fmi2StatusReturn.MergeFrom(other.Fmi2StatusReturn);
-          break;
-        case ResultOneofCase.Fmi2GetRealReturn:
-          if (Fmi2GetRealReturn == null) {
-            Fmi2GetRealReturn = new global::Fmi2Proto.Fmi2GetRealReturn();
-          }
-          Fmi2GetRealReturn.MergeFrom(other.Fmi2GetRealReturn);
-          break;
-        case ResultOneofCase.Fmi2GetIntegerReturn:
-          if (Fmi2GetIntegerReturn == null) {
-            Fmi2GetIntegerReturn = new global::Fmi2Proto.Fmi2GetIntegerReturn();
-          }
-          Fmi2GetIntegerReturn.MergeFrom(other.Fmi2GetIntegerReturn);
-          break;
-        case ResultOneofCase.Fmi2GetBooleanReturn:
-          if (Fmi2GetBooleanReturn == null) {
-            Fmi2GetBooleanReturn = new global::Fmi2Proto.Fmi2GetBooleanReturn();
-          }
-          Fmi2GetBooleanReturn.MergeFrom(other.Fmi2GetBooleanReturn);
-          break;
-        case ResultOneofCase.Fmi2GetStringReturn:
-          if (Fmi2GetStringReturn == null) {
-            Fmi2GetStringReturn = new global::Fmi2Proto.Fmi2GetStringReturn();
-          }
-          Fmi2GetStringReturn.MergeFrom(other.Fmi2GetStringReturn);
-          break;
-        case ResultOneofCase.Fmi2FreeInstanceReturn:
-          if (Fmi2FreeInstanceReturn == null) {
-            Fmi2FreeInstanceReturn = new global::Fmi2Proto.Fmi2FreeInstanceReturn();
-          }
-          Fmi2FreeInstanceReturn.MergeFrom(other.Fmi2FreeInstanceReturn);
-          break;
-        case ResultOneofCase.Fmi2ExtHandshakeReturn:
-          if (Fmi2ExtHandshakeReturn == null) {
-            Fmi2ExtHandshakeReturn = new global::Fmi2Proto.Fmi2ExtHandshakeReturn();
-          }
-          Fmi2ExtHandshakeReturn.MergeFrom(other.Fmi2ExtHandshakeReturn);
-          break;
-        case ResultOneofCase.Fmi2ExtSerializeSlaveReturn:
-          if (Fmi2ExtSerializeSlaveReturn == null) {
-            Fmi2ExtSerializeSlaveReturn = new global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn();
-          }
-          Fmi2ExtSerializeSlaveReturn.MergeFrom(other.Fmi2ExtSerializeSlaveReturn);
-          break;
-      }
-
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            global::Fmi2Proto.Fmi2StatusReturn subBuilder = new global::Fmi2Proto.Fmi2StatusReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2StatusReturn) {
-              subBuilder.MergeFrom(Fmi2StatusReturn);
+          case 162: {
+            global::Fmi2Proto.Fmi2GetRealOutputDerivatives subBuilder = new global::Fmi2Proto.Fmi2GetRealOutputDerivatives();
+            if (commandCase_ == CommandOneofCase.Fmi2GetRealOutputDerivatives) {
+              subBuilder.MergeFrom(Fmi2GetRealOutputDerivatives);
             }
             input.ReadMessage(subBuilder);
-            Fmi2StatusReturn = subBuilder;
+            Fmi2GetRealOutputDerivatives = subBuilder;
             break;
           }
-          case 18: {
-            global::Fmi2Proto.Fmi2GetRealReturn subBuilder = new global::Fmi2Proto.Fmi2GetRealReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetRealReturn) {
-              subBuilder.MergeFrom(Fmi2GetRealReturn);
+          case 170: {
+            global::Fmi2Proto.Fmi2SetRealInputDerivatives subBuilder = new global::Fmi2Proto.Fmi2SetRealInputDerivatives();
+            if (commandCase_ == CommandOneofCase.Fmi2SetRealInputDerivatives) {
+              subBuilder.MergeFrom(Fmi2SetRealInputDerivatives);
             }
             input.ReadMessage(subBuilder);
-            Fmi2GetRealReturn = subBuilder;
+            Fmi2SetRealInputDerivatives = subBuilder;
             break;
           }
-          case 26: {
-            global::Fmi2Proto.Fmi2GetIntegerReturn subBuilder = new global::Fmi2Proto.Fmi2GetIntegerReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn) {
-              subBuilder.MergeFrom(Fmi2GetIntegerReturn);
+          case 178: {
+            global::Fmi2Proto.Fmi2GetDirectionalDerivatives subBuilder = new global::Fmi2Proto.Fmi2GetDirectionalDerivatives();
+            if (commandCase_ == CommandOneofCase.Fmi2GetDirectionalDerivatives) {
+              subBuilder.MergeFrom(Fmi2GetDirectionalDerivatives);
             }
             input.ReadMessage(subBuilder);
-            Fmi2GetIntegerReturn = subBuilder;
-            break;
-          }
-          case 34: {
-            global::Fmi2Proto.Fmi2GetBooleanReturn subBuilder = new global::Fmi2Proto.Fmi2GetBooleanReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn) {
-              subBuilder.MergeFrom(Fmi2GetBooleanReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2GetBooleanReturn = subBuilder;
-            break;
-          }
-          case 42: {
-            global::Fmi2Proto.Fmi2GetStringReturn subBuilder = new global::Fmi2Proto.Fmi2GetStringReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) {
-              subBuilder.MergeFrom(Fmi2GetStringReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2GetStringReturn = subBuilder;
-            break;
-          }
-          case 50: {
-            global::Fmi2Proto.Fmi2FreeInstanceReturn subBuilder = new global::Fmi2Proto.Fmi2FreeInstanceReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
-              subBuilder.MergeFrom(Fmi2FreeInstanceReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2FreeInstanceReturn = subBuilder;
-            break;
-          }
-          case 58: {
-            global::Fmi2Proto.Fmi2ExtHandshakeReturn subBuilder = new global::Fmi2Proto.Fmi2ExtHandshakeReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
-              subBuilder.MergeFrom(Fmi2ExtHandshakeReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2ExtHandshakeReturn = subBuilder;
-            break;
-          }
-          case 66: {
-            global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn subBuilder = new global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
-              subBuilder.MergeFrom(Fmi2ExtSerializeSlaveReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2ExtSerializeSlaveReturn = subBuilder;
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            global::Fmi2Proto.Fmi2StatusReturn subBuilder = new global::Fmi2Proto.Fmi2StatusReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2StatusReturn) {
-              subBuilder.MergeFrom(Fmi2StatusReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2StatusReturn = subBuilder;
-            break;
-          }
-          case 18: {
-            global::Fmi2Proto.Fmi2GetRealReturn subBuilder = new global::Fmi2Proto.Fmi2GetRealReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetRealReturn) {
-              subBuilder.MergeFrom(Fmi2GetRealReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2GetRealReturn = subBuilder;
-            break;
-          }
-          case 26: {
-            global::Fmi2Proto.Fmi2GetIntegerReturn subBuilder = new global::Fmi2Proto.Fmi2GetIntegerReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetIntegerReturn) {
-              subBuilder.MergeFrom(Fmi2GetIntegerReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2GetIntegerReturn = subBuilder;
-            break;
-          }
-          case 34: {
-            global::Fmi2Proto.Fmi2GetBooleanReturn subBuilder = new global::Fmi2Proto.Fmi2GetBooleanReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetBooleanReturn) {
-              subBuilder.MergeFrom(Fmi2GetBooleanReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2GetBooleanReturn = subBuilder;
-            break;
-          }
-          case 42: {
-            global::Fmi2Proto.Fmi2GetStringReturn subBuilder = new global::Fmi2Proto.Fmi2GetStringReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2GetStringReturn) {
-              subBuilder.MergeFrom(Fmi2GetStringReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2GetStringReturn = subBuilder;
-            break;
-          }
-          case 50: {
-            global::Fmi2Proto.Fmi2FreeInstanceReturn subBuilder = new global::Fmi2Proto.Fmi2FreeInstanceReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2FreeInstanceReturn) {
-              subBuilder.MergeFrom(Fmi2FreeInstanceReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2FreeInstanceReturn = subBuilder;
-            break;
-          }
-          case 58: {
-            global::Fmi2Proto.Fmi2ExtHandshakeReturn subBuilder = new global::Fmi2Proto.Fmi2ExtHandshakeReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2ExtHandshakeReturn) {
-              subBuilder.MergeFrom(Fmi2ExtHandshakeReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2ExtHandshakeReturn = subBuilder;
-            break;
-          }
-          case 66: {
-            global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn subBuilder = new global::Fmi2Proto.Fmi2ExtSerializeSlaveReturn();
-            if (resultCase_ == ResultOneofCase.Fmi2ExtSerializeSlaveReturn) {
-              subBuilder.MergeFrom(Fmi2ExtSerializeSlaveReturn);
-            }
-            input.ReadMessage(subBuilder);
-            Fmi2ExtSerializeSlaveReturn = subBuilder;
+            Fmi2GetDirectionalDerivatives = subBuilder;
             break;
           }
         }

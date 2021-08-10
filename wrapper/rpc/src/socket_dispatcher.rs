@@ -6,15 +6,17 @@ use crate::fmi2_proto::fmi2_command::Command as c_enum;
 use crate::fmi2_proto::{
     self, Fmi2CancelStep, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
     Fmi2ExtDeserializeSlave, Fmi2ExtSerializeSlaveReturn, Fmi2FreeInstance, Fmi2GetBoolean,
-    Fmi2GetBooleanReturn, Fmi2GetInteger, Fmi2GetIntegerReturn, Fmi2GetReal, Fmi2GetRealReturn,
-    Fmi2GetString, Fmi2GetStringReturn, Fmi2Reset, Fmi2SetBoolean, Fmi2SetDebugLogging,
-    Fmi2SetInteger, Fmi2SetReal, Fmi2SetString, Fmi2SetupExperiment, Fmi2StatusReturn,
+    Fmi2GetBooleanReturn, Fmi2GetDirectionalDerivatives, Fmi2GetInteger, Fmi2GetIntegerReturn,
+    Fmi2GetReal, Fmi2GetRealOutputDerivatives, Fmi2GetRealReturn, Fmi2GetString,
+    Fmi2GetStringReturn, Fmi2Reset, Fmi2SetBoolean, Fmi2SetDebugLogging, Fmi2SetInteger,
+    Fmi2SetReal, Fmi2SetRealInputDerivatives, Fmi2SetString, Fmi2SetupExperiment, Fmi2StatusReturn,
     Fmi2Terminate,
 };
 use crate::fmi2_proto::{Fmi2Command as c_obj, Fmi2ExtSerializeSlave};
 
 use common::Fmi2Status;
 use prost::Message;
+use serde::de::value;
 use serde::Deserialize;
 
 // ################################# SERIALIZATION #########################################
@@ -363,26 +365,6 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
             })
     }
 
-    fn fmi2GetStatus(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
-        todo!()
-    }
-
-    fn fmi2GetRealStatus(&mut self) -> Result<f64, Fmi2CommandDispatcherError> {
-        todo!()
-    }
-
-    fn fmi2GetIntegerStatus(&mut self) -> Result<i32, Fmi2CommandDispatcherError> {
-        todo!()
-    }
-
-    fn fmi2GetBooleanStatus(&mut self) -> Result<bool, Fmi2CommandDispatcherError> {
-        todo!()
-    }
-
-    fn fmi2GetStringStatus(&mut self) -> Result<String, Fmi2CommandDispatcherError> {
-        todo!()
-    }
-
     fn fmi2SetDebugLogging(
         &mut self,
         categories: &[String],
@@ -397,6 +379,78 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
 
         self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
             .map(|s| Fmi2Status::try_from(s.status).unwrap())
+    }
+
+    fn fmi2GetRealOutputDerivatives(
+        &mut self,
+        references: &[u32],
+        orders: &[i32],
+    ) -> Result<(Fmi2Status, Option<Vec<f64>>), Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2GetRealOutputDerivatives(
+                Fmi2GetRealOutputDerivatives {
+                    references: references.to_owned(),
+                    orders: orders.to_owned(),
+                },
+            )),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2GetRealOutputDerivativesReturn>(&cmd)
+            .map(|s| {
+                let status = Fmi2Status::try_from(s.status).unwrap();
+                let values = match s.values.is_empty() {
+                    true => Some(s.values),
+                    false => None,
+                };
+                (status, values)
+            })
+    }
+
+    fn fmi2SetRealInputDerivatives(
+        &mut self,
+        references: &[u32],
+        orders: &[i32],
+        values: &[f64],
+    ) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2SetRealInputDerivatives(
+                Fmi2SetRealInputDerivatives {
+                    references: references.to_owned(),
+                    orders: orders.to_owned(),
+                    values: values.to_owned(),
+                },
+            )),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2StatusReturn>(&cmd)
+            .map(|s| Fmi2Status::try_from(s.status).unwrap())
+    }
+
+    fn fmi2GetDirectionalDerivative(
+        &mut self,
+        references_unknown: &[u32],
+        references_known: &[u32],
+        direction_known: &[f64],
+    ) -> Result<(Fmi2Status, Option<Vec<f64>>), Fmi2CommandDispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2GetDirectionalDerivatives(
+                Fmi2GetDirectionalDerivatives {
+                    references_unknown: references_unknown.to_owned(),
+                    references_known: references_known.to_owned(),
+                    direction_known: direction_known.to_owned(),
+                },
+            )),
+        };
+
+        self.send_and_recv::<_, fmi2_proto::Fmi2GetDirectionalDerivativesReturn>(&cmd)
+            .map(|s| {
+                let status = Fmi2Status::try_from(s.status).unwrap();
+                let values = match s.values.is_empty() {
+                    true => Some(s.values),
+                    false => None,
+                };
+                (status, values)
+            })
     }
 }
 

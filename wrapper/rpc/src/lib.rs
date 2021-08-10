@@ -94,19 +94,29 @@ pub trait Fmi2CommandDispatcher {
         references: &[u32],
     ) -> Result<(Fmi2Status, Option<Vec<String>>), Fmi2CommandDispatcherError>;
 
-    fn fmi2GetStatus(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
-
-    fn fmi2GetRealStatus(&mut self) -> Result<f64, Fmi2CommandDispatcherError>;
-
-    fn fmi2GetIntegerStatus(&mut self) -> Result<i32, Fmi2CommandDispatcherError>;
-
-    fn fmi2GetBooleanStatus(&mut self) -> Result<bool, Fmi2CommandDispatcherError>;
-
-    fn fmi2GetStringStatus(&mut self) -> Result<String, Fmi2CommandDispatcherError>;
-
     fn fmi2SetDebugLogging(
         &mut self,
         categories: &[String],
         logging_on: bool,
     ) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
+
+    fn fmi2GetRealOutputDerivatives(
+        &mut self,
+        references: &[u32],
+        order: &[i32],
+    ) -> Result<(Fmi2Status, Option<Vec<f64>>), Fmi2CommandDispatcherError>;
+
+    fn fmi2SetRealInputDerivatives(
+        &mut self,
+        references: &[u32],
+        orders: &[i32],
+        values: &[f64],
+    ) -> Result<Fmi2Status, Fmi2CommandDispatcherError>;
+
+    fn fmi2GetDirectionalDerivative(
+        &mut self,
+        references_unknown: &[u32],
+        references_known: &[u32],
+        direction_known: &[f64],
+    ) -> Result<(Fmi2Status, Option<Vec<f64>>), Fmi2CommandDispatcherError>;
 }

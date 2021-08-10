@@ -36,6 +36,8 @@ use std::os::raw::c_ulonglong;
 use std::os::raw::c_void;
 use std::panic::RefUnwindSafe;
 use std::panic::UnwindSafe;
+use std::slice::from_raw_parts;
+use std::slice::from_raw_parts_mut;
 
 use crate::config::LaunchConfig;
 use crate::md::parse_model_description;
@@ -108,6 +110,7 @@ pub struct Slave {
 
     last_successful_time: Option<f64>,
     pending_message: Option<String>,
+    dostep_status: Option<Fmi2Status>,
 }
 //  + Send + UnwindSafe + RefUnwindSafe
 impl RefUnwindSafe for Slave {}
@@ -122,6 +125,7 @@ impl Slave {
             popen,
             last_successful_time: None,
             pending_message: None,
+            dostep_status: None,
         }
     }
 }
@@ -447,8 +451,8 @@ pub fn fmi2GetReal(
     nvr: size_t,
     values: *mut c_double,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
-    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
+    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
     match slave.dispatcher.fmi2GetReal(&references) {
         Ok((status, values)) => {
@@ -469,8 +473,8 @@ pub fn fmi2GetInteger(
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
-    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
+    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
     match slave.dispatcher.fmi2GetInteger(&references) {
         Ok((status, values)) => {
@@ -491,8 +495,8 @@ pub fn fmi2GetBoolean(
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
-    let values_out = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
+    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
     match slave.dispatcher.fmi2GetBoolean(&references) {
         Ok((status, values)) => {
@@ -528,7 +532,7 @@ pub fn fmi2GetString(
     nvr: size_t,
     values: *mut *const c_char,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
 
     match slave.dispatcher.fmi2GetString(&references) {
         Ok((status, vals)) => {
@@ -560,8 +564,8 @@ pub fn fmi2SetReal(
     nvr: size_t,
     values: *const c_double,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
-    let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
+    let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
 
     slave
         .dispatcher
@@ -577,8 +581,8 @@ pub fn fmi2SetInteger(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
-    let values = unsafe { std::slice::from_raw_parts(values, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
+    let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
 
     slave
         .dispatcher
@@ -597,8 +601,8 @@ pub fn fmi2SetBoolean(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(references, nvr) }.to_owned();
-    let values: Vec<bool> = unsafe { std::slice::from_raw_parts(values, nvr) }
+    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let values: Vec<bool> = unsafe { from_raw_parts(values, nvr) }
         .iter()
         .map(|v| *v == 0)
         .collect();
@@ -616,10 +620,10 @@ pub fn fmi2SetString(
     nvr: size_t,
     values: *const *const c_char,
 ) -> Fmi2Status {
-    let references = unsafe { std::slice::from_raw_parts(vr, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
 
     let values: Vec<String> = unsafe {
-        std::slice::from_raw_parts(values, nvr)
+        from_raw_parts(values, nvr)
             .iter()
             .map(|v| CStr::from_ptr(*v).to_str().unwrap().to_owned())
             .collect()
@@ -634,44 +638,78 @@ pub fn fmi2SetString(
 
 #[ffi_export]
 pub fn fmi2GetDirectionalDerivative(
-    c: *const c_int,
-    unknown_refs: *const c_int,
+    slave: &mut Slave,
+    unknown_refs: *const c_uint,
     nvr_unknown: size_t,
-    known_refs: *const c_int,
+    known_refs: *const c_uint,
     nvr_known: size_t,
-    values_known: *const c_double,
-    values_unkown: *mut c_double,
+    direction_known: *const c_double,
+    direction_unknown: *mut c_double,
 ) -> Fmi2Status {
-    todo!();
+    let references_unknown = unsafe { from_raw_parts(unknown_refs, nvr_known) };
+    let references_known = unsafe { from_raw_parts(known_refs, nvr_known) };
+    let direction_known = unsafe { from_raw_parts(direction_known, nvr_known) };
+    let direction_unknown = unsafe { from_raw_parts_mut(direction_unknown, nvr_known) };
 
-    Fmi2Status::Fmi2Error
+    match slave.dispatcher.fmi2GetDirectionalDerivative(
+        references_known,
+        references_unknown,
+        direction_known,
+    ) {
+        Ok((status, values)) => match values {
+            Some(values) => {
+                direction_unknown.copy_from_slice(&values);
+                status
+            }
+            None => todo!(),
+        },
+        Err(e) => Fmi2Status::Fmi2Error,
+    }
 }
 
-/// p. 104
 #[ffi_export]
 pub fn fmi2SetRealInputDerivatives(
     slave: &mut Slave,
-    vr: *const c_uint,
+    references: *const c_uint,
     nvr: size_t,
-    order: *const c_int,
+    orders: *const c_int,
     values: *const c_double,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { from_raw_parts(references, nvr) };
+    let orders = unsafe { from_raw_parts(orders, nvr) };
+    let values = unsafe { from_raw_parts(values, nvr) };
 
-    Fmi2Status::Fmi2Error
+    slave
+        .dispatcher
+        .fmi2SetRealInputDerivatives(references, orders, values)
+        .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
-/// p. 104
 #[ffi_export]
 pub fn fmi2GetRealOutputDerivatives(
     slave: &mut Slave,
-    vr: *const c_uint,
+    references: *const c_uint,
     nvr: size_t,
-    order: *const c_int,
+    orders: *const c_int,
+    values: *mut c_double,
 ) -> Fmi2Status {
-    todo!();
+    let references = unsafe { from_raw_parts(references, nvr) };
+    let orders = unsafe { from_raw_parts(orders, nvr) };
+    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
-    Fmi2Status::Fmi2Error
+    match slave
+        .dispatcher
+        .fmi2GetRealOutputDerivatives(references, orders)
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi2Status::Fmi2Error,
+    }
 }
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
@@ -745,7 +783,7 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     size: size_t,
     state: &mut repr_c::Box<Option<SlaveState>>,
 ) -> Fmi2Status {
-    let serialized_state = unsafe { std::slice::from_raw_parts(serialized_state, size) };
+    let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
 
     *state = repr_c::Box::new(Some(SlaveState::new(serialized_state)));
     Fmi2Status::Fmi2OK
@@ -770,15 +808,13 @@ pub fn fmi2GetStatus(
     value: *mut Fmi2Status,
 ) -> Fmi2Status {
     match status_kind {
-        Fmi2StatusKind::Fmi2DoStepStatus => {
-            let status = slave
-                .dispatcher
-                .fmi2GetStatus()
-                .unwrap_or(Fmi2Status::Fmi2Error);
-
-            unsafe { *value = status };
-            Fmi2Status::Fmi2OK
-        }
+        Fmi2StatusKind::Fmi2DoStepStatus => match slave.dostep_status {
+            Some(s) => s,
+            None => {
+                eprintln!("'fmi2GetStatus' called with fmi2StatusKind 'Fmi2DoStepStatus' before 'fmi2DoStep' has returned pending.");
+                Fmi2Status::Fmi2Error
+            }
+        },
         _ => {
             eprintln!(
                 "'fmi2GetStatus' only accepts the status kind '{:?}'",
