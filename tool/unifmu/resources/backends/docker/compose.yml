@@ -3,7 +3,7 @@ services:
     python:
         image: ${UNIFMU_GUID}
         build: .
-        command: bash deploy.sh
+        command: python deploy.py 
         environment: 
             - UNIFMU_GUID
             - UNIFMU_INSTANCE_NAME
