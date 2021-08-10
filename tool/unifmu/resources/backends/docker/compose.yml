@@ -10,4 +10,5 @@ services:
             - UNIFMU_VISIBLE
             - UNIFMU_DISPATCHER_ENDPOINT
             - UNIFMU_REFS_TO_ATTRS
-        network_mode: "host"
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
