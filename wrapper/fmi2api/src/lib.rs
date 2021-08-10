@@ -451,10 +451,10 @@ pub fn fmi2GetReal(
     nvr: size_t,
     values: *mut c_double,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(references, nvr) };
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
-    match slave.dispatcher.fmi2GetReal(&references) {
+    match slave.dispatcher.fmi2GetReal(references) {
         Ok((status, values)) => {
             match values {
                 Some(values) => values_out.copy_from_slice(&values),
@@ -473,10 +473,10 @@ pub fn fmi2GetInteger(
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(references, nvr) };
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
-    match slave.dispatcher.fmi2GetInteger(&references) {
+    match slave.dispatcher.fmi2GetInteger(references) {
         Ok((status, values)) => {
             match values {
                 Some(values) => values_out.copy_from_slice(&values),
@@ -495,10 +495,10 @@ pub fn fmi2GetBoolean(
     nvr: size_t,
     values: *mut c_int,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(references, nvr) };
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
-    match slave.dispatcher.fmi2GetBoolean(&references) {
+    match slave.dispatcher.fmi2GetBoolean(references) {
         Ok((status, values)) => {
             match values {
                 Some(values) => {
@@ -532,9 +532,9 @@ pub fn fmi2GetString(
     nvr: size_t,
     values: *mut *const c_char,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(references, nvr) };
 
-    match slave.dispatcher.fmi2GetString(&references) {
+    match slave.dispatcher.fmi2GetString(references) {
         Ok((status, vals)) => {
             match vals {
                 Some(vals) => {
@@ -564,12 +564,12 @@ pub fn fmi2SetReal(
     nvr: size_t,
     values: *const c_double,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
-    let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(vr, nvr) };
+    let values = unsafe { from_raw_parts(values, nvr) };
 
     slave
         .dispatcher
-        .fmi2SetReal(&references, &values)
+        .fmi2SetReal(references, values)
         .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
@@ -581,12 +581,12 @@ pub fn fmi2SetInteger(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
-    let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(vr, nvr) };
+    let values = unsafe { from_raw_parts(values, nvr) };
 
     slave
         .dispatcher
-        .fmi2SetInteger(&references, &values)
+        .fmi2SetInteger(references, values)
         .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
@@ -601,7 +601,7 @@ pub fn fmi2SetBoolean(
     nvr: size_t,
     values: *const c_int,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(references, nvr) };
     let values: Vec<bool> = unsafe { from_raw_parts(values, nvr) }
         .iter()
         .map(|v| *v == 0)
@@ -609,7 +609,7 @@ pub fn fmi2SetBoolean(
 
     slave
         .dispatcher
-        .fmi2SetBoolean(&references, &values)
+        .fmi2SetBoolean(references, &values)
         .unwrap_or(Fmi2Status::Fmi2Error)
 }
 
@@ -620,7 +620,7 @@ pub fn fmi2SetString(
     nvr: size_t,
     values: *const *const c_char,
 ) -> Fmi2Status {
-    let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
+    let references = unsafe { from_raw_parts(vr, nvr) };
 
     let values: Vec<String> = unsafe {
         from_raw_parts(values, nvr)
@@ -630,7 +630,7 @@ pub fn fmi2SetString(
     };
     slave
         .dispatcher
-        .fmi2SetString(&references, &values)
+        .fmi2SetString(references, &values)
         .unwrap_or(Fmi2Status::Fmi2Error)
 }
 

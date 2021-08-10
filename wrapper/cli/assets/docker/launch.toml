@@ -1,0 +1,4 @@
+
+linux = ["docker-compose", "up"]
+macos = ["docker-compose", "up"]
+windows = ["docker-compose", "up"]

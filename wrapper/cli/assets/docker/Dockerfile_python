@@ -1,0 +1,8 @@
+FROM python:3.8
+
+RUN pip install --upgrade pip
+RUN pip install zmq protobuf
+
+COPY container_bundle resources
+
+WORKDIR /resources

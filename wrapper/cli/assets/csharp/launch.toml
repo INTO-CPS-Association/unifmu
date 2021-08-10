@@ -1,0 +1,3 @@
+linux = ["dotnet", "run", "launch.cs"]
+macos = ["dotnet", "run", "launch.cs"]
+windows = ["dotnet", "run", "launch.cs"]

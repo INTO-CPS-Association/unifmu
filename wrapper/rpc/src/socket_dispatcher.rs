@@ -37,7 +37,6 @@ pub enum SerializationFormat {
 /// * A message queue such as zmq, where the framing is built into the abstraction.
 /// * A TCP socket coupled with a framing protocol.
 pub struct Fmi2SocketDispatcher<T: FramedSocket> {
-    format: SerializationFormat,
     socket: T,
 }
 
@@ -53,20 +52,20 @@ pub fn new_boxed_socket_dispatcher(
         ..Default::default()
     };
 
-    let dispatcher = Fmi2SocketDispatcher { format, socket };
+    let dispatcher = Fmi2SocketDispatcher { socket };
 
     (endpoint, Box::new(dispatcher))
 }
 
 #[allow(non_snake_case)]
 impl<T: FramedSocket> Fmi2SocketDispatcher<T> {
-    pub fn new(format: SerializationFormat) -> (String, Fmi2SocketDispatcher<zmq::Socket>) {
+    pub fn new() -> (String, Fmi2SocketDispatcher<zmq::Socket>) {
         let ctx = zmq::Context::new();
         let socket = ctx.socket(zmq::SocketType::REP).unwrap();
         socket.bind("tcp://*:0").unwrap();
         let endpoint = socket.get_last_endpoint().unwrap().unwrap();
 
-        let dispatcher = Fmi2SocketDispatcher { format, socket };
+        let dispatcher = Fmi2SocketDispatcher { socket };
 
         (endpoint, dispatcher)
     }
