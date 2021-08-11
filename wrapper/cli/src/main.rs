@@ -46,12 +46,12 @@ enum Subcommands {
     Validate {},
 }
 #[derive(RustEmbed)]
-#[folder = "assets/"]
-struct Assets;
+#[folder = "assets/common"]
+struct AssetsCommon;
 
 #[derive(RustEmbed)]
 #[folder = "assets/python"]
-struct PythonAssets;
+struct AssetsPython;
 
 // lazy_static! {
 //     static ref HASHMAP: HashMap<Language, &'static str> = {
@@ -64,7 +64,7 @@ struct PythonAssets;
 // }
 
 fn main() {
-    let assets: Vec<String> = Assets::iter().map(|f| String::from(f)).collect();
+    let assets: Vec<String> = AssetsCommon::iter().map(|f| String::from(f)).collect();
     println!("I got all these assets: {:?}", assets);
 
     let opt = Subcommands::from_args();
@@ -112,26 +112,22 @@ fn main() {
 
             let md = tmpdir.path().join("modelDescription.xml");
 
-            std::fs::write(
-                &md,
-                Assets::get("common/modelDescription.xml").unwrap().data,
-            )
-            .unwrap();
+            std::fs::write(&md, AssetsCommon::get("modelDescription.xml").unwrap().data).unwrap();
 
             info!("{:?}", &bin_win);
-            std::fs::write(bin_win, Assets::get("common/unifmu.dll").unwrap().data).unwrap();
-            std::fs::write(bin_linux, Assets::get("common/unifmu.so").unwrap().data).unwrap();
-            std::fs::write(bin_macos, Assets::get("common/unifmu.dylib").unwrap().data).unwrap();
+            std::fs::write(bin_win, AssetsCommon::get("unifmu.dll").unwrap().data).unwrap();
+            std::fs::write(bin_linux, AssetsCommon::get("unifmu.so").unwrap().data).unwrap();
+            std::fs::write(bin_macos, AssetsCommon::get("unifmu.dylib").unwrap().data).unwrap();
 
             let resources = tmpdir.path().join("resources");
 
             match language {
                 Language::Python => {
-                    for f in PythonAssets::iter() {
+                    for f in AssetsPython::iter() {
                         let out = resources.join(&*f);
                         info!("writing resource: {:?} to {:?}", f, out);
                         std::fs::create_dir_all(&out.parent().unwrap()).unwrap();
-                        std::fs::write(resources.join(&*f), PythonAssets::get(&*f).unwrap().data)
+                        std::fs::write(resources.join(&*f), AssetsPython::get(&*f).unwrap().data)
                             .unwrap();
                     }
                 }
