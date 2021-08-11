@@ -21,9 +21,8 @@ mod tests {
         prelude::repr_c,
     };
     use std::{
-        collections::HashMap,
         ffi::{CStr, CString},
-        path::{self, Path},
+        path::Path,
         ptr::null_mut,
     };
     use tempfile::TempDir;

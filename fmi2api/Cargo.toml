@@ -25,6 +25,7 @@ subprocess = "*"
 quick-xml = { version = "*", features = ["serialize"] }
 prost = "*"
 zmq = "*"
+zeromq = "*"
 serde_bytes = "*"
 serde_repr = "*"
 

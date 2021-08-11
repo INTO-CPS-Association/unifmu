@@ -1,7 +1,5 @@
 use std::convert::TryFrom;
 
-use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
-
 use crate::fmi2_proto::fmi2_command::Command as c_enum;
 use crate::fmi2_proto::{
     self, Fmi2CancelStep, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
@@ -13,10 +11,12 @@ use crate::fmi2_proto::{
     Fmi2Terminate,
 };
 use crate::fmi2_proto::{Fmi2Command as c_obj, Fmi2ExtSerializeSlave};
+use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 
 use crate::Fmi2Status;
 use prost::Message;
 use serde::Deserialize;
+use zeromq::BlockingSend;
 
 // ################################# SERIALIZATION #########################################
 
@@ -455,16 +455,28 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
 /// * Message queues such as zmq, for which framing is a natural part of the abstraction.
 /// * TCP socket paired with a framing protocol.
 pub trait FramedSocket {
-    fn send(&self, buf: &[u8]);
+    fn send(&mut self, buf: &[u8]);
     fn recv_bytes(&self) -> Vec<u8>;
 }
 
 impl FramedSocket for zmq::Socket {
-    fn send(&self, buf: &[u8]) {
+    fn send(&mut self, buf: &[u8]) {
         zmq::Socket::send(self, buf, 0).unwrap()
     }
 
     fn recv_bytes(&self) -> Vec<u8> {
         self.recv_bytes(0).unwrap()
+    }
+}
+
+impl FramedSocket for zeromq::RepSocket {
+    fn send(&mut self, buf: &[u8]) {
+        let test = BlockingSend::send(self, buf.to_owned().into());
+
+        todo!();
+    }
+
+    fn recv_bytes(&self) -> Vec<u8> {
+        todo!()
     }
 }
