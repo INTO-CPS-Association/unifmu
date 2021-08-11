@@ -7,4 +7,3 @@ WORKDIR /resources
 COPY backend.py .
 COPY model.py .
 COPY schemas /schemas
-

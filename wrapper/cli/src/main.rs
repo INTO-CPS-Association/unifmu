@@ -1,7 +1,6 @@
 use std::{
-    collections::HashMap,
-    option,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use clap::arg_enum;
@@ -24,7 +23,10 @@ enum Language {
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "UniFMU", about = "An example of StructOpt usage.")]
+#[structopt(
+    name = "UniFMU",
+    about = "Generate FMUs in one of several source languages."
+)]
 enum Subcommands {
     /// Create a new FMU using the specified source language
     Generate {
@@ -45,26 +47,54 @@ enum Subcommands {
 
     Validate {},
 }
-#[derive(RustEmbed)]
-#[folder = "assets/common"]
-struct AssetsCommon;
+
+struct LanguageAssets {
+    resources: Vec<(&'static str, &'static str)>,
+    docker: Vec<(&'static str, &'static str)>,
+}
+
+lazy_static! {
+    static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
+        resources: vec![
+            ("python/backend.py", "backend.py"),
+            ("python/model.py", "model.py"),
+            (
+                "python/schemas/unifmu_fmi2_pb2.py",
+                "schemas/unifmu_fmi2_pb2.py"
+            ),
+            ("python/launch.toml", "launch.toml"),
+            ("python/README.md", "README.md"),
+        ],
+        docker: vec![
+            ("docker/Dockerfile_python", "Dockerfile"),
+            ("docker/compose_python.yml", "compose.yml"),
+            ("docker/launch.toml", "launch.toml"),
+            ("docker/README.md", "README_DOCKER.md"),
+        ],
+    };
+    static ref CSHARPASSETS: LanguageAssets = LanguageAssets {
+        resources: vec![
+            ("csharp/backend.cs", "backend.cs"),
+            ("csharp/model.cs", "model.cs"),
+            ("csharp/schemas/UnifmuFmi2.cs", "schemas/UnifmuFmi2.cs"),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
+        ],
+        docker: vec![
+            ("docker/Dockerfile_csharp", "Dockerfile"),
+            ("docker/compose_csharp.yml", "compose.yml"),
+            ("docker/launch.toml", "launch.toml"),
+            ("docker/README.md", "README_DOCKER.md"),
+        ],
+    };
+}
 
 #[derive(RustEmbed)]
-#[folder = "assets/python"]
-struct AssetsPython;
-
-// lazy_static! {
-//     static ref HASHMAP: HashMap<Language, &'static str> = {
-//         let mut m = HashMap::new();
-//         m.insert(Language::Python, ("backend.py", "backend.py"));
-//         m.insert(Language::Python, "backend.py");
-//         m.insert(2, "baz");
-//         m
-//     };
-// }
+#[folder = "assets"]
+struct Assets;
 
 fn main() {
-    let assets: Vec<String> = AssetsCommon::iter().map(|f| String::from(f)).collect();
+    let assets: Vec<String> = Assets::iter().map(|f| String::from(f)).collect();
     println!("I got all these assets: {:?}", assets);
 
     let opt = Subcommands::from_args();
@@ -90,6 +120,7 @@ fn main() {
                 outpath
             );
 
+            // copy common files to root directory and binaries
             let bin_macos = tmpdir
                 .path()
                 .join("binaries")
@@ -112,35 +143,58 @@ fn main() {
 
             let md = tmpdir.path().join("modelDescription.xml");
 
-            std::fs::write(&md, AssetsCommon::get("modelDescription.xml").unwrap().data).unwrap();
+            std::fs::write(
+                &md,
+                Assets::get("common/modelDescription.xml").unwrap().data,
+            )
+            .unwrap();
 
             info!("{:?}", &bin_win);
-            std::fs::write(bin_win, AssetsCommon::get("unifmu.dll").unwrap().data).unwrap();
-            std::fs::write(bin_linux, AssetsCommon::get("unifmu.so").unwrap().data).unwrap();
-            std::fs::write(bin_macos, AssetsCommon::get("unifmu.dylib").unwrap().data).unwrap();
+            std::fs::write(bin_win, Assets::get("common/unifmu.dll").unwrap().data).unwrap();
+            std::fs::write(bin_linux, Assets::get("common/unifmu.so").unwrap().data).unwrap();
+            std::fs::write(bin_macos, Assets::get("common/unifmu.dylib").unwrap().data).unwrap();
 
-            let resources = tmpdir.path().join("resources");
+            // copy language specific files to 'resources' directory
 
-            match language {
-                Language::Python => {
-                    for f in AssetsPython::iter() {
-                        let out = resources.join(&*f);
-                        info!("writing resource: {:?} to {:?}", f, out);
-                        std::fs::create_dir_all(&out.parent().unwrap()).unwrap();
-                        std::fs::write(resources.join(&*f), AssetsPython::get(&*f).unwrap().data)
-                            .unwrap();
-                    }
+            let copy_to_resources = |assets: &LanguageAssets| {
+                let mut assets_all = assets.resources.to_owned();
+
+                if dockerize {
+                    assets_all.extend(assets.docker.to_owned())
+                };
+
+                for (src, dst) in assets_all {
+                    let dst_resources = tmpdir.path().join("resources").join(dst);
+
+                    info!("copying resource {:?} to {:?}", src, dst_resources);
+                    std::fs::create_dir_all(dst_resources.parent().unwrap()).unwrap();
+                    std::fs::write(dst_resources, Assets::get(src).unwrap().data).unwrap();
                 }
-                Language::CSharp => todo!(),
-                Language::Matlab => todo!(),
-                Language::Java => todo!(),
             };
 
-            let mut options = CopyOptions::default();
-            options.copy_inside = true;
-            options.content_only = true;
-            options.overwrite = true;
-            fs_extra::dir::move_dir(tmpdir, outpath, &options).unwrap();
+            match language {
+                Language::Python => copy_to_resources(&PYTHONASSETS),
+
+                Language::CSharp => copy_to_resources(&CSHARPASSETS),
+
+                Language::Matlab => copy_to_resources(&PYTHONASSETS),
+
+                Language::Java => copy_to_resources(&PYTHONASSETS),
+            };
+
+            match zipped {
+                // zip to temporary, change extension from 'zip' to 'fmu', then copy to output directory
+                true => todo!(),
+
+                // copy from temporary directory to output directory
+                false => {
+                    let mut options = CopyOptions::default();
+                    options.copy_inside = true;
+                    options.content_only = true;
+                    options.overwrite = true;
+                    fs_extra::dir::move_dir(tmpdir, outpath, &options).unwrap();
+                }
+            }
         }
         Subcommands::Validate {} => todo!(),
     }
