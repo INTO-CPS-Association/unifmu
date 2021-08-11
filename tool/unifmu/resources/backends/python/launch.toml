@@ -1,3 +1,0 @@
-linux = ["python3", "backend.py"]
-macos = ["python3", "backend.py"]
-windows = ["python", "backend.py"]

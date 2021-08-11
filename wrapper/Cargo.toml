@@ -1,3 +1,0 @@
-[workspace]
-
-members = ["common", "fmi2api", "rpc", "wrapper-tests", "cli"]

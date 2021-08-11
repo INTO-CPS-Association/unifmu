@@ -1,0 +1,30 @@
+[package]
+authors = ["Christian Legaard <clegaard@outlook.com>"]
+edition = "2018"
+name = "unifmu"
+version = "0.0.1"
+
+
+[dependencies]
+
+clap = "*"
+# dlopen = "*"
+# dlopen_derive = "*"
+
+libc = "*"
+lazy_static = "*"
+log = "*"
+num_enum = "*"
+env_logger = "*"
+fs_extra = "*"
+# relative-path = "*"
+# serde = { version = "*", features = ["derive"] }
+# serde-xml-rs = "*"
+# serde_derive = "*"
+# serde_path_to_error = "*"
+structopt = "*"
+tempfile = "*"
+rust-embed = "6.0.0"
+# tracing = "*"
+# url = "*"
+# zip = { version = "*", default-features = false }

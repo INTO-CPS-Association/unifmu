@@ -1,3 +1,0 @@
-linux = ["python3", "matlab_proxy.py"]
-macos = ["python3", "matlab_proxy.py"]
-windows = ["python", "matlab_proxy.py"]
