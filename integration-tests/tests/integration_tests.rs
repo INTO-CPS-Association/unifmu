@@ -1,5 +1,7 @@
 #![allow(non_snake_case)]
 
+use unifmu::generate;
+
 #[cfg(test)]
 mod tests {
 
@@ -21,41 +23,34 @@ mod tests {
     use std::{
         collections::HashMap,
         ffi::{CStr, CString},
+        path::{self, Path},
         ptr::null_mut,
     };
+    use tempfile::TempDir;
+    use unifmu::Language;
+    use url::Url;
 
     use super::*;
 
-    /// credits https://stackoverflow.com/questions/62118412/is-it-possible-to-build-a-hashmap-of-str-referencing-environment-variables
-    fn os_env_hashmap() -> HashMap<String, String> {
-        let mut map = HashMap::new();
-        use std::env;
-        for (key, val) in env::vars_os() {
-            // Use pattern bindings instead of testing .is_some() followed by .unwrap()
-            if let (Ok(k), Ok(v)) = (key.into_string(), val.into_string()) {
-                map.insert(k, v);
-            }
-        }
-        return map;
+    #[test]
+    fn test_placeholder_python() {
+        let tmpdir = TempDir::new().unwrap();
+        generate(&Language::Python, tmpdir.path(), false, false).unwrap();
+        test_placeholder_functionality(tmpdir.path());
     }
 
     #[test]
-    fn test_adder() {
-        let env_values = os_env_hashmap();
-        let resource_uri = env_values.get("UNIFMU_ADDER_RESOURCES_URI")
-        .expect("To run integration tests an environement variable must be defined `UNIFMU_ADDER_RESOURCES_URI`. Please invoke `python build.py --update-wrapper ----test-integration` in the root of the repo instead of running the tests manually");
-        let shared_object_path = env_values.get("UNIFMU_ADDER_LIBRARY")
-        .expect(
-            "To run integration tests an environement variable must be defined `UNIFMU_ADDER_LIBRARY`. Please invoke `python build.py --update-wrapper ----test-integration` in the root of the repo instead of running the tests manually",
-        );
+    fn test_placeholder_csharp() {
+        let tmpdir = TempDir::new().unwrap();
+        generate(&Language::CSharp, tmpdir.path(), false, false).unwrap();
+        test_placeholder_functionality(tmpdir.path());
+    }
 
-        format!("{:?}", resource_uri);
-        format!("{:?}", shared_object_path);
+    fn test_placeholder_functionality(rootdir: &Path) {
+        let resources_path = rootdir.join("resources");
+        let url = Url::from_file_path(resources_path).unwrap();
+        let resource_uri = url.as_str();
 
-        // let f: Container<Fmi2Api> = unsafe { Container::load(shared_object_path) }
-        //     .expect("Could not open library or load symbols");
-
-        use safer_ffi::c;
         assert_eq!(fmi2GetTypesPlatform(), c!("default")); // rust analyzer might flag c! as undefined macro
         assert_eq!(fmi2GetVersion(), c!("2.0"));
 

@@ -1,10 +1,6 @@
 use clap::arg_enum;
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::path::Path;
 
-use env_logger::Builder;
 use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use log::info;
@@ -66,6 +62,7 @@ lazy_static! {
     };
 }
 
+#[derive(Debug)]
 pub enum GenerateError {
     Error,
 }
@@ -142,9 +139,9 @@ pub fn generate(
 
         Language::CSharp => copy_to_resources(&CSHARPASSETS),
 
-        Language::Matlab => copy_to_resources(&PYTHONASSETS),
+        Language::Matlab => todo!(),
 
-        Language::Java => copy_to_resources(&PYTHONASSETS),
+        Language::Java => todo!(),
     };
 
     match zipped {
