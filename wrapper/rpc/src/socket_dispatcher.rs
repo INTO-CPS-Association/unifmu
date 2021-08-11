@@ -45,7 +45,7 @@ pub fn new_boxed_socket_dispatcher(
 ) -> (String, Box<dyn Fmi2CommandDispatcher>) {
     let ctx = zmq::Context::new();
     let socket = ctx.socket(zmq::SocketType::REP).unwrap();
-    socket.bind("tcp://*:0").unwrap();
+    socket.bind("tcp://127.0.0.1:0").unwrap();
     let endpoint = socket.get_last_endpoint().unwrap().unwrap();
 
     let command = fmi2_proto::Fmi2Command {
@@ -62,7 +62,7 @@ impl<T: FramedSocket> Fmi2SocketDispatcher<T> {
     pub fn new() -> (String, Fmi2SocketDispatcher<zmq::Socket>) {
         let ctx = zmq::Context::new();
         let socket = ctx.socket(zmq::SocketType::REP).unwrap();
-        socket.bind("tcp://*:0").unwrap();
+        socket.bind("tcp://127.0.0.1:0").unwrap();
         let endpoint = socket.get_last_endpoint().unwrap().unwrap();
 
         let dispatcher = Fmi2SocketDispatcher { socket };
