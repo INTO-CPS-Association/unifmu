@@ -8,11 +8,6 @@ edition = "2018"
 [lib]
 crate-type = ["rlib", "cdylib"]
 
-
-[features]
-default = ["vendored-zmq"]
-vendored-zmq = ['zmq/vendored']
-
 [dependencies]
 safer-ffi = { version = "*", features = ["proc_macros"] }
 url = "*"
@@ -24,10 +19,10 @@ toml = "*"
 subprocess = "*"
 quick-xml = { version = "*", features = ["serialize"] }
 prost = "*"
-zmq = "*"
 zeromq = "*"
 serde_bytes = "*"
 serde_repr = "*"
+tokio = { version = "*", features = ["rt"] }
 
 
 [build-dependencies]

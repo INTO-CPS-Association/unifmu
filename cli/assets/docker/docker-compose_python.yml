@@ -1,4 +1,3 @@
-version: "3.9"
 services:
     python:
         image: ${UNIFMU_GUID}

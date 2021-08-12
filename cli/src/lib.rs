@@ -39,7 +39,7 @@ lazy_static! {
         ],
         docker: vec![
             ("docker/Dockerfile_python", "Dockerfile"),
-            ("docker/compose_python.yml", "compose.yml"),
+            ("docker/docker-compose_python.yml", "docker-compose.yml"),
             ("docker/launch.toml", "launch.toml"),
             ("docker/README.md", "README_DOCKER.md"),
         ],
@@ -55,7 +55,7 @@ lazy_static! {
         ],
         docker: vec![
             ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/compose_csharp.yml", "compose.yml"),
+            ("docker/docker-compose_csharp.yml", "docker-compose.yml"),
             ("docker/launch.toml", "launch.toml"),
             ("docker/README.md", "README_DOCKER.md"),
         ],

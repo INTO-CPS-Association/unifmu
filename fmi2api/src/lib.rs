@@ -40,7 +40,7 @@ use std::slice::from_raw_parts_mut;
 
 use crate::config::LaunchConfig;
 use crate::md::parse_model_description;
-use crate::socket_dispatcher::new_boxed_socket_dispatcher;
+use crate::socket_dispatcher::Fmi2SocketDispatcher;
 
 ///
 /// Represents the function signature of the logging callback function passsed
@@ -221,7 +221,9 @@ pub fn fmi2Instantiate(
     let config: LaunchConfig = toml::from_str(config.as_str())
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
-    let (endpoint, mut dispatcher) = new_boxed_socket_dispatcher();
+    let mut dispatcher = Box::new(Fmi2SocketDispatcher::new("tcp://127.0.0.1:0"));
+
+    let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = endpoint
         .split(":")
         .last()

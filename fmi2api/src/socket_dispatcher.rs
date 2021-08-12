@@ -15,16 +15,16 @@ use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 
 use crate::Fmi2Status;
 use prost::Message;
-use serde::Deserialize;
-use zeromq::BlockingSend;
+use tokio::runtime::Runtime;
+use zeromq::{BlockingRecv, BlockingSend, RepSocket, Socket};
 
 // ################################# SERIALIZATION #########################################
 
-#[derive(Clone, Copy, Deserialize)]
-pub enum SerializationFormat {
-    #[serde(alias = "protobuf")]
-    Protobuf,
-}
+// #[derive(Clone, Copy, Deserialize)]
+// pub enum SerializationFormat {
+//     #[serde(alias = "protobuf")]
+//     Protobuf,
+// }
 
 // ################################# SOCKET ##############################
 
@@ -35,36 +35,48 @@ pub enum SerializationFormat {
 /// Two choices for these would be:
 /// * A message queue such as zmq, where the framing is built into the abstraction.
 /// * A TCP socket coupled with a framing protocol.
-pub struct Fmi2SocketDispatcher<T: FramedSocket> {
-    socket: T,
+pub struct Fmi2SocketDispatcher {
+    socket: zeromq::RepSocket,
+    rt: Runtime,
+    pub endpoint: String,
 }
 
-pub fn new_boxed_socket_dispatcher() -> (String, Box<dyn Fmi2CommandDispatcher>) {
-    let ctx = zmq::Context::new();
-    let socket = ctx.socket(zmq::SocketType::REP).unwrap();
-    socket.bind("tcp://127.0.0.1:0").unwrap();
-    let endpoint = socket.get_last_endpoint().unwrap().unwrap();
+// pub fn new_boxed_socket_dispatcher_zeromq() -> (String, Box<dyn Fmi2CommandDispatcher>) {
+//     let mut socket = RepSocket::new();
 
-    let command = fmi2_proto::Fmi2Command {
-        ..Default::default()
-    };
+//     let rt = tokio::runtime::Builder::new_current_thread()
+//         .enable_io()
+//         .build()
+//         .unwrap();
 
-    let dispatcher = Fmi2SocketDispatcher { socket };
+//     let endpoint = rt.block_on(socket.bind("tcp://127.0.0.1:0")).unwrap();
 
-    (endpoint, Box::new(dispatcher))
-}
+//     let dispatcher = Fmi2SocketDispatcher {
+//         socket,
+//         rt,
+//         endpoint: endpoint.to_string(),
+//     };
+
+//     (endpoint.to_string(), Box::new(dispatcher))
+// }
 
 #[allow(non_snake_case)]
-impl<T: FramedSocket> Fmi2SocketDispatcher<T> {
-    pub fn new() -> (String, Fmi2SocketDispatcher<zmq::Socket>) {
-        let ctx = zmq::Context::new();
-        let socket = ctx.socket(zmq::SocketType::REP).unwrap();
-        socket.bind("tcp://127.0.0.1:0").unwrap();
-        let endpoint = socket.get_last_endpoint().unwrap().unwrap();
+impl Fmi2SocketDispatcher {
+    pub fn new(endpoint: &str) -> Self {
+        let mut socket = RepSocket::new();
 
-        let dispatcher = Fmi2SocketDispatcher { socket };
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_io()
+            .build()
+            .unwrap();
 
-        (endpoint, dispatcher)
+        let endpoint = rt.block_on(socket.bind(endpoint)).unwrap();
+
+        Self {
+            socket,
+            rt,
+            endpoint: endpoint.to_string(),
+        }
     }
 
     pub fn send_and_recv<S: Message, R: Message + Default>(
@@ -72,8 +84,12 @@ impl<T: FramedSocket> Fmi2SocketDispatcher<T> {
         msg: &S,
     ) -> Result<R, Fmi2CommandDispatcherError> {
         let bytes_send = msg.encode_to_vec();
-        self.socket.send(&bytes_send);
-        let bytes_recv = self.socket.recv_bytes();
+
+        self.rt
+            .block_on(self.socket.send(bytes_send.into()))
+            .unwrap();
+
+        let bytes_recv: Vec<u8> = self.rt.block_on(self.socket.recv()).unwrap().into();
 
         match R::decode(bytes_recv.as_ref()) {
             Ok(result) => Ok(result),
@@ -95,9 +111,10 @@ impl From<fmi2_proto::Fmi2StatusReturn> for Fmi2Status {
     }
 }
 
-impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
+impl Fmi2CommandDispatcher for Fmi2SocketDispatcher {
     fn await_handshake(&mut self) -> Result<(), Fmi2CommandDispatcherError> {
-        let buf = self.socket.recv_bytes();
+        let buf: Vec<u8> = self.rt.block_on(self.socket.recv()).unwrap().into();
+
         fmi2_proto::Fmi2ExtHandshakeReturn::decode(buf.as_ref())
             .map(|_| ())
             .map_err(|e| Fmi2CommandDispatcherError::DecodeError(e))
@@ -447,36 +464,5 @@ impl<T: FramedSocket> Fmi2CommandDispatcher for Fmi2SocketDispatcher<T> {
                 };
                 (status, values)
             })
-    }
-}
-
-/// A sender that implements framing.
-/// Examples include :
-/// * Message queues such as zmq, for which framing is a natural part of the abstraction.
-/// * TCP socket paired with a framing protocol.
-pub trait FramedSocket {
-    fn send(&mut self, buf: &[u8]);
-    fn recv_bytes(&self) -> Vec<u8>;
-}
-
-impl FramedSocket for zmq::Socket {
-    fn send(&mut self, buf: &[u8]) {
-        zmq::Socket::send(self, buf, 0).unwrap()
-    }
-
-    fn recv_bytes(&self) -> Vec<u8> {
-        self.recv_bytes(0).unwrap()
-    }
-}
-
-impl FramedSocket for zeromq::RepSocket {
-    fn send(&mut self, buf: &[u8]) {
-        let test = BlockingSend::send(self, buf.to_owned().into());
-
-        todo!();
-    }
-
-    fn recv_bytes(&self) -> Vec<u8> {
-        todo!()
     }
 }
