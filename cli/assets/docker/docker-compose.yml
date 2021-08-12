@@ -1,9 +1,8 @@
 version: "3.8"
 services:
-    python:
+    backend:
         image: ${UNIFMU_GUID}
         build: .
-        command: python backend.py
         environment: 
             - UNIFMU_GUID
             - UNIFMU_INSTANCE_NAME

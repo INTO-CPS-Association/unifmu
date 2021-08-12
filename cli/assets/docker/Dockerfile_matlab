@@ -6,5 +6,5 @@ RUN pip install zmq protobuf
 WORKDIR /resources
 COPY backend.py .
 COPY model.py .
-COPY schemas /schemas
+COPY schemas schemas
 

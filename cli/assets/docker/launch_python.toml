@@ -1,0 +1,3 @@
+linux = ["docker-compose", "run", "backend", "python", "backend.py"]
+macos = ["docker-compose", "run", "backend", "python", "deploy.py"]
+windows = ["docker-compose", "run", "backend", "python", "deploy.py"]

@@ -4,5 +4,5 @@ WORKDIR /resources
 COPY backend.cs .
 COPY model.cs .
 COPY csharp.csproj .
-COPY schemas /schemas
+COPY schemas schemas
 
