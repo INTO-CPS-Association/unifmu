@@ -49,3 +49,10 @@ if platform.system() == "Windows":
             )
             sys.argv[idx + 1] = handshake_endpoint
 ```
+
+
+## Rebuilding image
+https://docs.docker.com/compose/reference/up/
+```
+docker-compose up --build --force-recreate
+```
