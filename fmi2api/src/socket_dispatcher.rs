@@ -14,9 +14,10 @@ use crate::fmi2_proto::{Fmi2Command as c_obj, Fmi2ExtSerializeSlave};
 use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 
 use crate::Fmi2Status;
+use bytes::Bytes;
 use prost::Message;
 use tokio::runtime::Runtime;
-use zeromq::{BlockingRecv, BlockingSend, RepSocket, Socket};
+use zeromq::{RepSocket, Socket, SocketRecv, SocketSend};
 
 // ################################# SERIALIZATION #########################################
 
@@ -83,13 +84,15 @@ impl Fmi2SocketDispatcher {
         &mut self,
         msg: &S,
     ) -> Result<R, Fmi2CommandDispatcherError> {
-        let bytes_send = msg.encode_to_vec();
+        let bytes_send: Bytes = msg.encode_to_vec().into();
 
         self.rt
             .block_on(self.socket.send(bytes_send.into()))
             .unwrap();
 
-        let bytes_recv: Vec<u8> = self.rt.block_on(self.socket.recv()).unwrap().into();
+        let bytes_recv = self.rt.block_on(self.socket.recv()).unwrap();
+
+        let bytes_recv: Bytes = bytes_recv.get(0).unwrap().to_owned();
 
         match R::decode(bytes_recv.as_ref()) {
             Ok(result) => Ok(result),
@@ -113,7 +116,9 @@ impl From<fmi2_proto::Fmi2StatusReturn> for Fmi2Status {
 
 impl Fmi2CommandDispatcher for Fmi2SocketDispatcher {
     fn await_handshake(&mut self) -> Result<(), Fmi2CommandDispatcherError> {
-        let buf: Vec<u8> = self.rt.block_on(self.socket.recv()).unwrap().into();
+        let buf = self.rt.block_on(self.socket.recv()).unwrap();
+
+        let buf: Bytes = buf.get(0).unwrap().to_owned();
 
         fmi2_proto::Fmi2ExtHandshakeReturn::decode(buf.as_ref())
             .map(|_| ())

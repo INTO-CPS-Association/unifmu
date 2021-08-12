@@ -24,6 +24,7 @@ mod tests {
         ffi::{CStr, CString},
         path::Path,
         ptr::null_mut,
+        time::{SystemTime, UNIX_EPOCH},
     };
     use tempfile::TempDir;
     use unifmu::Language;
@@ -94,12 +95,23 @@ mod tests {
             component_environment: &None,
         };
         let name = c!("adder");
-        let guid = c!("abc");
+
+        let start = SystemTime::now();
+        let since_the_epoch = start
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis()
+            .to_string();
+
+        // let guid = c!("abc");
+
+        let guid = CString::new(since_the_epoch).unwrap();
+        let guid = guid.as_c_str();
 
         let slave = fmi2Instantiate(
             name,
             Fmi2Type::Fmi2CoSimulation,
-            guid,
+            guid.into(),
             resource_uri,
             &callbacks,
             0,

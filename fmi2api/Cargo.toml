@@ -19,10 +19,25 @@ toml = "*"
 subprocess = "*"
 quick-xml = { version = "*", features = ["serialize"] }
 prost = "*"
-zeromq = "*"
+# zeromq = { git = "https://github.com/zeromq/zmq.rs.git", version = "*", default-features = false, features = [
+#     "tokio-runtime",
+#     "tcp-transport",
+# ] }
+
+zeromq = { git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
+    "tokio-runtime",
+    "tcp-transport",
+] }
+
+# zeromq = { version = "0.2.0", default-features = false, features = [
+#     "tokio-runtime",
+#     "tcp-transport",
+# ] }
+
 serde_bytes = "*"
 serde_repr = "*"
 tokio = { version = "*", features = ["rt"] }
+bytes = "*"
 
 
 [build-dependencies]
