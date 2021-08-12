@@ -1,3 +1,4 @@
+version: "3.8"
 services:
     python:
         image: ${UNIFMU_GUID}
@@ -9,5 +10,4 @@ services:
             - UNIFMU_VISIBLE
             - UNIFMU_DISPATCHER_ENDPOINT
             - UNIFMU_REFS_TO_ATTRS
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
+        network_mode: host

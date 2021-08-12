@@ -39,6 +39,13 @@ mod tests {
     }
 
     #[test]
+    fn test_placeholder_python_dockerize() {
+        let tmpdir = TempDir::new().unwrap();
+        generate(&Language::Python, tmpdir.path(), false, true).unwrap();
+        test_placeholder_functionality(tmpdir.path());
+    }
+
+    #[test]
     fn test_placeholder_csharp() {
         let tmpdir = TempDir::new().unwrap();
         generate(&Language::CSharp, tmpdir.path(), false, false).unwrap();
@@ -87,7 +94,7 @@ mod tests {
             component_environment: &None,
         };
         let name = c!("adder");
-        let guid = c!("");
+        let guid = c!("abc");
 
         let slave = fmi2Instantiate(
             name,
