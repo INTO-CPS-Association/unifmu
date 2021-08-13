@@ -194,50 +194,22 @@ Resources:
 * https://rust-lang.github.io/rustup-components-history/
 
 
-### Linux and Windows
+## Building using docker image
 
-Ensure that you have toolchains installed for both targets
-``` 
-rustup target add x86_64-pc-windows-gnu
-rustup target add x86_64-unknown-linux-gnu
-```
-
-Invoke cargo with the appropriate target
-```
-cargo build --package fmi2api --target x86_64-pc-windows-gnu --release
-cargo build --package fmi2api --target x86_64-unknown-linux-gnu --release
-``` 
-
-### macOS
-
-Compiling to macOS is 
+Build the cross compilation image from the dockerfile stored in `docker-build`:
 
 ```
-rustup target add x86_64-apple-darwin
-./macos_setup
+docker build -t unifmu-cross docker-build
 ```
+**This process may take a long time 15-30 minutes, since several compiler toolchains must be installed**
 
+Start a container with the name `builder` from the cross-compilation image `unifmu-cross`.
+
+Bash + PowerShell
 ```
-cargo build ./macos_build.sh
+docker run -it -v $(pwd):/workingdir unifmu-cross
 ```
-
-The `.cargo/config.toml` can be configured to specify the toolchain used for the `x86_64-apple-darwin` target.
-
-``` toml
-[target.x86_64-apple-darwin]
-linker = "x86_64-apple-darwin20.4-clang"
+Windows command line
 ```
-
-The linker attribute points to the clang compiler, which in turn dispatches to the appropriate ld.
-All tools for macOS are stored inside the `osxcross/target/bin` folder, which is added to the path by `macos_build.sh`.
-
-
-Build the cross compilation image:
-```
-docker build -t unifmu-cross .
-```
-
-Start a container with the name `builder` from the cross-compilation image `unifmu-cross`
-```
-docker run -it -v $(pwd):/fmi2api unifmu-cross
+docker run -it -v $%cd%:/workingdir unifmu-cross
 ```
