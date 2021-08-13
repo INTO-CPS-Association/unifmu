@@ -1,7 +1,7 @@
 [package]
+edition = "2018"
 name = "fmi2api"
 version = "0.1.0"
-edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,36 +9,24 @@ edition = "2018"
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-safer-ffi = { version = "*", features = ["proc_macros"] }
-url = "*"
-num_enum = "*"
-libc = "*"
-serde = { version = "1.0.127", features = ["derive"] }
-serde_json = "*"
-toml = "*"
-subprocess = "*"
-quick-xml = { version = "*", features = ["serialize"] }
-prost = "*"
-# zeromq = { git = "https://github.com/zeromq/zmq.rs.git", version = "*", default-features = false, features = [
-#     "tokio-runtime",
-#     "tcp-transport",
-# ] }
-
-zeromq = { git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
-    "tokio-runtime",
-    "tcp-transport",
-] }
-
-# zeromq = { version = "0.2.0", default-features = false, features = [
-#     "tokio-runtime",
-#     "tcp-transport",
-# ] }
-
-serde_bytes = "*"
-serde_repr = "*"
-tokio = { version = "*", features = ["rt"] }
 bytes = "*"
-
+libc = "*"
+num_enum = "*"
+prost = "*"
+quick-xml = {version = "*", features = ["serialize"]}
+safer-ffi = {version = "*", features = ["proc_macros"]}
+serde = {version = "1.0.127", features = ["derive"]}
+serde_bytes = "*"
+serde_json = "*"
+serde_repr = "*"
+subprocess = "*"
+tokio = {version = "*", features = ["rt"]}
+toml = "*"
+url = "*"
+zeromq = {git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
+  "tokio-runtime",
+  "tcp-transport",
+]}
 
 [build-dependencies]
 prost-build = "0.8.0"
