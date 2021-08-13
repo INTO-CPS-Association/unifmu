@@ -1,5 +1,6 @@
 use crate::Fmi2Status;
 
+#[derive(Debug)]
 pub enum Fmi2CommandDispatcherError {
     DecodeError(prost::DecodeError),
     EncodeError,

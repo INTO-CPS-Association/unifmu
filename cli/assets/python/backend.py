@@ -129,13 +129,11 @@ if __name__ == "__main__":
             result.status = slave.fmi2Reset()
         elif group == "Fmi2FreeInstance":
             result = Fmi2FreeInstanceReturn()
+            logger.info(f"Fmi2FreeInstance received, shutting down")
+            sys.exit(0)
         else:
             logger.error(f"unrecognized command '{group}' received, shutting down")
             sys.exit(-1)
 
         state = result.SerializeToString()
         socket.send(state)
-
-        if group == "Fmi2FreeInstance":
-            logger.info(f"Fmi2FreeInstance received, shutting down")
-            sys.exit(0)

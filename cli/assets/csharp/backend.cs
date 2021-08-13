@@ -217,16 +217,15 @@ namespace Launch
 
           case Fmi2Command.CommandOneofCase.Fmi2FreeInstance:
             {
-              var result = new Fmi2StatusReturn();
-              result.Status = Fmi2Status.Ok;
-              message = result;
+              Console.WriteLine("received fmi2FreeInstance, exiting with status code 0");
+              Environment.Exit(0);                      
             }
 
 
             break;
 
           default:
-            Console.Error.WriteLine("unrecognized command {0}, shutting down", command.CommandCase);
+            Console.Error.WriteLine("unrecognized command {0}, exiting with status code -1", command.CommandCase);
             Environment.Exit(-1);
             break;
         }
@@ -235,10 +234,7 @@ namespace Launch
         socket.SendFrame(message.ToByteArray(), false);
         Console.WriteLine("returning result {0}", message);
 
-        if (command.CommandCase == Fmi2Command.CommandOneofCase.Fmi2FreeInstance)
-        {
-          Environment.Exit(0);
-        }
+      
 
       }
 

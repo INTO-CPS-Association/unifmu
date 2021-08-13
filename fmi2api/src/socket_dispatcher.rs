@@ -3,12 +3,12 @@ use std::convert::TryFrom;
 use crate::fmi2_proto::fmi2_command::Command as c_enum;
 use crate::fmi2_proto::{
     self, Fmi2CancelStep, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
-    Fmi2ExtDeserializeSlave, Fmi2ExtSerializeSlaveReturn, Fmi2FreeInstance, Fmi2GetBoolean,
-    Fmi2GetBooleanReturn, Fmi2GetDirectionalDerivatives, Fmi2GetInteger, Fmi2GetIntegerReturn,
-    Fmi2GetReal, Fmi2GetRealOutputDerivatives, Fmi2GetRealReturn, Fmi2GetString,
-    Fmi2GetStringReturn, Fmi2Reset, Fmi2SetBoolean, Fmi2SetDebugLogging, Fmi2SetInteger,
-    Fmi2SetReal, Fmi2SetRealInputDerivatives, Fmi2SetString, Fmi2SetupExperiment, Fmi2StatusReturn,
-    Fmi2Terminate,
+    Fmi2ExtDeserializeSlave, Fmi2ExtHandshakeReturn, Fmi2ExtSerializeSlaveReturn, Fmi2FreeInstance,
+    Fmi2GetBoolean, Fmi2GetBooleanReturn, Fmi2GetDirectionalDerivatives, Fmi2GetInteger,
+    Fmi2GetIntegerReturn, Fmi2GetReal, Fmi2GetRealOutputDerivatives, Fmi2GetRealReturn,
+    Fmi2GetString, Fmi2GetStringReturn, Fmi2Reset, Fmi2SetBoolean, Fmi2SetDebugLogging,
+    Fmi2SetInteger, Fmi2SetReal, Fmi2SetRealInputDerivatives, Fmi2SetString, Fmi2SetupExperiment,
+    Fmi2StatusReturn, Fmi2Terminate,
 };
 use crate::fmi2_proto::{Fmi2Command as c_obj, Fmi2ExtSerializeSlave};
 use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
@@ -18,16 +18,6 @@ use bytes::Bytes;
 use prost::Message;
 use tokio::runtime::Runtime;
 use zeromq::{RepSocket, Socket, SocketRecv, SocketSend};
-
-// ################################# SERIALIZATION #########################################
-
-// #[derive(Clone, Copy, Deserialize)]
-// pub enum SerializationFormat {
-//     #[serde(alias = "protobuf")]
-//     Protobuf,
-// }
-
-// ################################# SOCKET ##############################
 
 /// An object that dispatches FMI2 calls over a socket to an FMU instance.
 ///
@@ -41,25 +31,6 @@ pub struct Fmi2SocketDispatcher {
     rt: Runtime,
     pub endpoint: String,
 }
-
-// pub fn new_boxed_socket_dispatcher_zeromq() -> (String, Box<dyn Fmi2CommandDispatcher>) {
-//     let mut socket = RepSocket::new();
-
-//     let rt = tokio::runtime::Builder::new_current_thread()
-//         .enable_io()
-//         .build()
-//         .unwrap();
-
-//     let endpoint = rt.block_on(socket.bind("tcp://127.0.0.1:0")).unwrap();
-
-//     let dispatcher = Fmi2SocketDispatcher {
-//         socket,
-//         rt,
-//         endpoint: endpoint.to_string(),
-//     };
-
-//     (endpoint.to_string(), Box::new(dispatcher))
-// }
 
 #[allow(non_snake_case)]
 impl Fmi2SocketDispatcher {
@@ -86,16 +57,30 @@ impl Fmi2SocketDispatcher {
     ) -> Result<R, Fmi2CommandDispatcherError> {
         let bytes_send: Bytes = msg.encode_to_vec().into();
 
-        self.rt
-            .block_on(self.socket.send(bytes_send.into()))
-            .unwrap();
+        match self.send(msg) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        };
 
-        let bytes_recv = self.rt.block_on(self.socket.recv()).unwrap();
+        self.recv()
+    }
 
-        let bytes_recv: Bytes = bytes_recv.get(0).unwrap().to_owned();
+    pub fn send<S: Message>(&mut self, msg: &S) -> Result<(), Fmi2CommandDispatcherError> {
+        let bytes_send: Bytes = msg.encode_to_vec().into();
 
-        match R::decode(bytes_recv.as_ref()) {
-            Ok(result) => Ok(result),
+        match self.rt.block_on(self.socket.send(bytes_send.into())) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(Fmi2CommandDispatcherError::SocketError),
+        }
+    }
+
+    pub fn recv<R: Message + Default>(&mut self) -> Result<R, Fmi2CommandDispatcherError> {
+        let buf = self.rt.block_on(self.socket.recv()).unwrap();
+
+        let buf: Bytes = buf.get(0).unwrap().to_owned();
+
+        match R::decode(buf.as_ref()) {
+            Ok(msg) => Ok(msg),
             Err(e) => Err(Fmi2CommandDispatcherError::DecodeError(e)),
         }
     }
@@ -116,13 +101,7 @@ impl From<fmi2_proto::Fmi2StatusReturn> for Fmi2Status {
 
 impl Fmi2CommandDispatcher for Fmi2SocketDispatcher {
     fn await_handshake(&mut self) -> Result<(), Fmi2CommandDispatcherError> {
-        let buf = self.rt.block_on(self.socket.recv()).unwrap();
-
-        let buf: Bytes = buf.get(0).unwrap().to_owned();
-
-        fmi2_proto::Fmi2ExtHandshakeReturn::decode(buf.as_ref())
-            .map(|_| ())
-            .map_err(|e| Fmi2CommandDispatcherError::DecodeError(e))
+        self.recv::<Fmi2ExtHandshakeReturn>().map(|_| ())
     }
 
     fn fmi2EnterInitializationMode(&mut self) -> Result<Fmi2Status, Fmi2CommandDispatcherError> {
@@ -239,8 +218,7 @@ impl Fmi2CommandDispatcher for Fmi2SocketDispatcher {
             command: Some(c_enum::Fmi2FreeInstance(Fmi2FreeInstance {})),
         };
 
-        self.send_and_recv::<_, fmi2_proto::Fmi2FreeInstanceReturn>(&cmd)
-            .map(|_| ())
+        self.send(&cmd)
     }
 
     fn fmi2SetReal(
