@@ -636,7 +636,7 @@ pub fn fmi2SetBoolean(
     let references = unsafe { from_raw_parts(references, nvr) };
     let values: Vec<bool> = unsafe { from_raw_parts(values, nvr) }
         .iter()
-        .map(|v| *v == 0)
+        .map(|v| *v != 0)
         .collect();
 
     slave
