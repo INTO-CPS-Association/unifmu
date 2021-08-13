@@ -11,6 +11,9 @@ thirdparty/
 /target
 Cargo.lock
 
+/cli/assets/auto_generated
+/fmi2api/src/fmi2_proto.rs
+
 /venv
 
 /osxcross
@@ -21,7 +24,7 @@ __pycache__/
 *$py.class
 
 # C extensions
-# *.so
+*.so
 
 # Distribution / packaging
 .Python
