@@ -34,5 +34,4 @@ RUN rustup target add x86_64-pc-windows-gnu
 RUN rustup target add x86_64-apple-darwin
 
 WORKDIR /workingdir
-COPY build_macos.sh .
-COPY build_windows.sh .
+COPY build_all.sh .

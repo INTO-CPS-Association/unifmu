@@ -116,7 +116,6 @@ Like the file structure, the workflow for modifying FMUs varies depending on the
 Depending on the language a `README.md` is placed in the root of the generated FMU, which serves as documentation for the particular language.
 For reference the `README.md` copied into Python FMUs looks like [README.md](tool/unifmu/resources/backends/python/README.md).
 
-
 # Building and Testing
 
 Building the project requires the following programs:
@@ -183,16 +182,15 @@ Bibtex:
 }
 ```
 
-
 # Cross-Compiling binaries
 
 Resources:
-* https://hub.docker.com/_/rust?tab=description&page=1&ordering=last_updated
-* https://wapl.es/rust/2019/02/17/rust-cross-compile-linux-to-macos.html
-* https://john-millikin.com/notes-on-cross-compiling-rust
-* https://github.com/phracker/MacOSX-SDKs
-* https://rust-lang.github.io/rustup-components-history/
 
+- https://hub.docker.com/_/rust?tab=description&page=1&ordering=last_updated
+- https://wapl.es/rust/2019/02/17/rust-cross-compile-linux-to-macos.html
+- https://john-millikin.com/notes-on-cross-compiling-rust
+- https://github.com/phracker/MacOSX-SDKs
+- https://rust-lang.github.io/rustup-components-history/
 
 ## Building using docker image
 
@@ -201,15 +199,19 @@ Build the cross compilation image from the dockerfile stored in `docker-build`:
 ```
 docker build -t unifmu-cross docker-build
 ```
+
 **This process may take a long time 15-30 minutes, since several compiler toolchains must be installed**
 
 Start a container with the name `builder` from the cross-compilation image `unifmu-cross`.
 
 Bash + PowerShell
+
 ```
-docker run -it -v $(pwd):/workingdir unifmu-cross
+docker run -it -v $(pwd):/workingdir/src unifmu-cross
 ```
+
 Windows command line
+
 ```
-docker run -it -v $%cd%:/workingdir unifmu-cross
+docker run -it -v $%cd%:/workingdir/src unifmu-cross
 ```
