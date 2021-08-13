@@ -182,3 +182,51 @@ Bibtex:
   series = {{{SIMULTECH}} 2021}
 }
 ```
+
+
+# Cross-Compiling binaries
+
+Resources:
+* https://hub.docker.com/_/rust?tab=description&page=1&ordering=last_updated
+* https://wapl.es/rust/2019/02/17/rust-cross-compile-linux-to-macos.html
+* https://john-millikin.com/notes-on-cross-compiling-rust
+* https://github.com/phracker/MacOSX-SDKs
+* https://rust-lang.github.io/rustup-components-history/
+
+
+### Linux and Windows
+
+Ensure that you have toolchains installed for both targets
+``` 
+rustup target add x86_64-pc-windows-gnu
+rustup target add x86_64-unknown-linux-gnu
+```
+
+Invoke cargo with the appropriate target
+```
+cargo build --package fmi2api --target x86_64-pc-windows-gnu --release
+cargo build --package fmi2api --target x86_64-unknown-linux-gnu --release
+``` 
+
+### macOS
+
+Compiling to macOS is 
+
+```
+rustup target add x86_64-apple-darwin
+./macos_setup
+```
+
+```
+cargo build ./macos_build.sh
+```
+
+The `.cargo/config.toml` can be configured to specify the toolchain used for the `x86_64-apple-darwin` target.
+
+``` toml
+[target.x86_64-apple-darwin]
+linker = "x86_64-apple-darwin20.4-clang"
+```
+
+The linker attribute points to the clang compiler, which in turn dispatches to the appropriate ld.
+All tools for macOS are stored inside the `osxcross/target/bin` folder, which is added to the path by `macos_build.sh`.
