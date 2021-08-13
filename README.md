@@ -230,3 +230,14 @@ linker = "x86_64-apple-darwin20.4-clang"
 
 The linker attribute points to the clang compiler, which in turn dispatches to the appropriate ld.
 All tools for macOS are stored inside the `osxcross/target/bin` folder, which is added to the path by `macos_build.sh`.
+
+
+Build the cross compilation image:
+```
+docker build -t unifmu-cross .
+```
+
+Start a container with the name `builder` from the cross-compilation image `unifmu-cross`
+```
+docker run -it -v $(pwd):/fmi2api unifmu-cross
+```
