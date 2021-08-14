@@ -366,8 +366,6 @@ pub fn fmi2SetDebugLogging(
     n_categories: size_t,
     categories: *const char_p_ref,
 ) -> Fmi2Status {
-    todo!();
-
     let categories: Vec<String> = unsafe { core::slice::from_raw_parts(categories, n_categories) }
         .iter()
         .map(|s| s.to_str().to_owned())

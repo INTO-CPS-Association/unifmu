@@ -53,6 +53,11 @@ public class Model
     return Fmi2Status.Ok;
   }
 
+  public Fmi2Status Fmi2SetDebugLogging(IEnumerable<String> categories, bool loggingOn)
+  {
+    return Fmi2Status.Ok;
+  }
+
   public Fmi2Status Fmi2EnterInitializationMode()
   {
     return Fmi2Status.Ok;

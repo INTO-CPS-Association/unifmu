@@ -58,6 +58,12 @@ if __name__ == "__main__":
                 data.start_time, data.stop_time, data.tolerance
             )
 
+        elif group == "Fmi2SetDebugLogging":
+            result = Fmi2StatusReturn()
+            result.status = slave.fmiSetDebugLogging(
+                data.categores, data.logging_on
+            )
+
         elif group == "Fmi2DoStep":
             result = Fmi2StatusReturn()
             result.status = slave.fmi2DoStep(
