@@ -195,13 +195,32 @@ docker build -t unifmu-build docker-build
 Start a container with the name `builder` from the cross-compilation image `unifmu-build`:
 
 ```bash
-docker run --name builder -it -v $(pwd):/workingdir unifmu-build  # bash + powershell
-docker run --name builder -it -v $%cd%:/workingdir unifmu-build   # windows cmd
+docker run --name builder -it -v $(pwd):/workdir unifmu-build  # bash
+docker run --name builder -it -v %cd%:/workdir unifmu-build   # windows cmd
 ```
 
-Sharing the source between the host and container, `unifmu-build`, is done using a volume as indicated by the `$(pwd):/workingdir`.
+Sharing the source between the host and container, `unifmu-build`, is done using a volume as indicated by the `$(pwd):/workdir`.
 
 **Note: On windows you may have to enable the use of shared folders through the dockers interface, otherwise the container fails to start.**
 
-To build the code invoke the script `docker-build/build_all.sh` in the `workingdir` of the container.
-The output of the command is an executable for linux, windows and macos, which can be located in the target folder.
+To build the code invoke the script `docker-build/build_all.sh` in the `workdir` of the container.
+This generates and copies all relevant build artifacts into the `assets/auto_generated` directory:
+
+```
+📦auto_generated
+ ┣ 📜.gitkeep
+ ┣ 📜unifmu.dll
+ ┣ 📜unifmu.dylib
+ ┣ 📜unifmu.so
+ ┣ 📜UnifmuFmi2.cs
+ ┗ 📜unifmu_fmi2_pb2.py
+```
+
+Following this the cli is compiled for each platform, including the assets that were just compiled.
+The final standalone executables can be found in the target folder, under the host tripple:
+
+- linux: release/unifmu
+- macOS: x86_64-apple-darwin/release/unifmu
+- windows: x86_64-pc-windows-gnu/release/unifmu.exe
+
+**Note: The executable for any platform embeds implementations of the FMI api for all other platforms. In other words the windows executable can generate FMUs that run on all other platforms.**

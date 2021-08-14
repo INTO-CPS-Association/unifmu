@@ -1,3 +1,4 @@
+#!/bin/bash
 # ------------------------------ fmi2api ------------------------------
 tgt=fmi2api
 echo "building fmi2api for linux"
@@ -12,13 +13,13 @@ export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=/usr/osxcross/target/bin/x86_64-a
 cargo build --package ${tgt} --target x86_64-apple-darwin --release
 
 echo "copying fmi2api into cli assets"
-cp target/release/lib${tgt}.so assets/auto_generated/unifmu.so
-cp target/x86_64-pc-windows-gnu/release/${tgt}.dll assets/auto_generated/unifmu.dll
-cp target/x86_64-apple-darwin/lib${p}.dylib assets/auto_generated/unifmu.dylib
+cp ./target/release/lib${tgt}.so ./assets/auto_generated/unifmu.so
+cp ./target/x86_64-pc-windows-gnu/release/${tgt}.dll ./assets/auto_generated/unifmu.dll
+cp ./target/x86_64-apple-darwin/release/lib${tgt}.dylib ./assets/auto_generated/unifmu.dylib
 
 # ------------------------------ schemas ------------------------------
 echo "generating protobuf schemas for python and csharp backends"
-protoc -I=../schemas --python_out=./assets/auto_generated --csharp_out=./assets/auto_generated unifmu_fmi2.proto
+protoc -I=./schemas --python_out=./assets/auto_generated --csharp_out=./assets/auto_generated unifmu_fmi2.proto
 
 # ------------------------------ cli ------------------------------
 tgt=unifmu
