@@ -17,7 +17,7 @@ pub enum Language {
 }
 }
 #[derive(RustEmbed)]
-#[folder = "assets"]
+#[folder = "../assets"]
 struct Assets;
 
 struct LanguageAssets {
@@ -31,7 +31,7 @@ lazy_static! {
             ("python/backend.py", "backend.py"),
             ("python/model.py", "model.py"),
             (
-                "python/schemas/unifmu_fmi2_pb2.py",
+                "auto_generated/unifmu_fmi2_pb2.py",
                 "schemas/unifmu_fmi2_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
@@ -50,7 +50,7 @@ lazy_static! {
             ("csharp/backend.cs", "backend.cs"),
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
-            ("csharp/schemas/UnifmuFmi2.cs", "schemas/UnifmuFmi2.cs"),
+            ("auto_generated/UnifmuFmi2.cs", "schemas/UnifmuFmi2.cs"),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
@@ -114,9 +114,21 @@ pub fn generate(
     .unwrap();
 
     info!("{:?}", &bin_win);
-    std::fs::write(bin_win, Assets::get("common/unifmu.dll").unwrap().data).unwrap();
-    std::fs::write(bin_linux, Assets::get("common/unifmu.so").unwrap().data).unwrap();
-    std::fs::write(bin_macos, Assets::get("common/unifmu.dylib").unwrap().data).unwrap();
+    std::fs::write(
+        bin_win,
+        Assets::get("auto_generated/unifmu.dll").unwrap().data,
+    )
+    .unwrap();
+    std::fs::write(
+        bin_linux,
+        Assets::get("auto_generated/unifmu.so").unwrap().data,
+    )
+    .unwrap();
+    std::fs::write(
+        bin_macos,
+        Assets::get("auto_generated/unifmu.dylib").unwrap().data,
+    )
+    .unwrap();
 
     // copy language specific files to 'resources' directory
 

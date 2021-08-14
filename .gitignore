@@ -11,7 +11,8 @@ thirdparty/
 /target
 Cargo.lock
 
-/cli/assets/auto_generated
+/assets/auto_generated/**
+!/assets/auto_generated/.gitkeep
 /fmi2api/src/fmi2_proto.rs
 
 /venv

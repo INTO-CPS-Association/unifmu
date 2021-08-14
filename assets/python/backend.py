@@ -39,9 +39,6 @@ if __name__ == "__main__":
     logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
     socket.connect(dispatcher_endpoint)
 
-    # result = Fmi2Return()
-    # result.Fmi2ExtHandshakeReturn.SetInParent()
-
     state = Fmi2ExtHandshakeReturn().SerializeToString()
     socket.send(state)
 

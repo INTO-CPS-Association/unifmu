@@ -200,7 +200,7 @@ Build the cross compilation image from the dockerfile stored in `docker-build`:
 docker build -t unifmu-cross docker-build
 ```
 
-**This process may take a long time 15-30 minutes, since several compiler toolchains must be installed**
+**This process may take a long time 10-30 minutes, since several compiler toolchains must be installed**
 
 Start a container with the name `builder` from the cross-compilation image `unifmu-cross`.
 

@@ -39,12 +39,12 @@ mod tests {
         test_placeholder_functionality(tmpdir.path());
     }
 
-    #[test]
-    fn test_placeholder_python_dockerize() {
-        let tmpdir = TempDir::new().unwrap();
-        generate(&Language::Python, tmpdir.path(), false, true).unwrap();
-        test_placeholder_functionality(tmpdir.path());
-    }
+    // #[test]
+    // fn test_placeholder_python_dockerize() {
+    //     let tmpdir = TempDir::new().unwrap();
+    //     generate(&Language::Python, tmpdir.path(), false, true).unwrap();
+    //     test_placeholder_functionality(tmpdir.path());
+    // }
 
     #[test]
     fn test_placeholder_csharp() {

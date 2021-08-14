@@ -15,7 +15,8 @@ RUN apt -qq -y install \
     wget\
     libxml2-dev\
     libssl-dev \
-    libz-dev
+    libz-dev \
+    protobuf-compiler
 
 
 WORKDIR /usr/

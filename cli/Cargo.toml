@@ -4,17 +4,15 @@ edition = "2018"
 name = "unifmu"
 version = "0.0.1"
 
-
 [dependencies]
 
 clap = "*"
-
-libc = "*"
-lazy_static = "*"
-log = "*"
-num_enum = "*"
 env_logger = "*"
 fs_extra = "*"
+lazy_static = "*"
+libc = "*"
+log = "*"
+num_enum = "*"
+rust-embed = "6.0.0"
 structopt = "*"
 tempfile = "*"
-rust-embed = "6.0.0"
