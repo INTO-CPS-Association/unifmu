@@ -182,36 +182,26 @@ Bibtex:
 }
 ```
 
-# Cross-Compiling binaries
+# Building using docker image
 
-Resources:
-
-- https://hub.docker.com/_/rust?tab=description&page=1&ordering=last_updated
-- https://wapl.es/rust/2019/02/17/rust-cross-compile-linux-to-macos.html
-- https://john-millikin.com/notes-on-cross-compiling-rust
-- https://github.com/phracker/MacOSX-SDKs
-- https://rust-lang.github.io/rustup-components-history/
-
-## Building using docker image
-
-Build the cross compilation image from the dockerfile stored in `docker-build`:
+Build the cross compilation image from the dockerfile stored in `docker-build` folder:
 
 ```
-docker build -t unifmu-cross docker-build
+docker build -t unifmu-build docker-build
 ```
 
-**This process may take a long time 10-30 minutes, since several compiler toolchains must be installed**
+**Note: This process may take a long time 10-30 minutes, but must only be done once.**
 
-Start a container with the name `builder` from the cross-compilation image `unifmu-cross`.
+Start a container with the name `builder` from the cross-compilation image `unifmu-build`:
 
-Bash + PowerShell
-
+```bash
+docker run --name builder -it -v $(pwd):/workingdir unifmu-build  # bash + powershell
+docker run --name builder -it -v $%cd%:/workingdir unifmu-build   # windows cmd
 ```
-docker run -it -v $(pwd):/workingdir/src unifmu-cross
-```
 
-Windows command line
+Sharing the source between the host and container, `unifmu-build`, is done using a volume as indicated by the `$(pwd):/workingdir`.
 
-```
-docker run -it -v $%cd%:/workingdir/src unifmu-cross
-```
+**Note: On windows you may have to enable the use of shared folders through the dockers interface, otherwise the container fails to start.**
+
+To build the code invoke the script `docker-build/build_all.sh` in the `workingdir` of the container.
+The output of the command is an executable for linux, windows and macos, which can be located in the target folder.
