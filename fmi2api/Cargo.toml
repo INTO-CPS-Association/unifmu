@@ -1,0 +1,32 @@
+[package]
+edition = "2018"
+name = "fmi2api"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+bytes = "*"
+libc = "*"
+num_enum = "*"
+prost = "*"
+quick-xml = {version = "*", features = ["serialize"]}
+safer-ffi = {version = "*", features = ["proc_macros"]}
+serde = {version = "1.0.127", features = ["derive"]}
+serde_bytes = "*"
+serde_json = "*"
+serde_repr = "*"
+subprocess = "*"
+tokio = {version = "*", features = ["rt"]}
+toml = "*"
+url = "*"
+zeromq = {git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
+  "tokio-runtime",
+  "tcp-transport",
+]}
+
+[build-dependencies]
+prost-build = "0.8.0"

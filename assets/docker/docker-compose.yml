@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+    backend:
+        image: ${UNIFMU_GUID}
+        build: .
+        environment: 
+            - UNIFMU_GUID
+            - UNIFMU_INSTANCE_NAME
+            - UNIFMU_VISIBLE
+            - UNIFMU_DISPATCHER_ENDPOINT
+            - UNIFMU_REFS_TO_ATTRS
+        network_mode: host

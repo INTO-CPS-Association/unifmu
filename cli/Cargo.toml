@@ -1,0 +1,18 @@
+[package]
+authors = ["Christian Legaard <clegaard@outlook.com>"]
+edition = "2018"
+name = "unifmu"
+version = "0.0.4"
+
+[dependencies]
+
+clap = "*"
+env_logger = "*"
+fs_extra = "*"
+lazy_static = "*"
+libc = "*"
+log = "*"
+num_enum = "*"
+rust-embed = "6.0.0"
+structopt = "*"
+tempfile = "*"
