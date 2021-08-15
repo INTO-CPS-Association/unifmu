@@ -107,10 +107,12 @@ Start a container with the name `builder` from the cross-compilation image `unif
 
 ```bash
 docker run --name builder -it -v $(pwd):/workdir unifmu-build  # bash
-docker run --name builder -it -v %cd%:/workdir unifmu-build   # windows cmd
 ```
 
-Sharing the source between the host and container, `unifmu-build`, is done using a volume as indicated by the `$(pwd):/workdir`.
+```powershell
+$pwd = (pwd).Path
+docker run --name builder -it -v ${pwd}:/workdir unifmu-build   # powershell
+```
 
 **Note: On windows you may have to enable the use of shared folders through the dockers interface, otherwise the container fails to start.**
 
