@@ -24,7 +24,7 @@ protoc -I=./schemas --python_out=./assets/auto_generated --csharp_out=./assets/a
 # ------------------------------ cli ------------------------------
 tgt=unifmu
 echo "building cli for linux"
-cargo build --package ${tgt} --release
+cargo build --package ${tgt} --target x86_64-unknown-linux-gnu --release
 
 echo "building cli for windows"
 cargo build --package ${tgt} --target x86_64-pc-windows-gnu --release
@@ -32,5 +32,23 @@ cargo build --package ${tgt} --target x86_64-pc-windows-gnu --release
 echo "building cli for macos"
 cargo build --package ${tgt} --target x86_64-apple-darwin --release
 
+# ------------------------------ compress for release ------------------------------
 
+echo "querying for version number of unifmu via 'unifmu --version', the version is defined in cli/cargo.toml"
+VER=$(./target/x86_64-unknown-linux-gnu/release/unifmu --version)
+arrVER=(${VER//\ / })
+VER=${arrVER[1]}
+echo "detected version" ${VER}
+
+echo "zipping linux cli"
+t=x86_64-unknown-linux-gnu
+zip -qj target/unifmu-${t}-${VER}.zip target/${t}/release/unifmu
+
+echo "zipping windows cli"
+t=x86_64-pc-windows-gnu
+zip -qj target/unifmu-${t}-${VER}.zip target/${t}/release/unifmu.exe
+
+echo "zipping macos cli"
+t=x86_64-apple-darwin
+zip -qj target/unifmu-${t}-${VER}.zip target/${t}/release/unifmu
 

@@ -2,7 +2,7 @@
 authors = ["Christian Legaard <clegaard@outlook.com>"]
 edition = "2018"
 name = "unifmu"
-version = "0.0.1"
+version = "0.0.4"
 
 [dependencies]
 

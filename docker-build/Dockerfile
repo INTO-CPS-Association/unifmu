@@ -14,6 +14,7 @@ RUN apt -qq -y install \
     libxml2-dev\
     libssl-dev \
     libz-dev \
+    zip \
     unzip
 
 # install protoc

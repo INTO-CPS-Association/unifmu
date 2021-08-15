@@ -16,6 +16,7 @@ enum Subcommands {
         #[structopt(possible_values = &Language::variants(), case_insensitive = true)]
         language: Language,
 
+        /// Output directory or name of the FMU archive if "--zipped" is passed
         outpath: PathBuf,
 
         /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
