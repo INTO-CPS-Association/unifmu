@@ -2,7 +2,11 @@ use env_logger::Builder;
 use log::info;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use unifmu::{generate, Language};
+use unifmu::{
+    generate,
+    validation::{validate, ValidationConfig},
+    Language,
+};
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -28,7 +32,11 @@ enum Subcommands {
         dockerize: bool,
     },
 
-    Validate {},
+    /// Run a suite of checks to detect potential defects of the FMU
+    Validate {
+        /// Path to FMU directory or archive
+        path: PathBuf,
+    },
 }
 
 fn main() {
@@ -50,6 +58,10 @@ fn main() {
             }
             Err(_) => todo!(),
         },
-        Subcommands::Validate {} => todo!(),
+        Subcommands::Validate { path } => {
+            let config = ValidationConfig {};
+
+            validate(&path, &config).unwrap();
+        }
     }
 }

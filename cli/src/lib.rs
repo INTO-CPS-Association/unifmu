@@ -20,6 +20,8 @@ pub enum Language {
 #[folder = "../assets"]
 struct Assets;
 
+pub mod validation;
+
 struct LanguageAssets {
     resources: Vec<(&'static str, &'static str)>,
     docker: Vec<(&'static str, &'static str)>,

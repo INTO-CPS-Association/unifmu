@@ -2,7 +2,7 @@
 # ------------------------------ fmi2api ------------------------------
 tgt=fmi2api
 echo "building fmi2api for linux"
-cargo build --package ${tgt} --release
+cargo build --package ${tgt} --target x86_64-unknown-linux-gnu --release
 
 echo "building fmi2api for windows"
 cargo build --package ${tgt} --target x86_64-pc-windows-gnu --release
@@ -13,7 +13,7 @@ export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=/usr/osxcross/target/bin/x86_64-a
 cargo build --package ${tgt} --target x86_64-apple-darwin --release
 
 echo "copying fmi2api into cli assets"
-cp ./target/release/lib${tgt}.so ./assets/auto_generated/unifmu.so
+cp ./target/x86_64-unknown-linux-gnu/release/lib${tgt}.so ./assets/auto_generated/unifmu.so
 cp ./target/x86_64-pc-windows-gnu/release/${tgt}.dll ./assets/auto_generated/unifmu.dll
 cp ./target/x86_64-apple-darwin/release/lib${tgt}.dylib ./assets/auto_generated/unifmu.dylib
 
