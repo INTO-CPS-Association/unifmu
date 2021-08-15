@@ -249,7 +249,7 @@ pub fn fmi2Instantiate(
         }),
     ));
     env_vars.push((
-        OsString::from("UNIFMU_VISIBLE"),
+        OsString::from("UNIFMU_LOGGING_ON"),
         OsString::from(match logging_on {
             0 => "false",
             _ => "true",

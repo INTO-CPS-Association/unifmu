@@ -127,6 +127,8 @@ This generates and copies all relevant build artifacts into the `assets/auto_gen
  ┗ 📜unifmu_fmi2_pb2.py
 ```
 
+**Note: On windows Git may be configured to replace LF line-endings with CRLF. **
+
 Following this the cli is compiled for each platform, including the assets that were just compiled.
 The final standalone executables can be found in the target folder, under the host tripple:
 
@@ -135,6 +137,24 @@ The final standalone executables can be found in the target folder, under the ho
 - macOS: unifmu-x86_64-apple-darwin-0.0.4.zip
 
 **Note: The executable for any platform embeds implementations of the FMI api for all other platforms. In other words the windows executable can generate FMUs that run on all other platforms.**
+
+## Environment Variables
+
+In addition to the systems environment variables, UniFMU defines the following variables in the process created during instantiation of a slave.
+These can be accessed during execution by the model implementation or the backend.
+
+| Variable                        | Description                                                                                                                   | Example                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| UNIFMU_GUID                     | The global unique identifier, passed as an argument to fmi2Instantiate                                                        | 77236337-210e-4e9c-8f2c-c1a0677db21b  |
+| UNIFMU_INSTANCE_NAME            | Name of the slave instance, passed as an argument to fmi2Instantiate                                                          | left_wheel_motor                      |
+| UNIFMU_VISIBLE                  | Flag used to indicating if the instance should run in visible mode, passed as an argument to fmi2Instantiate                  | {true, false}                         |
+| UNIFMU_LOGGING_ON               | Flag used to indicating if the instance should run with logging, passed as an argument to fmi2Instantiate                     | {true, false}                         |
+| UNIFMU_FMU_TYPE                 | Flag used to indicating if the instance is running in co-sim or model exchange mode, passed as an argument to fmi2Instantiate | {fmi2ModelExchange, fmi2CoSimulation} |
+| UNIFMU_DISPATCHER_ENDPOINT      | Endpoint bound by the zmq socket of the binary                                                                                | tcp://127.0.0.1/5000                  |
+| UNIFMU_DISPATCHER_ENDPOINT_PORT | Port component of UNIFMU_DISPATCHER_ENDPOINT                                                                                  | 5000                                  |
+| UNIFMU_REFS_TO_ATTRS            | Mapping from value references to variable names encoded as a JSON dictionary\*.                                               | {"0": "my_input", "1" : "my_output"}  |
+
+\* This variable is only defined if the modelDescription.xml is present in the parent directory of the resources folder passed to fmi2Instantiate.
 
 ## Citing the tool
 
