@@ -116,7 +116,12 @@ docker run --name builder -it -v ${pwd}:/workdir unifmu-build   # powershell
 
 **Note: On windows you may have to enable the use of shared folders through the dockers interface, otherwise the container fails to start.**
 
-To build the code invoke the script `docker-build/build_all.sh` in the `workdir` of the container.
+To build the code invoke the script `docker-build/build_all.sh` in the `workdir` of the container:
+
+``` bash
+bash ./docker-build/build_all.sh
+```
+
 This generates and copies all relevant build artifacts into the `assets/auto_generated` directory:
 
 ```
@@ -129,7 +134,7 @@ This generates and copies all relevant build artifacts into the `assets/auto_gen
  ┗ 📜unifmu_fmi2_pb2.py
 ```
 
-**Note: On windows Git may be configured to replace LF line-endings with CRLF. **
+**Note: On windows Git may be configured to replace LF line-endings with CRLF, which are not compatible with bash.**
 
 Following this the cli is compiled for each platform, including the assets that were just compiled.
 The final standalone executables can be found in the target folder, under the host tripple:
@@ -137,8 +142,6 @@ The final standalone executables can be found in the target folder, under the ho
 - linux: unifmu-x86_64-unknown-linux-gnu-0.0.4.zip
 - windows: unifmu-x86_64-pc-windows-gnu-0.0.4.zip
 - macOS: unifmu-x86_64-apple-darwin-0.0.4.zip
-
-**Note: The executable for any platform embeds implementations of the FMI api for all other platforms. In other words the windows executable can generate FMUs that run on all other platforms.**
 
 ## Environment Variables
 
