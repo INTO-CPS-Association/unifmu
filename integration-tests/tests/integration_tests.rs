@@ -6,7 +6,7 @@ use unifmu::generate;
 mod tests {
 
     use fmi2api::{
-        fmi2DeSerializeFMUstate, fmi2DoStep, fmi2EnterInitializationMode,
+        config, fmi2DeSerializeFMUstate, fmi2DoStep, fmi2EnterInitializationMode,
         fmi2ExitInitializationMode, fmi2FreeFMUstate, fmi2FreeInstance, fmi2GetBoolean,
         fmi2GetFMUstate, fmi2GetInteger, fmi2GetReal, fmi2GetString, fmi2GetTypesPlatform,
         fmi2GetVersion, fmi2Instantiate, fmi2Reset, fmi2SerializeFMUstate,
@@ -27,7 +27,10 @@ mod tests {
         time::{SystemTime, UNIX_EPOCH},
     };
     use tempfile::TempDir;
-    use unifmu::Language;
+    use unifmu::{
+        validation::{validate, ValidationConfig},
+        Language,
+    };
     use url::Url;
 
     use super::*;
@@ -36,7 +39,12 @@ mod tests {
     fn test_placeholder_python() {
         let tmpdir = TempDir::new().unwrap();
         generate(&Language::Python, tmpdir.path(), false, false).unwrap();
-        test_placeholder_functionality(tmpdir.path());
+
+        let res = validate(tmpdir.path(), &ValidationConfig::default());
+
+        res.unwrap();
+
+        // test_placeholder_functionality(tmpdir.path());
     }
 
     // #[test]

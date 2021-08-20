@@ -1,5 +1,5 @@
 use env_logger::Builder;
-use log::info;
+use log::{error, info};
 use std::path::PathBuf;
 use structopt::StructOpt;
 use unifmu::{
@@ -59,9 +59,17 @@ fn main() {
             Err(_) => todo!(),
         },
         Subcommands::Validate { path } => {
-            let config = ValidationConfig {};
+            let config = ValidationConfig::default();
 
-            validate(&path, &config).unwrap();
+            match validate(&path, &config) {
+                Ok(_) => info!("No errors detected during validation of the FMU"),
+                Err(e) => {
+                    error!(
+                        "An defect was defect was detected during the validation of the FMU: {:?}",
+                        e
+                    )
+                }
+            }
         }
     }
 }
