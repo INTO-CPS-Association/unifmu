@@ -285,7 +285,6 @@ pub fn fmi2Instantiate(
                     OsString::from("UNIFMU_REFS_TO_ATTRS"),
                     OsString::from(serde_json::to_string(&ref_to_attr).unwrap()),
                 ));
-                println!("the 'modelDescription.xml' was succefully parsed and it's results used to populate 'UNIFMU_REFS_TO_ATTRS'")
             }
             Err(e) => match e {
                 md::ModelDescriptionError::UnableToRead => {
@@ -332,7 +331,7 @@ pub fn fmi2Instantiate(
     };
 
     match dispatcher.await_handshake() {
-        Ok(handshake) => println!("Received handshake"),
+        Ok(handshake) => (),
         Err(e) => {
             eprint!("Error ocurred during handshake");
             return None;

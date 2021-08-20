@@ -20,6 +20,7 @@ pub enum Language {
 #[folder = "../assets"]
 struct Assets;
 
+pub mod benchmark;
 pub mod validation;
 
 struct LanguageAssets {

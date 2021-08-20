@@ -1,8 +1,9 @@
-#![allow(non_snake_case)]
+#![allow(non_snake_case, non_camel_case_types)]
 use std::{ffi::CString, path::Path};
 
 use libc::{c_char, c_double, c_int, c_void};
 use libloading::{Library, Symbol};
+use log::{error, info};
 use std::ptr::null;
 use url::Url;
 
@@ -53,6 +54,7 @@ pub enum ValidateError {
     Fmi2ResetFailed(i32),
 }
 
+#[derive(Debug)]
 pub struct ValidationConfig {
     check_instantiate: bool,
 }
@@ -75,18 +77,18 @@ pub struct FmuDescription {
     _supports_async: bool,
 }
 
-#[allow(non_snake_case)]
-struct Fmi2Binary<'a> {
-    // lib: Library,
-    pub fmi2Instantiate: Symbol<'a, fmi2InstantiateType>,
-    pub fmi2SetupExperiment: Symbol<'a, fmi2SetupExperimentType>,
-    pub fmi2EnterInitializationMode: Symbol<'a, fmi2EnterInitializationModeType>,
-    pub fmi2ExitInitializationMode: Symbol<'a, fmi2ExitInitializationModeType>,
-    pub fmi2Terminate: Symbol<'a, fmi2TerminateType>,
-    pub fmi2Reset: Symbol<'a, fmi2ResetType>,
-    pub fmi2FreeInstance: Symbol<'a, fmi2FreeInstanceType>,
-    pub fmi2DoStep: Symbol<'a, fmi2DoStepType>,
-}
+// #[allow(non_snake_case)]
+// struct Fmi2Binary<'a> {
+//     // lib: Library,
+//     pub fmi2Instantiate: Symbol<'a, fmi2InstantiateType>,
+//     pub fmi2SetupExperiment: Symbol<'a, fmi2SetupExperimentType>,
+//     pub fmi2EnterInitializationMode: Symbol<'a, fmi2EnterInitializationModeType>,
+//     pub fmi2ExitInitializationMode: Symbol<'a, fmi2ExitInitializationModeType>,
+//     pub fmi2Terminate: Symbol<'a, fmi2TerminateType>,
+//     pub fmi2Reset: Symbol<'a, fmi2ResetType>,
+//     pub fmi2FreeInstance: Symbol<'a, fmi2FreeInstanceType>,
+//     pub fmi2DoStep: Symbol<'a, fmi2DoStepType>,
+// }
 
 pub fn validate(rootdir: &Path, _config: &ValidationConfig) -> Result<(), ValidateError> {
     unsafe {
@@ -97,10 +99,14 @@ pub fn validate(rootdir: &Path, _config: &ValidationConfig) -> Result<(), Valida
         };
         let path = rootdir.join("binaries").join(binary_path);
 
+        info!("attempting to load binary from {:?}", path);
+
         let lib = match Library::new(path) {
             Ok(l) => l,
             Err(_) => return Err(ValidateError::BinaryNotFound),
         };
+
+        info!("binary loaded successfully");
 
         // load methods
 
@@ -155,23 +161,39 @@ pub fn validate(rootdir: &Path, _config: &ValidationConfig) -> Result<(), Valida
 
         // instantiate slave
         let instance_name = CString::new("a").unwrap();
+        let mut resources_path = rootdir.join("resources");
 
-        let resources_path = rootdir.join("resources");
+        if resources_path.is_relative() {
+            info!("path appears to be relative, creating absolute path");
+            resources_path = resources_path.canonicalize().unwrap();
+        }
+
+        info!(
+            "attempting to generate URI for based on path to resources directory {:?}",
+            resources_path
+        );
+
         let url = Url::from_file_path(resources_path).unwrap();
         let resources_uri = CString::new(url.as_str()).unwrap();
         let fmu_type: c_int = 1;
+        let callbacks = null();
 
         let guid = CString::new("1234").unwrap();
 
         let visible: c_int = 1;
         let logging_on: c_int = 1;
 
+        info!(
+            "instantiating slave with instance name {:?} with type {:?}, guid {:?}, resources uri {:?}, callbacks: {:?}, visible {:?} and logging {:?}",
+            instance_name, fmu_type, guid, resources_uri, callbacks, visible, logging_on
+        );
+
         let handle = fmi2Instantiate(
             instance_name.as_ptr(),
             fmu_type,
             guid.as_ptr(),
             resources_uri.as_ptr(),
-            null(),
+            callbacks,
             visible,
             logging_on,
         );
