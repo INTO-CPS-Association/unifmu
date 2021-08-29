@@ -13,7 +13,6 @@ bytes = "*"
 libc = "*"
 num_enum = "*"
 prost = "*"
-quick-xml = {version = "*", features = ["serialize"]}
 safer-ffi = {version = "*", features = ["proc_macros"]}
 serde = {version = "1.0.127", features = ["derive"]}
 serde_bytes = "*"
@@ -27,6 +26,8 @@ zeromq = {git = "https://github.com/zeromq/zmq.rs.git", default-features = false
   "tokio-runtime",
   "tcp-transport",
 ]}
+
+common = {path = "../common"}
 
 [build-dependencies]
 prost-build = "0.8.0"

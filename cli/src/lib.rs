@@ -7,6 +7,9 @@ use log::info;
 use rust_embed::RustEmbed;
 use tempfile::TempDir;
 
+#[macro_use]
+extern crate dlopen_derive;
+
 arg_enum! {
     #[derive(Debug)]
 pub enum Language {

@@ -58,7 +58,11 @@ mod tests {
     fn test_placeholder_csharp() {
         let tmpdir = TempDir::new().unwrap();
         generate(&Language::CSharp, tmpdir.path(), false, false).unwrap();
-        test_placeholder_functionality(tmpdir.path());
+
+        let res = validate(tmpdir.path(), &ValidationConfig::default());
+
+        res.unwrap()
+        // test_placeholder_functionality(tmpdir.path());
     }
 
     fn test_placeholder_functionality(rootdir: &Path) {

@@ -6,9 +6,9 @@
 pub mod config;
 pub mod dispatcher;
 pub mod fmi2_proto;
-pub mod md;
 pub mod socket_dispatcher;
 
+use common::md;
 use dispatcher::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 use libc::c_double;
 use libc::size_t;
@@ -39,8 +39,8 @@ use std::slice::from_raw_parts;
 use std::slice::from_raw_parts_mut;
 
 use crate::config::LaunchConfig;
-use crate::md::parse_model_description;
 use crate::socket_dispatcher::Fmi2SocketDispatcher;
+use common::md::parse_model_description;
 
 ///
 /// Represents the function signature of the logging callback function passsed
@@ -287,10 +287,10 @@ pub fn fmi2Instantiate(
                 ));
             }
             Err(e) => match e {
-                md::ModelDescriptionError::UnableToRead => {
+                md::Fmi2ModelDescriptionError::UnableToRead => {
                     println!("the 'modelDescription.xml' file was not found")
                 }
-                md::ModelDescriptionError::UnableToParse => {
+                md::Fmi2ModelDescriptionError::UnableToParse => {
                     println!("the 'modelDescription.xml' file was found but could not be parsed")
                 }
             },

@@ -1,6 +1,6 @@
 use env_logger::Builder;
 use log::{error, info};
-use std::path::PathBuf;
+use std::{path::PathBuf, process::exit};
 use structopt::StructOpt;
 use unifmu::{
     benchmark::{benchmark, BenchmarkConfig},
@@ -73,10 +73,25 @@ fn main() {
             Ok(_) => {
                 info!("the FMU was generated succesfully");
             }
-            Err(e) => error!("an error ocurred during the generation of the FMU: {:?}", e),
+            Err(e) => {
+                error!("an error ocurred during the generation of the FMU: {:?}", e);
+                exit(-1);
+            }
         },
         Command::Validate { path } => {
             let config = ValidationConfig::default();
+
+            let path = match path.is_absolute() {
+                true => path,
+                false => std::env::current_dir().unwrap().join(path),
+            };
+
+            if !path.exists() {
+                error!("Unable to open FMU, the specified path is neither a directory or a file.");
+                exit(-1);
+            }
+
+            // let path = path.canonicalize().unwrap();
 
             info!(
                 "validating the following FMU {:?} with the following checks {:?}",
@@ -89,7 +104,8 @@ fn main() {
                     error!(
                         "a defect was detected during the validation of the FMU: {:?} ",
                         e
-                    )
+                    );
+                    exit(-1);
                 }
             }
         }
