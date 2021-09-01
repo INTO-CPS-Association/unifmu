@@ -1,11 +1,15 @@
 use clap::arg_enum;
-use std::path::Path;
+use std::{fs::File, path::Path};
+use walkdir::WalkDir;
+use zip::{result::ZipError, CompressionMethod};
 
 use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use log::info;
 use rust_embed::RustEmbed;
 use tempfile::TempDir;
+
+use crate::utils::zip_dir;
 
 #[macro_use]
 extern crate dlopen_derive;
@@ -24,6 +28,7 @@ pub enum Language {
 struct Assets;
 
 pub mod benchmark;
+pub mod utils;
 pub mod validation;
 
 struct LanguageAssets {
@@ -73,6 +78,8 @@ lazy_static! {
 #[derive(Debug)]
 pub enum GenerateError {
     Error,
+    FileExists,
+    ZipError(ZipError),
 }
 
 pub fn generate(
@@ -166,10 +173,38 @@ pub fn generate(
 
     match zipped {
         // zip to temporary, change extension from 'zip' to 'fmu', then copy to output directory
-        true => todo!(),
+        true => {
+            info!("Compressing contents into archive with path {:?}", outpath);
+
+            let file = match File::create(&outpath) {
+                Ok(f) => f,
+                Err(_) => return Err(GenerateError::FileExists),
+            };
+
+            let walkdir = WalkDir::new(tmpdir.path());
+            let it = walkdir.into_iter();
+
+            let method = CompressionMethod::Deflated;
+
+            match zip_dir(
+                &mut it.filter_map(|e| e.ok()),
+                tmpdir.path().to_str().unwrap(),
+                file,
+                method,
+            ) {
+                Ok(_) => (),
+                Err(e) => return Err(GenerateError::ZipError(e)),
+            }
+            Ok(())
+        }
 
         // copy from temporary directory to output directory
         false => {
+            info!(
+                "copying temporary dir from {:?} to output {:?}",
+                tmpdir.path(),
+                outpath,
+            );
             let mut options = CopyOptions::default();
             options.copy_inside = true;
             options.content_only = true;

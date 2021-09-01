@@ -2,7 +2,7 @@
 authors = ["Christian Legaard <clegaard@outlook.com>"]
 edition = "2018"
 name = "unifmu"
-version = "0.0.4"
+version = "0.0.5"
 
 [dependencies]
 
@@ -11,7 +11,6 @@ env_logger = "*"
 fs_extra = "*"
 lazy_static = "*"
 libc = "*"
-# libloading = "*"
 dlopen = "*"
 dlopen_derive = "*"
 log = "*"
@@ -20,5 +19,7 @@ rust-embed = "6.0.0"
 structopt = "*"
 tempfile = "*"
 url = "*"
+walkdir = "*"
+zip = { version = "*", default-features = false, features = ["deflate"] }
 
-common = {path = "../common"}
+common = { path = "../common" }
