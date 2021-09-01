@@ -1,0 +1,11 @@
+[package]
+edition = "2018"
+name = "common"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quick-xml = {version = "*", features = ["serialize"]}
+safer-ffi = {version = "*", features = ["proc_macros"]}
+serde = {version = "1.0.127", features = ["derive"]}
