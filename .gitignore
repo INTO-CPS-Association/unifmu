@@ -3,7 +3,7 @@ examples/
 tmp/
 thirdparty/
 
-/.vscode
+**.vscode
 **.pyc
 
 .idea/

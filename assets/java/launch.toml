@@ -1,0 +1,3 @@
+linux = ["java", "-jar", "app/build/libs/backend.jar"]
+macos = ["java", "-jar", "app/build/libs/backend.jar"]
+windows = ["java", "-jar", "app\build\libs\backend.jar"]
