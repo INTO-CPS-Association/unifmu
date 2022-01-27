@@ -3,28 +3,31 @@
 # UniFMU - Universal Functional Mock-Up Units
 
 The [_Functional Mock-Up Interface_](https://fmi-standard.org/) _(FMI)_ defines an exchange format that allows models, referred to as _Functional Mock-Up Unit (FMU)_, to be shared between tools supporting the standard.
+In general, an FMU must be implemented in a programming language that can produce binaries that can be called from C, such as C itself or C++.
+While this allows efficient execution of a simulation, it is a significant limitation when prototyping models.
 
-Traditionally, an FMU must be implemented in a programming language that is compatible with C's binary interface such as C itself or C++.
+UniFMU is a command line tool that facilitates the implementation of FMUs in other popular languages that would otherwise not be able to produce C-compatible binaries.
+It does this by providing a precompiled binary that is C-compatible, which then dispatches calls to the implementation of the model in the target language.
 
-UniFMU is a command line tool that facilitates the implementation of FMUs in languages in several languages, such as:
+| Specification Version | FMU Types    | Languages  |
+| --------------------- | ------------ | ---------- |
+| FMI3                  |              |            |
+| FMI2                  | cosimulation | Python, C# |
+| FMI1                  |              |            |
 
-- Python
-- C#
+Examples of generated FMUs can be found in the [unifmu_examples](https://github.com/INTO-CPS-Association/unifmu_examples) repo.
 
-This is made possible by providing a generic binary that dispatches calls to the users implementation using _remote procedure call_ _(RPC)_.
+## Getting the tool
 
-## Installing the tool
-
-The current and revious versions of the tool can be downloaded from the releases tab of the repository.
-
-For convenience the tool can be copied to a directory that is in the systems path such as `/usr/bin/` for most Linux distributions.
+The tool can be downloaded from [releases](https://github.com/INTO-CPS-Association/unifmu/releases) tab of the repository.
+It is a single executable that bundles all assets used during FMU generation as part of the binary.
 
 ## How to use the command line interface?
 
 To display the synopsis use the `--help` flag.
 
 ```
-UniFMU 0.0.4
+UniFMU 0.0.6
 Implement 'Functional Mock-up units' (FMUs) in various source languages.
 
 USAGE:
@@ -92,71 +95,6 @@ For example the tree below shows the placeholder FMU generated when implementing
 Like the file structure, the workflow for modifying FMUs varies depending on the implementation language.
 Depending on the language a `README.md` is placed in the root of the generated FMU, which serves as documentation for the particular language.
 For reference the `README.md` copied into Python FMUs looks like [README.md](tool/unifmu/resources/backends/python/README.md).
-
-## Building and Testing
-
-Build the cross compilation image from the dockerfile stored in `docker-build` folder:
-
-```
-docker build -t unifmu-build docker-build
-```
-
-**Note: This process may take a long time 10-30 minutes, but must only be done once.**
-
-Start a container with the name `builder` from the cross-compilation image `unifmu-build`:
-
-```bash
-docker run --name builder -it -v $(pwd):/workdir unifmu-build  # bash
-```
-
-```powershell
-$pwd = (pwd).Path
-docker run --name builder -it -v ${pwd}:/workdir unifmu-build   # powershell
-```
-
-**Note: On windows you may have to enable the use of shared folders through the dockers interface, otherwise the container fails to start.**
-
-To build the code invoke the script `docker-build/build_all.sh` in the `workdir` of the container:
-
-```bash
-bash ./docker-build/build_all.sh
-```
-
-This generates and copies all relevant build artifacts into the `assets/auto_generated` directory:
-
-```
-📦auto_generated
- ┣ 📜.gitkeep
- ┣ 📜unifmu.dll
- ┣ 📜unifmu.dylib
- ┣ 📜unifmu.so
- ┣ 📜UnifmuFmi2.cs
- ┗ 📜unifmu_fmi2_pb2.py
-```
-
-**Note: On windows Git may be configured to replace LF line-endings with CRLF, which are not compatible with bash.**
-
-Following this the cli is compiled for each platform, including the assets that were just compiled.
-The final standalone executables can be found in the target folder, under the host tripple:
-
-- linux: unifmu-x86_64-unknown-linux-gnu-0.0.4.zip
-- windows: unifmu-x86_64-pc-windows-gnu-0.0.4.zip
-- macOS: unifmu-x86_64-apple-darwin-0.0.4.zip
-
-## Environment Variables
-
-In addition to the systems environment variables, UniFMU defines the following variables in the process created during instantiation of a slave.
-These can be accessed during execution by the model implementation or the backend.
-
-| Variable                        | Description                                                                                                                   | Example                               |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| UNIFMU_GUID                     | The global unique identifier, passed as an argument to fmi2Instantiate                                                        | 77236337-210e-4e9c-8f2c-c1a0677db21b  |
-| UNIFMU_INSTANCE_NAME            | Name of the slave instance, passed as an argument to fmi2Instantiate                                                          | left_wheel_motor                      |
-| UNIFMU_VISIBLE                  | Flag used to indicating if the instance should run in visible mode, passed as an argument to fmi2Instantiate                  | {true, false}                         |
-| UNIFMU_LOGGING_ON               | Flag used to indicating if the instance should run with logging, passed as an argument to fmi2Instantiate                     | {true, false}                         |
-| UNIFMU_FMU_TYPE                 | Flag used to indicating if the instance is running in co-sim or model exchange mode, passed as an argument to fmi2Instantiate | {fmi2ModelExchange, fmi2CoSimulation} |
-| UNIFMU_DISPATCHER_ENDPOINT      | Endpoint bound by the zmq socket of the binary                                                                                | tcp://127.0.0.1/5000                  |
-| UNIFMU_DISPATCHER_ENDPOINT_PORT | Port component of UNIFMU_DISPATCHER_ENDPOINT                                                                                  | 5000                                  |
 
 ## Citing the tool
 

@@ -89,3 +89,68 @@ def deserialize(self, bytes) -> int:
 
     return Fmi2Status.ok
 ```
+
+## Building and Testing
+
+Build the cross compilation image from the dockerfile stored in `docker-build` folder:
+
+```
+docker build -t unifmu-build docker-build
+```
+
+**Note: This process may take a long time 10-30 minutes, but must only be done once.**
+
+Start a container with the name `builder` from the cross-compilation image `unifmu-build`:
+
+```bash
+docker run --name builder -it -v $(pwd):/workdir unifmu-build  # bash
+```
+
+```powershell
+$pwd = (pwd).Path
+docker run --name builder -it -v ${pwd}:/workdir unifmu-build   # powershell
+```
+
+**Note: On windows you may have to enable the use of shared folders through the dockers interface, otherwise the container fails to start.**
+
+To build the code invoke the script `docker-build/build_all.sh` in the `workdir` of the container:
+
+```bash
+bash ./docker-build/build_all.sh
+```
+
+This generates and copies all relevant build artifacts into the `assets/auto_generated` directory:
+
+```
+📦auto_generated
+ ┣ 📜.gitkeep
+ ┣ 📜unifmu.dll
+ ┣ 📜unifmu.dylib
+ ┣ 📜unifmu.so
+ ┣ 📜UnifmuFmi2.cs
+ ┗ 📜unifmu_fmi2_pb2.py
+```
+
+**Note: On windows Git may be configured to replace LF line-endings with CRLF, which are not compatible with bash.**
+
+Following this the cli is compiled for each platform, including the assets that were just compiled.
+The final standalone executables can be found in the target folder, under the host tripple:
+
+- linux: unifmu-x86_64-unknown-linux-gnu-0.0.4.zip
+- windows: unifmu-x86_64-pc-windows-gnu-0.0.4.zip
+- macOS: unifmu-x86_64-apple-darwin-0.0.4.zip
+
+## Environment Variables
+
+In addition to the systems environment variables, UniFMU defines the following variables in the process created during instantiation of a slave.
+These can be accessed during execution by the model implementation or the backend.
+
+| Variable                        | Description                                                                                                                   | Example                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| UNIFMU_GUID                     | The global unique identifier, passed as an argument to fmi2Instantiate                                                        | 77236337-210e-4e9c-8f2c-c1a0677db21b  |
+| UNIFMU_INSTANCE_NAME            | Name of the slave instance, passed as an argument to fmi2Instantiate                                                          | left_wheel_motor                      |
+| UNIFMU_VISIBLE                  | Flag used to indicating if the instance should run in visible mode, passed as an argument to fmi2Instantiate                  | {true, false}                         |
+| UNIFMU_LOGGING_ON               | Flag used to indicating if the instance should run with logging, passed as an argument to fmi2Instantiate                     | {true, false}                         |
+| UNIFMU_FMU_TYPE                 | Flag used to indicating if the instance is running in co-sim or model exchange mode, passed as an argument to fmi2Instantiate | {fmi2ModelExchange, fmi2CoSimulation} |
+| UNIFMU_DISPATCHER_ENDPOINT      | Endpoint bound by the zmq socket of the binary                                                                                | tcp://127.0.0.1/5000                  |
+| UNIFMU_DISPATCHER_ENDPOINT_PORT | Port component of UNIFMU_DISPATCHER_ENDPOINT                                                                                  | 5000                                  |
