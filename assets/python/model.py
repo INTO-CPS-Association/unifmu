@@ -157,3 +157,36 @@ class Fmi2Status:
     error = 3
     fatal = 4
     pending = 5
+
+
+if __name__ == "__main__":
+    m = Model()
+
+    assert m.real_a == 0.0
+    assert m.real_b == 0.0
+    assert m.real_c == 0.0
+    assert m.integer_a == 0
+    assert m.integer_b == 0
+    assert m.integer_c == 0
+    assert m.boolean_a == False
+    assert m.boolean_b == False
+    assert m.boolean_c == False
+    assert m.string_a == ""
+    assert m.string_b == ""
+    assert m.string_c == ""
+
+    m.real_a = 1.0
+    m.real_b = 2.0
+    m.integer_a = 1
+    m.integer_b = 2
+    m.boolean_a = True
+    m.boolean_b = False
+    m.string_a = "Hello "
+    m.string_b = "World!"
+
+    assert m.fmi2DoStep(0.0, 1.0, False) == Fmi2Status.ok
+
+    assert m.real_c == 3.0
+    assert m.integer_c == 3
+    assert m.boolean_c == True
+    assert m.string_c == "Hello World!"
