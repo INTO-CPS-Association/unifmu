@@ -1,5 +1,4 @@
-import os, json, pickle
-from schemas.unifmu_fmi2_pb2 import Ok
+import pickle
 
 
 class Model:
@@ -13,15 +12,19 @@ class Model:
         self.string_a = ""
         self.string_b = ""
 
-        refs_to_attr = os.environ["UNIFMU_REFS_TO_ATTRS"]
-
-        if refs_to_attr is None:
-            raise NotImplementedError(
-                "the environment variable 'UNIFMU_REFS_TO_ATTRS' was not set"
-            )
-
         self.reference_to_attribute = {
-            int(k): v for k, v in json.loads(refs_to_attr).items()
+            0: "real_a",
+            1: "real_b",
+            2: "real_c",
+            3: "integer_a",
+            4: "integer_b",
+            5: "integer_c",
+            6: "boolean_a",
+            7: "boolean_b",
+            8: "boolean_c",
+            9: "string_a",
+            10: "string_b",
+            11: "string_c",
         }
 
         self._update_outputs()
@@ -34,6 +37,7 @@ class Model:
         return Fmi2Status.ok
 
     def fmi2ExitInitializationMode(self):
+        self._update_outputs()
         return Fmi2Status.ok
 
     def fmi2SetupExperiment(self, start_time, stop_time, tolerance):

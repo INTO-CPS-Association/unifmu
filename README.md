@@ -118,7 +118,7 @@ docker run --name builder -it -v ${pwd}:/workdir unifmu-build   # powershell
 
 To build the code invoke the script `docker-build/build_all.sh` in the `workdir` of the container:
 
-``` bash
+```bash
 bash ./docker-build/build_all.sh
 ```
 
@@ -157,9 +157,6 @@ These can be accessed during execution by the model implementation or the backen
 | UNIFMU_FMU_TYPE                 | Flag used to indicating if the instance is running in co-sim or model exchange mode, passed as an argument to fmi2Instantiate | {fmi2ModelExchange, fmi2CoSimulation} |
 | UNIFMU_DISPATCHER_ENDPOINT      | Endpoint bound by the zmq socket of the binary                                                                                | tcp://127.0.0.1/5000                  |
 | UNIFMU_DISPATCHER_ENDPOINT_PORT | Port component of UNIFMU_DISPATCHER_ENDPOINT                                                                                  | 5000                                  |
-| UNIFMU_REFS_TO_ATTRS            | Mapping from value references to variable names encoded as a JSON dictionary\*.                                               | {"0": "my_input", "1" : "my_output"}  |
-
-\* This variable is only defined if the modelDescription.xml is present in the parent directory of the resources folder passed to fmi2Instantiate.
 
 ## Citing the tool
 
