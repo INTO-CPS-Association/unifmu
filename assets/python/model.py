@@ -1,5 +1,4 @@
-import os, json, pickle
-from schemas.unifmu_fmi2_pb2 import Ok
+import pickle
 
 
 class Model:
@@ -13,15 +12,19 @@ class Model:
         self.string_a = ""
         self.string_b = ""
 
-        refs_to_attr = os.environ["UNIFMU_REFS_TO_ATTRS"]
-
-        if refs_to_attr is None:
-            raise NotImplementedError(
-                "the environment variable 'UNIFMU_REFS_TO_ATTRS' was not set"
-            )
-
         self.reference_to_attribute = {
-            int(k): v for k, v in json.loads(refs_to_attr).items()
+            0: "real_a",
+            1: "real_b",
+            2: "real_c",
+            3: "integer_a",
+            4: "integer_b",
+            5: "integer_c",
+            6: "boolean_a",
+            7: "boolean_b",
+            8: "boolean_c",
+            9: "string_a",
+            10: "string_b",
+            11: "string_c",
         }
 
         self._update_outputs()
@@ -34,6 +37,7 @@ class Model:
         return Fmi2Status.ok
 
     def fmi2ExitInitializationMode(self):
+        self._update_outputs()
         return Fmi2Status.ok
 
     def fmi2SetupExperiment(self, start_time, stop_time, tolerance):
@@ -153,3 +157,36 @@ class Fmi2Status:
     error = 3
     fatal = 4
     pending = 5
+
+
+if __name__ == "__main__":
+    m = Model()
+
+    assert m.real_a == 0.0
+    assert m.real_b == 0.0
+    assert m.real_c == 0.0
+    assert m.integer_a == 0
+    assert m.integer_b == 0
+    assert m.integer_c == 0
+    assert m.boolean_a == False
+    assert m.boolean_b == False
+    assert m.boolean_c == False
+    assert m.string_a == ""
+    assert m.string_b == ""
+    assert m.string_c == ""
+
+    m.real_a = 1.0
+    m.real_b = 2.0
+    m.integer_a = 1
+    m.integer_b = 2
+    m.boolean_a = True
+    m.boolean_b = False
+    m.string_a = "Hello "
+    m.string_b = "World!"
+
+    assert m.fmi2DoStep(0.0, 1.0, False) == Fmi2Status.ok
+
+    assert m.real_c == 3.0
+    assert m.integer_c == 3
+    assert m.boolean_c == True
+    assert m.string_c == "Hello World!"

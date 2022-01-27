@@ -8,7 +8,6 @@ pub mod dispatcher;
 pub mod fmi2_proto;
 pub mod socket_dispatcher;
 
-use common::md;
 use dispatcher::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 use libc::c_double;
 use libc::size_t;
@@ -18,12 +17,11 @@ use safer_ffi::{
     c,
     char_p::{char_p_raw, char_p_ref},
 };
-use serde_json;
+
 use subprocess::Popen;
 use subprocess::PopenConfig;
 use url::Url;
 
-use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::ffi::OsString;
@@ -40,7 +38,6 @@ use std::slice::from_raw_parts_mut;
 
 use crate::config::LaunchConfig;
 use crate::socket_dispatcher::Fmi2SocketDispatcher;
-use common::md::parse_model_description;
 
 ///
 /// Represents the function signature of the logging callback function passsed
@@ -270,33 +267,6 @@ pub fn fmi2Instantiate(
         OsString::from("UNIFMU_DISPATCHER_ENDPOINT_PORT"),
         OsString::from(endpoint_port),
     ));
-
-    match resources_dir.parent() {
-        Some(p) => match parse_model_description(&p.join("modelDescription.xml")) {
-            Ok(md) => {
-                let ref_to_attr: HashMap<u32, String> = md
-                    .model_variables
-                    .variables
-                    .iter()
-                    .map(|v| (v.value_reference, v.name.to_owned()))
-                    .collect();
-
-                env_vars.push((
-                    OsString::from("UNIFMU_REFS_TO_ATTRS"),
-                    OsString::from(serde_json::to_string(&ref_to_attr).unwrap()),
-                ));
-            }
-            Err(e) => match e {
-                md::Fmi2ModelDescriptionError::UnableToRead => {
-                    println!("the 'modelDescription.xml' file was not found")
-                }
-                md::Fmi2ModelDescriptionError::UnableToParse => {
-                    println!("the 'modelDescription.xml' file was found but could not be parsed")
-                }
-            },
-        },
-        None => println!("resources directory has no parent"),
-    }
 
     // grab launch command for host os
     let launch_command = match std::env::consts::OS {

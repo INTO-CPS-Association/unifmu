@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-
-using Newtonsoft.Json;
 using System.Linq;
 using Fmi2Proto;
 
@@ -28,18 +26,21 @@ public class Model
 
   public Model()
   {
-    // Populate map from value reference to attributes of the model.
-    string references_to_values = System.Environment.GetEnvironmentVariable("UNIFMU_REFS_TO_ATTRS");
-    if (references_to_values == null)
+    this.reference_to_attributes = new Dictionary<uint, PropertyInfo>
     {
-      Console.WriteLine("the environment variable 'UNIFMU_REFS_TO_ATTRS' was not set");
-      Environment.Exit(-1);
-    }
-    var dict = JsonConvert.DeserializeObject<Dictionary<uint, String>>(references_to_values);
-    foreach (var (vref, variable) in dict)
-    {
-      this.reference_to_attributes.Add(vref, this.GetType().GetProperty(variable));
-    }
+      { 0, this.GetType().GetProperty("real_a") }, 
+      { 1, this.GetType().GetProperty("real_b") }, 
+      { 2, this.GetType().GetProperty("real_c") }, 
+      { 3, this.GetType().GetProperty("integer_a") }, 
+      { 4, this.GetType().GetProperty("integer_b") }, 
+      { 5, this.GetType().GetProperty("integer_c") }, 
+      { 6, this.GetType().GetProperty("boolean_a") }, 
+      { 7, this.GetType().GetProperty("boolean_b") }, 
+      { 8, this.GetType().GetProperty("boolean_c") }, 
+      { 9, this.GetType().GetProperty("string_a") }, 
+      { 10, this.GetType().GetProperty("string_b") }, 
+      { 11, this.GetType().GetProperty("string_c") }, 
+    };
 
   }
   public Fmi2Status Fmi2DoStep(double currentTime, double stepSize, bool noStepPrior)
