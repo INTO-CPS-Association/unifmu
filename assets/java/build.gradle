@@ -22,10 +22,14 @@ repositories {
     mavenCentral()
 }
 
-// dependencies {
-//     // This dependency is used by the application.
-//     implementation 'com.google.guava:guava:30.1.1-jre'
-// }
+dependencies {
+    // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
+    implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.19.3'
+    
+    // https://mvnrepository.com/artifact/org.zeromq/jeromq
+    implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.2'
+}
+// /com/google/protobuf/protobuf-java/3.19.3/
 
 // testing {
 //     suites {
