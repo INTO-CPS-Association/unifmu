@@ -2,6 +2,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 public class Model {
 
@@ -100,6 +104,18 @@ public class Model {
     }
 
     public Fmi2Status fmi2Reset() {
+        this.real_a = 0.0;
+        this.real_c = 0.0;
+        this.integer_a = 0;
+        this.real_b = 0.0;
+        this.integer_b = 0;
+        this.integer_c = 0;
+        this.boolean_a = false;
+        this.boolean_b = false;
+        this.boolean_c = false;
+        this.string_a = "";
+        this.string_b = "";
+        this.string_c = "";
         return Fmi2Status.OK;
     }
 
@@ -108,6 +124,39 @@ public class Model {
     }
 
     public Fmi2Status fmi2CancelStep() {
+        return Fmi2Status.OK;
+    }
+
+    public Fmi2SerializePair fmi2ExtSerialize() throws Exception {
+
+        var b = new ByteArrayOutputStream();
+        var o = new ObjectOutputStream(b);
+
+        o.writeObject(this);
+
+        return new Fmi2SerializePair(Fmi2Status.OK, b.toByteArray());
+    }
+
+    public Fmi2Status fmi2ExtDeserialize(byte[] bytes) throws Exception {
+
+        try (ByteArrayInputStream b = new ByteArrayInputStream(bytes)) {
+            try (ObjectInputStream o = new ObjectInputStream(b)) {
+                var other = (Model) o.readObject();
+                this.real_a = other.real_a;
+                this.real_b = other.real_b;
+                this.real_c = other.real_c;
+                this.integer_a = other.integer_a;
+                this.integer_b = other.integer_b;
+                this.integer_c = other.integer_c;
+                this.boolean_a = other.boolean_a;
+                this.boolean_b = other.boolean_b;
+                this.boolean_c = other.boolean_c;
+                this.string_a = other.string_a;
+                this.string_b = other.string_b;
+                this.string_c = other.string_c;
+            }
+        }
+
         return Fmi2Status.OK;
     }
 
@@ -151,6 +200,16 @@ public class Model {
         {
             this.status = status;
             this.values = values;
+        }
+    }
+
+    class Fmi2SerializePair {
+        public Fmi2Status status;
+        public byte[] bytes;
+
+        Fmi2SerializePair(Fmi2Status status, byte[] bytes) {
+            this.status = status;
+            this.bytes = bytes;
         }
     }
 

@@ -1,3 +1,4 @@
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 
 import org.zeromq.SocketType;
@@ -169,10 +170,22 @@ public class Backend {
                     }
                         break;
 
-                    case FMI2EXTSERIALIZESLAVE:
+                    case FMI2EXTSERIALIZESLAVE: {
+                        var res = model.fmi2ExtSerialize();
+                        reply = UnifmuFmi2.Fmi2ExtSerializeSlaveReturn.newBuilder()
+                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.status.ordinal()))
+                                .setState(ByteString.copyFrom(res.bytes))
+                                .build();
+                    }
                         break;
 
-                    case FMI2EXTDESERIALIZESLAVE:
+                    case FMI2EXTDESERIALIZESLAVE: {
+                        var c = command.getFmi2ExtDeserializeSlave();
+                        var res = model.fmi2ExtDeserialize(c.getState().toByteArray());
+                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                                .build();
+                    }
                         break;
 
                     case FMI2SETDEBUGLOGGING:
