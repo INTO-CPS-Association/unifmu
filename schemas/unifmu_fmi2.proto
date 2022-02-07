@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package fmi2_proto;
 
+// https://developers.google.com/protocol-buffers/docs/reference/java-generated#package
+option java_package = "";
+option java_outer_classname = "UnifmuFmi2";
+
 message Fmi2SetReal{
   repeated uint32 references = 1;
   repeated double values = 2;

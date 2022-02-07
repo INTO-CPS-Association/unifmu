@@ -73,6 +73,39 @@ lazy_static! {
             ("docker/README.md", "README_DOCKER.md"),
         ],
     };
+    static ref JAVAASSETS: LanguageAssets = LanguageAssets {
+        resources: vec![
+            (
+                "java/src/main/java/Backend.java",
+                "src/main/java/Backend.java"
+            ),
+            ("java/src/main/java/Model.java", "src/main/java/Model.java"),
+            ("java/build.gradle", "build.gradle"),
+            ("java/gradlew", "gradlew"),
+            (
+                "java/gradle/wrapper/gradle-wrapper.jar",
+                "gradle/wrapper/gradle-wrapper.jar"
+            ),
+            (
+                "java/gradle/wrapper/gradle-wrapper.properties",
+                "gradle/wrapper/gradle-wrapper.properties"
+            ),
+            ("java/gradlew.bat", "gradlew.bat"),
+            ("java/launch.toml", "launch.toml"),
+            ("java/README.md", "README.md"),
+            (
+                "auto_generated/UnifmuFmi2.java",
+                "src/main/java/UnifmuFmi2.java"
+            ),
+        ],
+        docker: vec![
+            ("docker/Dockerfile_csharp", "Dockerfile"),
+            ("docker/deploy_csharp.py", "deploy.py"),
+            ("docker/docker-compose.yml", "docker-compose.yml"),
+            ("docker/launch_csharp.toml", "launch.toml"),
+            ("docker/README.md", "README_DOCKER.md"),
+        ],
+    };
 }
 
 #[derive(Debug)]
@@ -168,7 +201,7 @@ pub fn generate(
 
         Language::Matlab => todo!(),
 
-        Language::Java => todo!(),
+        Language::Java => copy_to_resources(&JAVAASSETS),
     };
 
     match zipped {
