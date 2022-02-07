@@ -11,10 +11,10 @@ public class Backend {
 
         Model model = new Model();
 
-        String dispacher_endpoint = "";
+        String dispacher_endpoint = System.getenv("UNIFMU_DISPATCHER_ENDPOINT");
 
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REP);
+            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(dispacher_endpoint);
 
             socket.send(UnifmuFmi2.Fmi2ExtHandshakeReturn.newBuilder().build().toByteArray(), 0);

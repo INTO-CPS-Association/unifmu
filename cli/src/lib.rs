@@ -82,6 +82,14 @@ lazy_static! {
             ("java/src/main/java/Model.java", "src/main/java/Model.java"),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
+            (
+                "java/gradle/wrapper/gradle-wrapper.jar",
+                "gradle/wrapper/gradle-wrapper.jar"
+            ),
+            (
+                "java/gradle/wrapper/gradle-wrapper.properties",
+                "gradle/wrapper/gradle-wrapper.properties"
+            ),
             ("java/gradlew.bat", "gradlew.bat"),
             ("java/launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
