@@ -1,3 +1,3 @@
-linux = ["./bash", "gradlew", "run"]
-macos = ["./bash", "gradlew", "run"]
+linux = ["bash", "gradlew", "run"]
+macos = ["zsh", "./gradlew", "run"]
 windows = ["powershell.exe", "./gradlew.bat", "run"]
