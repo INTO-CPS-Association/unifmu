@@ -1,5 +1,5 @@
 import pickle
-
+from typing import list
 
 class Model:
     def __init__(self) -> None:
@@ -29,6 +29,278 @@ class Model:
 
         self._update_outputs()
 
+    def _set_value(self, references, values):
+
+        for r, v in zip(references, values):
+            setattr(self, self.reference_to_attribute[r], v)
+
+        return Fmi2Status.ok
+
+    def _get_value(self, references):
+
+        values = []
+
+        for r in references:
+            values.append(getattr(self, self.reference_to_attribute[r]))
+
+        return Fmi2Status.ok, values
+
+    def _update_outputs(self):
+        self.real_c = self.real_a + self.real_b
+        self.integer_c = self.integer_a + self.integer_b
+        self.boolean_c = self.boolean_a or self.boolean_b
+        self.string_c = self.string_a + self.string_b
+
+    """
+
+    FMI3 Methods
+    
+    """
+    
+    def fmi3DoStep(self, 
+        current_communication_point: float, 
+        communication_step_size: float, 
+        no_set_fmu_state_prior_to_current_point: bool, 
+        event_handling_needed: bool,
+        terminate_simulation: bool,
+        early_return: bool,
+        last_successful_time: float,
+    ) -> int:
+        self._update_outputs()
+        return Fmi3Status.ok
+
+    def fmi3EnterInitializationMode(self,
+        tolerance_defined: bool,
+        tolerance: bool,
+        start_time: float,
+        stop_time_defined: bool,
+        stop_time: float
+    ) -> int:
+        return Fmi3Status.ok
+
+    def fmi3ExitInitializationMode(self) -> int:
+        self._update_outputs()
+        return Fmi3Status.ok
+
+    # tag::Getters[]
+
+    def fmi3GetFloat32(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetFloat64(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetInt8(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetUInt8(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetInt16(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetUInt16(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetInt32(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetUInt32(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetInt64(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetUInt64(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetBoolean(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    def fmi3GetString(self,
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ):
+        return self._get_value(value_references)
+
+    def fmi3GetBinary(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> tuple:
+        return self._get_value(value_references)
+
+    # tag::Setters[]
+    
+    def fmi3SetFloat32(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetFloat64(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetInt8(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetUInt8(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetInt16(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetUInt16(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetInt32(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetUInt32(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+    
+    def fmi3SetInt64(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetUInt64(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetBoolean(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+
+    def fmi3SetString(self, 
+        value_references, 
+        n_value_references: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+    
+    def fmi3SetBinary(self, 
+        value_references, 
+        n_value_references: int,
+        value_sizes: int,
+        values,
+        n_values: int
+    ) -> int:
+        return self._set_value(value_references)
+     
+
+    """
+    
+    FMI2 Methods
+
+    """
     def fmi2DoStep(self, current_time, step_size, no_step_prior):
         self._update_outputs()
         return Fmi2Status.ok
@@ -112,31 +384,10 @@ class Model:
 
         return Fmi2Status.ok
 
-    def _set_value(self, references, values):
-
-        for r, v in zip(references, values):
-            setattr(self, self.reference_to_attribute[r], v)
-
-        return Fmi2Status.ok
-
-    def _get_value(self, references):
-
-        values = []
-
-        for r in references:
-            values.append(getattr(self, self.reference_to_attribute[r]))
-
-        return Fmi2Status.ok, values
-
-    def _update_outputs(self):
-        self.real_c = self.real_a + self.real_b
-        self.integer_c = self.integer_a + self.integer_b
-        self.boolean_c = self.boolean_a or self.boolean_b
-        self.string_c = self.string_a + self.string_b
-
 
 class Fmi2Status:
-    """Represents the status of the FMU or the results of function calls.
+    """
+    Represents the status of the FMU or the results of function calls.
 
     Values:
         * ok: all well
@@ -150,13 +401,20 @@ class Fmi2Status:
         FMI section 2.1.3
 
     """
-
     ok = 0
     warning = 1
     discard = 2
     error = 3
     fatal = 4
     pending = 5
+
+
+class Fmi3Status:
+    ok = 0
+    warning = 1
+    discard = 2
+    error = 3
+    fatal = 4
 
 
 if __name__ == "__main__":
