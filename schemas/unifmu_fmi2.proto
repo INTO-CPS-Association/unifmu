@@ -1,10 +1,194 @@
 syntax = "proto3";
 
+
 package fmi2_proto;
 
 // https://developers.google.com/protocol-buffers/docs/reference/java-generated#package
 option java_package = "";
 option java_outer_classname = "UnifmuFmi2";
+
+// FMI3
+
+message Fmi3DoStep {
+  double current_communication_point = 1;
+  double communication_step_size = 2;
+  bool no_set_fmu_state_prior_to_current_point = 3;
+  bool event_handling_needed = 4;
+  bool terminate_simulation = 5;
+  bool early_return = 6;
+  double last_successful_time = 7;
+}
+
+message Fmi2SetupExperiment{   
+  double start_time = 1;
+  optional double stop_time = 2;
+  optional double tolerance = 3;
+  // bool has_stop_time = 4;
+  // bool has_tolerance = 5;
+}
+
+message Fmi2CancelStep {}
+  
+message Fmi2EnterInitializationMode{}
+
+message Fmi2ExitInitializationMode{}
+
+message Fmi2FreeInstance{}
+
+message Fmi2Terminate{}
+
+message Fmi2Reset{}
+
+message Fmi2GetDirectionalDerivatives{
+  repeated uint32 references_unknown = 1;
+  repeated uint32 references_known = 2;
+  repeated double direction_known = 3;
+}
+
+message Fmi2SetRealInputDerivatives{
+  repeated uint32 references = 1;
+  repeated int32 orders = 2;
+  repeated double values = 3; 
+}
+
+message Fmi2GetRealOutputDerivatives{
+  repeated uint32 references = 1;
+  repeated int32 orders = 2;
+}
+
+message Fmi2SetDebugLogging{
+    repeated string categories = 1;
+    bool logging_on = 2;
+}
+
+enum Fmi2Status
+{
+    Ok = 0;
+    Warning=1;
+    Discard=2;
+    Error=3;
+    Fatal=4;
+    Pending=5;
+}
+
+message Fmi3GetFloat32 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetFloat64 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetInt8 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetUInt8 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetInt16 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetUInt16 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetInt32 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetUInt32 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetInt64 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetUInt64 {
+  repeated uint32 value_reference = 1;
+}
+
+message Fmi3GetBoolean {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3GetString {
+  repeated uint32 value_references = 1;
+}
+
+message FmiGetBinary {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3SetFloat32 {
+  repeated uint32 value_reference = 1;
+  repeated float values = 2;
+}
+
+message Fmi3SetFloat64 {
+  repeated uint32 value_reference = 1;
+  repeated double values = 2;
+}
+
+message Fmi3SetInt8 {
+  repeated uint32 value_reference = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi3SetUInt8 {
+  repeated uint32 value_reference = 1;
+  repeated uint32 values = 2;
+}
+
+message Fmi3SetInt16 {
+  repeated uint32 value_reference = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi3SetUInt16 {
+  repeated uint32 value_reference = 1;
+  repeated uint32 values = 2;
+}
+
+message Fmi3SetInt32 {
+  repeated uint32 value_reference = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi3SetUInt32 {
+  repeated uint32 value_reference = 1;
+  repeated uint32 values = 2;
+}
+
+message Fmi3SetInt64 {
+  repeated uint32 value_reference = 1;
+  repeated int64 values = 2;
+}
+
+message Fmi3SetUInt64 {
+  repeated uint32 value_reference = 1;
+  repeated uint64 values = 2;
+}
+
+message Fmi3SetBoolean {
+  repeated uint32 value_references = 1;
+  repeated bool values = 2;
+}
+
+message Fmi3SetString {
+  repeated uint32 value_references = 1;
+  repeated string values = 2;
+}
+
+message FmiSetBinary {
+  repeated uint32 value_references = 1;
+  repeated bytes values = 2;
+}
+
+// FMI2
 
 message Fmi2SetReal{
   repeated uint32 references = 1;
