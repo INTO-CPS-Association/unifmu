@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use crate::dispatcher::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 use crate::fmi2_proto::fmi2_command::Command as c_enum;
 use crate::fmi2_proto::{
     self, Fmi2CancelStep, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
@@ -11,9 +12,8 @@ use crate::fmi2_proto::{
     Fmi2StatusReturn, Fmi2Terminate,
 };
 use crate::fmi2_proto::{Fmi2Command as c_obj, Fmi2ExtSerializeSlave};
-use crate::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
 
-use crate::Fmi2Status;
+use crate::fmi2::Fmi2Status;
 use bytes::Bytes;
 use prost::Message;
 use tokio::runtime::Runtime;

@@ -1,4 +1,4 @@
-use crate::Fmi2Status;
+use crate::fmi2::Fmi2Status;
 
 #[derive(Debug)]
 pub enum Fmi2CommandDispatcherError {
