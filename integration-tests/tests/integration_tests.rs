@@ -5,7 +5,7 @@ use unifmu::generate;
 #[cfg(test)]
 mod tests {
 
-    use fmi2api::{
+    use fmi2api::fmi2::{
         config, fmi2DeSerializeFMUstate, fmi2DoStep, fmi2EnterInitializationMode,
         fmi2ExitInitializationMode, fmi2FreeFMUstate, fmi2FreeInstance, fmi2GetBoolean,
         fmi2GetFMUstate, fmi2GetInteger, fmi2GetReal, fmi2GetString, fmi2GetTypesPlatform,

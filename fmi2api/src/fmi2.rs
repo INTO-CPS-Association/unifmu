@@ -3,7 +3,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use crate::dispatcher::{Fmi2CommandDispatcher, Fmi2CommandDispatcherError};
+use crate::dispatcher::CommandDispatcher;
 use libc::c_double;
 use libc::size_t;
 
@@ -32,7 +32,6 @@ use std::slice::from_raw_parts;
 use std::slice::from_raw_parts_mut;
 
 use crate::config::LaunchConfig;
-use crate::socket_dispatcher::Fmi2SocketDispatcher;
 
 ///
 /// Represents the function signature of the logging callback function passsed
@@ -126,7 +125,7 @@ pub struct Slave {
     string_buffer: Vec<CString>,
 
     /// Object performing remote procedure calls on the slave
-    dispatcher: Box<dyn Fmi2CommandDispatcher>,
+    dispatcher: Box<CommandDispatcher>,
 
     popen: Popen,
 
@@ -140,7 +139,7 @@ impl UnwindSafe for Slave {}
 unsafe impl Send for Slave {}
 
 impl Slave {
-    fn new(dispatcher: Box<dyn Fmi2CommandDispatcher>, popen: Popen) -> Self {
+    fn new(dispatcher: Box<CommandDispatcher>, popen: Popen) -> Self {
         Self {
             dispatcher,
             string_buffer: Vec::new(),
@@ -213,7 +212,7 @@ pub fn fmi2Instantiate(
     let config: LaunchConfig = toml::from_str(config.as_str())
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
-    let mut dispatcher = Box::new(Fmi2SocketDispatcher::new("tcp://127.0.0.1:0"));
+    let mut dispatcher = Box::new(CommandDispatcher::new("tcp://127.0.0.1:0"));
 
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = endpoint

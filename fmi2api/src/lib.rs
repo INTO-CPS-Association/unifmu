@@ -5,7 +5,7 @@
 
 pub mod config;
 mod dispatcher;
-mod fmi2;
+pub mod fmi2;
 pub mod fmi2_proto;
-mod fmi3;
-pub mod socket_dispatcher;
+pub mod fmi3;
+// pub mod socket_dispatcher;

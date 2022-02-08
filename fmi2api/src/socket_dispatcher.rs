@@ -33,7 +33,7 @@ pub struct Fmi2SocketDispatcher {
 }
 
 #[allow(non_snake_case)]
-impl Fmi2SocketDispatcher {
+pub impl Fmi2SocketDispatcher {
     pub fn new(endpoint: &str) -> Self {
         let mut socket = RepSocket::new();
 

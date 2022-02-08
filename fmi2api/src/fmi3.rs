@@ -2,14 +2,13 @@ use std::{ffi::c_void, ptr::null};
 
 use libc::{c_char, size_t};
 
-#[repr(C)]
+#[repr(i32)]
 pub enum Fmi3Status {
     OK = 0,
     Warning = 1,
     Discard = 2,
     Error = 3,
     Fatal = 4,
-    Pending = 5,
 }
 
 pub extern "C" fn fmi2InstantiateCoSimulation(
