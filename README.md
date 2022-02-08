@@ -9,11 +9,12 @@ While this allows efficient execution of a simulation, it is a significant limit
 UniFMU is a command line tool that facilitates the implementation of FMUs in other popular languages that would otherwise not be able to produce C-compatible binaries.
 It does this by providing a precompiled binary that is C-compatible, which then dispatches calls to the implementation of the model in the target language.
 
-| Specification Version | FMU Types    | Languages        |
-| --------------------- | ------------ | ---------------- |
-| FMI3                  |              |                  |
-| FMI2                  | cosimulation | Python, C#, Java |
-| FMI1                  |              |                  |
+| Specification Version | FMU Interface | Languages        | Binaries                 |
+| --------------------- | ------------- | ---------------- | ------------------------ |
+| FMI3                  |               |                  |                          |
+| FMI2                  | Co-Simulation | Python, C#, Java | win64, linux64, darwin64 |
+| FMI1                  |               |                  |                          |
+
 
 Examples of generated FMUs can be found in the [unifmu_examples](https://github.com/INTO-CPS-Association/unifmu_examples) repo.
 
