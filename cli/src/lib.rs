@@ -1,28 +1,26 @@
-use clap::arg_enum;
-use std::{fs::File, path::Path};
-use walkdir::WalkDir;
-use zip::{result::ZipError, CompressionMethod};
-
+use clap::ArgEnum;
 use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use log::info;
 use rust_embed::RustEmbed;
+use std::{fs::File, path::Path};
 use tempfile::TempDir;
+use walkdir::WalkDir;
+use zip::{result::ZipError, CompressionMethod};
 
 use crate::utils::zip_dir;
 
 #[macro_use]
 extern crate dlopen_derive;
 
-arg_enum! {
-    #[derive(Debug)]
+#[derive(ArgEnum, Clone, Debug)]
 pub enum Language {
     Python,
     CSharp,
     Matlab,
     Java,
 }
-}
+
 #[derive(RustEmbed)]
 #[folder = "../assets"]
 struct Assets;

@@ -6,7 +6,7 @@ version = "0.0.6"
 
 [dependencies]
 
-clap = "*"
+clap = { version = "3.0.14", features = ["derive"] }
 dlopen = "*"
 dlopen_derive = "*"
 env_logger = "*"
@@ -16,10 +16,9 @@ libc = "*"
 log = "*"
 num_enum = "*"
 rust-embed = "6.0.0"
-structopt = "*"
 tempfile = "*"
 url = "*"
 walkdir = "*"
-zip = {version = "*", default-features = false, features = ["deflate"]}
+zip = { version = "*", default-features = false, features = ["deflate"] }
 
-common = {path = "../common"}
+common = { path = "../common" }

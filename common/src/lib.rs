@@ -1,5 +1,4 @@
 pub mod md;
-use serde::{Deserialize, Deserializer};
 
 #[cfg(test)]
 mod tests {
