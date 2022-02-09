@@ -13,7 +13,7 @@ bytes = "*"
 libc = "*"
 num_enum = "*"
 prost = "*"
-safer-ffi = { version = "*", features = ["proc_macros"] }
+# safer-ffi = { version = "*", features = ["proc_macros"] }
 serde = { version = "1.0.127", features = ["derive"] }
 serde_bytes = "*"
 serde_json = "*"

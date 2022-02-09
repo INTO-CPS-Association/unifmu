@@ -19,7 +19,7 @@ cp ./target/x86_64-apple-darwin/release/lib${tgt}.dylib ./assets/auto_generated/
 
 # ------------------------------ schemas ------------------------------
 echo "generating protobuf schemas for python and csharp backends"
-protoc -I=./schemas --python_out=./assets/auto_generated --csharp_out=./assets/auto_generated --java_out ./assets/auto_generated unifmu_fmi2.proto
+protoc -I=./schemas --python_out=./assets/auto_generated --csharp_out=./assets/auto_generated --java_out ./assets/auto_generated unifmu_fmi.proto
 
 # ------------------------------ cli ------------------------------
 tgt=unifmu
