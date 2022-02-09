@@ -205,32 +205,82 @@ message Fmi3StatusReturn {
 
 message Fmi3FreeInstanceReturn {}
 
-message Fmi3GetRealReturn {
+message Fmi3GetFloat32Return {
+  Fmi3Status status = 1;
+  repeated float values = 2;
+}
+
+message Fmi3GetFloat64Return {
   Fmi3Status status = 1;
   repeated double values = 2;
 }
 
-message Fmi3GetIntegerReturn {
-    Fmi3Status status = 1;
-    repeated int32 values = 2;
+message Fmi3GetInt8Return {
+  Fmi3Status status = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi3GetUInt8Return {
+  Fmi3Status status = 1;
+  repeated uint32 values = 2;
+}
+
+message Fmi3GetInt16Return {
+  Fmi3Status status = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi3GetUInt16Return {
+  Fmi3Status status = 1;
+  repeated uint32 values = 2;
+}
+
+message Fmi3GetInt32Return {
+  Fmi3Status status = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi3GetUInt32Return {
+  Fmi3Status status = 1;
+  repeated uint32 values = 2;
+}
+
+message Fmi3GetInt64Return {
+  Fmi3Status status = 1;
+  repeated int64 values = 2;
+}
+
+message Fmi3GetUInt64Return {
+  Fmi3Status status = 1;
+  repeated uint64 values = 2;
 }
 
 message Fmi3GetBooleanReturn {
-    Fmi3Status status = 1;
-    repeated bool values = 2;
+  Fmi3Status status = 1;
+  repeated bool values = 2;
 }
 
 message Fmi3GetStringReturn {
-    Fmi3Status status = 1;
-    repeated string values = 2;
+  Fmi3Status status = 1;
+  repeated string values = 2;
 }
 
-message Fmi3GetRealOutputDerivativesReturn {
+message FmiGetBinaryReturn {
+  Fmi3Status status = 1;
+  repeated bytes values = 2;
+}
+
+message Fmi3GetDirectionalDerivativeReturn {
   Fmi3Status status = 1;
   repeated double values = 2;
 }
 
-message Fmi3GetDirectionalDerivativesReturn {
+message Fmi3GetAdjointDerivativeReturn {
+  Fmi3Status status = 1;
+  repeated double values = 2;
+}
+
+message Fmi3GetOutputDerivativesReturn {
   Fmi3Status status = 1;
   repeated double values = 2;
 }
