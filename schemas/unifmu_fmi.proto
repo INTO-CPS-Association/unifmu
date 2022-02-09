@@ -59,35 +59,35 @@ message Fmi3Reset {}
 // ----------------------- FMI3 Getters ----------------------
 
 message Fmi3GetFloat32 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetFloat64 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetInt8 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetUInt8 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetInt16 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetUInt16 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetInt32 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetUInt32 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetInt64 {
@@ -95,7 +95,7 @@ message Fmi3GetInt64 {
 }
 
 message Fmi3GetUInt64 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetBoolean {
@@ -438,7 +438,7 @@ message Fmi2SetRealInputDerivatives {
   repeated double values = 3; 
 }
 
-// ----------------------- RETURN VALUES ----------------------
+// ----------------------- FMI2 Return Values ----------------------
 
 message Fmi2StatusReturn {
   Fmi2Status status = 1;
@@ -490,6 +490,7 @@ message Fmi2Command {
     Fmi2SetDebugLogging Fmi2SetDebugLogging = 2;
 
     Fmi2SetupExperiment Fmi2SetupExperiment = 3;
+    
     Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 4;
     Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 5;
     Fmi2FreeInstance Fmi2FreeInstance = 6;

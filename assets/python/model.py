@@ -1,5 +1,5 @@
 import pickle
-from typing import list
+from typing import Any, Tuple
 
 class Model:
     def __init__(self) -> None:
@@ -29,14 +29,14 @@ class Model:
 
         self._update_outputs()
 
-    def _set_value(self, references, values):
+    def _set_value(self, references, values) -> int:
 
         for r, v in zip(references, values):
             setattr(self, self.reference_to_attribute[r], v)
 
         return Fmi2Status.ok
 
-    def _get_value(self, references):
+    def _get_value(self, references) -> Tuple[int, Any]:
 
         values = []
 
@@ -70,10 +70,8 @@ class Model:
         return Fmi3Status.ok
 
     def fmi3EnterInitializationMode(self,
-        tolerance_defined: bool,
         tolerance: bool,
         start_time: float,
-        stop_time_defined: bool,
         stop_time: float
     ) -> int:
         return Fmi3Status.ok
@@ -82,218 +80,171 @@ class Model:
         self._update_outputs()
         return Fmi3Status.ok
 
+    def fmi3Terminate(self) -> int:
+        return Fmi3Status.ok
+    
+    def fmi3Reset(self) -> int:
+        return Fmi3Status.ok
+
+    def unifmuFmi3Serialize(self) -> Tuple[int, bytes]:
+
+        bytes = pickle.dumps(
+            (
+                self.real_a,
+                self.real_b,
+                self.integer_a,
+                self.integer_b,
+                self.boolean_a,
+                self.boolean_b,
+                self.string_a,
+                self.string_b,
+            )
+        )
+        return Fmi3Status.ok, bytes
+
+    def unifmuFmi3Deserialize(self, bytes: bytes) -> int:
+        (
+            real_a,
+            real_b,
+            integer_a,
+            integer_b,
+            boolean_a,
+            boolean_b,
+            string_a,
+            string_b,
+        ) = pickle.loads(bytes)
+        self.real_a = real_a
+        self.real_b = real_b
+        self.integer_a = integer_a
+        self.integer_b = integer_b
+        self.boolean_a = boolean_a
+        self.boolean_b = boolean_b
+        self.string_a = string_a
+        self.string_b = string_b
+        self._update_outputs()
+
+        return Fmi3Status.ok
+
     # tag::Getters[]
 
-    def fmi3GetFloat32(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetFloat32(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetFloat64(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetFloat64(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetInt8(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetInt8(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetUInt8(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetUInt8(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetInt16(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetInt16(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetUInt16(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetUInt16(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetInt32(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetInt32(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetUInt32(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetUInt32(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetInt64(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetInt64(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetUInt64(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetUInt64(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetBoolean(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetBoolean(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetString(self,
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ):
+    def fmi3GetString(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
-    def fmi3GetBinary(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
-    ) -> tuple:
+    def fmi3GetBinary(self, value_references) -> Tuple[int, Any]:
         return self._get_value(value_references)
 
     # tag::Setters[]
     
     def fmi3SetFloat32(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetFloat64(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetInt8(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetUInt8(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetInt16(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetUInt16(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetInt32(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetUInt32(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
     
     def fmi3SetInt64(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetUInt64(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetBoolean(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
 
     def fmi3SetString(self, 
-        value_references, 
-        n_value_references: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
     
     def fmi3SetBinary(self, 
-        value_references, 
-        n_value_references: int,
-        value_sizes: int,
-        values,
-        n_values: int
+        value_references,
+        values
     ) -> int:
-        return self._set_value(value_references)
+        return self._set_value(value_references, values)
      
 
     """
@@ -315,38 +266,13 @@ class Model:
     def fmi2SetupExperiment(self, start_time, stop_time, tolerance):
         return Fmi2Status.ok
 
-    def fmi2SetReal(self, references, values):
-        return self._set_value(references, values)
-
-    def fmi2SetInteger(self, references, values):
-        return self._set_value(references, values)
-
-    def fmi2SetBoolean(self, references, values):
-        return self._set_value(references, values)
-
-    def fmi2SetString(self, references, values):
-        return self._set_value(references, values)
-
-    def fmi2GetReal(self, references):
-        return self._get_value(references)
-
-    def fmi2GetInteger(self, references):
-        return self._get_value(references)
-
-    def fmi2GetBoolean(self, references):
-        return self._get_value(references)
-
-    def fmi2GetString(self, references):
-        return self._get_value(references)
+    def fmi2Terminate(self):
+        return Fmi2Status.ok
 
     def fmi2Reset(self):
         return Fmi2Status.ok
 
-    def fmi2Terminate(self):
-        return Fmi2Status.ok
-
-    def fmi2ExtSerialize(self):
-
+    def unifmuFmi2Serialize(self):
         bytes = pickle.dumps(
             (
                 self.real_a,
@@ -361,7 +287,7 @@ class Model:
         )
         return Fmi2Status.ok, bytes
 
-    def fmi2ExtDeserialize(self, bytes) -> int:
+    def unifmuFmi2Deserialize(self, bytes) -> int:
         (
             real_a,
             real_b,
@@ -383,6 +309,30 @@ class Model:
         self._update_outputs()
 
         return Fmi2Status.ok
+
+    def fmi2GetReal(self, references):
+        return self._get_value(references)
+
+    def fmi2GetInteger(self, references):
+        return self._get_value(references)
+
+    def fmi2GetBoolean(self, references):
+        return self._get_value(references)
+
+    def fmi2GetString(self, references):
+        return self._get_value(references)
+
+    def fmi2SetReal(self, references, values):
+        return self._set_value(references, values)
+
+    def fmi2SetInteger(self, references, values):
+        return self._set_value(references, values)
+
+    def fmi2SetBoolean(self, references, values):
+        return self._set_value(references, values)
+
+    def fmi2SetString(self, references, values):
+        return self._set_value(references, values)
 
 
 class Fmi2Status:
@@ -442,7 +392,7 @@ if __name__ == "__main__":
     m.string_a = "Hello "
     m.string_b = "World!"
 
-    assert m.fmi2DoStep(0.0, 1.0, False) == Fmi2Status.ok
+    assert m.fmi3DoStep(0.0, 1.0, False) == Fmi2Status.ok
 
     assert m.real_c == 3.0
     assert m.integer_c == 3
