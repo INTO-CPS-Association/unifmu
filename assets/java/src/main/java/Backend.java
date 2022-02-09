@@ -18,25 +18,25 @@ public class Backend {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(dispacher_endpoint);
 
-            socket.send(UnifmuFmi2.Fmi2ExtHandshakeReturn.newBuilder().build().toByteArray(), 0);
+            socket.send(UnifmuFmi.UnifmuHandshakeReturn.newBuilder().build().toByteArray(), 0);
 
             Message reply;
             // Java compiler does not know that reply is always initialized after switch
             // case, so we assign it a dummy value
-            reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder().build();
+            reply = UnifmuFmi.Fmi2StatusReturn.newBuilder().build();
 
             while (true) {
                 byte[] message = socket.recv();
 
-                var command = UnifmuFmi2.Fmi2Command.parseFrom(message);
+                var command = UnifmuFmi.Fmi2Command.parseFrom(message);
 
                 switch (command.getCommandCase()) {
 
                     case FMI2SETREAL: {
                         var c = command.getFmi2SetReal();
                         var res = model.fmi2SetReal(c.getReferencesList(), c.getValuesList());
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
@@ -44,8 +44,8 @@ public class Backend {
                     case FMI2SETINTEGER: {
                         var c = command.getFmi2SetInteger();
                         var res = model.fmi2SetInteger(c.getReferencesList(), c.getValuesList());
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
@@ -53,8 +53,8 @@ public class Backend {
                     case FMI2SETBOOLEAN: {
                         var c = command.getFmi2SetBoolean();
                         var res = model.fmi2SetBoolean(c.getReferencesList(), c.getValuesList());
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
@@ -62,8 +62,8 @@ public class Backend {
                     case FMI2SETSTRING: {
                         var c = command.getFmi2SetString();
                         var res = model.fmi2SetString(c.getReferencesList(), c.getValuesList());
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
@@ -71,8 +71,8 @@ public class Backend {
                     case FMI2GETREAL: {
                         var c = command.getFmi2GetReal();
                         var res = model.fmi2GetReal(c.getReferencesList());
-                        reply = UnifmuFmi2.Fmi2GetRealReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.status.ordinal()))
+                        reply = UnifmuFmi.Fmi2GetRealReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.status.ordinal()))
                                 .addAllValues(res.values)
                                 .build();
                     }
@@ -81,8 +81,8 @@ public class Backend {
                     case FMI2GETINTEGER: {
                         var c = command.getFmi2GetInteger();
                         var res = model.fmi2GetInteger(c.getReferencesList());
-                        reply = UnifmuFmi2.Fmi2GetIntegerReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.status.ordinal()))
+                        reply = UnifmuFmi.Fmi2GetIntegerReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.status.ordinal()))
                                 .addAllValues(res.values)
                                 .build();
                     }
@@ -91,8 +91,8 @@ public class Backend {
                     case FMI2GETBOOLEAN: {
                         var c = command.getFmi2GetBoolean();
                         var res = model.fmi2GetBoolean(c.getReferencesList());
-                        reply = UnifmuFmi2.Fmi2GetBooleanReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.status.ordinal()))
+                        reply = UnifmuFmi.Fmi2GetBooleanReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.status.ordinal()))
                                 .addAllValues(res.values)
                                 .build();
                     }
@@ -101,8 +101,8 @@ public class Backend {
                     case FMI2GETSTRING: {
                         var c = command.getFmi2GetString();
                         var res = model.fmi2GetString(c.getReferencesList());
-                        reply = UnifmuFmi2.Fmi2GetStringReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.status.ordinal()))
+                        reply = UnifmuFmi.Fmi2GetStringReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.status.ordinal()))
                                 .addAllValues(res.values)
                                 .build();
                     }
@@ -111,8 +111,8 @@ public class Backend {
                     case FMI2DOSTEP: {
                         var c = command.getFmi2DoStep();
                         var res = model.fmi2DoStep(c.getCurrentTime(), c.getStepSize(), c.getNoStepPrior());
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
@@ -121,24 +121,24 @@ public class Backend {
                         var c = command.getFmi2SetupExperiment();
                         var res = model.fmi2SetupExperiment(c.getStartTime(), c.hasStopTime() ? c.getStopTime() : null,
                                 c.hasTolerance() ? c.getTolerance() : null);
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
 
                     case FMI2ENTERINITIALIZATIONMODE: {
                         var res = model.fmi2EnterInitializationMode();
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
 
                     case FMI2EXITINITIALIZATIONMODE: {
                         var res = model.fmi2EnterInitializationMode();
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
@@ -148,42 +148,42 @@ public class Backend {
 
                     case FMI2RESET: {
                         var res = model.fmi2Reset();
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
 
                     case FMI2TERMINATE: {
                         var res = model.fmi2Terminate();
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
 
                     case FMI2CANCELSTEP: {
                         var res = model.fmi2CancelStep();
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;
 
-                    case FMI2EXTSERIALIZESLAVE: {
+                    case UNIFMUSERIALIZE: {
                         var res = model.fmi2ExtSerialize();
-                        reply = UnifmuFmi2.Fmi2ExtSerializeSlaveReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.status.ordinal()))
+                        reply = UnifmuFmi.UnifmuFmi2SerializeReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.status.ordinal()))
                                 .setState(ByteString.copyFrom(res.bytes))
                                 .build();
                     }
                         break;
 
-                    case FMI2EXTDESERIALIZESLAVE: {
-                        var c = command.getFmi2ExtDeserializeSlave();
+                    case UNIFMUDESERIALIZE: {
+                        var c = command.getUnifmuDeserialize();
                         var res = model.fmi2ExtDeserialize(c.getState().toByteArray());
-                        reply = UnifmuFmi2.Fmi2StatusReturn.newBuilder()
-                                .setStatus(UnifmuFmi2.Fmi2Status.forNumber(res.ordinal()))
+                        reply = UnifmuFmi.Fmi2StatusReturn.newBuilder()
+                                .setStatus(UnifmuFmi.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
                     }
                         break;

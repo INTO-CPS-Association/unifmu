@@ -38,15 +38,26 @@ impl CommandDispatcher {
     // ================= Common (FMI2+FMI3) ====================
 
     pub fn await_handshake(&mut self) -> Result<(), DispatcherError> {
-        todo!()
+        self.recv::<UnifmuHandshakeReturn>().map(|_| ())
     }
 
     pub fn UnifmuSerialize(&mut self) -> Result<(Fmi2Status, Vec<u8>), DispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::UnifmuSerialize(UnifmuSerialize {})),
+        };
+        self.send_and_recv::<_, UnifmuFmi2SerializeReturn>(&cmd)
+            .map(|res| (Fmi2Status::try_from(res.status).unwrap(), res.state))
     }
 
     pub fn UnifmuDeserialize(&mut self, state: &[u8]) -> Result<Fmi2Status, DispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::UnifmuDeserialize(UnifmuDeserialize {
+                state: state.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, Fmi2StatusReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     // ================= FMI3 ======================
