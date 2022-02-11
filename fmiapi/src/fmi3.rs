@@ -11,7 +11,7 @@ pub enum Fmi3Status {
     Fatal = 4,
 }
 
-pub extern "C" fn fmi2InstantiateCoSimulation(
+pub extern "C" fn fmi3InstantiateCoSimulation(
     instanceName: *const c_char,
     instantiationToken: *const c_char,
     resourcePath: *const c_char,

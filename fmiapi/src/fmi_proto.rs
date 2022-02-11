@@ -61,42 +61,42 @@ pub struct Fmi3Reset {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetFloat32 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetFloat64 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetInt8 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetUInt8 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetInt16 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetUInt16 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetInt32 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetUInt32 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetInt64 {
@@ -106,7 +106,7 @@ pub struct Fmi3GetInt64 {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetUInt64 {
     #[prost(uint32, repeated, tag="1")]
-    pub value_reference: ::prost::alloc::vec::Vec<u32>,
+    pub value_references: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3GetBoolean {
@@ -585,7 +585,7 @@ pub struct Fmi2SetRealInputDerivatives {
     #[prost(double, repeated, tag="3")]
     pub values: ::prost::alloc::vec::Vec<f64>,
 }
-// ----------------------- RETURN VALUES ----------------------
+// ----------------------- FMI2 Return Values ----------------------
 
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2StatusReturn {

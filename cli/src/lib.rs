@@ -40,8 +40,8 @@ lazy_static! {
             ("python/backend.py", "backend.py"),
             ("python/model.py", "model.py"),
             (
-                "auto_generated/unifmu_fmi2_pb2.py",
-                "schemas/unifmu_fmi2_pb2.py"
+                "auto_generated/unifmu_fmi_pb2.py",
+                "schemas/unifmu_fmi_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/README.md", "README.md"),
@@ -59,7 +59,7 @@ lazy_static! {
             ("csharp/backend.cs", "backend.cs"),
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
-            ("auto_generated/UnifmuFmi2.cs", "schemas/UnifmuFmi2.cs"),
+            ("auto_generated/UnifmuFmi.cs", "schemas/UnifmuFmi.cs"),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
@@ -92,8 +92,8 @@ lazy_static! {
             ("java/launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
             (
-                "auto_generated/UnifmuFmi2.java",
-                "src/main/java/UnifmuFmi2.java"
+                "auto_generated/UnifmuFmi.java",
+                "src/main/java/UnifmuFmi.java"
             ),
         ],
         docker: vec![

@@ -17,6 +17,15 @@ message UnifmuDeserialize {
 
 message UnifmuHandshakeReturn {}
 
+message FmiInstantiationCommand{
+  oneof command {
+    Fmi3InstantiateModelExchange Fmi3InstantiateModelExchange = 1;
+    Fmi3InstantiateCoSimulation Fmi3InstantiateCoSimulation = 2;
+    Fmi3InstantiateScheduledExecution Fmi3InstantiateScheduledExecution = 3;
+    Fmi2Instantiate Fmi2Instantiate = 4;
+  }
+}
+
 // ----------------------- FMI3 ----------------------
 
 enum Fmi3Status {
@@ -199,6 +208,34 @@ message FmiSetBinary {
 
 // ----------------------- FMI3 Return Values ----------------------
 
+message Fmi3InstantiateModelExchange {
+  string instance_name = 1;
+  string instantiation_token = 2;
+  string resource_path = 3;
+  bool visible = 4;
+  bool logging_on = 5;
+}
+
+
+message Fmi3InstantiateCoSimulation {
+  string instance_name = 1;
+  string instantiation_token = 2;
+  string resource_path = 3;
+  bool visible = 4;
+  bool logging_on = 5;
+  bool event_mode_used = 6;
+  bool early_return_allowed = 7;
+  repeated uint32 required_intermediate_variables = 8;
+}
+
+message Fmi3InstantiateScheduledExecution {
+  string instance_name = 1;
+  string instantiation_token = 2;
+  string resource_path = 3;
+  bool visible = 4;
+  bool logging_on = 5;
+}
+
 message Fmi3StatusReturn {
     Fmi3Status status = 1;
 }
@@ -351,6 +388,20 @@ enum Fmi2Status {
   FMI2_ERROR=3;
   FMI2_FATAL=4;
   FMI2_PENDING=5;
+}
+
+enum FmuType {
+  MODEL_EXCHANGE = 0;
+  CO_SIMULATION = 1;
+}
+
+message Fmi2Instantiate {
+  string instance_name = 1;
+  FmuType fmu_type = 2;
+  string fmu_guid = 3;
+  string fmu_resource_location = 4;
+  bool visible = 5;
+  bool logging_on = 6; 
 }
 
 message Fmi2DoStep {
@@ -516,5 +567,7 @@ message Fmi2Command {
     Fmi2SetString Fmi2SetString = 21;
 
     Fmi2SetRealInputDerivatives Fmi2SetRealInputDerivatives = 22;
+
+    Fmi2Instantiate Fmi2Instantiate = 23; 
   }
 }
