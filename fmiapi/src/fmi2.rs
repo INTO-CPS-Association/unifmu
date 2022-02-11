@@ -116,13 +116,13 @@ pub struct Slave {
     string_buffer: Vec<CString>,
 
     /// Object performing remote procedure calls on the slave
-    dispatcher: Box<CommandDispatcher>,
+    pub dispatcher: CommandDispatcher,
 
     popen: Popen,
 
-    last_successful_time: Option<f64>,
-    pending_message: Option<String>,
-    dostep_status: Option<Fmi2Status>,
+    pub last_successful_time: Option<f64>,
+    pub pending_message: Option<String>,
+    pub dostep_status: Option<Fmi2Status>,
 }
 //  + Send + UnwindSafe + RefUnwindSafe
 impl RefUnwindSafe for Slave {}
@@ -130,7 +130,7 @@ impl UnwindSafe for Slave {}
 unsafe impl Send for Slave {}
 
 impl Slave {
-    fn new(dispatcher: Box<CommandDispatcher>, popen: Popen) -> Self {
+    fn new(dispatcher: CommandDispatcher, popen: Popen) -> Self {
         Self {
             dispatcher,
             string_buffer: Vec::new(),
@@ -215,7 +215,7 @@ pub extern "C" fn fmi2Instantiate(
     let config: LaunchConfig = toml::from_str(config.as_str())
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
-    let mut dispatcher = Box::new(CommandDispatcher::new("tcp://127.0.0.1:0"));
+    let mut dispatcher = CommandDispatcher::new("tcp://127.0.0.1:0");
 
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = endpoint

@@ -1,6 +1,6 @@
-use std::{ffi::c_void, ptr::null};
-
+use crate::fmi2::Slave;
 use libc::{c_char, size_t};
+use std::{ffi::c_void, ptr::null};
 
 #[repr(i32)]
 pub enum Fmi3Status {
@@ -29,7 +29,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
 }
 
 pub extern "C" fn fmi3DoStep(
-    instance: *mut c_void,
+    instance: &mut Slave,
     currentCommunicationPoint: f64,
     communicationStepSize: f64,
     noSetFMUStatePriorToCurrentPoint: i32,
@@ -38,7 +38,21 @@ pub extern "C" fn fmi3DoStep(
     earlyReturn: *const i32,
     lastSuccessfulTime: f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    match instance.dispatcher.fmi3DoStep(
+        currentCommunicationPoint,
+        communicationStepSize,
+        noSetFMUStatePriorToCurrentPoint != 0,
+    ) {
+        Ok(s) => match s {
+            Fmi3Status::OK | Fmi3Status::Warning => {
+                instance.last_successful_time =
+                    Some(currentCommunicationPoint + communicationStepSize);
+                s
+            }
+            s => s,
+        },
+        Err(e) => Fmi3Status::Error,
+    }
 }
 
 pub extern "C" fn fmi3EnterInitializationMode(

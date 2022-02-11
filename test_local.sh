@@ -3,6 +3,6 @@ cargo build --package fmiapi --target x86_64-unknown-linux-gnu --release
 cp ./target/x86_64-unknown-linux-gnu/release/libfmiapi.so ./assets/auto_generated/unifmu.so
 cargo run --bin unifmu --release -- generate python myfmu
 cargo run --bin unifmu --release -- validate myfmu
-#cargo run --bin unifmu --release -- generate python myfmu.fmu --zipped
-#fmpy simulate myfmu.fmu
+cargo run --bin unifmu --release -- generate python myfmu.fmu --zipped
+fmpy simulate myfmu.fmu
 

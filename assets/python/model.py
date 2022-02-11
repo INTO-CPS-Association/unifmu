@@ -1,5 +1,4 @@
 import pickle
-from typing import Any, Tuple
 
 
 class Model:
@@ -30,9 +29,7 @@ class Model:
 
         self._update_outputs()
 
-    """
-    FMI3 Methods
-    """
+    # ================= FMI3 =================
 
     def fmi3DoStep(
         self,
@@ -43,26 +40,26 @@ class Model:
         terminate_simulation: bool,
         early_return: bool,
         last_successful_time: float,
-    ) -> int:
+    ):
         self._update_outputs()
         return Fmi3Status.ok
 
     def fmi3EnterInitializationMode(
         self, tolerance: bool, start_time: float, stop_time: float
-    ) -> int:
+    ):
         return Fmi3Status.ok
 
-    def fmi3ExitInitializationMode(self) -> int:
+    def fmi3ExitInitializationMode(self):
         self._update_outputs()
         return Fmi3Status.ok
 
-    def fmi3Terminate(self) -> int:
+    def fmi3Terminate(self):
         return Fmi3Status.ok
 
-    def fmi3Reset(self) -> int:
+    def fmi3Reset(self):
         return Fmi3Status.ok
 
-    def unifmuFmi3Serialize(self) -> Tuple[int, bytes]:
+    def unifmuFmi3Serialize(self):
 
         bytes = pickle.dumps(
             (
@@ -78,7 +75,7 @@ class Model:
         )
         return Fmi3Status.ok, bytes
 
-    def unifmuFmi3Deserialize(self, bytes: bytes) -> int:
+    def unifmuFmi3Deserialize(self, bytes: bytes):
         (
             real_a,
             real_b,
@@ -101,87 +98,85 @@ class Model:
 
         return Fmi3Status.ok
 
-    def fmi3GetFloat32(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetFloat32(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetFloat64(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetFloat64(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetInt8(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetInt8(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetUInt8(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetUInt8(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetInt16(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetInt16(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetUInt16(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetUInt16(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetInt32(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetInt32(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetUInt32(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetUInt32(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetInt64(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetInt64(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetUInt64(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetUInt64(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetBoolean(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetBoolean(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetString(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetString(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3GetBinary(self, value_references) -> Tuple[int, Any]:
+    def fmi3GetBinary(self, value_references):
         return self._get_value(value_references)
 
-    def fmi3SetFloat32(self, value_references, values) -> int:
+    def fmi3SetFloat32(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetFloat64(self, value_references, values) -> int:
+    def fmi3SetFloat64(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetInt8(self, value_references, values) -> int:
+    def fmi3SetInt8(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetUInt8(self, value_references, values) -> int:
+    def fmi3SetUInt8(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetInt16(self, value_references, values) -> int:
+    def fmi3SetInt16(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetUInt16(self, value_references, values) -> int:
+    def fmi3SetUInt16(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetInt32(self, value_references, values) -> int:
+    def fmi3SetInt32(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetUInt32(self, value_references, values) -> int:
+    def fmi3SetUInt32(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetInt64(self, value_references, values) -> int:
+    def fmi3SetInt64(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetUInt64(self, value_references, values) -> int:
+    def fmi3SetUInt64(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetBoolean(self, value_references, values) -> int:
+    def fmi3SetBoolean(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetString(self, value_references, values) -> int:
+    def fmi3SetString(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetBinary(self, value_references, values) -> int:
+    def fmi3SetBinary(self, value_references, values):
         return self._set_value(value_references, values)
 
-    """
-    FMI2 Methods
-    """
+    # ================= FMI2 =================
 
     def fmi2DoStep(self, current_time, step_size, no_step_prior):
         self._update_outputs()
@@ -218,7 +213,7 @@ class Model:
         )
         return Fmi2Status.ok, bytes
 
-    def unifmuFmi2Deserialize(self, bytes) -> int:
+    def unifmuFmi2Deserialize(self, bytes):
         (
             real_a,
             real_b,
@@ -265,18 +260,16 @@ class Model:
     def fmi2SetString(self, references, values):
         return self._set_value(references, values)
 
-    """
-    Utility
-    """
+    # ================= Helpers =================
 
-    def _set_value(self, references, values) -> int:
+    def _set_value(self, references, values):
 
         for r, v in zip(references, values):
             setattr(self, self.reference_to_attribute[r], v)
 
         return Fmi2Status.ok
 
-    def _get_value(self, references) -> Tuple[int, Any]:
+    def _get_value(self, references):
 
         values = []
 
@@ -294,7 +287,7 @@ class Model:
 
 class Fmi2Status:
     """
-    Represents the status of the FMU or the results of function calls.
+    Represents the status of an FMI2 FMU or the results of function calls.
 
     Values:
         * ok: all well
@@ -318,6 +311,17 @@ class Fmi2Status:
 
 
 class Fmi3Status:
+    """
+    Represents the status of an FMI3 FMU or the results of function calls.
+
+    Values:
+        * ok: all well
+        * warning: an issue has arisen, but the computation can continue.
+        * discard: an operation has resulted in invalid output, which must be discarded
+        * error: an error has ocurred for this specific FMU instance.
+        * fatal: an fatal error has ocurred which has corrupted ALL FMU instances.
+    """
+
     ok = 0
     warning = 1
     discard = 2

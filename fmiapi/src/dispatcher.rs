@@ -83,7 +83,12 @@ impl CommandDispatcher {
         todo!()
     }
 
-    pub fn fmi3DoStep(&mut self) -> Result<Fmi3Status, DispatcherError> {
+    pub fn fmi3DoStep(
+        &mut self,
+        current_communication_point: f64,
+        communication_step_size: f64,
+        no_set_fmu_state_prior_to_current_point: bool,
+    ) -> Result<Fmi3Status, DispatcherError> {
         todo!()
     }
 
