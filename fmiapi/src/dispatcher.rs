@@ -8,7 +8,14 @@ use crate::fmi_proto::{
     Fmi2GetRealOutputDerivatives, Fmi2GetRealReturn, Fmi2GetString, Fmi2GetStringReturn,
     Fmi2Instantiate, Fmi2Reset, Fmi2SetBoolean, Fmi2SetDebugLogging, Fmi2SetInteger, Fmi2SetReal,
     Fmi2SetRealInputDerivatives, Fmi2SetString, Fmi2SetupExperiment, Fmi2StatusReturn,
-    Fmi2Terminate, Fmi3DoStep, UnifmuDeserialize, UnifmuFmi2SerializeReturn,
+    Fmi2Terminate, Fmi3DoStep, Fmi3EnterInitializationMode, Fmi3ExitInitializationMode,
+    Fmi3GetBoolean, Fmi3GetBooleanReturn, Fmi3GetFloat32, Fmi3GetFloat32Return, Fmi3GetFloat64,
+    Fmi3GetFloat64Return, Fmi3GetInt16, Fmi3GetInt16Return, Fmi3GetInt32, Fmi3GetInt32Return,
+    Fmi3GetInt64, Fmi3GetInt64Return, Fmi3GetInt8, Fmi3GetInt8Return, Fmi3GetString,
+    Fmi3GetStringReturn, Fmi3GetUInt16, Fmi3GetUInt16Return, Fmi3GetUInt32, Fmi3GetUInt32Return,
+    Fmi3GetUInt64, Fmi3GetUInt64Return, Fmi3GetUInt8, Fmi3GetUInt8Return,
+    Fmi3InstantiateCoSimulation, Fmi3InstantiateModelExchange, UnifmuDeserialize,
+    UnifmuFmi2SerializeReturn,
 };
 
 use crate::fmi2::{Fmi2Status, Fmi2Type};
@@ -63,24 +70,82 @@ impl CommandDispatcher {
 
     // ================= FMI3 ======================
     // https://github.com/modelica/fmi-standard/blob/master/headers/fmi3FunctionTypes.h
-    pub fn fmi3InstanteModelExchange(&mut self) {
-        todo!()
+    pub fn fmi3InstantiateModelExchange(&mut self) -> Result<EmptyReturn, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3InstantiateModelExchange(
+                Fmi3InstantiateModelExchange {
+                    instance_name: todo!(),
+                    instantiation_token: todo!(),
+                    resource_path: todo!(),
+                    visible: todo!(),
+                    logging_on: todo!(),
+                },
+            )),
+        };
+
+        self.send_and_recv::<_, fmi_proto::EmptyReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     pub fn fmi3InstantiateCoSimulation(
         &mut self,
-        instance_name: &str,
-        instantiation_token: &str,
-        resources_path: &str,
+        instance_name: String,
+        instantiation_token: String,
+        resource_path: String,
         visible: bool,
         logging_on: bool,
         event_mode_used: bool,
         early_return_allowed: bool,
-        required_intermediate_variables: &[i32], // instance_enviornment: *const c_void,
-                                                 // log_message: *const c_void,
-                                                 // intermediate_update: *const c_void
-    ) {
-        todo!()
+        required_intermediate_variables: Vec<u32>, // instance_enviornment: *const c_void,
+                                                   // log_message: *const c_void,
+                                                   // intermediate_update: *const c_void
+    ) -> Result<EmptyReturn, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3InstantiateCoSimulation(
+                Fmi3InstantiateCoSimulation {
+                    instance_name,
+                    instantiation_token,
+                    resource_path,
+                    visible,
+                    logging_on,
+                    event_mode_used,
+                    early_return_allowed,
+                    required_intermediate_variables,
+                },
+            )),
+        };
+
+        self.send_and_recv::<_, fmi_proto::EmptyReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    pub fn fmi3EnterInitializationMode(
+        &mut self,
+        tolerance: Option<f64>,
+        start_time: f64,
+        stop_time: Option<f64>,
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3EnterInitializationMode(
+                Fmi3EnterInitializationMode {
+                    tolerance,
+                    start_time,
+                    stop_time,
+                },
+            )),
+        };
+        self.send_and_recv::<_, fmi_proto::Fmi3StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    pub fn fmi3ExitInitializationMode(&mut self) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3ExitInitializationMode(
+                Fmi3ExitInitializationMode {},
+            )),
+        };
+        self.send_and_recv::<_, fmi_proto::Fmi3StatusReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     pub fn fmi3DoStep(
@@ -99,6 +164,217 @@ impl CommandDispatcher {
 
         self.send_and_recv::<_, fmi_proto::Fmi3StatusReturn>(&cmd)
             .map(|s| s.into())
+    }
+
+    pub fn fmi3GetFloat32(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<f32>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetFloat32(Fmi3GetFloat32 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetFloat32Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetFloat64(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<f64>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetFloat64(Fmi3GetFloat64 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetFloat64Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetInt8(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<i8>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetInt8(Fmi3GetInt8 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetInt8Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values.iter().map(|v| *v as i8).collect()),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetUInt8(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<u8>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetUInt8(Fmi3GetUInt8 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetUInt8Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values.iter().map(|v| *v as u8).collect()),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetInt16(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<i16>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetInt16(Fmi3GetInt16 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetInt16Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values.iter().map(|v| *v as i16).collect()),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetUInt16(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<u16>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetUInt16(Fmi3GetUInt16 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetUInt16Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values.iter().map(|v| *v as u16).collect()),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetInt32(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<i32>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetInt32(Fmi3GetInt32 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetInt32Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetUInt32(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<u32>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetUInt32(Fmi3GetUInt32 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetUInt32Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetInt64(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<i64>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetInt64(Fmi3GetInt64 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetInt64Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetUInt64(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<u64>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetUInt64(Fmi3GetUInt64 { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetUInt64Return>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetBoolean(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<bool>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetBoolean(Fmi3GetBoolean { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetBooleanReturn>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetString(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<String>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetString(Fmi3GetString { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetStringReturn>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
+    }
+
+    pub fn fmi3GetBinary(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<Vec<u8>>>), DispatcherError> {
+        todo!()
     }
 
     // ================= FMI2 ======================
@@ -129,8 +405,8 @@ impl CommandDispatcher {
 
     pub fn fmi2EnterInitializationMode(&mut self) -> Result<Fmi2Status, DispatcherError> {
         let cmd = c_obj {
-            command: Some(c_enum::Fmi2ExitInitializationMode(
-                Fmi2ExitInitializationMode {},
+            command: Some(c_enum::Fmi2EnterInitializationMode(
+                Fmi2EnterInitializationMode {},
             )),
         };
 
@@ -140,8 +416,8 @@ impl CommandDispatcher {
 
     pub fn fmi2ExitInitializationMode(&mut self) -> Result<Fmi2Status, DispatcherError> {
         let cmd = c_obj {
-            command: Some(c_enum::Fmi2EnterInitializationMode(
-                Fmi2EnterInitializationMode {},
+            command: Some(c_enum::Fmi2ExitInitializationMode(
+                Fmi2ExitInitializationMode {},
             )),
         };
 

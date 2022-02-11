@@ -36,15 +36,6 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
 
-def receive_command(command, socket):
-    msg = socket.recv()
-    command.ParseFromString(msg)
-
-    group = command.WhichOneof("command")
-    data = getattr(command, command.WhichOneof("command"))
-    return group, data
-
-
 if __name__ == "__main__":
 
     model = Model()
@@ -65,7 +56,12 @@ if __name__ == "__main__":
     # dispatch commands to model
     command = FmiCommand()
     while True:
-        group, data = receive_command(command, socket)
+
+        msg = socket.recv()
+        command.ParseFromString(msg)
+
+        group = command.WhichOneof("command")
+        data = getattr(command, command.WhichOneof("command"))
 
         # ================= FMI3 =================
         if group == "Fmi3InstantiateModelExchange":
@@ -188,6 +184,7 @@ if __name__ == "__main__":
         elif group == "Fmi3SetBinary":
             result = Fmi2StatusReturn()
             result.status = model.fmi3SetBinary(data.value_references, data.values)
+
         # ================= FMI2 =================
 
         elif group == "Fmi2Instantiate":

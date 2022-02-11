@@ -120,7 +120,7 @@ message Fmi3GetUInt32 {
 }
 
 message Fmi3GetInt64 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references = 1;
 }
 
 message Fmi3GetUInt64 {
@@ -162,52 +162,52 @@ message Fmi3GetOutputDerivatives {
 // ----------------------- FMI3 Setters ----------------------
 
 message Fmi3SetFloat32 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated float values = 2;
 }
 
 message Fmi3SetFloat64 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated double values = 2;
 }
 
 message Fmi3SetInt8 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated int32 values = 2;
 }
 
 message Fmi3SetUInt8 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated uint32 values = 2;
 }
 
 message Fmi3SetInt16 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated int32 values = 2;
 }
 
 message Fmi3SetUInt16 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated uint32 values = 2;
 }
 
 message Fmi3SetInt32 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated int32 values = 2;
 }
 
 message Fmi3SetUInt32 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated uint32 values = 2;
 }
 
 message Fmi3SetInt64 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated int64 values = 2;
 }
 
 message Fmi3SetUInt64 {
-  repeated uint32 value_reference = 1;
+  repeated uint32 value_references= 1;
   repeated uint64 values = 2;
 }
 

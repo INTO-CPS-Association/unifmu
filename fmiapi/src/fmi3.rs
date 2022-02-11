@@ -1,7 +1,20 @@
+use crate::fmi2::Fmi2Status;
 use crate::fmi2::Slave;
+use crate::spawn::spawn_slave;
 use libc::{c_char, size_t};
-use std::{ffi::c_void, ptr::null};
+use std::ffi::c_void;
+use std::ffi::CStr;
+use std::ffi::CString;
+use std::ptr::null_mut;
+use std::slice::from_raw_parts;
+use std::slice::from_raw_parts_mut;
 
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+
+#[derive(
+    Debug, PartialEq, Clone, Copy, Serialize_repr, Deserialize_repr, IntoPrimitive, TryFromPrimitive,
+)]
 #[repr(i32)]
 pub enum Fmi3Status {
     OK = 0,
@@ -11,42 +24,70 @@ pub enum Fmi3Status {
     Fatal = 4,
 }
 
-pub extern "C" fn fmi3InstantiateCoSimulation(
-    instanceName: *const c_char,
-    instantiationToken: *const c_char,
-    resourcePath: *const c_char,
-    visible: i32,
-    loggingOn: i32,
-    eventModeUsed: i32,
-    earlyReturnAllowed: i32,
-    requiredIntermediateVariables: *const i32,
-    nRequiredIntermediateVariables: size_t,
-    instanceEnvironment: *const c_void,
-    logMessage: *const c_void,
-    intermediateUpdate: *const c_void,
-) -> *const c_void {
-    null()
+fn c2s(c: *const c_char) -> String {
+    unsafe { CStr::from_ptr(c).to_str().unwrap().to_owned() }
 }
 
+#[no_mangle]
+pub extern "C" fn fmi3InstantiateCoSimulation(
+    instance_name: *const c_char,
+    instantiation_token: *const c_char,
+    resource_path: *const c_char,
+    visible: i32,
+    logging_on: i32,
+    event_mode_used: i32,
+    early_return_allowed: i32,
+    required_intermediate_variables: *const u32,
+    n_required_intermediate_variables: size_t,
+    instance_environment: *const c_void,
+    log_message: *const c_void,
+    intermediate_update: *const c_void,
+) -> Option<Box<Slave>> {
+    let instance_name = unsafe { c2s(instance_name) };
+    let instantiation_token = unsafe { c2s(instantiation_token) };
+    let resource_path = unsafe { c2s(resource_path) };
+    let required_intermediate_variables = unsafe {
+        from_raw_parts(
+            required_intermediate_variables,
+            n_required_intermediate_variables,
+        )
+    }
+    .to_owned();
+    let mut s = spawn_slave();
+    match s.dispatcher.fmi3InstantiateCoSimulation(
+        instance_name,
+        instantiation_token,
+        resource_path,
+        visible != 0,
+        logging_on != 0,
+        event_mode_used != 0,
+        early_return_allowed != 0,
+        required_intermediate_variables,
+    ) {
+        Ok(_) => Some(Box::new(s)),
+        Err(_) => None,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3DoStep(
     instance: &mut Slave,
-    currentCommunicationPoint: f64,
-    communicationStepSize: f64,
-    noSetFMUStatePriorToCurrentPoint: i32,
-    eventHandlingNeeded: *const i32,
-    terminateSimulation: *const i32,
-    earlyReturn: *const i32,
-    lastSuccessfulTime: f64,
+    current_communication_point: f64,
+    communication_step_size: f64,
+    no_set_fmu_state_prior_to_current_point: i32,
+    event_handling_needed: *const i32,
+    terminate_simulation: *const i32,
+    early_return: *const i32,
+    last_successful_time: f64,
 ) -> Fmi3Status {
     match instance.dispatcher.fmi3DoStep(
-        currentCommunicationPoint,
-        communicationStepSize,
-        noSetFMUStatePriorToCurrentPoint != 0,
+        current_communication_point,
+        communication_step_size,
+        no_set_fmu_state_prior_to_current_point != 0,
     ) {
         Ok(s) => match s {
             Fmi3Status::OK | Fmi3Status::Warning => {
                 instance.last_successful_time =
-                    Some(currentCommunicationPoint + communicationStepSize);
+                    Some(current_communication_point + communication_step_size);
                 s
             }
             s => s,
@@ -54,260 +95,513 @@ pub extern "C" fn fmi3DoStep(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3EnterInitializationMode(
-    instance: *mut c_void,
-    toleranceDefined: i32,
+    instance: &mut Slave,
+    tolerance_defined: i32,
     tolerance: f64,
-    startTime: f64,
-    stopTimeDefined: f64,
-    stopTime: f64,
+    start_time: f64,
+    stop_time_defined: i32,
+    stop_time: f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    let tolerance = {
+        if tolerance_defined != 0 {
+            Some(tolerance)
+        } else {
+            None
+        }
+    };
+    let stop_time = {
+        if stop_time_defined != 0 {
+            Some(stop_time)
+        } else {
+            None
+        }
+    };
+
+    match instance
+        .dispatcher
+        .fmi3EnterInitializationMode(tolerance, start_time, stop_time)
+    {
+        Ok(s) => s,
+        Err(_e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
+pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Slave) -> Fmi3Status {
+    match instance.dispatcher.fmi3ExitInitializationMode() {
+        Ok(s) => s,
+        Err(_) => Fmi3Status::Error,
+    }
 }
 
-pub extern "C" fn fmi3ExitInitializationMode() -> Fmi3Status {
-    Fmi3Status::OK
-}
-
+#[no_mangle]
 pub extern "C" fn fmi3GetFloat32(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const f32,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut f32,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetFloat32(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetFloat64(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const f64,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut f64,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetFloat64(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetInt8(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const i8,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut i8,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance.dispatcher.fmi3GetInt8(value_references.to_owned()) {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetUint8(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const u8,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut u8,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetUInt8(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetInt16(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const i16,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut i16,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetInt16(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetUint16(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const u16,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut u16,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetUInt16(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetInt32(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const i32,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut i32,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetInt32(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetUint32(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const u32,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut u32,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetUInt32(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetInt64(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const i64,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut i64,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetInt64(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetUint64(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const u64,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut u64,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetUInt64(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(&values),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetBoolean(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    values: *const i32,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut i32,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
 
+    match instance
+        .dispatcher
+        .fmi3GetBoolean(value_references.to_owned())
+    {
+        Ok((status, values)) => {
+            match values {
+                Some(values) => values_out.copy_from_slice(
+                    &values
+                        .iter()
+                        .map(|v| match v {
+                            true => 0,
+                            false => 1,
+                        })
+                        .collect::<Vec<i32>>(),
+                ),
+
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
+pub extern "C" fn fmi3GetString(
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *mut *const c_char,
+    n_values: size_t,
+) -> Fmi3Status {
+    let value_references = unsafe { from_raw_parts(value_references, n_values) };
+
+    match instance
+        .dispatcher
+        .fmi3GetString(value_references.to_owned())
+    {
+        Ok((status, vals)) => {
+            match vals {
+                Some(vals) => {
+                    instance.string_buffer = vals
+                        .iter()
+                        .map(|s| CString::new(s.as_bytes()).unwrap())
+                        .collect();
+
+                    unsafe {
+                        for (idx, cstr) in instance.string_buffer.iter().enumerate() {
+                            std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
+                        }
+                    }
+                }
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3GetBinary(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
-    valueSizes: *const size_t,
-    values: *const i32,
-    nValues: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    value_sizes: *const size_t,
+    values: *mut *const u8,
+    n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
-}
+    let value_references =
+        unsafe { from_raw_parts(value_references, n_value_references) }.to_owned();
+    let values_v = unsafe { from_raw_parts(values, n_values) };
+    let value_sizes = unsafe { from_raw_parts(value_sizes, n_values) };
 
+    let values_v: Vec<Vec<u8>> = values_v
+        .iter()
+        .zip(value_sizes.iter())
+        .map(|(v, s)| unsafe { from_raw_parts(*v, *s).to_vec() })
+        .collect();
+
+    match instance.dispatcher.fmi3GetBinary(value_references) {
+        Ok((s, v)) => match v {
+            Some(vs) => unsafe {
+                for (idx, v) in vs.iter().enumerate() {
+                    std::ptr::write(values.offset(idx as isize), v.as_ptr());
+                }
+                s
+            },
+            None => s,
+        },
+        Err(e) => Fmi3Status::Error,
+    }
+}
+#[no_mangle]
 pub extern "C" fn fmi3SetFloat32(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const f32,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetFloat64(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const f64,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt8(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const i8,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint8(
-    instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    instance: &mut Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const u8,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt16(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const i16,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint16(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const u16,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt32(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const i32,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint32(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const u32,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt64(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const i64,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint64(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const u64,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetBoolean(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const u32,
+    n_value_references: size_t,
     values: *const i32,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetBinary(
     instance: *mut c_void,
-    valueReferences: *const i32,
-    nValueReferences: size_t,
+    value_references: *const i32,
+    n_value_references: size_t,
     valueSizes: *const size_t,
     values: *const i32,
-    nValues: size_t,
+    n_values: size_t,
 ) -> Fmi3Status {
     Fmi3Status::OK
 }

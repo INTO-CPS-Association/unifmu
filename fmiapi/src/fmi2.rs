@@ -113,7 +113,7 @@ pub struct Slave {
     /// Buffer storing the c-strings returned by `fmi2GetStrings`.
     /// The specs states that the caller should copy the strings to its own memory immidiately after the call has been made.
     /// The reason for this recommendation is that a FMU is allowed to free or overwrite the memory as soon as another call is made to the FMI interface.
-    string_buffer: Vec<CString>,
+    pub string_buffer: Vec<CString>,
 
     /// Object performing remote procedure calls on the slave
     pub dispatcher: CommandDispatcher,
