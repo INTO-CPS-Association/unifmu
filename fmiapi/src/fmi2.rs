@@ -79,12 +79,12 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 )]
 
 pub enum Fmi2Status {
-    Fmi2OK = 0,
-    Fmi2Warning = 1,
-    Fmi2Discard = 2,
-    Fmi2Error = 3,
-    Fmi2Fatal = 4,
-    Fmi2Pending = 5,
+    Ok = 0,
+    Warning = 1,
+    Discard = 2,
+    Error = 3,
+    Fatal = 4,
+    Pending = 5,
 }
 
 #[repr(i32)]
@@ -324,7 +324,7 @@ pub extern "C" fn fmi2SetDebugLogging(
     slave
         .dispatcher
         .fmi2SetDebugLogging(&categories, logging_on != 0)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
@@ -355,7 +355,7 @@ pub extern "C" fn fmi2SetupExperiment(
     slave
         .dispatcher
         .fmi2SetupExperiment(start_time, stop_time, tolerance)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
@@ -363,7 +363,7 @@ pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2EnterInitializationMode()
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
@@ -371,7 +371,7 @@ pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2ExitInitializationMode()
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
@@ -379,15 +379,12 @@ pub extern "C" fn fmi2Terminate(slave: &mut Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2Terminate()
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2Reset(slave: &mut Slave) -> Fmi2Status {
-    slave
-        .dispatcher
-        .fmi2Reset()
-        .unwrap_or(Fmi2Status::Fmi2Error)
+    slave.dispatcher.fmi2Reset().unwrap_or(Fmi2Status::Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
@@ -404,13 +401,13 @@ pub extern "C" fn fmi2DoStep(
         .fmi2DoStep(current_time, step_size, no_step_prior != 0)
     {
         Ok(s) => match s {
-            Fmi2Status::Fmi2OK | Fmi2Status::Fmi2Warning => {
+            Fmi2Status::Ok | Fmi2Status::Warning => {
                 slave.last_successful_time = Some(current_time + step_size);
                 s
             }
             s => s,
         },
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 
@@ -419,7 +416,7 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2CancelStep()
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
@@ -442,7 +439,7 @@ pub extern "C" fn fmi2GetReal(
             };
             status
         }
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 
@@ -464,7 +461,7 @@ pub extern "C" fn fmi2GetInteger(
             };
             status
         }
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 
@@ -495,7 +492,7 @@ pub extern "C" fn fmi2GetBoolean(
             };
             status
         }
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 
@@ -534,7 +531,7 @@ pub extern "C" fn fmi2GetString(
             };
             status
         }
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 
@@ -551,7 +548,7 @@ pub extern "C" fn fmi2SetReal(
     slave
         .dispatcher
         .fmi2SetReal(references, values)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
@@ -567,7 +564,7 @@ pub extern "C" fn fmi2SetInteger(
     slave
         .dispatcher
         .fmi2SetInteger(references, values)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 /// set boolean variables of FMU
@@ -591,7 +588,7 @@ pub extern "C" fn fmi2SetBoolean(
     slave
         .dispatcher
         .fmi2SetBoolean(references, &values)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
@@ -612,7 +609,7 @@ pub extern "C" fn fmi2SetString(
     slave
         .dispatcher
         .fmi2SetString(references, &values)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
@@ -644,7 +641,7 @@ pub extern "C" fn fmi2GetDirectionalDerivative(
             }
             None => todo!(),
         },
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 
@@ -663,7 +660,7 @@ pub extern "C" fn fmi2SetRealInputDerivatives(
     slave
         .dispatcher
         .fmi2SetRealInputDerivatives(references, orders, values)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 #[no_mangle]
@@ -689,7 +686,7 @@ pub extern "C" fn fmi2GetRealOutputDerivatives(
             };
             status
         }
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 
@@ -700,7 +697,7 @@ pub extern "C" fn fmi2SetFMUstate(slave: &mut Slave, state: &SlaveState) -> Fmi2
     slave
         .dispatcher
         .fmi2ExtDeserializeSlave(&state.bytes)
-        .unwrap_or(Fmi2Status::Fmi2Error)
+        .unwrap_or(Fmi2Status::Error)
 }
 
 //
@@ -718,7 +715,7 @@ pub extern "C" fn fmi2GetFMUstate(slave: &mut Slave, state: &mut Option<SlaveSta
                 status
             }
         },
-        Err(e) => Fmi2Status::Fmi2Error,
+        Err(e) => Fmi2Status::Error,
     }
 }
 /// Free previously recorded state of slave
@@ -733,7 +730,7 @@ pub extern "C" fn fmi2FreeFMUstate(
         Some(s) => drop(s),
         None => {}
     }
-    Fmi2Status::Fmi2OK
+    Fmi2Status::Ok
 }
 
 /// Copies the state of a slave into a buffer provided by the environment
@@ -752,12 +749,12 @@ pub extern "C" fn fmi2SerializeFMUstate(
     let serialized_state_len = state.bytes.len();
 
     if serialized_state_len > size {
-        return Fmi2Status::Fmi2Error;
+        return Fmi2Status::Error;
     }
 
     unsafe { std::ptr::copy(state.bytes.as_ptr(), data.cast(), serialized_state_len) };
 
-    Fmi2Status::Fmi2OK
+    Fmi2Status::Ok
 }
 
 //
@@ -773,7 +770,7 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
 
     *state = Box::new(Some(SlaveState::new(serialized_state)));
-    Fmi2Status::Fmi2OK
+    Fmi2Status::Ok
 }
 
 #[no_mangle]
@@ -783,7 +780,7 @@ pub extern "C" fn fmi2SerializedFMUstateSize(
     size: &mut size_t,
 ) -> Fmi2Status {
     *size = state.bytes.len();
-    Fmi2Status::Fmi2OK
+    Fmi2Status::Ok
 }
 
 // ------------------------------------- FMI FUNCTIONS (Status) --------------------------------
@@ -799,7 +796,7 @@ pub extern "C" fn fmi2GetStatus(
             Some(s) => s,
             None => {
                 eprintln!("'fmi2GetStatus' called with fmi2StatusKind 'Fmi2DoStepStatus' before 'fmi2DoStep' has returned pending.");
-                Fmi2Status::Fmi2Error
+                Fmi2Status::Error
             }
         },
         _ => {
@@ -807,7 +804,7 @@ pub extern "C" fn fmi2GetStatus(
                 "'fmi2GetStatus' only accepts the status kind '{:?}'",
                 Fmi2StatusKind::Fmi2DoStepStatus
             );
-            return Fmi2Status::Fmi2Error;
+            return Fmi2Status::Error;
         }
     }
 }
@@ -824,11 +821,11 @@ pub extern "C" fn fmi2GetRealStatus(
                 unsafe {
                     *value = last_time;
                 };
-                Fmi2Status::Fmi2OK
+                Fmi2Status::Ok
             }
             None => {
                 eprintln!("'fmi2GetRealStatus' can not be called before 'Fmi2DoStep'");
-                Fmi2Status::Fmi2Error
+                Fmi2Status::Error
             }
         },
         _ => {
@@ -836,7 +833,7 @@ pub extern "C" fn fmi2GetRealStatus(
                 "'fmi2GetRealStatus' only accepts the status kind '{:?}'",
                 Fmi2StatusKind::Fmi2DoStepStatus
             );
-            return Fmi2Status::Fmi2Error;
+            return Fmi2Status::Error;
         }
     }
 }
@@ -848,7 +845,7 @@ pub extern "C" fn fmi2GetIntegerStatus(
     value: *mut c_int,
 ) -> Fmi2Status {
     eprintln!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
-    return Fmi2Status::Fmi2Error;
+    return Fmi2Status::Error;
 }
 
 #[no_mangle]
@@ -858,7 +855,7 @@ pub extern "C" fn fmi2GetBooleanStatus(
     value: *mut c_int,
 ) -> Fmi2Status {
     eprintln!("Not currently implemented by UniFMU");
-    return Fmi2Status::Fmi2Discard;
+    return Fmi2Status::Discard;
 }
 
 #[no_mangle]
@@ -870,5 +867,5 @@ pub extern "C" fn fmi2GetStringStatus(
     todo!();
 
     eprintln!("NOT IMPLEMENTED");
-    Fmi2Status::Fmi2Error
+    Fmi2Status::Error
 }

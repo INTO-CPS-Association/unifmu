@@ -8,7 +8,7 @@ use crate::fmi_proto::{
     Fmi2GetRealOutputDerivatives, Fmi2GetRealReturn, Fmi2GetString, Fmi2GetStringReturn,
     Fmi2Instantiate, Fmi2Reset, Fmi2SetBoolean, Fmi2SetDebugLogging, Fmi2SetInteger, Fmi2SetReal,
     Fmi2SetRealInputDerivatives, Fmi2SetString, Fmi2SetupExperiment, Fmi2StatusReturn,
-    Fmi2Terminate, UnifmuDeserialize, UnifmuFmi2SerializeReturn,
+    Fmi2Terminate, Fmi3DoStep, UnifmuDeserialize, UnifmuFmi2SerializeReturn,
 };
 
 use crate::fmi2::{Fmi2Status, Fmi2Type};
@@ -89,7 +89,16 @@ impl CommandDispatcher {
         communication_step_size: f64,
         no_set_fmu_state_prior_to_current_point: bool,
     ) -> Result<Fmi3Status, DispatcherError> {
-        todo!()
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3DoStep(Fmi3DoStep {
+                current_communication_point,
+                communication_step_size,
+                no_set_fmu_state_prior_to_current_point,
+            })),
+        };
+
+        self.send_and_recv::<_, fmi_proto::Fmi3StatusReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     // ================= FMI2 ======================
@@ -514,12 +523,24 @@ impl CommandDispatcher {
 impl From<fmi_proto::Fmi2StatusReturn> for Fmi2Status {
     fn from(src: fmi_proto::Fmi2StatusReturn) -> Self {
         match src.status() {
-            fmi_proto::Fmi2Status::Fmi2Ok => Self::Fmi2OK,
-            fmi_proto::Fmi2Status::Fmi2Warning => Self::Fmi2Warning,
-            fmi_proto::Fmi2Status::Fmi2Discard => Self::Fmi2Discard,
-            fmi_proto::Fmi2Status::Fmi2Error => Self::Fmi2Error,
-            fmi_proto::Fmi2Status::Fmi2Fatal => Self::Fmi2Fatal,
-            fmi_proto::Fmi2Status::Fmi2Pending => Self::Fmi2Pending,
+            fmi_proto::Fmi2Status::Fmi2Ok => Self::Ok,
+            fmi_proto::Fmi2Status::Fmi2Warning => Self::Warning,
+            fmi_proto::Fmi2Status::Fmi2Discard => Self::Discard,
+            fmi_proto::Fmi2Status::Fmi2Error => Self::Error,
+            fmi_proto::Fmi2Status::Fmi2Fatal => Self::Fatal,
+            fmi_proto::Fmi2Status::Fmi2Pending => Self::Pending,
+        }
+    }
+}
+
+impl From<fmi_proto::Fmi3StatusReturn> for Fmi3Status {
+    fn from(src: fmi_proto::Fmi3StatusReturn) -> Self {
+        match src.status() {
+            fmi_proto::Fmi3Status::Fmi3Ok => Self::OK,
+            fmi_proto::Fmi3Status::Fmi3Warning => Self::Warning,
+            fmi_proto::Fmi3Status::Fmi3Discard => Self::Discard,
+            fmi_proto::Fmi3Status::Fmi3Error => Self::Error,
+            fmi_proto::Fmi3Status::Fmi3Fatal => Self::Fatal,
         }
     }
 }

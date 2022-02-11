@@ -62,10 +62,7 @@ message Fmi3DoStep {
   double current_communication_point = 1;
   double communication_step_size = 2;
   bool no_set_fmu_state_prior_to_current_point = 3;
-  bool event_handling_needed = 4;
-  bool terminate_simulation = 5;
-  bool early_return = 6;
-  double last_successful_time = 7;
+
 }
 
 message Fmi3SetDebugLogging {

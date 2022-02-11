@@ -64,14 +64,6 @@ pub struct Fmi3DoStep {
     pub communication_step_size: f64,
     #[prost(bool, tag="3")]
     pub no_set_fmu_state_prior_to_current_point: bool,
-    #[prost(bool, tag="4")]
-    pub event_handling_needed: bool,
-    #[prost(bool, tag="5")]
-    pub terminate_simulation: bool,
-    #[prost(bool, tag="6")]
-    pub early_return: bool,
-    #[prost(double, tag="7")]
-    pub last_successful_time: f64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3SetDebugLogging {
