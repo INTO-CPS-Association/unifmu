@@ -276,6 +276,17 @@ pub extern "C" fn fmi2Instantiate(
         }
     };
 
+    dispatcher
+        .fmi2Instantiate(
+            "instance_name",
+            fmu_type,
+            "fmu_guid",
+            "fmu_resources_location",
+            false,
+            false,
+        )
+        .unwrap();
+
     Some(Box::new(Slave::new(dispatcher, popen)))
 }
 

@@ -1,19 +1,19 @@
 use std::convert::TryFrom;
 
-use crate::fmi_proto::fmi2_command::Command as c_enum;
+use crate::fmi_proto::fmi_command::Command as c_enum;
 use crate::fmi_proto::{
-    self, Fmi2CancelStep, Fmi2DoStep, Fmi2EnterInitializationMode, Fmi2ExitInitializationMode,
-    Fmi2FreeInstance, Fmi2GetBoolean, Fmi2GetBooleanReturn, Fmi2GetDirectionalDerivatives,
-    Fmi2GetInteger, Fmi2GetIntegerReturn, Fmi2GetReal, Fmi2GetRealOutputDerivatives,
-    Fmi2GetRealReturn, Fmi2GetString, Fmi2GetStringReturn, Fmi2Reset, Fmi2SetBoolean,
-    Fmi2SetDebugLogging, Fmi2SetInteger, Fmi2SetReal, Fmi2SetRealInputDerivatives, Fmi2SetString,
-    Fmi2SetupExperiment, Fmi2StatusReturn, Fmi2Terminate, UnifmuDeserialize,
-    UnifmuFmi2SerializeReturn, UnifmuHandshakeReturn,
+    self, EmptyReturn, Fmi2CancelStep, Fmi2DoStep, Fmi2EnterInitializationMode,
+    Fmi2ExitInitializationMode, Fmi2FreeInstance, Fmi2GetBoolean, Fmi2GetBooleanReturn,
+    Fmi2GetDirectionalDerivatives, Fmi2GetInteger, Fmi2GetIntegerReturn, Fmi2GetReal,
+    Fmi2GetRealOutputDerivatives, Fmi2GetRealReturn, Fmi2GetString, Fmi2GetStringReturn,
+    Fmi2Instantiate, Fmi2Reset, Fmi2SetBoolean, Fmi2SetDebugLogging, Fmi2SetInteger, Fmi2SetReal,
+    Fmi2SetRealInputDerivatives, Fmi2SetString, Fmi2SetupExperiment, Fmi2StatusReturn,
+    Fmi2Terminate, UnifmuDeserialize, UnifmuFmi2SerializeReturn,
 };
 
 use crate::fmi2::{Fmi2Status, Fmi2Type};
 use crate::fmi3::Fmi3Status;
-use crate::fmi_proto::Fmi2Command as c_obj;
+use crate::fmi_proto::FmiCommand as c_obj;
 use crate::fmi_proto::UnifmuSerialize;
 use bytes::Bytes;
 use prost::Message;
@@ -26,6 +26,7 @@ pub struct CommandDispatcher {
     pub endpoint: String,
 }
 
+#[derive(Debug)]
 pub enum DispatcherError {
     DecodeError(prost::DecodeError),
     EncodeError,
@@ -38,7 +39,7 @@ impl CommandDispatcher {
     // ================= Common (FMI2+FMI3) ====================
 
     pub fn await_handshake(&mut self) -> Result<(), DispatcherError> {
-        self.recv::<UnifmuHandshakeReturn>().map(|_| ())
+        self.recv::<EmptyReturn>().map(|_| ())
     }
 
     pub fn UnifmuSerialize(&mut self) -> Result<(Fmi2Status, Vec<u8>), DispatcherError> {
@@ -94,11 +95,22 @@ impl CommandDispatcher {
         fmu_type: Fmi2Type,
         fmu_guid: &str,
         fmu_resources_location: &str,
-        // functions: *const c_void,
         visible: bool,
         logging_on: bool,
-    ) -> DispatcherError {
-        todo!()
+    ) -> Result<EmptyReturn, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi2Instantiate(Fmi2Instantiate {
+                instance_name: instance_name.to_owned(),
+                fmu_type: 0,
+                fmu_guid: fmu_guid.to_owned(),
+                fmu_resource_location: fmu_resources_location.to_owned(),
+                visible,
+                logging_on,
+            })),
+        };
+
+        self.send_and_recv::<_, fmi_proto::EmptyReturn>(&cmd)
+            .map(|s| s.into())
     }
 
     pub fn fmi2EnterInitializationMode(&mut self) -> Result<Fmi2Status, DispatcherError> {
@@ -503,6 +515,15 @@ impl From<fmi_proto::Fmi2StatusReturn> for Fmi2Status {
             fmi_proto::Fmi2Status::Fmi2Error => Self::Fmi2Error,
             fmi_proto::Fmi2Status::Fmi2Fatal => Self::Fmi2Fatal,
             fmi_proto::Fmi2Status::Fmi2Pending => Self::Fmi2Pending,
+        }
+    }
+}
+
+impl From<fmi_proto::Fmi2Type> for Fmi2Type {
+    fn from(src: fmi_proto::Fmi2Type) -> Self {
+        match src {
+            fmi_proto::Fmi2Type::Fmi2ModelExchange => Self::Fmi2ModelExchange,
+            fmi_proto::Fmi2Type::Fmi2CoSimulation => Self::Fmi2CoSimulation,
         }
     }
 }

@@ -9,7 +9,52 @@ pub struct UnifmuDeserialize {
     pub state: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UnifmuHandshakeReturn {
+pub struct EmptyReturn {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi3InstantiateModelExchange {
+    #[prost(string, tag="1")]
+    pub instance_name: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub instantiation_token: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub resource_path: ::prost::alloc::string::String,
+    #[prost(bool, tag="4")]
+    pub visible: bool,
+    #[prost(bool, tag="5")]
+    pub logging_on: bool,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi3InstantiateCoSimulation {
+    #[prost(string, tag="1")]
+    pub instance_name: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub instantiation_token: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub resource_path: ::prost::alloc::string::String,
+    #[prost(bool, tag="4")]
+    pub visible: bool,
+    #[prost(bool, tag="5")]
+    pub logging_on: bool,
+    #[prost(bool, tag="6")]
+    pub event_mode_used: bool,
+    #[prost(bool, tag="7")]
+    pub early_return_allowed: bool,
+    #[prost(uint32, repeated, tag="8")]
+    pub required_intermediate_variables: ::prost::alloc::vec::Vec<u32>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi3InstantiateScheduledExecution {
+    #[prost(string, tag="1")]
+    pub instance_name: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub instantiation_token: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub resource_path: ::prost::alloc::string::String,
+    #[prost(bool, tag="4")]
+    pub visible: bool,
+    #[prost(bool, tag="5")]
+    pub logging_on: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3DoStep {
@@ -376,94 +421,20 @@ pub struct UnifmuFmi3SerializeReturn {
     #[prost(bytes="vec", tag="2")]
     pub state: ::prost::alloc::vec::Vec<u8>,
 }
-// ----------------------- FMI3 Command Wrapper ----------------------
-
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi3Command {
-    #[prost(oneof="fmi3_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38")]
-    pub command: ::core::option::Option<fmi3_command::Command>,
-}
-/// Nested message and enum types in `Fmi3Command`.
-pub mod fmi3_command {
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Command {
-        #[prost(message, tag="1")]
-        Fmi3DoStep(super::Fmi3DoStep),
-        #[prost(message, tag="2")]
-        Fmi3SetDebugLogging(super::Fmi3SetDebugLogging),
-        #[prost(message, tag="3")]
-        Fmi3EnterInitializationMode(super::Fmi3EnterInitializationMode),
-        #[prost(message, tag="4")]
-        Fmi3ExitInitializationMode(super::Fmi3ExitInitializationMode),
-        #[prost(message, tag="5")]
-        Fmi3FreeInstance(super::Fmi3FreeInstance),
-        #[prost(message, tag="6")]
-        Fmi3Terminate(super::Fmi3Terminate),
-        #[prost(message, tag="7")]
-        Fmi3Reset(super::Fmi3Reset),
-        #[prost(message, tag="8")]
-        UnifmuSerialize(super::UnifmuSerialize),
-        #[prost(message, tag="9")]
-        UnifmuDeserialize(super::UnifmuDeserialize),
-        #[prost(message, tag="10")]
-        Fmi3GetFloat32(super::Fmi3GetFloat32),
-        #[prost(message, tag="11")]
-        Fmi3GetFloat64(super::Fmi3GetFloat64),
-        #[prost(message, tag="12")]
-        Fmi3GetInt8(super::Fmi3GetInt8),
-        #[prost(message, tag="13")]
-        Fmi3GetUInt8(super::Fmi3GetUInt8),
-        #[prost(message, tag="14")]
-        Fmi3GetInt16(super::Fmi3GetInt16),
-        #[prost(message, tag="15")]
-        Fmi3GetUInt16(super::Fmi3GetUInt16),
-        #[prost(message, tag="16")]
-        Fmi3GetInt32(super::Fmi3GetInt32),
-        #[prost(message, tag="17")]
-        Fmi3GetUInt32(super::Fmi3GetUInt32),
-        #[prost(message, tag="18")]
-        Fmi3GetInt64(super::Fmi3GetInt64),
-        #[prost(message, tag="19")]
-        Fmi3GetUInt64(super::Fmi3GetUInt64),
-        #[prost(message, tag="20")]
-        Fmi3GetBoolean(super::Fmi3GetBoolean),
-        #[prost(message, tag="21")]
-        Fmi3GetString(super::Fmi3GetString),
-        #[prost(message, tag="22")]
-        FmiGetBinary(super::FmiGetBinary),
-        #[prost(message, tag="23")]
-        Fmi3GetDirectionalDerivative(super::Fmi3GetDirectionalDerivative),
-        #[prost(message, tag="24")]
-        Fmi3GetAdjointDerivative(super::Fmi3GetAdjointDerivative),
-        #[prost(message, tag="25")]
-        Fmi3GetOutputDerivatives(super::Fmi3GetOutputDerivatives),
-        #[prost(message, tag="26")]
-        Fmi3SetFloat32(super::Fmi3SetFloat32),
-        #[prost(message, tag="27")]
-        Fmi3SetFloat64(super::Fmi3SetFloat64),
-        #[prost(message, tag="28")]
-        Fmi3SetInt8(super::Fmi3SetInt8),
-        #[prost(message, tag="29")]
-        Fmi3SetUInt8(super::Fmi3SetUInt8),
-        #[prost(message, tag="30")]
-        Fmi3SetInt16(super::Fmi3SetInt16),
-        #[prost(message, tag="31")]
-        Fmi3SetUInt16(super::Fmi3SetUInt16),
-        #[prost(message, tag="32")]
-        Fmi3SetInt32(super::Fmi3SetInt32),
-        #[prost(message, tag="33")]
-        Fmi3SetUInt32(super::Fmi3SetUInt32),
-        #[prost(message, tag="34")]
-        Fmi3SetInt64(super::Fmi3SetInt64),
-        #[prost(message, tag="35")]
-        Fmi3SetUInt64(super::Fmi3SetUInt64),
-        #[prost(message, tag="36")]
-        Fmi3SetBoolean(super::Fmi3SetBoolean),
-        #[prost(message, tag="37")]
-        Fmi3SetString(super::Fmi3SetString),
-        #[prost(message, tag="38")]
-        FmiSetBinary(super::FmiSetBinary),
-    }
+pub struct Fmi2Instantiate {
+    #[prost(string, tag="1")]
+    pub instance_name: ::prost::alloc::string::String,
+    #[prost(enumeration="Fmi2Type", tag="2")]
+    pub fmu_type: i32,
+    #[prost(string, tag="3")]
+    pub fmu_guid: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub fmu_resource_location: ::prost::alloc::string::String,
+    #[prost(bool, tag="5")]
+    pub visible: bool,
+    #[prost(bool, tag="6")]
+    pub logging_on: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2DoStep {
@@ -644,61 +615,147 @@ pub struct UnifmuFmi2SerializeReturn {
     #[prost(bytes="vec", tag="2")]
     pub state: ::prost::alloc::vec::Vec<u8>,
 }
-// ----------------------- FMI2 Command Wrapper ----------------------
+// ----------------------- FMI Command Wrapper ----------------------
 
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2Command {
-    #[prost(oneof="fmi2_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22")]
-    pub command: ::core::option::Option<fmi2_command::Command>,
+pub struct FmiCommand {
+    #[prost(oneof="fmi_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64")]
+    pub command: ::core::option::Option<fmi_command::Command>,
 }
-/// Nested message and enum types in `Fmi2Command`.
-pub mod fmi2_command {
+/// Nested message and enum types in `FmiCommand`.
+pub mod fmi_command {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Command {
+        // FMI3
+
         #[prost(message, tag="1")]
-        Fmi2DoStep(super::Fmi2DoStep),
+        Fmi3InstantiateModelExchange(super::Fmi3InstantiateModelExchange),
         #[prost(message, tag="2")]
-        Fmi2SetDebugLogging(super::Fmi2SetDebugLogging),
+        Fmi3InstantiateCoSimulation(super::Fmi3InstantiateCoSimulation),
         #[prost(message, tag="3")]
-        Fmi2SetupExperiment(super::Fmi2SetupExperiment),
+        Fmi3InstantiateScheduledExecution(super::Fmi3InstantiateScheduledExecution),
         #[prost(message, tag="4")]
-        Fmi2EnterInitializationMode(super::Fmi2EnterInitializationMode),
+        Fmi3DoStep(super::Fmi3DoStep),
         #[prost(message, tag="5")]
-        Fmi2ExitInitializationMode(super::Fmi2ExitInitializationMode),
+        Fmi3SetDebugLogging(super::Fmi3SetDebugLogging),
         #[prost(message, tag="6")]
-        Fmi2FreeInstance(super::Fmi2FreeInstance),
+        Fmi3EnterInitializationMode(super::Fmi3EnterInitializationMode),
         #[prost(message, tag="7")]
-        Fmi2CancelStep(super::Fmi2CancelStep),
+        Fmi3ExitInitializationMode(super::Fmi3ExitInitializationMode),
         #[prost(message, tag="8")]
-        Fmi2Terminate(super::Fmi2Terminate),
+        Fmi3FreeInstance(super::Fmi3FreeInstance),
         #[prost(message, tag="9")]
-        Fmi2Reset(super::Fmi2Reset),
+        Fmi3Terminate(super::Fmi3Terminate),
         #[prost(message, tag="10")]
-        UnifmuSerialize(super::UnifmuSerialize),
-        #[prost(message, tag="11")]
-        UnifmuDeserialize(super::UnifmuDeserialize),
-        #[prost(message, tag="12")]
-        Fmi2GetReal(super::Fmi2GetReal),
+        Fmi3Reset(super::Fmi3Reset),
         #[prost(message, tag="13")]
-        Fmi2GetInteger(super::Fmi2GetInteger),
+        Fmi3GetFloat32(super::Fmi3GetFloat32),
         #[prost(message, tag="14")]
-        Fmi2GetBoolean(super::Fmi2GetBoolean),
+        Fmi3GetFloat64(super::Fmi3GetFloat64),
         #[prost(message, tag="15")]
-        Fmi2GetString(super::Fmi2GetString),
+        Fmi3GetInt8(super::Fmi3GetInt8),
         #[prost(message, tag="16")]
-        Fmi2GetDirectionalDerivatives(super::Fmi2GetDirectionalDerivatives),
+        Fmi3GetUInt8(super::Fmi3GetUInt8),
         #[prost(message, tag="17")]
-        Fmi2GetRealOutputDerivatives(super::Fmi2GetRealOutputDerivatives),
+        Fmi3GetInt16(super::Fmi3GetInt16),
         #[prost(message, tag="18")]
-        Fmi2SetReal(super::Fmi2SetReal),
+        Fmi3GetUInt16(super::Fmi3GetUInt16),
         #[prost(message, tag="19")]
-        Fmi2SetInteger(super::Fmi2SetInteger),
+        Fmi3GetInt32(super::Fmi3GetInt32),
         #[prost(message, tag="20")]
-        Fmi2SetBoolean(super::Fmi2SetBoolean),
+        Fmi3GetUInt32(super::Fmi3GetUInt32),
         #[prost(message, tag="21")]
-        Fmi2SetString(super::Fmi2SetString),
+        Fmi3GetInt64(super::Fmi3GetInt64),
         #[prost(message, tag="22")]
+        Fmi3GetUInt64(super::Fmi3GetUInt64),
+        #[prost(message, tag="23")]
+        Fmi3GetBoolean(super::Fmi3GetBoolean),
+        #[prost(message, tag="24")]
+        Fmi3GetString(super::Fmi3GetString),
+        #[prost(message, tag="25")]
+        FmiGetBinary(super::FmiGetBinary),
+        #[prost(message, tag="26")]
+        Fmi3GetDirectionalDerivative(super::Fmi3GetDirectionalDerivative),
+        #[prost(message, tag="27")]
+        Fmi3GetAdjointDerivative(super::Fmi3GetAdjointDerivative),
+        #[prost(message, tag="28")]
+        Fmi3GetOutputDerivatives(super::Fmi3GetOutputDerivatives),
+        #[prost(message, tag="29")]
+        Fmi3SetFloat32(super::Fmi3SetFloat32),
+        #[prost(message, tag="30")]
+        Fmi3SetFloat64(super::Fmi3SetFloat64),
+        #[prost(message, tag="31")]
+        Fmi3SetInt8(super::Fmi3SetInt8),
+        #[prost(message, tag="32")]
+        Fmi3SetUInt8(super::Fmi3SetUInt8),
+        #[prost(message, tag="33")]
+        Fmi3SetInt16(super::Fmi3SetInt16),
+        #[prost(message, tag="34")]
+        Fmi3SetUInt16(super::Fmi3SetUInt16),
+        #[prost(message, tag="35")]
+        Fmi3SetInt32(super::Fmi3SetInt32),
+        #[prost(message, tag="36")]
+        Fmi3SetUInt32(super::Fmi3SetUInt32),
+        #[prost(message, tag="37")]
+        Fmi3SetInt64(super::Fmi3SetInt64),
+        #[prost(message, tag="38")]
+        Fmi3SetUInt64(super::Fmi3SetUInt64),
+        #[prost(message, tag="39")]
+        Fmi3SetBoolean(super::Fmi3SetBoolean),
+        #[prost(message, tag="40")]
+        Fmi3SetString(super::Fmi3SetString),
+        #[prost(message, tag="41")]
+        FmiSetBinary(super::FmiSetBinary),
+        // FMI2
+
+        #[prost(message, tag="42")]
+        Fmi2DoStep(super::Fmi2DoStep),
+        #[prost(message, tag="43")]
+        Fmi2SetDebugLogging(super::Fmi2SetDebugLogging),
+        #[prost(message, tag="44")]
+        Fmi2SetupExperiment(super::Fmi2SetupExperiment),
+        #[prost(message, tag="45")]
+        Fmi2EnterInitializationMode(super::Fmi2EnterInitializationMode),
+        #[prost(message, tag="46")]
+        Fmi2ExitInitializationMode(super::Fmi2ExitInitializationMode),
+        #[prost(message, tag="47")]
+        Fmi2FreeInstance(super::Fmi2FreeInstance),
+        #[prost(message, tag="48")]
+        Fmi2CancelStep(super::Fmi2CancelStep),
+        #[prost(message, tag="49")]
+        Fmi2Terminate(super::Fmi2Terminate),
+        #[prost(message, tag="50")]
+        Fmi2Reset(super::Fmi2Reset),
+        #[prost(message, tag="51")]
+        Fmi2GetReal(super::Fmi2GetReal),
+        #[prost(message, tag="52")]
+        Fmi2GetInteger(super::Fmi2GetInteger),
+        #[prost(message, tag="53")]
+        Fmi2GetBoolean(super::Fmi2GetBoolean),
+        #[prost(message, tag="54")]
+        Fmi2GetString(super::Fmi2GetString),
+        #[prost(message, tag="55")]
+        Fmi2GetDirectionalDerivatives(super::Fmi2GetDirectionalDerivatives),
+        #[prost(message, tag="56")]
+        Fmi2GetRealOutputDerivatives(super::Fmi2GetRealOutputDerivatives),
+        #[prost(message, tag="57")]
+        Fmi2SetReal(super::Fmi2SetReal),
+        #[prost(message, tag="58")]
+        Fmi2SetInteger(super::Fmi2SetInteger),
+        #[prost(message, tag="59")]
+        Fmi2SetBoolean(super::Fmi2SetBoolean),
+        #[prost(message, tag="60")]
+        Fmi2SetString(super::Fmi2SetString),
+        #[prost(message, tag="61")]
         Fmi2SetRealInputDerivatives(super::Fmi2SetRealInputDerivatives),
+        #[prost(message, tag="62")]
+        Fmi2Instantiate(super::Fmi2Instantiate),
+        // Common
+
+        #[prost(message, tag="63")]
+        UnifmuSerialize(super::UnifmuSerialize),
+        #[prost(message, tag="64")]
+        UnifmuDeserialize(super::UnifmuDeserialize),
     }
 }
 // ----------------------- FMI3 ----------------------
@@ -723,4 +780,10 @@ pub enum Fmi2Status {
     Fmi2Error = 3,
     Fmi2Fatal = 4,
     Fmi2Pending = 5,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Fmi2Type {
+    Fmi2ModelExchange = 0,
+    Fmi2CoSimulation = 1,
 }

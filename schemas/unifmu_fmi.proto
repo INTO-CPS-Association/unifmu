@@ -15,16 +15,9 @@ message UnifmuDeserialize {
     bytes state = 1;
 }
 
-message UnifmuHandshakeReturn {}
+message EmptyReturn {}
 
-message FmiInstantiationCommand{
-  oneof command {
-    Fmi3InstantiateModelExchange Fmi3InstantiateModelExchange = 1;
-    Fmi3InstantiateCoSimulation Fmi3InstantiateCoSimulation = 2;
-    Fmi3InstantiateScheduledExecution Fmi3InstantiateScheduledExecution = 3;
-    Fmi2Instantiate Fmi2Instantiate = 4;
-  }
-}
+
 
 // ----------------------- FMI3 ----------------------
 
@@ -34,6 +27,35 @@ enum Fmi3Status {
   FMI3_DISCARD=2;
   FMI3_ERROR=3;
   FMI3_FATAL=4;
+}
+
+
+message Fmi3InstantiateModelExchange {
+  string instance_name = 1;
+  string instantiation_token = 2;
+  string resource_path = 3;
+  bool visible = 4;
+  bool logging_on = 5;
+}
+
+
+message Fmi3InstantiateCoSimulation {
+  string instance_name = 1;
+  string instantiation_token = 2;
+  string resource_path = 3;
+  bool visible = 4;
+  bool logging_on = 5;
+  bool event_mode_used = 6;
+  bool early_return_allowed = 7;
+  repeated uint32 required_intermediate_variables = 8;
+}
+
+message Fmi3InstantiateScheduledExecution {
+  string instance_name = 1;
+  string instantiation_token = 2;
+  string resource_path = 3;
+  bool visible = 4;
+  bool logging_on = 5;
 }
 
 message Fmi3DoStep {
@@ -66,6 +88,7 @@ message Fmi3Terminate {}
 message Fmi3Reset {}
 
 // ----------------------- FMI3 Getters ----------------------
+
 
 message Fmi3GetFloat32 {
   repeated uint32 value_references = 1;
@@ -208,34 +231,6 @@ message FmiSetBinary {
 
 // ----------------------- FMI3 Return Values ----------------------
 
-message Fmi3InstantiateModelExchange {
-  string instance_name = 1;
-  string instantiation_token = 2;
-  string resource_path = 3;
-  bool visible = 4;
-  bool logging_on = 5;
-}
-
-
-message Fmi3InstantiateCoSimulation {
-  string instance_name = 1;
-  string instantiation_token = 2;
-  string resource_path = 3;
-  bool visible = 4;
-  bool logging_on = 5;
-  bool event_mode_used = 6;
-  bool early_return_allowed = 7;
-  repeated uint32 required_intermediate_variables = 8;
-}
-
-message Fmi3InstantiateScheduledExecution {
-  string instance_name = 1;
-  string instantiation_token = 2;
-  string resource_path = 3;
-  bool visible = 4;
-  bool logging_on = 5;
-}
-
 message Fmi3StatusReturn {
     Fmi3Status status = 1;
 }
@@ -327,58 +322,6 @@ message UnifmuFmi3SerializeReturn {
   bytes state = 2;
 }
 
-// ----------------------- FMI3 Command Wrapper ----------------------
-
-message Fmi3Command {
-  oneof command {
-    Fmi3DoStep Fmi3DoStep = 1;
-
-    Fmi3SetDebugLogging Fmi3SetDebugLogging = 2;
-
-    Fmi3EnterInitializationMode Fmi3EnterInitializationMode = 3;
-    Fmi3ExitInitializationMode Fmi3ExitInitializationMode = 4;
-    
-    Fmi3FreeInstance Fmi3FreeInstance = 5;
-    Fmi3Terminate Fmi3Terminate = 6;
-    Fmi3Reset Fmi3Reset = 7;
-    
-    UnifmuSerialize UnifmuSerialize =8;
-    UnifmuDeserialize UnifmuDeserialize =9;
-
-    Fmi3GetFloat32 Fmi3GetFloat32 = 10;
-    Fmi3GetFloat64 Fmi3GetFloat64 = 11;
-    Fmi3GetInt8 Fmi3GetInt8 = 12;
-    Fmi3GetUInt8 Fmi3GetUInt8 = 13;
-    Fmi3GetInt16 Fmi3GetInt16 = 14;
-    Fmi3GetUInt16 Fmi3GetUInt16 = 15;
-    Fmi3GetInt32 Fmi3GetInt32 = 16;
-    Fmi3GetUInt32 Fmi3GetUInt32 = 17;
-    Fmi3GetInt64 Fmi3GetInt64 = 18;
-    Fmi3GetUInt64 Fmi3GetUInt64 = 19;
-    Fmi3GetBoolean Fmi3GetBoolean = 20;
-    Fmi3GetString Fmi3GetString = 21;
-    FmiGetBinary FmiGetBinary = 22;
-
-    Fmi3GetDirectionalDerivative Fmi3GetDirectionalDerivative = 23;
-    Fmi3GetAdjointDerivative Fmi3GetAdjointDerivative = 24;
-    Fmi3GetOutputDerivatives Fmi3GetOutputDerivatives = 25;
-
-    Fmi3SetFloat32 Fmi3SetFloat32 = 26;
-    Fmi3SetFloat64 Fmi3SetFloat64 = 27;
-    Fmi3SetInt8 Fmi3SetInt8 = 28;
-    Fmi3SetUInt8 Fmi3SetUInt8 = 29;
-    Fmi3SetInt16 Fmi3SetInt16 = 30;
-    Fmi3SetUInt16 Fmi3SetUInt16 = 31;
-    Fmi3SetInt32 Fmi3SetInt32 = 32;
-    Fmi3SetUInt32 Fmi3SetUInt32 = 33;
-    Fmi3SetInt64 Fmi3SetInt64 = 34;
-    Fmi3SetUInt64 Fmi3SetUInt64 = 35;
-    Fmi3SetBoolean Fmi3SetBoolean = 36;
-    Fmi3SetString Fmi3SetString = 37;
-    FmiSetBinary FmiSetBinary = 38;
-  }
-}
-
 // ----------------------- FMI2 ----------------------
 
 enum Fmi2Status {
@@ -390,14 +333,14 @@ enum Fmi2Status {
   FMI2_PENDING=5;
 }
 
-enum FmuType {
-  MODEL_EXCHANGE = 0;
-  CO_SIMULATION = 1;
+enum FMI2Type {
+  FMI2_MODEL_EXCHANGE = 0;
+  FMI2_CO_SIMULATION = 1;
 }
 
 message Fmi2Instantiate {
   string instance_name = 1;
-  FmuType fmu_type = 2;
+  FMI2Type fmu_type = 2;
   string fmu_guid = 3;
   string fmu_resource_location = 4;
   bool visible = 5;
@@ -532,42 +475,95 @@ message UnifmuFmi2SerializeReturn {
   bytes state = 2;
 }
 
-// ----------------------- FMI2 Command Wrapper ----------------------
+// ----------------------- FMI Command Wrapper ----------------------
 
-message Fmi2Command {
+message FmiCommand {
   oneof command {
-    Fmi2DoStep Fmi2DoStep = 1;
 
-    Fmi2SetDebugLogging Fmi2SetDebugLogging = 2;
+    // FMI3
 
-    Fmi2SetupExperiment Fmi2SetupExperiment = 3;
+    Fmi3InstantiateModelExchange Fmi3InstantiateModelExchange= 1;
+    Fmi3InstantiateCoSimulation Fmi3InstantiateCoSimulation = 2;
+    Fmi3InstantiateScheduledExecution Fmi3InstantiateScheduledExecution = 3;
+
+    Fmi3DoStep Fmi3DoStep = 4;
+    Fmi3SetDebugLogging Fmi3SetDebugLogging = 5;
+
+    Fmi3EnterInitializationMode Fmi3EnterInitializationMode = 6;
+    Fmi3ExitInitializationMode Fmi3ExitInitializationMode = 7;
     
-    Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 4;
-    Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 5;
-    Fmi2FreeInstance Fmi2FreeInstance = 6;
+    Fmi3FreeInstance Fmi3FreeInstance = 8;
+    Fmi3Terminate Fmi3Terminate = 9;
+    Fmi3Reset Fmi3Reset = 10;
 
-    Fmi2CancelStep Fmi2CancelStep = 7;
-    Fmi2Terminate Fmi2Terminate = 8;
-    Fmi2Reset Fmi2Reset = 9;
+    Fmi3GetFloat32 Fmi3GetFloat32 = 13;
+    Fmi3GetFloat64 Fmi3GetFloat64 = 14;
+    Fmi3GetInt8 Fmi3GetInt8 = 15;
+    Fmi3GetUInt8 Fmi3GetUInt8 = 16;
+    Fmi3GetInt16 Fmi3GetInt16 = 17;
+    Fmi3GetUInt16 Fmi3GetUInt16 = 18;
+    Fmi3GetInt32 Fmi3GetInt32 = 19;
+    Fmi3GetUInt32 Fmi3GetUInt32 = 20;
+    Fmi3GetInt64 Fmi3GetInt64 = 21;
+    Fmi3GetUInt64 Fmi3GetUInt64 = 22;
+    Fmi3GetBoolean Fmi3GetBoolean = 23;
+    Fmi3GetString Fmi3GetString = 24;
+    FmiGetBinary FmiGetBinary = 25;
+
+    Fmi3GetDirectionalDerivative Fmi3GetDirectionalDerivative = 26;
+    Fmi3GetAdjointDerivative Fmi3GetAdjointDerivative = 27;
+    Fmi3GetOutputDerivatives Fmi3GetOutputDerivatives = 28;
+
+    Fmi3SetFloat32 Fmi3SetFloat32 = 29;
+    Fmi3SetFloat64 Fmi3SetFloat64 = 30;
+    Fmi3SetInt8 Fmi3SetInt8 = 31;
+    Fmi3SetUInt8 Fmi3SetUInt8 = 32;
+    Fmi3SetInt16 Fmi3SetInt16 = 33;
+    Fmi3SetUInt16 Fmi3SetUInt16 = 34;
+    Fmi3SetInt32 Fmi3SetInt32 = 35;
+    Fmi3SetUInt32 Fmi3SetUInt32 = 36;
+    Fmi3SetInt64 Fmi3SetInt64 = 37;
+    Fmi3SetUInt64 Fmi3SetUInt64 = 38;
+    Fmi3SetBoolean Fmi3SetBoolean = 39;
+    Fmi3SetString Fmi3SetString = 40;
+    FmiSetBinary FmiSetBinary = 41;
+
+    // FMI2
+
+    Fmi2DoStep Fmi2DoStep = 42;
+
+    Fmi2SetDebugLogging Fmi2SetDebugLogging = 43;
+
+    Fmi2SetupExperiment Fmi2SetupExperiment = 44;
     
-    UnifmuSerialize UnifmuSerialize = 10;
-    UnifmuDeserialize UnifmuDeserialize = 11;
+    Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 45;
+    Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 46;
+    Fmi2FreeInstance Fmi2FreeInstance = 47;
 
-    Fmi2GetReal Fmi2GetReal = 12;
-    Fmi2GetInteger Fmi2GetInteger = 13;
-    Fmi2GetBoolean Fmi2GetBoolean = 14;
-    Fmi2GetString Fmi2GetString = 15;
+    Fmi2CancelStep Fmi2CancelStep = 48;
+    Fmi2Terminate Fmi2Terminate = 49;
+    Fmi2Reset Fmi2Reset = 50;
 
-    Fmi2GetDirectionalDerivatives Fmi2GetDirectionalDerivatives = 16;
-    Fmi2GetRealOutputDerivatives Fmi2GetRealOutputDerivatives = 17;
+    Fmi2GetReal Fmi2GetReal = 51;
+    Fmi2GetInteger Fmi2GetInteger = 52;
+    Fmi2GetBoolean Fmi2GetBoolean = 53;
+    Fmi2GetString Fmi2GetString = 54;
 
-    Fmi2SetReal Fmi2SetReal = 18;
-    Fmi2SetInteger Fmi2SetInteger = 19;
-    Fmi2SetBoolean Fmi2SetBoolean = 20;
-    Fmi2SetString Fmi2SetString = 21;
+    Fmi2GetDirectionalDerivatives Fmi2GetDirectionalDerivatives = 55;
+    Fmi2GetRealOutputDerivatives Fmi2GetRealOutputDerivatives = 56;
 
-    Fmi2SetRealInputDerivatives Fmi2SetRealInputDerivatives = 22;
+    Fmi2SetReal Fmi2SetReal = 57;
+    Fmi2SetInteger Fmi2SetInteger = 58;
+    Fmi2SetBoolean Fmi2SetBoolean = 59;
+    Fmi2SetString Fmi2SetString = 60;
 
-    Fmi2Instantiate Fmi2Instantiate = 23; 
+    Fmi2SetRealInputDerivatives Fmi2SetRealInputDerivatives = 61;
+
+    Fmi2Instantiate Fmi2Instantiate = 62; 
+
+    // Common
+
+    UnifmuSerialize UnifmuSerialize = 63;
+    UnifmuDeserialize UnifmuDeserialize = 64;
   }
 }

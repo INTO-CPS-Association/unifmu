@@ -1,11 +1,11 @@
 import logging
 import os
 import sys
+import zmq
 
 from schemas.unifmu_fmi_pb2 import (
-    UnifmuHandshakeReturn,
-    FmiInstantiationCommand,
-    Fmi3Command,
+    EmptyReturn,
+    FmiCommand,
     Fmi3StatusReturn,
     Fmi3FreeInstanceReturn,
     UnifmuFmi3SerializeReturn,
@@ -22,7 +22,6 @@ from schemas.unifmu_fmi_pb2 import (
     Fmi3GetBooleanReturn,
     Fmi3GetStringReturn,
     FmiGetBinaryReturn,
-    Fmi2Command,
     Fmi2StatusReturn,
     Fmi2FreeInstanceReturn,
     UnifmuFmi2SerializeReturn,
@@ -31,21 +30,10 @@ from schemas.unifmu_fmi_pb2 import (
     Fmi2GetBooleanReturn,
     Fmi2GetStringReturn,
 )
+from model import Model
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
-
-try:
-    import zmq
-except ImportError:
-    logger.fatal(
-        "unable to import the python library 'zmq' required by the schemaless backend. "
-        "please ensure that the library is present in the python environment launching the script. "
-        "the missing dependencies can be installed using 'python -m pip install unifmu[python-backend]'"
-    )
-    sys.exit(-1)
-
-from model import Model
 
 
 def receive_command(command, socket):
@@ -57,12 +45,37 @@ def receive_command(command, socket):
     return group, data
 
 
-def connectFmi3Model(socket):
-    command = Fmi3Command()
+if __name__ == "__main__":
+
+    model = Model()
+
+    # initializing message queue
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+
+    dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
+    logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
+
+    socket.connect(dispatcher_endpoint)
+
+    # send handshake
+    state = EmptyReturn().SerializeToString()
+    socket.send(state)
+
+    # dispatch commands to model
+    command = FmiCommand()
     while True:
         group, data = receive_command(command, socket)
 
-        if group == "Fmi3DoStep":
+        # ================= FMI3 =================
+        if group == "Fmi3InstantiateModelExchange":
+            pass
+        elif group == "Fmi3InstantiateCoSimulation":
+            pass
+        elif group == "Fmi3InstantiateScheduledExecution":
+            pass
+
+        elif group == "Fmi3DoStep":
             result = Fmi3StatusReturn()
             result.status = model.fmi3DoStep(
                 data.current_communication_point,
@@ -97,7 +110,6 @@ def connectFmi3Model(socket):
         elif group == "UnifmuDeserialize":
             result = Fmi3StatusReturn
             result.status = model.unifmuFmi3Deserialize(data.state)
-        # -- Getters --
         elif group == "Fmi3GetFloat32":
             result = Fmi3GetFloat32Return()
             (result.status, result.values) = model.fmi3GetFloat32(data.value_references)
@@ -137,7 +149,6 @@ def connectFmi3Model(socket):
         elif group == "FmiGetBinary":
             result = FmiGetBinaryReturn()
             (result.status, result.values) = model.fmi3GetBinary(data.value_references)
-        # -- Setters --
         elif group == "Fmi3SetFloat32":
             result = Fmi2StatusReturn()
             result.status = model.fmi3SetFloat32(data.value_references, data.values)
@@ -177,30 +188,19 @@ def connectFmi3Model(socket):
         elif group == "Fmi3SetBinary":
             result = Fmi2StatusReturn()
             result.status = model.fmi3SetBinary(data.value_references, data.values)
-        else:
-            logger.error(f"unrecognized command '{group}' received, shutting down")
-            sys.exit(-1)
+        # ================= FMI2 =================
 
-        state = result.SerializeToString()
-        socket.send(state)
-
-
-def connectFmi2Model(socket):
-    command = Fmi2Command()
-
-    while True:
-
-        group, data = receive_command(command, socket)
-
-        if group == "Fmi2DoStep":
+        elif group == "Fmi2Instantiate":
+            result = EmptyReturn()
+        elif group == "Fmi2DoStep":
             result = Fmi2StatusReturn()
             result.status = model.fmi2DoStep(
                 data.current_time, data.step_size, data.no_step_prior
             )
-        if group == "Fmi2SetDebugLogging":
+        elif group == "Fmi2SetDebugLogging":
             result = Fmi2StatusReturn()
             result.status = model.fmiSetDebugLogging(data.categores, data.logging_on)
-        if group == "Fmi2SetupExperiment":
+        elif group == "Fmi2SetupExperiment":
             result = Fmi2StatusReturn()
             result.status = model.fmi2SetupExperiment(
                 data.start_time, data.stop_time, data.tolerance
@@ -227,7 +227,6 @@ def connectFmi2Model(socket):
         elif group == "Fmi2ExtDeserializeSlave":
             result = Fmi2StatusReturn()
             result.status = model.fmi2ExtDeserialize(data.state)
-        # -- Getters --
         elif group == "Fmi2GetReal":
             result = Fmi2GetRealReturn()
             result.status, result.values[:] = model.fmi2GetReal(data.references)
@@ -240,7 +239,6 @@ def connectFmi2Model(socket):
         elif group == "Fmi2GetString":
             result = Fmi2GetStringReturn()
             result.status, result.values[:] = model.fmi2GetString(data.references)
-        # -- Setters --
         elif group == "Fmi2SetReal":
             result = Fmi2StatusReturn()
             result.status = model.fmi2SetReal(data.references, data.values)
@@ -259,39 +257,3 @@ def connectFmi2Model(socket):
 
         state = result.SerializeToString()
         socket.send(state)
-
-
-if __name__ == "__main__":
-
-    command = FmiInstantiationCommand()
-
-    model = Model()
-
-    # initializing message queue
-    context = zmq.Context()
-    socket = context.socket(zmq.REQ)
-
-    dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
-    logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
-
-    socket.connect(dispatcher_endpoint)
-
-    state = UnifmuHandshakeReturn().SerializeToString()
-    socket.send(state)
-
-    command = FmiInstantiationCommand
-
-    group, data = receive_command(command, socket)
-
-    if group in {
-        "Fmi3InstantiateModelExchange",
-        "Fmi3InstantiateCoSimulation",
-        "Fmi3InstantiateScheduledExecution",
-    }:
-        connectFmi2Model()
-
-    elif group == "Fmi2Instantiate":
-        connectFmi2Model(socket)
-    else:
-        logger.error(f"unrecognized command '{group}' received, shutting down")
-        sys.exit(-1)
