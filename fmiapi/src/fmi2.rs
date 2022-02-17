@@ -162,6 +162,7 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 /// the command is specified by the configuration file, launch.toml, that should be located in the resources directory
 /// fmi-commands are sent between the wrapper and slave(s) using a message queue library, specifically zmq.
 
+#[no_mangle]
 pub extern "C" fn fmi2Instantiate(
     instance_name: *const c_char, // neither allowed to be null or empty string
     fmu_type: Fmi2Type,
@@ -204,7 +205,7 @@ pub extern "C" fn fmi2Instantiate(
 
     Some(Box::new(Fmi2Slave::new(dispatcher, popen)))
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
     let mut slave = slave;
 
@@ -221,6 +222,7 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
     }
 }
 
+#[no_mangle]
 pub extern "C" fn fmi2SetDebugLogging(
     slave: &mut Fmi2Slave,
     logging_on: c_int,
@@ -239,7 +241,7 @@ pub extern "C" fn fmi2SetDebugLogging(
         .fmi2SetDebugLogging(&categories, logging_on != 0)
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2SetupExperiment(
     slave: &mut Fmi2Slave,
     tolerance_defined: c_int,
@@ -269,34 +271,34 @@ pub extern "C" fn fmi2SetupExperiment(
         .fmi2SetupExperiment(start_time, stop_time, tolerance)
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2EnterInitializationMode()
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2ExitInitializationMode()
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2Terminate()
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave.dispatcher.fmi2Reset().unwrap_or(Fmi2Status::Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
-
+#[no_mangle]
 pub extern "C" fn fmi2DoStep(
     slave: &mut Fmi2Slave,
     current_time: c_double,
@@ -317,7 +319,7 @@ pub extern "C" fn fmi2DoStep(
         Err(e) => Fmi2Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
@@ -326,7 +328,7 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
-
+#[no_mangle]
 pub extern "C" fn fmi2GetReal(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
@@ -347,7 +349,7 @@ pub extern "C" fn fmi2GetReal(
         Err(e) => Fmi2Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2GetInteger(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
@@ -368,7 +370,7 @@ pub extern "C" fn fmi2GetInteger(
         Err(e) => Fmi2Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2GetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
@@ -405,7 +407,7 @@ pub extern "C" fn fmi2GetBoolean(
 /// To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
 /// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
 /// We choose to do it on an instance basis, i.e. each instance has its own string buffer.
-
+#[no_mangle]
 pub extern "C" fn fmi2GetString(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
@@ -436,7 +438,7 @@ pub extern "C" fn fmi2GetString(
         Err(e) => Fmi2Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2SetReal(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
@@ -451,7 +453,7 @@ pub extern "C" fn fmi2SetReal(
         .fmi2SetReal(references, values)
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2SetInteger(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
@@ -471,7 +473,7 @@ pub extern "C" fn fmi2SetInteger(
 ///
 /// Note: fmi2 uses C-int to represent booleans and NOT the boolean type defined by C99 in stdbool.h, _Bool.
 /// Rust's bool type is defined to have the same size as _Bool, as the values passed through the C-API must be converted.
-
+#[no_mangle]
 pub extern "C" fn fmi2SetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
@@ -489,7 +491,7 @@ pub extern "C" fn fmi2SetBoolean(
         .fmi2SetBoolean(references, &values)
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2SetString(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
@@ -511,7 +513,7 @@ pub extern "C" fn fmi2SetString(
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
-
+#[no_mangle]
 pub extern "C" fn fmi2GetDirectionalDerivative(
     slave: &mut Fmi2Slave,
     unknown_refs: *const c_uint,
@@ -541,7 +543,7 @@ pub extern "C" fn fmi2GetDirectionalDerivative(
         Err(e) => Fmi2Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2SetRealInputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
@@ -558,7 +560,7 @@ pub extern "C" fn fmi2SetRealInputDerivatives(
         .fmi2SetRealInputDerivatives(references, orders, values)
         .unwrap_or(Fmi2Status::Error)
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2GetRealOutputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
@@ -586,7 +588,7 @@ pub extern "C" fn fmi2GetRealOutputDerivatives(
 }
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
-
+#[no_mangle]
 pub extern "C" fn fmi2SetFMUstate(slave: &mut Fmi2Slave, state: &SlaveState) -> Fmi2Status {
     slave
         .dispatcher
@@ -596,6 +598,7 @@ pub extern "C" fn fmi2SetFMUstate(slave: &mut Fmi2Slave, state: &SlaveState) -> 
 
 //
 
+#[no_mangle]
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
 pub extern "C" fn fmi2GetFMUstate(
     slave: &mut Fmi2Slave,
@@ -617,7 +620,7 @@ pub extern "C" fn fmi2GetFMUstate(
 }
 /// Free previously recorded state of slave
 /// If state points to null the call is ignored as defined by the specification
-
+#[no_mangle]
 pub extern "C" fn fmi2FreeFMUstate(
     slave: &mut Fmi2Slave,
     state: Option<Box<SlaveState>>,
@@ -634,6 +637,7 @@ pub extern "C" fn fmi2FreeFMUstate(
 /// Oddly, the length of the buffer is also provided,
 /// as i would expect the environment to have enquired about the state size by calling fmi2SerializedFMUstateSize.
 
+#[no_mangle]
 /// We assume that the buffer is sufficiently large
 pub extern "C" fn fmi2SerializeFMUstate(
     _slave: &Fmi2Slave,
@@ -654,7 +658,7 @@ pub extern "C" fn fmi2SerializeFMUstate(
 
 //
 // #[repr(C)]
-
+#[no_mangle]
 pub extern "C" fn fmi2DeSerializeFMUstate(
     slave: &mut Fmi2Slave,
     serialized_state: *const u8,
@@ -666,7 +670,7 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     *state = Box::new(Some(SlaveState::new(serialized_state)));
     Fmi2Status::Ok
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2SerializedFMUstateSize(
     slave: &Fmi2Slave,
     state: &SlaveState,
@@ -677,7 +681,7 @@ pub extern "C" fn fmi2SerializedFMUstateSize(
 }
 
 // ------------------------------------- FMI FUNCTIONS (Status) --------------------------------
-
+#[no_mangle]
 pub extern "C" fn fmi2GetStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
@@ -700,7 +704,7 @@ pub extern "C" fn fmi2GetStatus(
         }
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2GetRealStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
@@ -728,7 +732,7 @@ pub extern "C" fn fmi2GetRealStatus(
         }
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2GetIntegerStatus(
     c: *const c_int,
     status_kind: c_int,
@@ -737,7 +741,7 @@ pub extern "C" fn fmi2GetIntegerStatus(
     eprintln!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
     return Fmi2Status::Error;
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2GetBooleanStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
@@ -746,7 +750,7 @@ pub extern "C" fn fmi2GetBooleanStatus(
     eprintln!("Not currently implemented by UniFMU");
     return Fmi2Status::Discard;
 }
-
+#[no_mangle]
 pub extern "C" fn fmi2GetStringStatus(
     c: *const c_int,
     status_kind: c_int,

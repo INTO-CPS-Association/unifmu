@@ -48,7 +48,7 @@ fn c2s(c: *const c_char) -> String {
 }
 
 type Fmi3SlaveType = Box<Fmi3Slave>;
-
+#[no_mangle]
 pub extern "C" fn fmi3InstantiateCoSimulation(
     instance_name: *const c_char,
     instantiation_token: *const c_char,
@@ -90,7 +90,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         Err(_) => None,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3DoStep(
     instance: &mut Fmi3Slave,
     current_communication_point: f64,
@@ -117,7 +117,7 @@ pub extern "C" fn fmi3DoStep(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3EnterInitializationMode(
     instance: &mut Fmi3Slave,
     tolerance_defined: i32,
@@ -149,14 +149,14 @@ pub extern "C" fn fmi3EnterInitializationMode(
         Err(_e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3Status {
     match instance.dispatcher.fmi3ExitInitializationMode() {
         Ok(s) => s,
         Err(_) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetFloat32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -181,7 +181,7 @@ pub extern "C" fn fmi3GetFloat32(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetFloat64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -206,7 +206,7 @@ pub extern "C" fn fmi3GetFloat64(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -228,7 +228,7 @@ pub extern "C" fn fmi3GetInt8(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetUint8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -253,7 +253,7 @@ pub extern "C" fn fmi3GetUint8(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetInt16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -278,7 +278,7 @@ pub extern "C" fn fmi3GetInt16(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetUint16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -303,7 +303,7 @@ pub extern "C" fn fmi3GetUint16(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -328,7 +328,7 @@ pub extern "C" fn fmi3GetInt32(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetUint32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -353,7 +353,7 @@ pub extern "C" fn fmi3GetUint32(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetInt64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -378,7 +378,7 @@ pub extern "C" fn fmi3GetInt64(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetUint64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -403,7 +403,7 @@ pub extern "C" fn fmi3GetUint64(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetBoolean(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -437,7 +437,7 @@ pub extern "C" fn fmi3GetBoolean(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetString(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -472,7 +472,7 @@ pub extern "C" fn fmi3GetString(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3GetBinary(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -505,7 +505,7 @@ pub extern "C" fn fmi3GetBinary(
         Err(e) => Fmi3Status::Error,
     }
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetFloat32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -515,7 +515,7 @@ pub extern "C" fn fmi3SetFloat32(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetFloat64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -525,7 +525,7 @@ pub extern "C" fn fmi3SetFloat64(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -535,7 +535,7 @@ pub extern "C" fn fmi3SetInt8(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
@@ -545,7 +545,7 @@ pub extern "C" fn fmi3SetUint8(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt16(
     instance: *mut c_void,
     value_references: *const u32,
@@ -555,7 +555,7 @@ pub extern "C" fn fmi3SetInt16(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint16(
     instance: *mut c_void,
     value_references: *const u32,
@@ -565,7 +565,7 @@ pub extern "C" fn fmi3SetUint16(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt32(
     instance: *mut c_void,
     value_references: *const u32,
@@ -575,7 +575,7 @@ pub extern "C" fn fmi3SetInt32(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint32(
     instance: *mut c_void,
     value_references: *const u32,
@@ -585,7 +585,7 @@ pub extern "C" fn fmi3SetUint32(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetInt64(
     instance: *mut c_void,
     value_references: *const u32,
@@ -595,7 +595,7 @@ pub extern "C" fn fmi3SetInt64(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetUint64(
     instance: *mut c_void,
     value_references: *const u32,
@@ -605,7 +605,7 @@ pub extern "C" fn fmi3SetUint64(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetBoolean(
     instance: *mut c_void,
     value_references: *const u32,
@@ -615,7 +615,7 @@ pub extern "C" fn fmi3SetBoolean(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
-
+#[no_mangle]
 pub extern "C" fn fmi3SetBinary(
     instance: *mut c_void,
     value_references: *const i32,
