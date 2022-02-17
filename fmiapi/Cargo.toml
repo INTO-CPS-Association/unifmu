@@ -13,19 +13,15 @@ bytes = "*"
 libc = "*"
 num_enum = "*"
 prost = "*"
-# safer-ffi = { version = "*", features = ["proc_macros"] }
-serde = { version = "1.0.127", features = ["derive"] }
-serde_bytes = "*"
-serde_json = "*"
-serde_repr = "*"
+serde = {version = "1.0.127", features = ["derive"]}
 subprocess = "*"
-tokio = { version = "*", features = ["rt"] }
+tokio = {version = "*", features = ["rt"]}
 toml = "*"
 url = "*"
-zeromq = { git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
+zeromq = {git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
   "tokio-runtime",
   "tcp-transport",
-] }
+]}
 
 [build-dependencies]
 prost-build = "0.8.0"

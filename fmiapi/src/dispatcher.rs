@@ -42,6 +42,7 @@ pub enum DispatcherError {
     BackendImplementationError,
 }
 
+#[allow(non_snake_case)]
 impl CommandDispatcher {
     // ================= Common (FMI2+FMI3) ====================
 

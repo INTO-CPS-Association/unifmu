@@ -2,30 +2,23 @@
 #![allow(unreachable_code)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
-
 use crate::dispatcher::CommandDispatcher;
+use crate::spawn::spawn_slave;
 use libc::c_double;
 use libc::size_t;
 
 use subprocess::Popen;
-use subprocess::PopenConfig;
 use url::Url;
 
 use std::ffi::CStr;
 use std::ffi::CString;
-use std::ffi::OsString;
-use std::fs::read_to_string;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
 use std::os::raw::c_uint;
 use std::os::raw::c_ulonglong;
 use std::os::raw::c_void;
-use std::panic::RefUnwindSafe;
-use std::panic::UnwindSafe;
 use std::slice::from_raw_parts;
 use std::slice::from_raw_parts_mut;
-
-use crate::config::LaunchConfig;
 
 ///
 /// Represents the function signature of the logging callback function passsed
@@ -72,11 +65,8 @@ pub struct Fmi2CallbackFunctions {
 }
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 #[repr(i32)]
-#[derive(
-    Debug, PartialEq, Clone, Copy, Serialize_repr, Deserialize_repr, IntoPrimitive, TryFromPrimitive,
-)]
+#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 
 pub enum Fmi2Status {
     Ok = 0,
@@ -88,9 +78,7 @@ pub enum Fmi2Status {
 }
 
 #[repr(i32)]
-#[derive(
-    Debug, PartialEq, Clone, Copy, Serialize_repr, Deserialize_repr, IntoPrimitive, TryFromPrimitive,
-)]
+#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi2StatusKind {
     Fmi2DoStepStatus = 0,
     Fmi2PendingStatus = 1,
@@ -109,7 +97,7 @@ pub enum Fmi2Type {
 // ----------------------- Library instantiation and cleanup ---------------------------
 
 #[repr(C)]
-pub struct Slave {
+pub struct Fmi2Slave {
     /// Buffer storing the c-strings returned by `fmi2GetStrings`.
     /// The specs states that the caller should copy the strings to its own memory immidiately after the call has been made.
     /// The reason for this recommendation is that a FMU is allowed to free or overwrite the memory as soon as another call is made to the FMI interface.
@@ -125,11 +113,11 @@ pub struct Slave {
     pub dostep_status: Option<Fmi2Status>,
 }
 //  + Send + UnwindSafe + RefUnwindSafe
-impl RefUnwindSafe for Slave {}
-impl UnwindSafe for Slave {}
-unsafe impl Send for Slave {}
+// impl RefUnwindSafe for Slave {}
+// impl UnwindSafe for Slave {}
+// unsafe impl Send for Slave {}
 
-impl Slave {
+impl Fmi2Slave {
     fn new(dispatcher: CommandDispatcher, popen: Popen) -> Self {
         Self {
             dispatcher,
@@ -157,16 +145,13 @@ impl SlaveState {
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 
-#[no_mangle]
 pub static VERSION: &str = "2.0\0";
 pub static TYPES_PLATFORM: &str = "default";
 
-#[no_mangle]
 pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
     TYPES_PLATFORM.as_ptr() as *const c_char
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetVersion() -> *const c_char {
     VERSION.as_ptr() as *const c_char
 }
@@ -177,7 +162,6 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 /// the command is specified by the configuration file, launch.toml, that should be located in the resources directory
 /// fmi-commands are sent between the wrapper and slave(s) using a message queue library, specifically zmq.
 
-#[no_mangle]
 pub extern "C" fn fmi2Instantiate(
     instance_name: *const c_char, // neither allowed to be null or empty string
     fmu_type: Fmi2Type,
@@ -186,7 +170,7 @@ pub extern "C" fn fmi2Instantiate(
     functions: &Fmi2CallbackFunctions,
     visible: c_int,
     logging_on: c_int,
-) -> Option<Box<Slave>> {
+) -> Option<Box<Fmi2Slave>> {
     let resource_uri = unsafe {
         match fmu_resource_location.as_ref() {
             Some(b) => match CStr::from_ptr(b).to_str() {
@@ -205,76 +189,7 @@ pub extern "C" fn fmi2Instantiate(
         resource_uri
     ));
 
-    let config_path = resources_dir.join("launch.toml");
-
-    let config = read_to_string(&config_path).expect(&format!(
-             "Unable to read configuration file stored at path: '{:?}', ensure that 'launch.toml' exists in the resources directory of the fmu.",
-             config_path
-         ));
-
-    let config: LaunchConfig = toml::from_str(config.as_str())
-        .expect("configuration file was opened, but the contents does not appear to be valid");
-
-    let mut dispatcher = CommandDispatcher::new("tcp://127.0.0.1:0");
-
-    let endpoint = dispatcher.endpoint.to_owned();
-    let endpoint_port = endpoint
-        .split(":")
-        .last()
-        .expect("There should be a port after the colon")
-        .to_owned();
-
-    // set environment variables
-    let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
-
-    env_vars.push((
-        OsString::from("UNIFMU_DISPATCHER_ENDPOINT"),
-        OsString::from(endpoint),
-    ));
-    env_vars.push((
-        OsString::from("UNIFMU_DISPATCHER_ENDPOINT_PORT"),
-        OsString::from(endpoint_port),
-    ));
-
-    // grab launch command for host os
-    let launch_command = match std::env::consts::OS {
-        "windows" => match config.windows {
-            Some(cmd) => cmd,
-            None => return None,
-        },
-        "macos" => match config.macos {
-            Some(cmd) => cmd,
-            None => return None,
-        },
-        _other => match config.linux {
-            Some(cmd) => cmd,
-            None => return None,
-        },
-    };
-
-    // spawn process
-    let popen = match Popen::create(
-        &launch_command,
-        PopenConfig {
-            cwd: Some(resources_dir.as_os_str().to_owned()),
-            env: Some(env_vars),
-            ..Default::default()
-        },
-    ) {
-        Ok(popen) => popen,
-        Err(e) => {
-            eprintln!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command);
-            return None;
-        }
-    };
-
-    match dispatcher.await_handshake() {
-        Ok(handshake) => (),
-        Err(e) => {
-            eprint!("Error ocurred during handshake");
-            return None;
-        }
-    };
+    let (mut dispatcher, popen) = spawn_slave(&resources_dir).unwrap();
 
     dispatcher
         .fmi2Instantiate(
@@ -287,11 +202,10 @@ pub extern "C" fn fmi2Instantiate(
         )
         .unwrap();
 
-    Some(Box::new(Slave::new(dispatcher, popen)))
+    Some(Box::new(Fmi2Slave::new(dispatcher, popen)))
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Slave>>) {
+pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
     let mut slave = slave;
 
     match slave.as_mut() {
@@ -307,9 +221,8 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Slave>>) {
     }
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2SetDebugLogging(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     logging_on: c_int,
     n_categories: size_t,
     categories: *const *const c_char,
@@ -327,9 +240,8 @@ pub extern "C" fn fmi2SetDebugLogging(
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2SetupExperiment(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     tolerance_defined: c_int,
     tolerance: c_double,
     start_time: c_double,
@@ -358,40 +270,35 @@ pub extern "C" fn fmi2SetupExperiment(
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Slave) -> Fmi2Status {
+pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2EnterInitializationMode()
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Slave) -> Fmi2Status {
+pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2ExitInitializationMode()
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2Terminate(slave: &mut Slave) -> Fmi2Status {
+pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2Terminate()
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2Reset(slave: &mut Slave) -> Fmi2Status {
+pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave.dispatcher.fmi2Reset().unwrap_or(Fmi2Status::Error)
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
 
-#[no_mangle]
 pub extern "C" fn fmi2DoStep(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     current_time: c_double,
     step_size: c_double,
     no_step_prior: c_int,
@@ -411,8 +318,7 @@ pub extern "C" fn fmi2DoStep(
     }
 }
 
-#[no_mangle]
-pub extern "C" fn fmi2CancelStep(slave: &mut Slave) -> Fmi2Status {
+pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2CancelStep()
@@ -421,9 +327,8 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Slave) -> Fmi2Status {
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
 
-#[no_mangle]
 pub extern "C" fn fmi2GetReal(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
     values: *mut c_double,
@@ -443,9 +348,8 @@ pub extern "C" fn fmi2GetReal(
     }
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetInteger(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
     values: *mut c_int,
@@ -465,9 +369,8 @@ pub extern "C" fn fmi2GetInteger(
     }
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetBoolean(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
     values: *mut c_int,
@@ -503,9 +406,8 @@ pub extern "C" fn fmi2GetBoolean(
 /// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
 /// We choose to do it on an instance basis, i.e. each instance has its own string buffer.
 
-#[no_mangle]
 pub extern "C" fn fmi2GetString(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
     values: *mut *const c_char,
@@ -535,9 +437,8 @@ pub extern "C" fn fmi2GetString(
     }
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2SetReal(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
     values: *const c_double,
@@ -551,9 +452,8 @@ pub extern "C" fn fmi2SetReal(
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2SetInteger(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
     values: *const c_int,
@@ -572,9 +472,8 @@ pub extern "C" fn fmi2SetInteger(
 /// Note: fmi2 uses C-int to represent booleans and NOT the boolean type defined by C99 in stdbool.h, _Bool.
 /// Rust's bool type is defined to have the same size as _Bool, as the values passed through the C-API must be converted.
 
-#[no_mangle]
 pub extern "C" fn fmi2SetBoolean(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
     values: *const c_int,
@@ -591,9 +490,8 @@ pub extern "C" fn fmi2SetBoolean(
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2SetString(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
     values: *const *const c_char,
@@ -614,9 +512,8 @@ pub extern "C" fn fmi2SetString(
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
 
-#[no_mangle]
 pub extern "C" fn fmi2GetDirectionalDerivative(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     unknown_refs: *const c_uint,
     nvr_unknown: size_t,
     known_refs: *const c_uint,
@@ -645,9 +542,8 @@ pub extern "C" fn fmi2GetDirectionalDerivative(
     }
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2SetRealInputDerivatives(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
     orders: *const c_int,
@@ -663,9 +559,8 @@ pub extern "C" fn fmi2SetRealInputDerivatives(
         .unwrap_or(Fmi2Status::Error)
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetRealOutputDerivatives(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
     orders: *const c_int,
@@ -692,8 +587,7 @@ pub extern "C" fn fmi2GetRealOutputDerivatives(
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
 
-#[no_mangle]
-pub extern "C" fn fmi2SetFMUstate(slave: &mut Slave, state: &SlaveState) -> Fmi2Status {
+pub extern "C" fn fmi2SetFMUstate(slave: &mut Fmi2Slave, state: &SlaveState) -> Fmi2Status {
     slave
         .dispatcher
         .fmi2ExtDeserializeSlave(&state.bytes)
@@ -701,9 +595,12 @@ pub extern "C" fn fmi2SetFMUstate(slave: &mut Slave, state: &SlaveState) -> Fmi2
 }
 
 //
-#[no_mangle]
+
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
-pub extern "C" fn fmi2GetFMUstate(slave: &mut Slave, state: &mut Option<SlaveState>) -> Fmi2Status {
+pub extern "C" fn fmi2GetFMUstate(
+    slave: &mut Fmi2Slave,
+    state: &mut Option<SlaveState>,
+) -> Fmi2Status {
     match slave.dispatcher.unifmuSerialize() {
         Ok((status, bytes)) => match state.as_mut() {
             Some(state) => {
@@ -721,9 +618,8 @@ pub extern "C" fn fmi2GetFMUstate(slave: &mut Slave, state: &mut Option<SlaveSta
 /// Free previously recorded state of slave
 /// If state points to null the call is ignored as defined by the specification
 
-#[no_mangle]
 pub extern "C" fn fmi2FreeFMUstate(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     state: Option<Box<SlaveState>>,
 ) -> Fmi2Status {
     match state {
@@ -738,10 +634,9 @@ pub extern "C" fn fmi2FreeFMUstate(
 /// Oddly, the length of the buffer is also provided,
 /// as i would expect the environment to have enquired about the state size by calling fmi2SerializedFMUstateSize.
 
-#[no_mangle]
 /// We assume that the buffer is sufficiently large
 pub extern "C" fn fmi2SerializeFMUstate(
-    _slave: &Slave,
+    _slave: &Fmi2Slave,
     state: &SlaveState,
     data: *mut u8,
     size: size_t,
@@ -760,9 +655,8 @@ pub extern "C" fn fmi2SerializeFMUstate(
 //
 // #[repr(C)]
 
-#[no_mangle]
 pub extern "C" fn fmi2DeSerializeFMUstate(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     serialized_state: *const u8,
     size: size_t,
     state: &mut Box<Option<SlaveState>>,
@@ -773,9 +667,8 @@ pub extern "C" fn fmi2DeSerializeFMUstate(
     Fmi2Status::Ok
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2SerializedFMUstateSize(
-    slave: &Slave,
+    slave: &Fmi2Slave,
     state: &SlaveState,
     size: &mut size_t,
 ) -> Fmi2Status {
@@ -785,9 +678,8 @@ pub extern "C" fn fmi2SerializedFMUstateSize(
 
 // ------------------------------------- FMI FUNCTIONS (Status) --------------------------------
 
-#[no_mangle]
 pub extern "C" fn fmi2GetStatus(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Status,
 ) -> Fmi2Status {
@@ -809,9 +701,8 @@ pub extern "C" fn fmi2GetStatus(
     }
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetRealStatus(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
     value: *mut c_double,
 ) -> Fmi2Status {
@@ -838,7 +729,6 @@ pub extern "C" fn fmi2GetRealStatus(
     }
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetIntegerStatus(
     c: *const c_int,
     status_kind: c_int,
@@ -848,9 +738,8 @@ pub extern "C" fn fmi2GetIntegerStatus(
     return Fmi2Status::Error;
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetBooleanStatus(
-    slave: &mut Slave,
+    slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
     value: *mut c_int,
 ) -> Fmi2Status {
@@ -858,7 +747,6 @@ pub extern "C" fn fmi2GetBooleanStatus(
     return Fmi2Status::Discard;
 }
 
-#[no_mangle]
 pub extern "C" fn fmi2GetStringStatus(
     c: *const c_int,
     status_kind: c_int,
