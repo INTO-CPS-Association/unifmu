@@ -138,21 +138,46 @@ pub fn generate(
     );
 
     // copy common files to root directory and binaries
-    let bin_macos = tmpdir
-        .path()
-        .join("binaries")
-        .join("darwin64")
-        .join("unifmu.dylib");
-    let bin_win = tmpdir
-        .path()
-        .join("binaries")
-        .join("win64")
-        .join("unifmu.dll");
-    let bin_linux = tmpdir
-        .path()
-        .join("binaries")
-        .join("linux64")
-        .join("unifmu.so");
+    let (bin_macos, bin_win, bin_linux) = match fmu_version {
+        FmiFmuVersion::FMI2 => {
+            let bin_macos = tmpdir
+                .path()
+                .join("binaries")
+                .join("darwin64")
+                .join("unifmu.dylib");
+            let bin_win = tmpdir
+                .path()
+                .join("binaries")
+                .join("win64")
+                .join("unifmu.dll");
+            let bin_linux = tmpdir
+                .path()
+                .join("binaries")
+                .join("linux64")
+                .join("unifmu.so");
+
+            (bin_macos, bin_win, bin_linux)
+        }
+        FmiFmuVersion::FMI3 => {
+            let bin_macos = tmpdir
+                .path()
+                .join("binaries")
+                .join("x86_64-darwin")
+                .join("unifmu.dylib");
+            let bin_win = tmpdir
+                .path()
+                .join("binaries")
+                .join("x86_64-windows")
+                .join("unifmu.dll");
+            let bin_linux = tmpdir
+                .path()
+                .join("binaries")
+                .join("x86_64-linux")
+                .join("unifmu.so");
+
+            (bin_macos, bin_win, bin_linux)
+        }
+    };
 
     for p in vec![&bin_macos, &bin_win, &bin_linux] {
         std::fs::create_dir_all(p.parent().unwrap()).unwrap();
