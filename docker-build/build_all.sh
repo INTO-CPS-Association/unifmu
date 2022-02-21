@@ -18,8 +18,11 @@ cp ./target/x86_64-pc-windows-gnu/release/${tgt}.dll ./assets/auto_generated/uni
 cp ./target/x86_64-apple-darwin/release/lib${tgt}.dylib ./assets/auto_generated/unifmu.dylib
 
 # ------------------------------ schemas ------------------------------
-echo "generating protobuf schemas for python and csharp backends"
-protoc -I=./schemas --python_out=./assets/auto_generated --csharp_out=./assets/auto_generated --java_out ./assets/auto_generated unifmu_fmi.proto
+echo "generating protobuf schemas for python, csharp, and java backends"
+mkdir -p assets/auto_generated/fmi2
+mkdir -p assets/auto_generated/fmi3
+protoc -I=./schemas/fmi2 --python_out=./assets/auto_generated/fmi2 --csharp_out=./assets/auto_generated/fmi2 --java_out ./assets/auto_generated/fmi2 unifmu_fmi.proto
+protoc -I=./schemas/fmi3 --python_out=./assets/auto_generated/fmi3 --csharp_out=./assets/auto_generated/fmi3 --java_out ./assets/auto_generated/fmi3 unifmu_fmi.proto
 
 # ------------------------------ cli ------------------------------
 tgt=unifmu

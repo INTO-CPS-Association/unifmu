@@ -21,6 +21,12 @@ pub enum Language {
     Java,
 }
 
+#[derive(ArgEnum, Clone, Debug)]
+pub enum FmiFmuVersion {
+    FMI2,
+    FMI3,
+}
+
 #[derive(RustEmbed)]
 #[folder = "../assets"]
 struct Assets;
@@ -30,32 +36,35 @@ pub mod utils;
 pub mod validation;
 
 struct LanguageAssets {
-    resources: Vec<(&'static str, &'static str)>,
-    docker: Vec<(&'static str, &'static str)>,
+    fmi2_resources: Vec<(&'static str, &'static str)>,
+    fmi3_resources: Vec<(&'static str, &'static str)>,
 }
 
 lazy_static! {
     static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
-        resources: vec![
-            ("python/backend.py", "backend.py"),
-            ("python/model.py", "model.py"),
+        fmi2_resources: vec![
+            ("python/fmi2/backend.py", "backend.py"),
+            ("python/fmi2/model.py", "model.py"),
             (
-                "auto_generated/unifmu_fmi_pb2.py",
+                "auto_generated/fmi2/unifmu_fmi_pb2.py",
                 "schemas/unifmu_fmi_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
-            ("python/README.md", "README.md"),
+            ("python/fmi2/README.md", "README.md"),
         ],
-        docker: vec![
-            ("docker/Dockerfile_python", "Dockerfile"),
-            ("docker/deploy_python.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_python.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+        fmi3_resources: vec![
+            ("python/fmi3/backend.py", "backend.py"),
+            ("python/fmi3/model.py", "model.py"),
+            (
+                "auto_generated/fmi3/unifmu_fmi_pb2.py",
+                "schemas/unifmu_fmi_pb2.py"
+            ),
+            ("python/launch.toml", "launch.toml"),
+            ("python/fmi3/README.md", "README.md"),
         ],
     };
     static ref CSHARPASSETS: LanguageAssets = LanguageAssets {
-        resources: vec![
+        fmi2_resources: vec![
             ("csharp/backend.cs", "backend.cs"),
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
@@ -63,7 +72,7 @@ lazy_static! {
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
-        docker: vec![
+        fmi3_resources: vec![
             ("docker/Dockerfile_csharp", "Dockerfile"),
             ("docker/deploy_csharp.py", "deploy.py"),
             ("docker/docker-compose.yml", "docker-compose.yml"),
@@ -72,7 +81,7 @@ lazy_static! {
         ],
     };
     static ref JAVAASSETS: LanguageAssets = LanguageAssets {
-        resources: vec![
+        fmi2_resources: vec![
             (
                 "java/src/main/java/Backend.java",
                 "src/main/java/Backend.java"
@@ -96,7 +105,7 @@ lazy_static! {
                 "src/main/java/UnifmuFmi.java"
             ),
         ],
-        docker: vec![
+        fmi3_resources: vec![
             ("docker/Dockerfile_csharp", "Dockerfile"),
             ("docker/deploy_csharp.py", "deploy.py"),
             ("docker/docker-compose.yml", "docker-compose.yml"),
@@ -115,9 +124,9 @@ pub enum GenerateError {
 
 pub fn generate(
     language: &Language,
+    fmu_version: &FmiFmuVersion,
     outpath: &Path,
     zipped: bool,
-    dockerize: bool,
 ) -> Result<(), GenerateError> {
     let tmpdir = TempDir::new().unwrap();
 
@@ -151,12 +160,6 @@ pub fn generate(
 
     let md = tmpdir.path().join("modelDescription.xml");
 
-    std::fs::write(
-        &md,
-        Assets::get("common/modelDescription.xml").unwrap().data,
-    )
-    .unwrap();
-
     info!("{:?}", &bin_win);
     std::fs::write(
         bin_win,
@@ -177,11 +180,31 @@ pub fn generate(
     // copy language specific files to 'resources' directory
 
     let copy_to_resources = |assets: &LanguageAssets| {
-        let mut assets_all = assets.resources.to_owned();
-
-        if dockerize {
-            assets_all.extend(assets.docker.to_owned())
+        let assets_all = match fmu_version {
+            FmiFmuVersion::FMI2 => assets.fmi2_resources.to_owned(),
+            FmiFmuVersion::FMI3 => assets.fmi3_resources.to_owned(),
         };
+
+        match fmu_version {
+            FmiFmuVersion::FMI2 => {
+                std::fs::write(
+                    &md,
+                    Assets::get("common/fmi2/modelDescription.xml")
+                        .unwrap()
+                        .data,
+                )
+                .unwrap();
+            }
+            FmiFmuVersion::FMI3 => {
+                std::fs::write(
+                    &md,
+                    Assets::get("common/fmi3/modelDescription.xml")
+                        .unwrap()
+                        .data,
+                )
+                .unwrap();
+            }
+        }
 
         for (src, dst) in assets_all {
             let dst_resources = tmpdir.path().join("resources").join(dst);

@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 use env_logger::Builder;
 use log::{error, info};
 use std::{path::PathBuf, process::exit};
+use unifmu::FmiFmuVersion;
 use unifmu::{
     benchmark::{benchmark, BenchmarkConfig},
     generate,
@@ -26,16 +27,16 @@ enum Command {
         #[clap(arg_enum)]
         language: Language,
 
+        /// Version of the FMI specification to target
+        #[clap(arg_enum)]
+        fmu_version: FmiFmuVersion,
+
         /// Output directory or name of the FMU archive if "--zipped" is passed
         outpath: PathBuf,
 
         /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
         #[clap(short, long)]
         zipped: bool,
-
-        /// Configure the generated model to deploy and execute code inside a 'Docker' container
-        #[clap(short, long)]
-        dockerize: bool,
     },
 
     /// Run a suite of checks to detect potential defects of the FMU
@@ -64,10 +65,10 @@ fn main() {
     match opt.cmd {
         Command::Generate {
             language,
+            fmu_version,
             outpath,
             zipped,
-            dockerize,
-        } => match generate(&language, &outpath, zipped, dockerize) {
+        } => match generate(&language, &fmu_version, &outpath, zipped) {
             Ok(_) => {
                 info!("the FMU was generated succesfully");
             }

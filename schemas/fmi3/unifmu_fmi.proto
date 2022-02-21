@@ -319,158 +319,7 @@ message UnifmuFmi3SerializeReturn {
   bytes state = 2;
 }
 
-// ----------------------- FMI2 ----------------------
 
-enum Fmi2Status {
-  FMI2_OK = 0;
-  FMI2_WARNING=1;
-  FMI2_DISCARD=2;
-  FMI2_ERROR=3;
-  FMI2_FATAL=4;
-  FMI2_PENDING=5;
-}
-
-enum FMI2Type {
-  FMI2_MODEL_EXCHANGE = 0;
-  FMI2_CO_SIMULATION = 1;
-}
-
-message Fmi2Instantiate {
-  string instance_name = 1;
-  FMI2Type fmu_type = 2;
-  string fmu_guid = 3;
-  string fmu_resource_location = 4;
-  bool visible = 5;
-  bool logging_on = 6; 
-}
-
-message Fmi2DoStep {
-  double current_time = 1;
-  double step_size = 2;
-  bool no_step_prior = 3;
-}
-
-message Fmi2SetDebugLogging {
-  repeated string categories = 1;
-  bool logging_on = 2;
-}
-
-message Fmi2SetupExperiment {   
-  double start_time = 1;
-  optional double stop_time = 2;
-  optional double tolerance = 3;
-}
-
-message Fmi2EnterInitializationMode {}
-
-message Fmi2ExitInitializationMode {}
-
-message Fmi2CancelStep {}
-
-message Fmi2FreeInstance {}
-
-message Fmi2Terminate {}
-
-message Fmi2Reset {}
-
-// ----------------------- FMI2 Getters ----------------------
-
-message Fmi2GetReal {
-  repeated uint32 references = 1;
-}
-
-message Fmi2GetInteger {
-  repeated uint32 references = 1;
-}
-
-message Fmi2GetBoolean {
-  repeated uint32 references = 1;
-}
-
-message Fmi2GetString {
-  repeated uint32 references = 1;
-}
-
-message Fmi2GetDirectionalDerivatives {
-  repeated uint32 references_unknown = 1;
-  repeated uint32 references_known = 2;
-  repeated double direction_known = 3;
-}
-message Fmi2GetRealOutputDerivatives {
-  repeated uint32 references = 1;
-  repeated int32 orders = 2;
-}
-
-// ----------------------- FMI2 Setters ----------------------
-
-message Fmi2SetReal {
-  repeated uint32 references = 1;
-  repeated double values = 2;
-}
-
-message Fmi2SetInteger {
-  repeated uint32 references = 1;
-  repeated int32 values = 2;
-}
-
-message Fmi2SetBoolean {
-  repeated uint32 references = 1;
-  repeated bool values = 2;
-}
-
-message Fmi2SetString {
-  repeated uint32 references = 1;
-  repeated string values = 2;
-}
-
-message Fmi2SetRealInputDerivatives {
-  repeated uint32 references = 1;
-  repeated int32 orders = 2;
-  repeated double values = 3; 
-}
-
-// ----------------------- FMI2 Return Values ----------------------
-
-message Fmi2StatusReturn {
-  Fmi2Status status = 1;
-}
-
-message Fmi2FreeInstanceReturn {}
-
-message Fmi2GetRealReturn {
-  Fmi2Status status = 1;
-  repeated double values = 2;
-}
-
-message Fmi2GetIntegerReturn {
-    Fmi2Status status = 1;
-    repeated int32 values = 2;
-}
-
-message Fmi2GetBooleanReturn {
-    Fmi2Status status = 1;
-    repeated bool values = 2;
-}
-
-message Fmi2GetStringReturn {
-    Fmi2Status status = 1;
-    repeated string values = 2;
-}
-
-message Fmi2GetRealOutputDerivativesReturn {
-  Fmi2Status status = 1;
-  repeated double values = 2;
-}
-
-message Fmi2GetDirectionalDerivativesReturn {
-  Fmi2Status status = 1;
-  repeated double values = 2;
-}
-
-message UnifmuFmi2SerializeReturn {
-  Fmi2Status status = 1;
-  bytes state = 2;
-}
 
 // ----------------------- FMI Command Wrapper ----------------------
 
@@ -482,17 +331,13 @@ message FmiCommand {
     Fmi3InstantiateModelExchange Fmi3InstantiateModelExchange= 1;
     Fmi3InstantiateCoSimulation Fmi3InstantiateCoSimulation = 2;
     Fmi3InstantiateScheduledExecution Fmi3InstantiateScheduledExecution = 3;
-
     Fmi3DoStep Fmi3DoStep = 4;
     Fmi3SetDebugLogging Fmi3SetDebugLogging = 5;
-
     Fmi3EnterInitializationMode Fmi3EnterInitializationMode = 6;
     Fmi3ExitInitializationMode Fmi3ExitInitializationMode = 7;
-    
     Fmi3FreeInstance Fmi3FreeInstance = 8;
     Fmi3Terminate Fmi3Terminate = 9;
     Fmi3Reset Fmi3Reset = 10;
-
     Fmi3GetFloat32 Fmi3GetFloat32 = 13;
     Fmi3GetFloat64 Fmi3GetFloat64 = 14;
     Fmi3GetInt8 Fmi3GetInt8 = 15;
@@ -506,11 +351,9 @@ message FmiCommand {
     Fmi3GetBoolean Fmi3GetBoolean = 23;
     Fmi3GetString Fmi3GetString = 24;
     FmiGetBinary FmiGetBinary = 25;
-
     Fmi3GetDirectionalDerivative Fmi3GetDirectionalDerivative = 26;
     Fmi3GetAdjointDerivative Fmi3GetAdjointDerivative = 27;
     Fmi3GetOutputDerivatives Fmi3GetOutputDerivatives = 28;
-
     Fmi3SetFloat32 Fmi3SetFloat32 = 29;
     Fmi3SetFloat64 Fmi3SetFloat64 = 30;
     Fmi3SetInt8 Fmi3SetInt8 = 31;
@@ -524,43 +367,7 @@ message FmiCommand {
     Fmi3SetBoolean Fmi3SetBoolean = 39;
     Fmi3SetString Fmi3SetString = 40;
     FmiSetBinary FmiSetBinary = 41;
-
-    // FMI2
-
-    Fmi2DoStep Fmi2DoStep = 42;
-
-    Fmi2SetDebugLogging Fmi2SetDebugLogging = 43;
-
-    Fmi2SetupExperiment Fmi2SetupExperiment = 44;
-    
-    Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 45;
-    Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 46;
-    Fmi2FreeInstance Fmi2FreeInstance = 47;
-
-    Fmi2CancelStep Fmi2CancelStep = 48;
-    Fmi2Terminate Fmi2Terminate = 49;
-    Fmi2Reset Fmi2Reset = 50;
-
-    Fmi2GetReal Fmi2GetReal = 51;
-    Fmi2GetInteger Fmi2GetInteger = 52;
-    Fmi2GetBoolean Fmi2GetBoolean = 53;
-    Fmi2GetString Fmi2GetString = 54;
-
-    Fmi2GetDirectionalDerivatives Fmi2GetDirectionalDerivatives = 55;
-    Fmi2GetRealOutputDerivatives Fmi2GetRealOutputDerivatives = 56;
-
-    Fmi2SetReal Fmi2SetReal = 57;
-    Fmi2SetInteger Fmi2SetInteger = 58;
-    Fmi2SetBoolean Fmi2SetBoolean = 59;
-    Fmi2SetString Fmi2SetString = 60;
-
-    Fmi2SetRealInputDerivatives Fmi2SetRealInputDerivatives = 61;
-
-    Fmi2Instantiate Fmi2Instantiate = 62; 
-
-    // Common
-
-    UnifmuSerialize UnifmuSerialize = 63;
-    UnifmuDeserialize UnifmuDeserialize = 64;
+    UnifmuSerialize UnifmuSerialize = 42;
+    UnifmuDeserialize UnifmuDeserialize = 43;
   }
 }

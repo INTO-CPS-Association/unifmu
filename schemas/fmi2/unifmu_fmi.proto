@@ -1,0 +1,217 @@
+syntax = "proto3";
+
+
+package fmi_proto;
+
+// https://developers.google.com/protocol-buffers/docs/reference/java-generated#package
+option java_package = "";
+option java_outer_classname = "UnifmuFmi";
+
+// ----------------------- Common ----------------------
+
+message UnifmuSerialize {}
+
+message UnifmuDeserialize {
+    bytes state = 1;
+}
+
+message EmptyReturn {}
+
+// ----------------------- FMI2 ----------------------
+
+enum Fmi2Status {
+  FMI2_OK = 0;
+  FMI2_WARNING=1;
+  FMI2_DISCARD=2;
+  FMI2_ERROR=3;
+  FMI2_FATAL=4;
+  FMI2_PENDING=5;
+}
+
+enum FMI2Type {
+  FMI2_MODEL_EXCHANGE = 0;
+  FMI2_CO_SIMULATION = 1;
+}
+
+message Fmi2Instantiate {
+  string instance_name = 1;
+  FMI2Type fmu_type = 2;
+  string fmu_guid = 3;
+  string fmu_resource_location = 4;
+  bool visible = 5;
+  bool logging_on = 6; 
+}
+
+message Fmi2DoStep {
+  double current_time = 1;
+  double step_size = 2;
+  bool no_step_prior = 3;
+}
+
+message Fmi2SetDebugLogging {
+  repeated string categories = 1;
+  bool logging_on = 2;
+}
+
+message Fmi2SetupExperiment {   
+  double start_time = 1;
+  optional double stop_time = 2;
+  optional double tolerance = 3;
+}
+
+message Fmi2EnterInitializationMode {}
+
+message Fmi2ExitInitializationMode {}
+
+message Fmi2CancelStep {}
+
+message Fmi2FreeInstance {}
+
+message Fmi2Terminate {}
+
+message Fmi2Reset {}
+
+// ----------------------- FMI2 Getters ----------------------
+
+message Fmi2GetReal {
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetInteger {
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetBoolean {
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetString {
+  repeated uint32 references = 1;
+}
+
+message Fmi2GetDirectionalDerivatives {
+  repeated uint32 references_unknown = 1;
+  repeated uint32 references_known = 2;
+  repeated double direction_known = 3;
+}
+message Fmi2GetRealOutputDerivatives {
+  repeated uint32 references = 1;
+  repeated int32 orders = 2;
+}
+
+// ----------------------- FMI2 Setters ----------------------
+
+message Fmi2SetReal {
+  repeated uint32 references = 1;
+  repeated double values = 2;
+}
+
+message Fmi2SetInteger {
+  repeated uint32 references = 1;
+  repeated int32 values = 2;
+}
+
+message Fmi2SetBoolean {
+  repeated uint32 references = 1;
+  repeated bool values = 2;
+}
+
+message Fmi2SetString {
+  repeated uint32 references = 1;
+  repeated string values = 2;
+}
+
+message Fmi2SetRealInputDerivatives {
+  repeated uint32 references = 1;
+  repeated int32 orders = 2;
+  repeated double values = 3; 
+}
+
+// ----------------------- FMI2 Return Values ----------------------
+
+message Fmi2StatusReturn {
+  Fmi2Status status = 1;
+}
+
+message Fmi2FreeInstanceReturn {}
+
+message Fmi2GetRealReturn {
+  Fmi2Status status = 1;
+  repeated double values = 2;
+}
+
+message Fmi2GetIntegerReturn {
+    Fmi2Status status = 1;
+    repeated int32 values = 2;
+}
+
+message Fmi2GetBooleanReturn {
+    Fmi2Status status = 1;
+    repeated bool values = 2;
+}
+
+message Fmi2GetStringReturn {
+    Fmi2Status status = 1;
+    repeated string values = 2;
+}
+
+message Fmi2GetRealOutputDerivativesReturn {
+  Fmi2Status status = 1;
+  repeated double values = 2;
+}
+
+message Fmi2GetDirectionalDerivativesReturn {
+  Fmi2Status status = 1;
+  repeated double values = 2;
+}
+
+message UnifmuFmi2SerializeReturn {
+  Fmi2Status status = 1;
+  bytes state = 2;
+}
+
+// ----------------------- FMI Command Wrapper ----------------------
+
+message FmiCommand {
+  oneof command {
+
+    // FMI2 Common
+
+    Fmi2SetDebugLogging Fmi2SetDebugLogging = 1;
+
+    Fmi2Instantiate Fmi2Instantiate = 2; 
+    Fmi2FreeInstance Fmi2FreeInstance = 3;
+
+    Fmi2SetupExperiment Fmi2SetupExperiment = 4;
+
+    Fmi2EnterInitializationMode Fmi2EnterInitializationMode = 5;
+    Fmi2ExitInitializationMode Fmi2ExitInitializationMode = 6;
+
+    Fmi2Terminate Fmi2Terminate = 7;
+    Fmi2Reset Fmi2Reset = 8;
+
+    Fmi2GetReal Fmi2GetReal = 9;
+    Fmi2GetInteger Fmi2GetInteger = 10;
+    Fmi2GetBoolean Fmi2GetBoolean = 11;
+    Fmi2GetString Fmi2GetString = 12;
+
+    Fmi2SetReal Fmi2SetReal = 13;
+    Fmi2SetInteger Fmi2SetInteger = 14;
+    Fmi2SetBoolean Fmi2SetBoolean = 15;
+    Fmi2SetString Fmi2SetString = 16;
+
+    Fmi2GetDirectionalDerivatives Fmi2GetDirectionalDerivatives = 17;
+
+    // Co-Simulation
+    Fmi2SetRealInputDerivatives Fmi2SetRealInputDerivatives = 18;
+    Fmi2GetRealOutputDerivatives Fmi2GetRealOutputDerivatives = 19;
+
+    Fmi2DoStep Fmi2DoStep = 20;
+    Fmi2CancelStep Fmi2CancelStep = 21;
+
+    // UniFMU Common
+
+    UnifmuSerialize UnifmuSerialize = 63;
+    UnifmuDeserialize UnifmuDeserialize = 64;
+  }
+}

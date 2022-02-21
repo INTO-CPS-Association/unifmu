@@ -147,11 +147,12 @@ impl SlaveState {
 
 pub static VERSION: &str = "2.0\0";
 pub static TYPES_PLATFORM: &str = "default";
-
+#[no_mangle]
 pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
     TYPES_PLATFORM.as_ptr() as *const c_char
 }
 
+#[no_mangle]
 pub extern "C" fn fmi2GetVersion() -> *const c_char {
     VERSION.as_ptr() as *const c_char
 }

@@ -47,6 +47,14 @@ fn c2s(c: *const c_char) -> String {
     unsafe { CStr::from_ptr(c).to_str().unwrap().to_owned() }
 }
 
+// ------------------------------------- FMI FUNCTIONS --------------------------------
+
+static VERSION: &str = "2.0\0";
+
+pub extern "C" fn fmi3GetVersion() -> *const c_char {
+    VERSION.as_ptr() as *const c_char
+}
+
 type Fmi3SlaveType = Box<Fmi3Slave>;
 #[no_mangle]
 pub extern "C" fn fmi3InstantiateCoSimulation(
