@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::io::{Seek, Write};
 use std::iter::Iterator;
 use std::path::Path;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::DirEntry;
 use zip::result::ZipError;
 use zip::write::FileOptions;
 

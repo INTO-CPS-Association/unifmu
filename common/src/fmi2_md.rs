@@ -1,6 +1,4 @@
-use std::{fs, path::Path};
-
-use quick_xml::de::from_str;
+use quick_xml::de::from_reader;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -39,7 +37,6 @@ pub struct Fmi2ModelDescription {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
-
 pub enum Fmi2Variable {
     Real { start: Option<f64> },
     Integer { start: Option<i32> },
@@ -53,22 +50,11 @@ pub enum Fmi2ModelDescriptionError {
     UnableToParse,
 }
 
-pub fn parse_model_description(
-    md_path: &Path,
+pub fn parse_fmi2_model_description(
+    buf: &[u8],
 ) -> Result<Fmi2ModelDescription, Fmi2ModelDescriptionError> {
-    match fs::read_to_string(md_path) {
-        Ok(contents) => match from_str::<Fmi2ModelDescription>(&contents) {
-            Ok(md) => Ok(md),
-            Err(e) => Err(Fmi2ModelDescriptionError::UnableToParse),
-        },
-        Err(e) => Err(Fmi2ModelDescriptionError::UnableToRead),
-    }
-}
-
-impl Fmi2ModelDescription {
-    pub fn from_slice(buf: &[u8]) -> Result<Self, String> {
-        let md: Result<Fmi2ModelDescription, _> = quick_xml::de::from_reader(buf);
-
-        md.map_err(|_| "whoops".to_string())
+    match from_reader::<_, Fmi2ModelDescription>(buf) {
+        Ok(md) => Ok(md),
+        Err(_) => Err(Fmi2ModelDescriptionError::UnableToParse),
     }
 }

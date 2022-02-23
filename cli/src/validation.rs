@@ -8,34 +8,49 @@ extern crate dlopen;
 
 use dlopen::wrapper::{Container, WrapperApi};
 
-use common::md::{Fmi2ModelDescription, Fmi2Variable};
+use common::{
+    fmi2_md::{parse_fmi2_model_description, Fmi2ModelDescription, Fmi2Variable},
+    fmi3_md::{parse_fmi3_model_description, Fmi3ModelDescription},
+    get_model_description_major_version,
+};
 use libc::{c_char, c_double, c_int, c_void, size_t};
 // use libloading::{Library, Symbol};
 
-use log::{error, info};
+use log::info;
 use std::ptr::null;
 use url::Url;
 
 type fmi2CallbackFunctions = *const c_void;
 
-// type fmi2InstantiateType = unsafe extern "C" fn(
-//     *const c_char,
-//     c_int,
-//     *const c_char,
-//     *const c_char,
-//     fmi2CallbackFunctions,
-//     c_int,
-//     c_int,
-// ) -> *mut c_void;
+#[derive(WrapperApi)]
+struct Fmi3Api {
+    fmi3InstantiateCoSimulation: extern "C" fn(
+        instance_name: *const c_char,
+        instantiation_token: *const c_char,
+        resource_path: *const c_char,
+        visible: i32,
+        logging_on: i32,
+        event_mode_used: i32,
+        early_return_allowed: i32,
+        required_intermediate_variables: *const u32,
+        n_required_intermediate_variables: size_t,
+        instance_environment: *const c_void,
+        log_message: *const c_void,
+        intermediate_update: *const c_void,
+    ) -> Option<*mut c_void>,
 
-// type fmi2SetupExperimentType =
-//     unsafe extern "C" fn(*mut c_void, c_int, c_double, c_double, c_int, c_double) -> c_int;
-// type fmi2EnterInitializationModeType = unsafe extern "C" fn(*mut c_void) -> c_int;
-// type fmi2ExitInitializationModeType = unsafe extern "C" fn(*mut c_void) -> c_int;
-// type fmi2TerminateType = unsafe extern "C" fn(*mut c_void) -> c_int;
-// type fmi2ResetType = unsafe extern "C" fn(*mut c_void) -> c_int;
-// type fmi2FreeInstanceType = unsafe extern "C" fn(*mut c_void);
-// type fmi2DoStepType = unsafe extern "C" fn(*mut c_void, c_double, c_double, c_int) -> c_int;
+    fmi2EnterInitializationMode: unsafe extern "C" fn(
+        instance: *const c_void,
+        tolerance_defined: i32,
+        tolerance: f64,
+        start_time: f64,
+        stop_time_defined: i32,
+        stop_time: f64,
+    ) -> i32,
+    fmi3ExitInitializationMode: unsafe extern "C" fn(instance: *mut c_void) -> i32,
+
+    fmi3FreeInstance: unsafe extern "C" fn(instance: *mut c_void),
+}
 
 #[derive(WrapperApi)]
 struct Fmi2CoSimulationApi {
@@ -138,14 +153,65 @@ pub struct FmuDescription {
     md: Fmi2ModelDescription,
 }
 
+struct Fmi3Fmu {
+    api: Container<Fmi3Api>,
+    handle: *mut c_void,
+}
+
+impl Fmi3Fmu {
+    pub fn fmi3InstantiateCoSimulation(
+        api: Container<Fmi3Api>,
+        instance_name: &str,
+        instantiation_token: &str,
+        resource_path: &str,
+        visible: bool,
+        logging_on: bool,
+        event_mode_used: bool,
+        early_return_allowed: bool,
+        required_intermediate_variables: &[u32],
+        n_required_intermediate_variables: size_t,
+        instance_environment: *const c_void,
+        log_message: *const c_void,
+        intermediate_update: *const c_void,
+    ) -> Result<Self, ()> {
+        let instance_name = CString::new(instance_name).unwrap();
+        let instantiation_token = CString::new(instantiation_token).unwrap();
+        let resource_path = CString::new(resource_path).unwrap();
+
+        match api.fmi3InstantiateCoSimulation(
+            instance_name.as_ptr(),
+            instantiation_token.as_ptr(),
+            resource_path.as_ptr(),
+            visible as i32,
+            logging_on as i32,
+            event_mode_used as i32,
+            early_return_allowed as i32,
+            required_intermediate_variables.as_ptr(),
+            n_required_intermediate_variables,
+            instance_environment,
+            log_message,
+            intermediate_update,
+        ) {
+            Some(handle) => Ok(Self { api, handle }),
+            None => Err(()),
+        }
+    }
+
+    pub fn Fmi3FreeInstance(&self, instance: *mut c_void) {
+        unsafe { self.api.fmi3FreeInstance(instance) }
+    }
+}
+
 /// Convenience wrapper for a single instance of an FMI2 FMU.
-struct Fmi2CoSimulationFMU {
+struct Fmi2Fmu {
     api: Container<Fmi2CoSimulationApi>,
     handle: *mut c_void,
 }
 
-impl Fmi2CoSimulationFMU {
-    pub unsafe fn fmi2Instantate(
+impl Fmi2Fmu {
+    // pub new(Container<Fmi2CoSimulationApi>) ->Self
+
+    pub fn fmi2Instantate(
         api: Container<Fmi2CoSimulationApi>,
         instance_name: &str,
         guid: &str,
@@ -163,15 +229,17 @@ impl Fmi2CoSimulationFMU {
         let visible: c_int = 1;
         let logging_on: c_int = 1;
 
-        let handle = api.fmi2Instantiate(
-            instance_name.as_ptr(),
-            fmu_type,
-            guid.as_ptr(),
-            resources_uri.as_ptr(),
-            callbacks,
-            visible,
-            logging_on,
-        );
+        let handle = unsafe {
+            api.fmi2Instantiate(
+                instance_name.as_ptr(),
+                fmu_type,
+                guid.as_ptr(),
+                resources_uri.as_ptr(),
+                callbacks,
+                visible,
+                logging_on,
+            )
+        };
 
         if handle.is_null() {
             return Err(ValidateError::Fmi2InstantiateFailed);
@@ -297,26 +365,60 @@ impl Fmi2CoSimulationFMU {
         status
     }
 }
+fn validate_fmi3_fmu(rootdir: &Path, md: Fmi3ModelDescription) -> Result<(), ValidateError> {
+    let model_identifier = md.cosimulation.unwrap().model_identifier;
 
-pub fn validate(rootdir: &Path, config: &ValidationConfig) -> Result<(), ValidateError> {
-    let md_path = rootdir.join("modelDescription.xml");
+    // load library
+    let api = unsafe {
+        let binary_path = rootdir.join("binaries");
 
-    if !md_path.exists() {
-        return Err(ValidateError::ModelDescriptionNotFound);
-    }
+        let binary_path = match std::env::consts::OS {
+            "windows" => binary_path
+                .join("x86_64-windows")
+                .join(format!("{}.dll", model_identifier)),
+            "macos" => binary_path
+                .join("x86_64-darwin")
+                .join(format!("{}.dylib", model_identifier)),
 
-    let md = match std::fs::read_to_string(md_path) {
-        Ok(s) => match Fmi2ModelDescription::from_slice(s.as_bytes()) {
-            Ok(md) => md,
-            Err(_) => return Err(ValidateError::ModelDescriptionUnableToParse),
-        },
-        Err(_) => return Err(ValidateError::ModelDescriptionUnableToRead),
+            _other => binary_path
+                .join("x86_64-linux")
+                .join(format!("{}.so", model_identifier)),
+        };
+
+        info!("attempting to load binary from {:?}", binary_path);
+
+        let api: Container<Fmi3Api> = match Container::load(binary_path) {
+            Ok(l) => l,
+            Err(_) => return Err(ValidateError::BinaryNotFound),
+        };
+
+        api
     };
 
-    if md.cosimulation.is_none() {
-        todo!("Only validation of FMI2 cosimulation FMUs are currently supported.")
-    }
+    let s = Fmi3Fmu::fmi3InstantiateCoSimulation(
+        api,
+        "",
+        "instantiation_token",
+        "resource_path",
+        false,
+        false,
+        false,
+        false,
+        &[],
+        0,
+        null(),
+        null(),
+        null(),
+    );
 
+    Ok(())
+}
+
+fn validate_fmi2_fmu(
+    rootdir: &Path,
+    md: Fmi2ModelDescription,
+    config: &ValidationConfig,
+) -> Result<(), ValidateError> {
     let model_identifier = md.cosimulation.unwrap().model_identifier;
 
     // load library
@@ -369,14 +471,7 @@ pub fn validate(rootdir: &Path, config: &ValidationConfig) -> Result<(), Validat
                 instance_name, fmu_type, guid, resources_uri, callbacks, visible, logging_on
             );
 
-        let s = match Fmi2CoSimulationFMU::fmi2Instantate(
-            api,
-            &"abc",
-            &"1234",
-            &url.as_str(),
-            true,
-            false,
-        ) {
+        let s = match Fmi2Fmu::fmi2Instantate(api, &"abc", &"1234", &url.as_str(), true, false) {
             Ok(s) => s,
             Err(e) => return Err(e),
         };
@@ -452,7 +547,7 @@ pub fn validate(rootdir: &Path, config: &ValidationConfig) -> Result<(), Validat
                 0 => (),
                 s => return Err(ValidateError::Fmi2EnterInitializationModeFailed(s)),
             }
-        }
+        };
 
         //
         s.fmi2FreeInstance();
@@ -461,6 +556,30 @@ pub fn validate(rootdir: &Path, config: &ValidationConfig) -> Result<(), Validat
     }
 }
 
-fn validate_common() {}
+pub fn validate(rootdir: &Path, config: &ValidationConfig) -> Result<(), ValidateError> {
+    let md_path = rootdir.join("modelDescription.xml");
 
-fn validate_cosimulation() {}
+    if !md_path.exists() {
+        return Err(ValidateError::ModelDescriptionNotFound);
+    }
+
+    let md = match std::fs::read_to_string(md_path) {
+        Ok(s) => match get_model_description_major_version(s.as_bytes()) {
+            Ok(v) => match v {
+                common::FmiVersion::Fmi3 => match parse_fmi3_model_description(s.as_bytes()) {
+                    Ok(md) => validate_fmi3_fmu(rootdir, md),
+                    Err(e) => todo!(),
+                },
+                common::FmiVersion::Fmi2 => match parse_fmi2_model_description(s.as_bytes()) {
+                    Ok(md) => validate_fmi2_fmu(rootdir, md, config),
+                    Err(_) => todo!(),
+                },
+                common::FmiVersion::Fmi1 => todo!(),
+            },
+            Err(_) => return Err(ValidateError::ModelDescriptionUnableToParse),
+        },
+        Err(_) => return Err(ValidateError::ModelDescriptionUnableToRead),
+    };
+
+    todo!()
+}

@@ -6,7 +6,6 @@ import zmq
 from schemas.unifmu_fmi_pb2 import (
     EmptyReturn,
     FmiCommand,
-    FmiGetBinaryReturn,
     Fmi2StatusReturn,
     Fmi2FreeInstanceReturn,
     UnifmuFmi2SerializeReturn,

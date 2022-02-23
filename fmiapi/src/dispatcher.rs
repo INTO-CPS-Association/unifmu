@@ -379,7 +379,6 @@ impl CommandDispatcher {
     }
 
     // ================= FMI2 ======================
-    // https://github.com/modelica/fmi-standard/blob/support/v2.0.x/headers/fmi2FunctionTypes.h
     pub fn fmi2Instantiate(
         &mut self,
         instance_name: &str,

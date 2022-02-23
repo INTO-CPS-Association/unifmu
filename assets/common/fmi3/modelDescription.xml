@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<fmiModelDescription fmiVersion="3.0-beta.3" modelName="unifmu" instantiationToken="77236337-210e-4e9c-8f2c-c1a0677db21b" author="Christian Møldrup Legaard" version="0.0.1" license="MIT" generationDateAndTime="2020-10-23T19:51:25Z" variableNamingConvention="flat" generationTool="unifmu">
+<fmiModelDescription fmiVersion="3.0-beta.4" modelName="unifmu" instantiationToken="77236337-210e-4e9c-8f2c-c1a0677db21b" author="Christian Møldrup Legaard" version="0.0.1" license="MIT" generationDateAndTime="2020-10-23T19:51:25Z" variableNamingConvention="flat" generationTool="unifmu">
   <CoSimulation modelIdentifier="unifmu" needsExecutionTool="true" canBeInstantiatedOnlyOncePerProcess="false" canGetAndSetFMUState="true" canSerializeFMUState="true" canHandleVariableCommunicationStepSize="true" />
   <LogCategories>
     <Category name="logStatusWarning" />
@@ -19,10 +19,12 @@
     <Boolean name="boolean_a" valueReference="6" variability="discrete" causality="input" start="false" />
     <Boolean name="boolean_b" valueReference="7" variability="discrete" causality="input" start="false" />
     <Boolean name="boolean_c" valueReference="8" variability="discrete" causality="output" initial="calculated" />
-    <!-- start -->
-    <String name="string_a" valueReference="9" variability="discrete" causality="input" />
-    <!-- start -->
-    <String name="string_b" valueReference="10" variability="discrete" causality="input" />
+    <String name="string_a" valueReference="9" variability="discrete" causality="input">
+      <Start value="" />
+    </String>
+    <String name="string_b" valueReference="10" variability="discrete" causality="input">
+      <Start value="" />
+    </String>
     <String name="string_c" valueReference="11" variability="discrete" causality="output" initial="calculated" />
 
   </ModelVariables>
@@ -30,10 +32,10 @@
     <Output valueReference="2" dependencies="1 2" />
     <Output valueReference="5" dependencies="3 4" />
     <Output valueReference="8" dependencies="6 7" />
-    <Output valueReference="11" dependencies="9 10" />
+    <!-- <Output valueReference="11" dependencies="9 10" /> -->
     <InitialUnknown valueReference="2" dependencies="" />
     <InitialUnknown valueReference="5" dependencies="" />
     <InitialUnknown valueReference="8" dependencies="" />
-    <InitialUnknown valueReference="11" dependencies="" />
+    <!-- <InitialUnknown valueReference="11" dependencies="" /> -->
   </ModelStructure>
 </fmiModelDescription>
