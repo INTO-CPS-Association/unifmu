@@ -127,17 +127,17 @@ public class Model {
         return Fmi2Status.OK;
     }
 
-    public Fmi2SerializePair fmi2ExtSerialize() throws Exception {
+    public Fmi2SerializeFmuStatePair fmi2SerializeFmuState() throws Exception {
 
         var b = new ByteArrayOutputStream();
         var o = new ObjectOutputStream(b);
 
         o.writeObject(this);
 
-        return new Fmi2SerializePair(Fmi2Status.OK, b.toByteArray());
+        return new Fmi2SerializeFmuStatePair(Fmi2Status.OK, b.toByteArray());
     }
 
-    public Fmi2Status fmi2ExtDeserialize(byte[] bytes) throws Exception {
+    public Fmi2Status fmi2DeserializeFmuState(byte[] bytes) throws Exception {
 
         try (ByteArrayInputStream b = new ByteArrayInputStream(bytes)) {
             try (ObjectInputStream o = new ObjectInputStream(b)) {
@@ -203,11 +203,11 @@ public class Model {
         }
     }
 
-    class Fmi2SerializePair {
+    class Fmi2SerializeFmuStatePair {
         public Fmi2Status status;
         public byte[] bytes;
 
-        Fmi2SerializePair(Fmi2Status status, byte[] bytes) {
+        Fmi2SerializeFmuStatePair(Fmi2Status status, byte[] bytes) {
             this.status = status;
             this.bytes = bytes;
         }

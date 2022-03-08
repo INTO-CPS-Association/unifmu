@@ -101,8 +101,8 @@ lazy_static! {
             ("java/launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
             (
-                "auto_generated/UnifmuFmi.java",
-                "src/main/java/UnifmuFmi.java"
+                "auto_generated/Fmi2Messages.java",
+                "src/main/java/Fmi2Messages.java"
             ),
         ],
         fmi3_resources: vec![
