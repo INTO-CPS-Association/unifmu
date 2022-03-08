@@ -39,7 +39,7 @@ struct Fmi3Api {
         intermediate_update: *const c_void,
     ) -> Option<*mut c_void>,
 
-    fmi2EnterInitializationMode: unsafe extern "C" fn(
+    fmi3EnterInitializationMode: unsafe extern "C" fn(
         instance: *const c_void,
         tolerance_defined: i32,
         tolerance: f64,
@@ -50,6 +50,8 @@ struct Fmi3Api {
     fmi3ExitInitializationMode: unsafe extern "C" fn(instance: *mut c_void) -> i32,
 
     fmi3FreeInstance: unsafe extern "C" fn(instance: *mut c_void),
+
+    fmi3Reset: unsafe extern "C" fn(instance: *mut c_void) -> i32,
 }
 
 #[derive(WrapperApi)]
@@ -197,8 +199,44 @@ impl Fmi3Fmu {
         }
     }
 
-    pub fn Fmi3FreeInstance(&self, instance: *mut c_void) {
-        unsafe { self.api.fmi3FreeInstance(instance) }
+    pub fn fmi3FreeInstance(&self) {
+        unsafe { self.api.fmi3FreeInstance(self.handle) }
+    }
+    pub fn fmi3Reset(&self) -> i32 {
+        unsafe { self.api.fmi3Reset(self.handle) }
+    }
+
+    pub fn fmi3ExitInitializationMode(&self) -> i32 {
+        unsafe { self.api.fmi3ExitInitializationMode(self.handle) }
+    }
+
+    pub fn fmi3EnterInitializationMode(
+        &self,
+        tolerance: Option<f64>,
+        start_time: f64,
+        stop_time: Option<f64>,
+    ) -> i32 {
+        let tolerance_defined = match tolerance {
+            Some(_) => 1,
+            None => 0,
+        };
+        let tolerance = tolerance.unwrap_or_else(|| 0.0);
+        let stop_time_defined = match stop_time {
+            Some(_) => 1,
+            None => 0,
+        };
+        let stop_time = stop_time.unwrap_or_else(|| 0.0);
+
+        unsafe {
+            self.api.fmi3EnterInitializationMode(
+                self.handle,
+                tolerance_defined,
+                tolerance,
+                start_time,
+                stop_time_defined,
+                stop_time,
+            )
+        }
     }
 }
 
@@ -409,7 +447,13 @@ fn validate_fmi3_fmu(rootdir: &Path, md: Fmi3ModelDescription) -> Result<(), Val
         null(),
         null(),
         null(),
-    );
+    )
+    .unwrap();
+
+    s.fmi3EnterInitializationMode(None, 0.0, None);
+    s.fmi3ExitInitializationMode();
+    s.fmi3Reset();
+    s.fmi3FreeInstance();
 
     Ok(())
 }
