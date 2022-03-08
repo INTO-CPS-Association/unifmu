@@ -68,7 +68,7 @@ lazy_static! {
             ("csharp/backend.cs", "backend.cs"),
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
-            ("auto_generated/UnifmuFmi.cs", "schemas/UnifmuFmi.cs"),
+            ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
