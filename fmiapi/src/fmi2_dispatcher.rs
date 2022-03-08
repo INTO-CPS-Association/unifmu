@@ -110,13 +110,13 @@ impl Fmi2CommandDispatcher {
         &mut self,
         current_time: f64,
         step_size: f64,
-        no_step_prior: bool,
+        no_set_fmu_state_prior_to_current_point: bool,
     ) -> Result<Fmi2Status, DispatcherError> {
         let cmd = c_obj {
             command: Some(c_enum::Fmi2DoStep(Fmi2DoStep {
                 current_time,
                 step_size,
-                no_step_prior,
+                no_set_fmu_state_prior_to_current_point,
             })),
         };
 
@@ -142,7 +142,7 @@ impl Fmi2CommandDispatcher {
             .map(|s| s.into())
     }
 
-    pub fn unifmuSerialize(&mut self) -> Result<(Fmi2Status, Vec<u8>), DispatcherError> {
+    pub fn fmi2SerializeFmuState(&mut self) -> Result<(Fmi2Status, Vec<u8>), DispatcherError> {
         let cmd = c_obj {
             command: Some(c_enum::Fmi2SerializeFmuState(Fmi2SerializeFmuState {})),
         };
@@ -150,7 +150,7 @@ impl Fmi2CommandDispatcher {
             .map(|res| (Fmi2Status::try_from(res.status).unwrap(), res.state))
     }
 
-    pub fn fmi2ExtDeserializeSlave(&mut self, state: &[u8]) -> Result<Fmi2Status, DispatcherError> {
+    pub fn fmi2DeserializeFmuState(&mut self, state: &[u8]) -> Result<Fmi2Status, DispatcherError> {
         let cmd = c_obj {
             command: Some(c_enum::Fmi2DeserializeFmuState(Fmi2DeserializeFmuState {
                 state: state.to_owned(),

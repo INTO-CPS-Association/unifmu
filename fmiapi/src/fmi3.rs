@@ -634,3 +634,32 @@ pub extern "C" fn fmi3SetBinary(
 ) -> Fmi3Status {
     Fmi3Status::OK
 }
+
+#[no_mangle]
+pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
+    slave
+        .dispatcher
+        .fmi3Terminate()
+        .unwrap_or(Fmi3Status::Error)
+}
+
+#[no_mangle]
+pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
+    let mut slave = slave;
+
+    match slave.as_mut() {
+        Some(s) => {
+            match s.dispatcher.fmi3FreeInstance() {
+                Ok(result) => (),
+                Err(e) => eprintln!("An error ocurred when freeing slave"),
+            };
+
+            drop(slave)
+        }
+        None => {}
+    }
+}
+#[no_mangle]
+pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
+    slave.dispatcher.fmi3Reset().unwrap_or(Fmi3Status::Error)
+}

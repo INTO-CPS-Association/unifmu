@@ -593,7 +593,7 @@ pub extern "C" fn fmi2GetRealOutputDerivatives(
 pub extern "C" fn fmi2SetFMUstate(slave: &mut Fmi2Slave, state: &SlaveState) -> Fmi2Status {
     slave
         .dispatcher
-        .fmi2ExtDeserializeSlave(&state.bytes)
+        .fmi2DeserializeFmuState(&state.bytes)
         .unwrap_or(Fmi2Status::Error)
 }
 
@@ -605,7 +605,7 @@ pub extern "C" fn fmi2GetFMUstate(
     slave: &mut Fmi2Slave,
     state: &mut Option<SlaveState>,
 ) -> Fmi2Status {
-    match slave.dispatcher.unifmuSerialize() {
+    match slave.dispatcher.fmi2SerializeFmuState() {
         Ok((status, bytes)) => match state.as_mut() {
             Some(state) => {
                 state.bytes = bytes;

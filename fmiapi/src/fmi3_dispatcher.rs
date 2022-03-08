@@ -2,13 +2,13 @@ use std::convert::TryFrom;
 
 use crate::fmi3_messages::{
     self, Fmi3DeserializeFmuState, Fmi3DoStep, Fmi3EmptyReturn, Fmi3EnterInitializationMode,
-    Fmi3ExitInitializationMode, Fmi3GetBoolean, Fmi3GetBooleanReturn, Fmi3GetFloat32,
-    Fmi3GetFloat32Return, Fmi3GetFloat64, Fmi3GetFloat64Return, Fmi3GetInt16, Fmi3GetInt16Return,
-    Fmi3GetInt32, Fmi3GetInt32Return, Fmi3GetInt64, Fmi3GetInt64Return, Fmi3GetInt8,
-    Fmi3GetInt8Return, Fmi3GetString, Fmi3GetStringReturn, Fmi3GetUInt16, Fmi3GetUInt16Return,
-    Fmi3GetUInt32, Fmi3GetUInt32Return, Fmi3GetUInt64, Fmi3GetUInt64Return, Fmi3GetUInt8,
-    Fmi3GetUInt8Return, Fmi3InstantiateCoSimulation, Fmi3InstantiateModelExchange,
-    Fmi3SerializeFmuState, Fmi3SerializeFmuStateReturn, Fmi3StatusReturn,
+    Fmi3ExitInitializationMode, Fmi3FreeInstance, Fmi3GetBoolean, Fmi3GetBooleanReturn,
+    Fmi3GetFloat32, Fmi3GetFloat32Return, Fmi3GetFloat64, Fmi3GetFloat64Return, Fmi3GetInt16,
+    Fmi3GetInt16Return, Fmi3GetInt32, Fmi3GetInt32Return, Fmi3GetInt64, Fmi3GetInt64Return,
+    Fmi3GetInt8, Fmi3GetInt8Return, Fmi3GetString, Fmi3GetStringReturn, Fmi3GetUInt16,
+    Fmi3GetUInt16Return, Fmi3GetUInt32, Fmi3GetUInt32Return, Fmi3GetUInt64, Fmi3GetUInt64Return,
+    Fmi3GetUInt8, Fmi3GetUInt8Return, Fmi3InstantiateCoSimulation, Fmi3InstantiateModelExchange,
+    Fmi3Reset, Fmi3SerializeFmuState, Fmi3SerializeFmuStateReturn, Fmi3StatusReturn, Fmi3Terminate,
 };
 
 use crate::fmi3::Fmi3Status;
@@ -154,8 +154,8 @@ impl Fmi3CommandDispatcher {
             })),
         };
 
-        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
-            .map(|s| s.into())
+        self.send_and_recv::<_, fmi3_messages::Fmi3DoStepReturn>(&cmd)
+            .map(|s| s.status().into())
     }
 
     pub fn fmi3GetFloat32(
@@ -369,6 +369,32 @@ impl Fmi3CommandDispatcher {
         todo!()
     }
 
+    pub fn fmi3Terminate(&mut self) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3Terminate(Fmi3Terminate {})),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    pub fn fmi3Reset(&mut self) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3Reset(Fmi3Reset {})),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
+    pub fn fmi3FreeInstance(&mut self) -> Result<(), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3FreeInstance(Fmi3FreeInstance {})),
+        };
+
+        self.send(&cmd)
+    }
+
     // socket
     pub fn new(endpoint: &str) -> Self {
         let mut socket = RepSocket::new();
@@ -425,6 +451,18 @@ impl Fmi3CommandDispatcher {
 impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
     fn from(src: fmi3_messages::Fmi3StatusReturn) -> Self {
         match src.status() {
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fatal,
+        }
+    }
+}
+
+impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
+    fn from(s: fmi3_messages::Fmi3Status) -> Self {
+        match s {
             fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
             fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
             fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,

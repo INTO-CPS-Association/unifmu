@@ -54,7 +54,7 @@ if __name__ == "__main__":
         elif group == "Fmi2DoStep":
             result = Fmi2StatusReturn()
             result.status = model.fmi2DoStep(
-                data.current_time, data.step_size, data.no_step_prior
+                data.current_time, data.step_size, data.no_set_fmu_state_prior_to_current_point
             )
         elif group == "Fmi2SetDebugLogging":
             result = Fmi2StatusReturn()

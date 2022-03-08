@@ -31,7 +31,9 @@ class Model:
 
     # ================= FMI2 =================
 
-    def fmi2DoStep(self, current_time, step_size, no_step_prior):
+    def fmi2DoStep(
+        self, current_time, step_size, no_set_fmu_state_prior_to_current_point
+    ):
         self._update_outputs()
         return Fmi2Status.ok
 

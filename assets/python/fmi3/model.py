@@ -36,13 +36,21 @@ class Model:
         current_communication_point: float,
         communication_step_size: float,
         no_set_fmu_state_prior_to_current_point: bool,
-        event_handling_needed: bool,
-        terminate_simulation: bool,
-        early_return: bool,
-        last_successful_time: float,
     ):
         self._update_outputs()
-        return Fmi3Status.ok
+
+        event_handling_needed = False
+        terminate_simulation = False
+        early_return = False
+        last_successful_time = current_communication_point + communication_step_size
+
+        return (
+            Fmi3Status.ok,
+            event_handling_needed,
+            terminate_simulation,
+            early_return,
+            last_successful_time,
+        )
 
     def fmi3EnterInitializationMode(
         self, tolerance: bool, start_time: float, stop_time: float
@@ -59,7 +67,7 @@ class Model:
     def fmi3Reset(self):
         return Fmi3Status.ok
 
-    def unifmuFmi3Serialize(self):
+    def fmi3SerializeFmuState(self):
 
         bytes = pickle.dumps(
             (
@@ -75,7 +83,7 @@ class Model:
         )
         return Fmi3Status.ok, bytes
 
-    def unifmuFmi3Deserialize(self, bytes: bytes):
+    def fmi3DeserializeFmuState(self, bytes: bytes):
         (
             real_a,
             real_b,

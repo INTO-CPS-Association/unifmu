@@ -281,6 +281,19 @@ pub struct FmiSetBinary {
 }
 // ----------------------- FMI3 Return Values ----------------------
 
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi3DoStepReturn {
+    #[prost(enumeration="Fmi3Status", tag="1")]
+    pub status: i32,
+    #[prost(bool, tag="2")]
+    pub event_handling_needed: bool,
+    #[prost(bool, tag="3")]
+    pub terminate_simulation: bool,
+    #[prost(bool, tag="4")]
+    pub early_return: bool,
+    #[prost(double, tag="5")]
+    pub last_successful_time: f64,
+}
 /// For methods that do not return a status code
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3EmptyReturn {

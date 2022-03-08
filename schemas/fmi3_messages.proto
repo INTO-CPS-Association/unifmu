@@ -49,9 +49,8 @@ message Fmi3InstantiateScheduledExecution {
 
 message Fmi3DoStep {
   double current_communication_point = 1;
-  double communication_step_size = 2;
+  double communication_step_size = 2;  
   bool no_set_fmu_state_prior_to_current_point = 3;
-
 }
 
 message Fmi3SetDebugLogging {
@@ -222,6 +221,15 @@ message FmiSetBinary {
 }
 
 // ----------------------- FMI3 Return Values ----------------------
+
+message Fmi3DoStepReturn
+{
+  Fmi3Status status = 1;
+  bool event_handling_needed = 2;
+  bool terminate_simulation = 3;
+  bool early_return = 4;
+  double last_successful_time = 5;
+}
 
 // For methods that do not return a status code
 message Fmi3EmptyReturn {}

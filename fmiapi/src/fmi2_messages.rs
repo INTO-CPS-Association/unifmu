@@ -20,7 +20,7 @@ pub struct Fmi2DoStep {
     #[prost(double, tag="2")]
     pub step_size: f64,
     #[prost(bool, tag="3")]
-    pub no_step_prior: bool,
+    pub no_set_fmu_state_prior_to_current_point: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi2SetDebugLogging {

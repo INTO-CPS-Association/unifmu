@@ -3,12 +3,13 @@ import os
 import sys
 import zmq
 
-from schemas.unifmu_fmi_pb2 import (
-    EmptyReturn,
-    FmiCommand,
+from schemas.fmi3_messages_pb2 import (
+    Fmi3Command,
+    Fmi3DoStepReturn,
+    Fmi3EmptyReturn,
     Fmi3StatusReturn,
     Fmi3FreeInstanceReturn,
-    UnifmuFmi3SerializeReturn,
+    Fmi3SerializeFmuStateReturn,
     Fmi3GetFloat32Return,
     Fmi3GetFloat64Return,
     Fmi3GetInt8Return,
@@ -43,11 +44,11 @@ if __name__ == "__main__":
     socket.connect(dispatcher_endpoint)
 
     # send handshake
-    state = EmptyReturn().SerializeToString()
+    state = Fmi3EmptyReturn().SerializeToString()
     socket.send(state)
 
     # dispatch commands to model
-    command = FmiCommand()
+    command = Fmi3Command()
     while True:
 
         msg = socket.recv()
@@ -58,22 +59,24 @@ if __name__ == "__main__":
 
         # ================= FMI3 =================
         if group == "Fmi3InstantiateModelExchange":
-            pass
+            result = Fmi3EmptyReturn()
         elif group == "Fmi3InstantiateCoSimulation":
-            pass
+            result = Fmi3EmptyReturn()
         elif group == "Fmi3InstantiateScheduledExecution":
-            pass
+            result = Fmi3EmptyReturn()
 
         elif group == "Fmi3DoStep":
-            result = Fmi3StatusReturn()
-            result.status = model.fmi3DoStep(
+            result = Fmi3DoStepReturn()
+            (
+                result.status,
+                result.event_handling_needed,
+                result.terminate_simulation,
+                result.early_return,
+                result.last_successful_time,
+            ) = model.fmi3DoStep(
                 data.current_communication_point,
                 data.communication_step_size,
                 data.no_set_fmu_state_prior_to_current_point,
-                data.event_handling_needed,
-                data.terminate_simulation,
-                data.early_return,
-                data.last_successful_time,
             )
         elif group == "Fmi3EnterInitializationMode":
             result = Fmi3StatusReturn()
@@ -93,51 +96,57 @@ if __name__ == "__main__":
         elif group == "Fmi3Reset":
             result = Fmi3StatusReturn()
             result.status = model.fmi3Reset()
-        elif group == "UnifmuSerialize":
-            result = UnifmuFmi3SerializeReturn()
-            (result.status, result.state) = model.unifmuFmi3Serialize()
-        elif group == "UnifmuDeserialize":
+        elif group == "Fmi3SerializeFmuState":
+            result = Fmi3SerializeFmuStateReturn()
+            (result.status, result.state) = model.fmi3SerializeFmuState()
+        elif group == "Fmi3DeserializeFmuState":
             result = Fmi3StatusReturn
-            result.status = model.unifmuFmi3Deserialize(data.state)
+            result.status = model.fmi3DeserializeFmuState(data.state)
         elif group == "Fmi3GetFloat32":
             result = Fmi3GetFloat32Return()
-            (result.status, result.values) = model.fmi3GetFloat32(data.value_references)
+            result.status, result.values[:] = model.fmi3GetFloat32(
+                data.value_references
+            )
         elif group == "Fmi3GetFloat64":
             result = Fmi3GetFloat64Return()
-            (result.status, result.values) = model.fmi3GetFloat64(data.value_references)
+            result.status, result.values[:] = model.fmi3GetFloat64(
+                data.value_references
+            )
         elif group == "Fmi3GetInt8":
             result = Fmi3GetInt8Return()
-            (result.status, result.values) = model.fmi3GetInt8(data.value_references)
+            result.status, result.values[:] = model.fmi3GetInt8(data.value_references)
         elif group == "Fmi3GetUInt8":
             result = Fmi3GetUInt8Return()
-            (result.status, result.values) = model.fmi3GetUInt8(data.value_references)
+            result.status, result.values[:] = model.fmi3GetUInt8(data.value_references)
         elif group == "Fmi3GetInt16":
             result = Fmi3GetInt16Return()
-            (result.status, result.values) = model.fmi3GetInt16(data.value_references)
+            result.status, result.values[:] = model.fmi3GetInt16(data.value_references)
         elif group == "Fmi3GetUInt16":
             result = Fmi3GetUInt16Return()
-            (result.status, result.values) = model.fmi3GetUInt16(data.value_references)
+            result.status, result.values[:] = model.fmi3GetUInt16(data.value_references)
         elif group == "Fmi3GetInt32":
             result = Fmi3GetInt32Return()
-            (result.status, result.values) = model.fmi3GetInt32(data.value_references)
+            result.status, result.values[:] = model.fmi3GetInt32(data.value_references)
         elif group == "Fmi3GetUInt32":
             result = Fmi3GetUInt32Return()
-            (result.status, result.values) = model.fmi3GetUInt32(data.value_references)
+            result.status, result.values[:] = model.fmi3GetUInt32(data.value_references)
         elif group == "Fmi3GetInt64":
             result = Fmi3GetInt64Return()
-            (result.status, result.values) = model.fmi3GetInt64(data.value_references)
+            result.status, result.values[:] = model.fmi3GetInt64(data.value_references)
         elif group == "Fmi3GetUInt64":
             result = Fmi3GetUInt64Return()
-            (result.status, result.values) = model.fmi3GetUInt64(data.value_references)
+            result.status, result.values[:] = model.fmi3GetUInt64(data.value_references)
         elif group == "Fmi3GetBoolean":
             result = Fmi3GetBooleanReturn()
-            (result.status, result.values) = model.fmi3GetBoolean(data.value_references)
+            result.status, result.values[:] = model.fmi3GetBoolean(
+                data.value_references
+            )
         elif group == "Fmi3GetString":
             result = Fmi3GetStringReturn()
-            (result.status, result.values) = model.fmi3GetString(data.value_references)
+            result.status, result.values[:] = model.fmi3GetString(data.value_references)
         elif group == "FmiGetBinary":
             result = FmiGetBinaryReturn()
-            (result.status, result.values) = model.fmi3GetBinary(data.value_references)
+            result.status, result.values[:] = model.fmi3GetBinary(data.value_references)
         elif group == "Fmi3SetFloat32":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetFloat32(data.value_references, data.values)

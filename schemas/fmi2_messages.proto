@@ -35,7 +35,7 @@ message Fmi2Instantiate {
 message Fmi2DoStep {
   double current_time = 1;
   double step_size = 2;
-  bool no_step_prior = 3;
+  bool no_set_fmu_state_prior_to_current_point = 3;
 }
 
 message Fmi2SetDebugLogging {
