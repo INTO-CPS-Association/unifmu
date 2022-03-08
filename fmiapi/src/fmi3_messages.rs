@@ -1,16 +1,3 @@
-// ----------------------- Common ----------------------
-
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UnifmuSerialize {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UnifmuDeserialize {
-    #[prost(bytes="vec", tag="1")]
-    pub state: ::prost::alloc::vec::Vec<u8>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct EmptyReturn {
-}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3InstantiateModelExchange {
     #[prost(string, tag="1")]
@@ -92,6 +79,14 @@ pub struct Fmi3Terminate {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3Reset {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi3SerializeFmuState {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi3DeserializeFmuState {
+    #[prost(bytes="vec", tag="1")]
+    pub state: ::prost::alloc::vec::Vec<u8>,
 }
 // ----------------------- FMI3 Getters ----------------------
 
@@ -286,6 +281,10 @@ pub struct FmiSetBinary {
 }
 // ----------------------- FMI3 Return Values ----------------------
 
+/// For methods that do not return a status code
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fmi3EmptyReturn {
+}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fmi3StatusReturn {
     #[prost(enumeration="Fmi3Status", tag="1")]
@@ -407,202 +406,8 @@ pub struct Fmi3GetOutputDerivativesReturn {
     pub values: ::prost::alloc::vec::Vec<f64>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UnifmuFmi3SerializeReturn {
+pub struct Fmi3SerializeFmuStateReturn {
     #[prost(enumeration="Fmi3Status", tag="1")]
-    pub status: i32,
-    #[prost(bytes="vec", tag="2")]
-    pub state: ::prost::alloc::vec::Vec<u8>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2Instantiate {
-    #[prost(string, tag="1")]
-    pub instance_name: ::prost::alloc::string::String,
-    #[prost(enumeration="Fmi2Type", tag="2")]
-    pub fmu_type: i32,
-    #[prost(string, tag="3")]
-    pub fmu_guid: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub fmu_resource_location: ::prost::alloc::string::String,
-    #[prost(bool, tag="5")]
-    pub visible: bool,
-    #[prost(bool, tag="6")]
-    pub logging_on: bool,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2DoStep {
-    #[prost(double, tag="1")]
-    pub current_time: f64,
-    #[prost(double, tag="2")]
-    pub step_size: f64,
-    #[prost(bool, tag="3")]
-    pub no_step_prior: bool,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetDebugLogging {
-    #[prost(string, repeated, tag="1")]
-    pub categories: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(bool, tag="2")]
-    pub logging_on: bool,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetupExperiment {
-    #[prost(double, tag="1")]
-    pub start_time: f64,
-    #[prost(double, optional, tag="2")]
-    pub stop_time: ::core::option::Option<f64>,
-    #[prost(double, optional, tag="3")]
-    pub tolerance: ::core::option::Option<f64>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2EnterInitializationMode {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2ExitInitializationMode {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2CancelStep {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2FreeInstance {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2Terminate {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2Reset {
-}
-// ----------------------- FMI2 Getters ----------------------
-
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetReal {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetInteger {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetBoolean {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetString {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetDirectionalDerivatives {
-    #[prost(uint32, repeated, tag="1")]
-    pub references_unknown: ::prost::alloc::vec::Vec<u32>,
-    #[prost(uint32, repeated, tag="2")]
-    pub references_known: ::prost::alloc::vec::Vec<u32>,
-    #[prost(double, repeated, tag="3")]
-    pub direction_known: ::prost::alloc::vec::Vec<f64>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetRealOutputDerivatives {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-    #[prost(int32, repeated, tag="2")]
-    pub orders: ::prost::alloc::vec::Vec<i32>,
-}
-// ----------------------- FMI2 Setters ----------------------
-
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetReal {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-    #[prost(double, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<f64>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetInteger {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-    #[prost(int32, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<i32>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetBoolean {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-    #[prost(bool, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<bool>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetString {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-    #[prost(string, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2SetRealInputDerivatives {
-    #[prost(uint32, repeated, tag="1")]
-    pub references: ::prost::alloc::vec::Vec<u32>,
-    #[prost(int32, repeated, tag="2")]
-    pub orders: ::prost::alloc::vec::Vec<i32>,
-    #[prost(double, repeated, tag="3")]
-    pub values: ::prost::alloc::vec::Vec<f64>,
-}
-// ----------------------- FMI2 Return Values ----------------------
-
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2StatusReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
-    pub status: i32,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2FreeInstanceReturn {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetRealReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
-    pub status: i32,
-    #[prost(double, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<f64>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetIntegerReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
-    pub status: i32,
-    #[prost(int32, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<i32>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetBooleanReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
-    pub status: i32,
-    #[prost(bool, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<bool>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetStringReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
-    pub status: i32,
-    #[prost(string, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetRealOutputDerivativesReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
-    pub status: i32,
-    #[prost(double, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<f64>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fmi2GetDirectionalDerivativesReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
-    pub status: i32,
-    #[prost(double, repeated, tag="2")]
-    pub values: ::prost::alloc::vec::Vec<f64>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UnifmuFmi2SerializeReturn {
-    #[prost(enumeration="Fmi2Status", tag="1")]
     pub status: i32,
     #[prost(bytes="vec", tag="2")]
     pub state: ::prost::alloc::vec::Vec<u8>,
@@ -610,12 +415,12 @@ pub struct UnifmuFmi2SerializeReturn {
 // ----------------------- FMI Command Wrapper ----------------------
 
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FmiCommand {
-    #[prost(oneof="fmi_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64")]
-    pub command: ::core::option::Option<fmi_command::Command>,
+pub struct Fmi3Command {
+    #[prost(oneof="fmi3_command::Command", tags="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43")]
+    pub command: ::core::option::Option<fmi3_command::Command>,
 }
-/// Nested message and enum types in `FmiCommand`.
-pub mod fmi_command {
+/// Nested message and enum types in `Fmi3Command`.
+pub mod fmi3_command {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Command {
         // FMI3
@@ -698,56 +503,10 @@ pub mod fmi_command {
         Fmi3SetString(super::Fmi3SetString),
         #[prost(message, tag="41")]
         FmiSetBinary(super::FmiSetBinary),
-        // FMI2
-
         #[prost(message, tag="42")]
-        Fmi2DoStep(super::Fmi2DoStep),
+        Fmi3SerializeFmuState(super::Fmi3SerializeFmuState),
         #[prost(message, tag="43")]
-        Fmi2SetDebugLogging(super::Fmi2SetDebugLogging),
-        #[prost(message, tag="44")]
-        Fmi2SetupExperiment(super::Fmi2SetupExperiment),
-        #[prost(message, tag="45")]
-        Fmi2EnterInitializationMode(super::Fmi2EnterInitializationMode),
-        #[prost(message, tag="46")]
-        Fmi2ExitInitializationMode(super::Fmi2ExitInitializationMode),
-        #[prost(message, tag="47")]
-        Fmi2FreeInstance(super::Fmi2FreeInstance),
-        #[prost(message, tag="48")]
-        Fmi2CancelStep(super::Fmi2CancelStep),
-        #[prost(message, tag="49")]
-        Fmi2Terminate(super::Fmi2Terminate),
-        #[prost(message, tag="50")]
-        Fmi2Reset(super::Fmi2Reset),
-        #[prost(message, tag="51")]
-        Fmi2GetReal(super::Fmi2GetReal),
-        #[prost(message, tag="52")]
-        Fmi2GetInteger(super::Fmi2GetInteger),
-        #[prost(message, tag="53")]
-        Fmi2GetBoolean(super::Fmi2GetBoolean),
-        #[prost(message, tag="54")]
-        Fmi2GetString(super::Fmi2GetString),
-        #[prost(message, tag="55")]
-        Fmi2GetDirectionalDerivatives(super::Fmi2GetDirectionalDerivatives),
-        #[prost(message, tag="56")]
-        Fmi2GetRealOutputDerivatives(super::Fmi2GetRealOutputDerivatives),
-        #[prost(message, tag="57")]
-        Fmi2SetReal(super::Fmi2SetReal),
-        #[prost(message, tag="58")]
-        Fmi2SetInteger(super::Fmi2SetInteger),
-        #[prost(message, tag="59")]
-        Fmi2SetBoolean(super::Fmi2SetBoolean),
-        #[prost(message, tag="60")]
-        Fmi2SetString(super::Fmi2SetString),
-        #[prost(message, tag="61")]
-        Fmi2SetRealInputDerivatives(super::Fmi2SetRealInputDerivatives),
-        #[prost(message, tag="62")]
-        Fmi2Instantiate(super::Fmi2Instantiate),
-        // Common
-
-        #[prost(message, tag="63")]
-        UnifmuSerialize(super::UnifmuSerialize),
-        #[prost(message, tag="64")]
-        UnifmuDeserialize(super::UnifmuDeserialize),
+        Fmi3DeserializeFmuState(super::Fmi3DeserializeFmuState),
     }
 }
 // ----------------------- FMI3 ----------------------
@@ -760,22 +519,4 @@ pub enum Fmi3Status {
     Fmi3Discard = 2,
     Fmi3Error = 3,
     Fmi3Fatal = 4,
-}
-// ----------------------- FMI2 ----------------------
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum Fmi2Status {
-    Fmi2Ok = 0,
-    Fmi2Warning = 1,
-    Fmi2Discard = 2,
-    Fmi2Error = 3,
-    Fmi2Fatal = 4,
-    Fmi2Pending = 5,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum Fmi2Type {
-    Fmi2ModelExchange = 0,
-    Fmi2CoSimulation = 1,
 }

@@ -2,8 +2,8 @@
 #![allow(unreachable_code)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
-use crate::dispatcher::CommandDispatcher;
-use crate::spawn::spawn_slave;
+use crate::fmi2_dispatcher::Fmi2CommandDispatcher;
+use crate::spawn::spawn_fmi2_slave;
 use libc::c_double;
 use libc::size_t;
 
@@ -104,7 +104,7 @@ pub struct Fmi2Slave {
     pub string_buffer: Vec<CString>,
 
     /// Object performing remote procedure calls on the slave
-    pub dispatcher: CommandDispatcher,
+    pub dispatcher: Fmi2CommandDispatcher,
 
     popen: Popen,
 
@@ -118,7 +118,7 @@ pub struct Fmi2Slave {
 // unsafe impl Send for Slave {}
 
 impl Fmi2Slave {
-    fn new(dispatcher: CommandDispatcher, popen: Popen) -> Self {
+    fn new(dispatcher: Fmi2CommandDispatcher, popen: Popen) -> Self {
         Self {
             dispatcher,
             string_buffer: Vec::new(),
@@ -191,7 +191,7 @@ pub extern "C" fn fmi2Instantiate(
         resource_uri
     ));
 
-    let (mut dispatcher, popen) = spawn_slave(&resources_dir).unwrap();
+    let (mut dispatcher, popen) = spawn_fmi2_slave(&resources_dir).unwrap();
 
     dispatcher
         .fmi2Instantiate(

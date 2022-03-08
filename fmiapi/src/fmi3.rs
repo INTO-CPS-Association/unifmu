@@ -12,11 +12,11 @@ use subprocess::Popen;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-use crate::dispatcher::CommandDispatcher;
-use crate::spawn::spawn_slave;
+use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
+use crate::spawn::spawn_fmi3_slave;
 
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 #[repr(i32)]
+#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi3Status {
     OK = 0,
     Warning = 1,
@@ -26,14 +26,14 @@ pub enum Fmi3Status {
 }
 
 pub struct Fmi3Slave {
-    dispatcher: CommandDispatcher,
+    dispatcher: Fmi3CommandDispatcher,
     last_successful_time: Option<f64>,
     string_buffer: Vec<CString>,
     popen: Popen,
 }
 
 impl Fmi3Slave {
-    pub fn new(dispatcher: CommandDispatcher, popen: Popen) -> Self {
+    pub fn new(dispatcher: Fmi3CommandDispatcher, popen: Popen) -> Self {
         Self {
             dispatcher,
             popen,
@@ -82,7 +82,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     }
     .to_owned();
 
-    let (mut dispatcher, popen) = spawn_slave(&Path::new(&resource_path)).unwrap();
+    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
 
     match dispatcher.fmi3InstantiateCoSimulation(
         instance_name,

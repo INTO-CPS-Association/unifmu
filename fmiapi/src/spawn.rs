@@ -4,7 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::dispatcher::CommandDispatcher;
+use crate::fmi2_dispatcher::Fmi2CommandDispatcher;
+use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
 
 use serde::Deserialize;
 use subprocess::{Popen, PopenConfig};
@@ -16,7 +17,7 @@ pub struct LaunchConfig {
     pub macos: Option<Vec<String>>,
 }
 
-pub fn spawn_slave(resource_path: &Path) -> Result<(CommandDispatcher, Popen), ()> {
+pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, Popen), ()> {
     let config_path = resource_path.join("launch.toml");
 
     let config = read_to_string(&config_path).expect(&format!(
@@ -27,7 +28,7 @@ pub fn spawn_slave(resource_path: &Path) -> Result<(CommandDispatcher, Popen), (
     let config: LaunchConfig = toml::from_str(config.as_str())
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
-    let mut dispatcher = CommandDispatcher::new("tcp://127.0.0.1:0");
+    let mut dispatcher = Fmi2CommandDispatcher::new("tcp://127.0.0.1:0");
 
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = endpoint
@@ -84,4 +85,8 @@ pub fn spawn_slave(resource_path: &Path) -> Result<(CommandDispatcher, Popen), (
         Ok(handshake) => Ok((dispatcher, popen)),
         Err(e) => Err(()),
     }
+}
+
+pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<(Fmi3CommandDispatcher, Popen), ()> {
+    todo!();
 }

@@ -1,21 +1,11 @@
 syntax = "proto3";
 
 
-package fmi_proto;
+package fmi2_messages;
 
 // https://developers.google.com/protocol-buffers/docs/reference/java-generated#package
 option java_package = "";
-option java_outer_classname = "UnifmuFmi";
-
-// ----------------------- Common ----------------------
-
-message UnifmuSerialize {}
-
-message UnifmuDeserialize {
-    bytes state = 1;
-}
-
-message EmptyReturn {}
+option java_outer_classname = "Fmi2Messages";
 
 // ----------------------- FMI2 ----------------------
 
@@ -70,6 +60,13 @@ message Fmi2FreeInstance {}
 message Fmi2Terminate {}
 
 message Fmi2Reset {}
+
+message Fmi2SerializeFmuState {}
+
+message Fmi2DeserializeFmuState {
+    bytes state = 1;
+}
+
 
 // ----------------------- FMI2 Getters ----------------------
 
@@ -129,6 +126,9 @@ message Fmi2SetRealInputDerivatives {
 
 // ----------------------- FMI2 Return Values ----------------------
 
+// For methods that do not return a status code
+message Fmi2EmptyReturn {}
+
 message Fmi2StatusReturn {
   Fmi2Status status = 1;
 }
@@ -165,14 +165,14 @@ message Fmi2GetDirectionalDerivativesReturn {
   repeated double values = 2;
 }
 
-message UnifmuFmi2SerializeReturn {
+message Fmi2SerializeFmuStateReturn {
   Fmi2Status status = 1;
   bytes state = 2;
 }
 
 // ----------------------- FMI Command Wrapper ----------------------
 
-message FmiCommand {
+message Fmi2Command {
   oneof command {
 
     // FMI2 Common
@@ -211,7 +211,7 @@ message FmiCommand {
 
     // UniFMU Common
 
-    UnifmuSerialize UnifmuSerialize = 63;
-    UnifmuDeserialize UnifmuDeserialize = 64;
+    Fmi2SerializeFmuState Fmi2SerializeFmuState = 63;
+    Fmi2DeserializeFmuState Fmi2DeserializeFmuState = 64;
   }
 }

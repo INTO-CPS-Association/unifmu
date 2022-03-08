@@ -1,22 +1,11 @@
 syntax = "proto3";
 
 
-package fmi_proto;
+package fmi3_messages;
 
 // https://developers.google.com/protocol-buffers/docs/reference/java-generated#package
 option java_package = "";
-option java_outer_classname = "UnifmuFmi";
-
-// ----------------------- Common ----------------------
-
-message UnifmuSerialize {}
-
-message UnifmuDeserialize {
-    bytes state = 1;
-}
-
-message EmptyReturn {}
-
+option java_outer_classname = "Fmi3Messages";
 
 
 // ----------------------- FMI3 ----------------------
@@ -83,6 +72,12 @@ message Fmi3FreeInstance {}
 message Fmi3Terminate {}
 
 message Fmi3Reset {}
+
+message Fmi3SerializeFmuState {}
+
+message Fmi3DeserializeFmuState {
+    bytes state = 1;
+}
 
 // ----------------------- FMI3 Getters ----------------------
 
@@ -228,6 +223,9 @@ message FmiSetBinary {
 
 // ----------------------- FMI3 Return Values ----------------------
 
+// For methods that do not return a status code
+message Fmi3EmptyReturn {}
+
 message Fmi3StatusReturn {
     Fmi3Status status = 1;
 }
@@ -314,7 +312,7 @@ message Fmi3GetOutputDerivativesReturn {
   repeated double values = 2;
 }
 
-message UnifmuFmi3SerializeReturn {
+message Fmi3SerializeFmuStateReturn {
   Fmi3Status status = 1;
   bytes state = 2;
 }
@@ -323,7 +321,7 @@ message UnifmuFmi3SerializeReturn {
 
 // ----------------------- FMI Command Wrapper ----------------------
 
-message FmiCommand {
+message Fmi3Command {
   oneof command {
 
     // FMI3
@@ -367,7 +365,7 @@ message FmiCommand {
     Fmi3SetBoolean Fmi3SetBoolean = 39;
     Fmi3SetString Fmi3SetString = 40;
     FmiSetBinary FmiSetBinary = 41;
-    UnifmuSerialize UnifmuSerialize = 42;
-    UnifmuDeserialize UnifmuDeserialize = 43;
+    Fmi3SerializeFmuState Fmi3SerializeFmuState = 42;
+    Fmi3DeserializeFmuState Fmi3DeserializeFmuState = 43;
   }
 }
