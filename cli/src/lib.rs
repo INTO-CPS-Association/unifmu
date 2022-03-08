@@ -46,8 +46,8 @@ lazy_static! {
             ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
             (
-                "auto_generated/fmi2/unifmu_fmi_pb2.py",
-                "schemas/unifmu_fmi_pb2.py"
+                "auto_generated/fmi2_messages_pb2.py",
+                "schemas/fmi2_messages_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi2/README.md", "README.md"),
@@ -56,8 +56,8 @@ lazy_static! {
             ("python/fmi3/backend.py", "backend.py"),
             ("python/fmi3/model.py", "model.py"),
             (
-                "auto_generated/fmi3/unifmu_fmi_pb2.py",
-                "schemas/unifmu_fmi_pb2.py"
+                "auto_generated/fmi3_messages_pb2.py",
+                "schemas/fmi3_messages_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),

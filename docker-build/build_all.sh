@@ -13,15 +13,15 @@ export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=/usr/osxcross/target/bin/x86_64-a
 cargo build --package ${tgt} --target x86_64-apple-darwin --release
 
 echo "copying fmiapi into cli assets"
-cp ./target/x86_64-unknown-linux-gnu/release/lib${tgt}.so ./assets/auto_generated/unifmu.so
-cp ./target/x86_64-pc-windows-gnu/release/${tgt}.dll ./assets/auto_generated/unifmu.dll
-cp ./target/x86_64-apple-darwin/release/lib${tgt}.dylib ./assets/auto_generated/unifmu.dylib
+cp target/x86_64-unknown-linux-gnu/release/lib${tgt}.so assets/auto_generated/unifmu.so
+cp target/x86_64-pc-windows-gnu/release/${tgt}.dll assets/auto_generated/unifmu.dll
+cp target/x86_64-apple-darwin/release/lib${tgt}.dylib assets/auto_generated/unifmu.dylib
 
 # ------------------------------ schemas ------------------------------
 echo "generating protobuf schemas for python, csharp, and java backends"
 mkdir -p assets/auto_generated/fmi2
 mkdir -p assets/auto_generated/fmi3
-protoc -I=schemas --python_out=./assets/auto_generated --csharp_out=./assets/auto_generated --java_out ./assets/auto_generated fmi2_messages.proto fmi3_messages.proto
+protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
 # ------------------------------ cli ------------------------------
 tgt=unifmu
 echo "building cli for linux"

@@ -3,12 +3,12 @@ import os
 import sys
 import zmq
 
-from schemas.unifmu_fmi_pb2 import (
-    EmptyReturn,
-    FmiCommand,
+from schemas.fmi2_messages_pb2 import (
+    Fmi2EmptyReturn,
+    Fmi2Command,
     Fmi2StatusReturn,
     Fmi2FreeInstanceReturn,
-    UnifmuFmi2SerializeReturn,
+    Fmi2SerializeFmuStateReturn,
     Fmi2GetRealReturn,
     Fmi2GetIntegerReturn,
     Fmi2GetBooleanReturn,
@@ -34,11 +34,11 @@ if __name__ == "__main__":
     socket.connect(dispatcher_endpoint)
 
     # send handshake
-    state = EmptyReturn().SerializeToString()
+    state = Fmi2EmptyReturn().SerializeToString()
     socket.send(state)
 
     # dispatch commands to model
-    command = FmiCommand()
+    command = Fmi2Command()
     while True:
 
         msg = socket.recv()
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         # ================= FMI2 =================
 
         if group == "Fmi2Instantiate":
-            result = EmptyReturn()
+            result = Fmi2EmptyReturn()
         elif group == "Fmi2DoStep":
             result = Fmi2StatusReturn()
             result.status = model.fmi2DoStep(
@@ -80,12 +80,12 @@ if __name__ == "__main__":
         elif group == "Fmi2Reset":
             result = Fmi2StatusReturn()
             result.status = model.fmi2Reset()
-        elif group == "UnifmuSerialize":
-            result = UnifmuFmi2SerializeReturn()
-            (result.status, result.state) = model.fmi2ExtSerialize()
-        elif group == "Fmi2ExtDeserializeSlave":
+        elif group == "Fmi2SerializeFmuState":
+            result = Fmi2SerializeFmuStateReturn()
+            (result.status, result.state) = model.fmi2SerializeFmuState()
+        elif group == "Fmi2DeserializeFmuState":
             result = Fmi2StatusReturn()
-            result.status = model.fmi2ExtDeserialize(data.state)
+            result.status = model.fmi2DeserializeFmuState(data.state)
         elif group == "Fmi2GetReal":
             result = Fmi2GetRealReturn()
             result.status, result.values[:] = model.fmi2GetReal(data.references)

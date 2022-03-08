@@ -51,7 +51,7 @@ class Model:
     def fmi2Reset(self):
         return Fmi2Status.ok
 
-    def unifmuFmi2Serialize(self):
+    def fmi2SerializeFmuState(self):
         bytes = pickle.dumps(
             (
                 self.real_a,
@@ -66,7 +66,7 @@ class Model:
         )
         return Fmi2Status.ok, bytes
 
-    def unifmuFmi2Deserialize(self, bytes):
+    def fmi2DeserializeFmuState(self, bytes):
         (
             real_a,
             real_b,
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     m.string_a = "Hello "
     m.string_b = "World!"
 
-    assert m.fmi3DoStep(0.0, 1.0, False) == Fmi2Status.ok
+    assert m.fmi2DoStep(0.0, 1.0, False) == Fmi2Status.ok
 
     assert m.real_c == 3.0
     assert m.integer_c == 3
