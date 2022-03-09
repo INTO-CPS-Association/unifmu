@@ -1,8 +1,10 @@
 pub mod fmi2_md;
 pub mod fmi3_md;
+
 use serde;
 use serde::Deserialize;
 
+#[derive(Debug)]
 pub enum FmiVersion {
     Fmi3,
     Fmi2,

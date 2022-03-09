@@ -51,6 +51,7 @@ fn c2s(c: *const c_char) -> String {
 
 static VERSION: &str = "2.0\0";
 
+#[no_mangle]
 pub extern "C" fn fmi3GetVersion() -> *const c_char {
     VERSION.as_ptr() as *const c_char
 }

@@ -1,8 +1,6 @@
 #![allow(non_snake_case, non_camel_case_types)]
-use std::{
-    ffi::CString,
-    path::{Path, PathBuf},
-};
+use std::ffi::{CStr, CString};
+use std::path::Path;
 
 extern crate dlopen;
 
@@ -14,9 +12,8 @@ use common::{
     get_model_description_major_version,
 };
 use libc::{c_char, c_double, c_int, c_void, size_t};
-// use libloading::{Library, Symbol};
 
-use log::info;
+use log::{error, info};
 use std::ptr::null;
 use url::Url;
 
@@ -37,8 +34,7 @@ struct Fmi3Api {
         instance_environment: *const c_void,
         log_message: *const c_void,
         intermediate_update: *const c_void,
-    ) -> Option<*mut c_void>,
-
+    ) -> *mut c_void,
     fmi3EnterInitializationMode: unsafe extern "C" fn(
         instance: *const c_void,
         tolerance_defined: i32,
@@ -52,6 +48,7 @@ struct Fmi3Api {
     fmi3FreeInstance: unsafe extern "C" fn(instance: *mut c_void),
 
     fmi3Reset: unsafe extern "C" fn(instance: *mut c_void) -> i32,
+    // fmi3GetVersion: unsafe extern "C" fn() -> *const c_char,
 }
 
 #[derive(WrapperApi)]
@@ -180,7 +177,7 @@ impl Fmi3Fmu {
         let instantiation_token = CString::new(instantiation_token).unwrap();
         let resource_path = CString::new(resource_path).unwrap();
 
-        match api.fmi3InstantiateCoSimulation(
+        let handle = api.fmi3InstantiateCoSimulation(
             instance_name.as_ptr(),
             instantiation_token.as_ptr(),
             resource_path.as_ptr(),
@@ -193,10 +190,20 @@ impl Fmi3Fmu {
             instance_environment,
             log_message,
             intermediate_update,
-        ) {
-            Some(handle) => Ok(Self { api, handle }),
-            None => Err(()),
+        );
+
+        if handle.is_null() {
+            return Err(());
         }
+        Ok(Self { api, handle })
+    }
+
+    pub fn fmi3GetVersion(&self) -> String {
+        todo!();
+        // unsafe { CStr::from_ptr(self.api.fmi3GetVersion()) }
+        //     .to_str()
+        //     .unwrap()
+        //     .to_owned()
     }
 
     pub fn fmi3FreeInstance(&self) {
@@ -247,8 +254,6 @@ struct Fmi2Fmu {
 }
 
 impl Fmi2Fmu {
-    // pub new(Container<Fmi2CoSimulationApi>) ->Self
-
     pub fn fmi2Instantate(
         api: Container<Fmi2CoSimulationApi>,
         instance_name: &str,
@@ -264,9 +269,6 @@ impl Fmi2Fmu {
         let fmu_type: c_int = 1;
         let callbacks = null();
 
-        let visible: c_int = 1;
-        let logging_on: c_int = 1;
-
         let handle = unsafe {
             api.fmi2Instantiate(
                 instance_name.as_ptr(),
@@ -274,8 +276,8 @@ impl Fmi2Fmu {
                 guid.as_ptr(),
                 resources_uri.as_ptr(),
                 callbacks,
-                visible,
-                logging_on,
+                visible as i32,
+                logging as i32,
             )
         };
 
@@ -405,39 +407,48 @@ impl Fmi2Fmu {
 }
 fn validate_fmi3_fmu(rootdir: &Path, md: Fmi3ModelDescription) -> Result<(), ValidateError> {
     let model_identifier = md.cosimulation.unwrap().model_identifier;
+    let binary_path = rootdir.join("binaries");
 
-    // load library
-    let api = unsafe {
-        let binary_path = rootdir.join("binaries");
+    let binary_path = match std::env::consts::OS {
+        "windows" => binary_path
+            .join("x86_64-windows")
+            .join(format!("{}.dll", model_identifier)),
+        "macos" => binary_path
+            .join("x86_64-darwin")
+            .join(format!("{}.dylib", model_identifier)),
 
-        let binary_path = match std::env::consts::OS {
-            "windows" => binary_path
-                .join("x86_64-windows")
-                .join(format!("{}.dll", model_identifier)),
-            "macos" => binary_path
-                .join("x86_64-darwin")
-                .join(format!("{}.dylib", model_identifier)),
-
-            _other => binary_path
-                .join("x86_64-linux")
-                .join(format!("{}.so", model_identifier)),
-        };
-
-        info!("attempting to load binary from {:?}", binary_path);
-
-        let api: Container<Fmi3Api> = match Container::load(binary_path) {
-            Ok(l) => l,
-            Err(_) => return Err(ValidateError::BinaryNotFound),
-        };
-
-        api
+        _other => binary_path
+            .join("x86_64-linux")
+            .join(format!("{}.so", model_identifier)),
     };
 
+    info!("attempting to load binary from {:?}", binary_path);
+
+    let api: Container<Fmi3Api> = match unsafe { Container::load(&binary_path) } {
+        Ok(l) => l,
+        Err(e) => {
+            error!(
+                "Unable to load binary for platform {:?} at {:?} due to error {:?}",
+                std::env::consts::OS,
+                binary_path,
+                e
+            );
+            return Err(ValidateError::BinaryNotFound);
+        }
+    };
+
+    // info!("calling 'fmi3GetVersion'");
+    // unsafe { api.fmi3GetVersion() };
+
+    let resources_path = rootdir.join("resources");
+    let resources_path = resources_path.to_str().unwrap();
+
+    info!("calling 'fmi3InstantiateCoSimulation'");
     let s = Fmi3Fmu::fmi3InstantiateCoSimulation(
         api,
-        "",
+        "abc",
         "instantiation_token",
-        "resource_path",
+        resources_path,
         false,
         false,
         false,
@@ -450,9 +461,13 @@ fn validate_fmi3_fmu(rootdir: &Path, md: Fmi3ModelDescription) -> Result<(), Val
     )
     .unwrap();
 
+    info!("calling 'fmi3EnterInitializationMode'");
     s.fmi3EnterInitializationMode(None, 0.0, None);
+    info!("calling 'fmi3ExitInitializationMode'");
     s.fmi3ExitInitializationMode();
+    info!("calling 'fmi3Reset'");
     s.fmi3Reset();
+    info!("calling 'fmi3FreeInstance'");
     s.fmi3FreeInstance();
 
     Ok(())
@@ -600,30 +615,62 @@ fn validate_fmi2_fmu(
     }
 }
 
-pub fn validate(rootdir: &Path, config: &ValidationConfig) -> Result<(), ValidateError> {
+pub fn validate(rootdir: &Path, config: &ValidationConfig) -> Result<(), ()> {
     let md_path = rootdir.join("modelDescription.xml");
 
     if !md_path.exists() {
-        return Err(ValidateError::ModelDescriptionNotFound);
+        error!("Unable to locate 'modelDescription.xml' at {:?}", md_path);
+        return Err(());
     }
 
-    let md = match std::fs::read_to_string(md_path) {
-        Ok(s) => match get_model_description_major_version(s.as_bytes()) {
-            Ok(v) => match v {
-                common::FmiVersion::Fmi3 => match parse_fmi3_model_description(s.as_bytes()) {
-                    Ok(md) => validate_fmi3_fmu(rootdir, md),
-                    Err(e) => todo!(),
-                },
-                common::FmiVersion::Fmi2 => match parse_fmi2_model_description(s.as_bytes()) {
-                    Ok(md) => validate_fmi2_fmu(rootdir, md, config),
-                    Err(_) => todo!(),
-                },
-                common::FmiVersion::Fmi1 => todo!(),
-            },
-            Err(_) => return Err(ValidateError::ModelDescriptionUnableToParse),
-        },
-        Err(_) => return Err(ValidateError::ModelDescriptionUnableToRead),
+    let s = match std::fs::read_to_string(md_path) {
+        Ok(s) => s,
+        Err(e) => {
+            error!(
+                "Unable to read contents of 'modelDescription.xml' due to error {}",
+                e
+            );
+            return Err(());
+        }
     };
 
-    todo!()
+    info!("Detecting FMI version from the 'fmiVersion' field of the 'modelDescription.xml'");
+
+    let md_major_version = get_model_description_major_version(s.as_bytes());
+
+    let v = match md_major_version {
+        Ok(v) => v,
+        Err(e) => {
+            error!("Unable to identify 'fmiVersion' by inspection of the 'modelDescription.xml'");
+            return Err(());
+        }
+    };
+
+    info!("Major version {:?} detected", v);
+
+    let res = match v {
+        common::FmiVersion::Fmi3 => match parse_fmi3_model_description(s.as_bytes()) {
+            Ok(md) => validate_fmi3_fmu(rootdir, md),
+            Err(e) => {
+                error!("Unable to parse the contents of the 'modelDescription.xml' file");
+                return Err(());
+            }
+        },
+        common::FmiVersion::Fmi2 => match parse_fmi2_model_description(s.as_bytes()) {
+            Ok(md) => validate_fmi2_fmu(rootdir, md, config),
+            Err(e) => {
+                error!("Unable to parse the contents of the 'modelDescription.xml' file");
+                return Err(());
+            }
+        },
+        common::FmiVersion::Fmi1 => {
+            error!("Validation of FMI1 FMUs is not supported");
+            return Err(());
+        }
+    };
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(_) => Err(()),
+    }
 }

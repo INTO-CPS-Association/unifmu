@@ -11,10 +11,9 @@ It does this by providing a precompiled binary that is C-compatible, which then 
 
 | Specification Version | FMU Interface | Languages        | Binaries                 |
 | --------------------- | ------------- | ---------------- | ------------------------ |
-| FMI3                  |               |                  |                          |
+| FMI3                  | Co-Simulation | Python, C#, Java | win64, linux64, darwin64 |
 | FMI2                  | Co-Simulation | Python, C#, Java | win64, linux64, darwin64 |
-| FMI1                  |               |                  |                          |
-
+| FMI1                  | x             | x                | x                        |
 
 Examples of generated FMUs can be found in the [unifmu_examples](https://github.com/INTO-CPS-Association/unifmu_examples) repo.
 
@@ -96,6 +95,137 @@ For example the tree below shows the placeholder FMU generated when implementing
 Like the file structure, the workflow for modifying FMUs varies depending on the implementation language.
 Depending on the language a `README.md` is placed in the root of the generated FMU, which serves as documentation for the particular language.
 For reference the `README.md` copied into Python FMUs looks like [README.md](assets/python/README.md).
+
+## Supported Features
+
+### FMI3
+
+| Name                                | Supported | Notes |
+| ----------------------------------- | --------- | ----- |
+| fmi3GetVersion                      | ✓         |       |
+| fmi3SetDebugLogging                 | x         |       |
+| fmi3InstantiateModelExchange        | x         |       |
+| fmi3InstantiateCoSimulation         | ✓         |       |
+| fmi3InstantiateScheduledExecution   | x         |       |
+| fmi3FreeInstance                    | ✓         |       |
+| fmi3EnterInitializationMode         | ✓         |       |
+| fmi3ExitInitializationMode          | ✓         |       |
+| fmi3EnterEventMode                  | x         |       |
+| fmi3Terminate                       | ✓         |       |
+| fmi3Reset                           | ✓         |       |
+| fmi3GetFloat32                      | ✓         |       |
+| fmi3GetFloat64                      | ✓         |       |
+| fmi3GetInt8                         | ✓         |       |
+| fmi3GetUInt8                        | ✓         |       |
+| fmi3GetInt16                        | ✓         |       |
+| fmi3GetUInt16                       | ✓         |       |
+| fmi3GetInt32                        | ✓         |       |
+| fmi3GetUInt32                       | ✓         |       |
+| fmi3GetInt64                        | ✓         |       |
+| fmi3GetUInt64                       | ✓         |       |
+| fmi3GetBoolean                      | ✓         |       |
+| fmi3GetString                       | ✓         |       |
+| fmi3GetBinary                       | ✓         |       |
+| fmi3GetClock                        | ✓         |       |
+| fmi3SetFloat32                      | ✓         |       |
+| fmi3SetFloat64                      | ✓         |       |
+| fmi3SetInt8                         | ✓         |       |
+| fmi3SetUInt8                        | ✓         |       |
+| fmi3SetInt16                        | ✓         |       |
+| fmi3SetUInt16                       | ✓         |       |
+| fmi3SetInt32                        | ✓         |       |
+| fmi3SetUInt32                       | ✓         |       |
+| fmi3SetInt64                        | ✓         |       |
+| fmi3SetUInt64                       | ✓         |       |
+| fmi3SetBoolean                      | ✓         |       |
+| fmi3SetString                       | ✓         |       |
+| fmi3SetBinary                       | ✓         |       |
+| fmi3SetClock                        | x         |       |
+| fmi3GetNumberOfVariableDependencies | x         |       |
+| fmi3GetVariableDependencies         | x         |       |
+| fmi3GetFMUState                     | ✓         |       |
+| fmi3SetFMUState                     | ✓         |       |
+| fmi3FreeFMUState                    | ✓         |       |
+| fmi3SerializedFMUStateSize          | ✓         |       |
+| fmi3SerializeFMUState               | ✓         |       |
+| fmi3DeserializeFMUState             | ✓         |       |
+| fmi3GetDirectionalDerivative        | x         |       |
+| fmi3GetAdjointDerivative            | x         |       |
+| fmi3EnterConfigurationMode          | x         |       |
+| fmi3ExitConfigurationMode           | x         |       |
+| fmi3GetIntervalDecimal              | x         |       |
+| fmi3GetIntervalFraction             | x         |       |
+| fmi3GetShiftDecimal                 | x         |       |
+| fmi3GetShiftFraction                | x         |       |
+| fmi3SetIntervalDecimal              | x         |       |
+| fmi3SetIntervalFraction             | x         |       |
+| fmi3SetShiftDecimal                 | x         |       |
+| fmi3SetShiftFraction                | x         |       |
+| fmi3EvaluateDiscreteStates          | x         |       |
+| fmi3UpdateDiscreteStates            | x         |       |
+| fmi3EnterContinuousTimeMode         | x         |       |
+| fmi3CompletedIntegratorStep         | x         |       |
+| fmi3SetTime                         | x         |       |
+| fmi3SetContinuousStates             | x         |       |
+| fmi3GetContinuousStateDerivatives   | x         |       |
+| fmi3GetEventIndicators              | x         |       |
+| fmi3GetContinuousStates             | x         |       |
+| fmi3GetNominalsOfContinuousStates   | x         |       |
+| fmi3GetNumberOfEventIndicators      | x         |       |
+| fmi3GetNumberOfContinuousStates     | x         |       |
+| fmi3EnterStepMode                   | x         |       |
+| fmi3GetOutputDerivatives            | x         |       |
+| fmi3DoStep                          | x         |       |
+| fmi3ActivateModelPartition          | x         |       |
+
+### FMI2
+
+| Name                              | Supported | Notes |
+| --------------------------------- | --------- | ----- |
+| fmi2GetTypesPlatform              | ✓         |       |
+| fmi2GetVersion                    | ✓         |       |
+| fmi2SetDebugLogging               | x         |       |
+| fmi2Instantiate                   | ✓         |       |
+| fmi2FreeInstance                  | ✓         |       |
+| fmi2SetupExperiment               | ✓         |       |
+| fmi2EnterInitializationMode       | ✓         |       |
+| fmi2ExitInitializationMode        | ✓         |       |
+| fmi2Terminate                     | ✓         |       |
+| fmi2Reset                         | ✓         |       |
+| fmi2GetReal                       | ✓         |       |
+| fmi2GetInteger                    | ✓         |       |
+| fmi2GetBoolean                    | ✓         |       |
+| fmi2GetString                     | ✓         |       |
+| fmi2SetReal                       | ✓         |       |
+| fmi2SetInteger                    | ✓         |       |
+| fmi2SetBoolean                    | ✓         |       |
+| fmi2SetString                     | ✓         |       |
+| fmi2GetFMUstate                   | x         |       |
+| fmi2SetFMUstate                   | x         |       |
+| fmi2FreeFMUstate                  | x         |       |
+| fmi2SerializedFMUstateSize        | x         |       |
+| fmi2SerializeFMUstate             | x         |       |
+| fmi2DeSerializeFMUstate           | x         |       |
+| fmi2GetDirectionalDerivative      | x         |       |
+| fmi2EnterEventMode                | x         |       |
+| fmi2NewDiscreteStates             | x         |       |
+| fmi2EnterContinuousTimeMode       | x         |       |
+| fmi2CompletedIntegratorStep       | x         |       |
+| fmi2SetTime                       | x         |       |
+| fmi2SetContinuousStates           | x         |       |
+| fmi2GetDerivatives                | x         |       |
+| fmi2GetEventIndicators            | x         |       |
+| fmi2GetContinuousStates           | x         |       |
+| fmi2GetNominalsOfContinuousStates | x         |       |
+| fmi2SetRealInputDerivatives       | x         |       |
+| fmi2GetRealOutputDerivatives      | x         |       |
+| fmi2DoStep                        | x         |       |
+| fmi2CancelStep                    | x         |       |
+| fmi2GetStatus                     | x         |       |
+| fmi2GetRealStatus                 | x         |       |
+| fmi2GetIntegerStatus              | x         |       |
+| fmi2GetBooleanStatus              | x         |       |
+| fmi2GetStringStatus               | x         |       |
 
 ## Citing the tool
 

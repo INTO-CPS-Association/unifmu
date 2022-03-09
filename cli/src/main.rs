@@ -90,7 +90,14 @@ fn main() {
                 exit(-1);
             }
 
-            // let path = path.canonicalize().unwrap();
+            let md_path = path.join("modelDescription.xml");
+
+            info!("Attempting to locate 'modelDescription.xml' at path {}", "");
+
+            if !md_path.exists() {
+                error!("Unable to locate 'modelDescription.xml' inside the FMU");
+                exit(-1);
+            }
 
             info!(
                 "validating the following FMU {:?} with the following checks {:?}",
