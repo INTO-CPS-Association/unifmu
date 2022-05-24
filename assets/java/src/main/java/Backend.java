@@ -110,7 +110,7 @@ public class Backend {
 
                     case FMI2DOSTEP: {
                         var c = command.getFmi2DoStep();
-                        var res = model.fmi2DoStep(c.getCurrentTime(), c.getStepSize(), c.getNoStepPrior());
+                        var res = model.fmi2DoStep(c.getCurrentTime(), c.getStepSize(), c.getNoSetFmuStatePriorToCurrentPoint());
                         reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
                                 .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
                                 .build();
