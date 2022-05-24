@@ -11,14 +11,19 @@ use unifmu::{
     Language,
 };
 
+static ABOUT: &'static str = "
+Implement Functional Mock-up units (FMUs) in various source languages.
+
+* Source:   https://github.com/INTO-CPS-Association/unifmu
+* Examples: https://github.com/INTO-CPS-Association/unifmu_examples";
+
 #[derive(Debug, Parser)]
-#[clap(author, version, about, long_about = None)]
+#[clap(author, version, about = ABOUT)]
 struct Arguments {
     #[clap(subcommand)]
     cmd: Command,
 }
 
-/// Implement Functional Mock-up units (FMUs) in various source languages
 #[derive(Subcommand, Debug)]
 enum Command {
     /// Create a new FMU using the specified source language
@@ -70,7 +75,7 @@ fn main() {
             zipped,
         } => match generate(&language, &fmu_version, &outpath, zipped) {
             Ok(_) => {
-                info!("the FMU was generated succesfully");
+                info!("the FMU was generated successfully");
             }
             Err(e) => {
                 error!("an error ocurred during the generation of the FMU: {:?}", e);
