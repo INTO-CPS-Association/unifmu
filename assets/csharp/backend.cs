@@ -82,7 +82,7 @@ namespace Launch
                     case Fmi2Command.CommandOneofCase.Fmi2DoStep:
                         {
                             var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2DoStep(command.Fmi2DoStep.CurrentTime, command.Fmi2DoStep.StepSize, command.Fmi2DoStep.NoStepPrior);
+                            result.Status = model.Fmi2DoStep(command.Fmi2DoStep.CurrentTime, command.Fmi2DoStep.StepSize, command.Fmi2DoStep.NoSetFmuStatePriorToCurrentPoint);
                             message = result;
                         }
 
