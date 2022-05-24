@@ -200,12 +200,12 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](ass
 | fmi2SetInteger                    | ✓         |       |
 | fmi2SetBoolean                    | ✓         |       |
 | fmi2SetString                     | ✓         |       |
-| fmi2GetFMUstate                   | x         |       |
-| fmi2SetFMUstate                   | x         |       |
-| fmi2FreeFMUstate                  | x         |       |
-| fmi2SerializedFMUstateSize        | x         |       |
-| fmi2SerializeFMUstate             | x         |       |
-| fmi2DeSerializeFMUstate           | x         |       |
+| fmi2GetFMUstate                   | ✓         |       |
+| fmi2SetFMUstate                   | ✓         |       |
+| fmi2FreeFMUstate                  | ✓         |       |
+| fmi2SerializedFMUstateSize        | ✓        |       |
+| fmi2SerializeFMUstate             | ✓        |       |
+| fmi2DeSerializeFMUstate           | ✓         |       |
 | fmi2GetDirectionalDerivative      | x         |       |
 | fmi2EnterEventMode                | x         |       |
 | fmi2NewDiscreteStates             | x         |       |
@@ -219,7 +219,7 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](ass
 | fmi2GetNominalsOfContinuousStates | x         |       |
 | fmi2SetRealInputDerivatives       | x         |       |
 | fmi2GetRealOutputDerivatives      | x         |       |
-| fmi2DoStep                        | x         |       |
+| fmi2DoStep                        | ✓         |       |
 | fmi2CancelStep                    | x         |       |
 | fmi2GetStatus                     | x         |       |
 | fmi2GetRealStatus                 | x         |       |
