@@ -1,3 +1,0 @@
-linux = ["docker-compose", "run", "backend", "dotnet", "run"]
-macos = ["docker-compose", "run", "backend", "python", "deploy.py"]
-windows = ["docker-compose", "run", "backend", "python", "deploy.py"]
