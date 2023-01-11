@@ -92,9 +92,11 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┗ 📜modelDescription.xml
 ```
 
+## Language specific documentation
+
 Like the file structure, the workflow for modifying FMUs varies depending on the implementation language.
 Depending on the language a `README.md` is placed in the root of the generated FMU, which serves as documentation for the particular language.
-For reference the `README.md` copied into Python FMUs looks like [README.md](assets/python/README.md).
+For reference the `README.md` copied into Python FMUs looks like [README.md](https://github.com/INTO-CPS-Association/unifmu/blob/f921f645d420c236464330abef79de5ce76bdf6b/assets/python/fmi3/README.md).
 
 ## Supported Features
 
