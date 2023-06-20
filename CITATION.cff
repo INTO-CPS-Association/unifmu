@@ -2,32 +2,32 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 preferred-citation:
   type: conference-paper
-authors:
-- family-names: "Legaard"
-  given-names: "Christian"
-- family-names: "Tola"
-  given-names: "Daniella"
-- family-names: "Schranz"
-  given-names: "Thomas"
-- family-names: "Macedo"
-  given-names: "Hugo Daniel"
-- family-names: "Larsen"
-  given-names: "Peter Gorm"
-title: "A Universal Mechanism for Implementing Functional Mock-up Units"
-conference:
-  name: "11th International Conference on Simulation and Modeling Methodologies, Technologies and Applications: SIMULTECH 2021"
-collection-title: "Proceedings of the 11th International Conference on Simulation and Modeling Methodologies, Technologies and Applications, SIMULTECH 2021, Online Streaming, July 7-9, 2021"
-editors:
-- family-names: "Wagner"
-  given-names: "Gerd"
-- family-names: "Werner"
-  given-names: "Frank"
-- family-names: "Ören"
-  given-names: "Tuncer I. "
-- family-names: "De Rango"
-  given-names: "Floriano."
-publisher: "SCITEPRESS Digital Library"
-start: 121 # first page number
-end: 129 # last page number
-month: 7
-year: 2021
+  authors:
+  - family-names: "Legaard"
+    given-names: "Christian"
+  - family-names: "Tola"
+    given-names: "Daniella"
+  - family-names: "Schranz"
+    given-names: "Thomas"
+  - family-names: "Macedo"
+    given-names: "Hugo Daniel"
+  - family-names: "Larsen"
+    given-names: "Peter Gorm"
+  title: "A Universal Mechanism for Implementing Functional Mock-up Units"
+  conference:
+    name: "11th International Conference on Simulation and Modeling Methodologies, Technologies and Applications: SIMULTECH 2021"
+  collection-title: "Proceedings of the 11th International Conference on Simulation and Modeling Methodologies, Technologies and Applications, SIMULTECH 2021, Online Streaming, July 7-9, 2021"
+  editors:
+  - family-names: "Wagner"
+    given-names: "Gerd"
+  - family-names: "Werner"
+    given-names: "Frank"
+  - family-names: "Ören"
+    given-names: "Tuncer I. "
+  - family-names: "De Rango"
+    given-names: "Floriano."
+  publisher: "SCITEPRESS Digital Library"
+  start: 121 # first page number
+  end: 129 # last page number
+  month: 7
+  year: 2021
