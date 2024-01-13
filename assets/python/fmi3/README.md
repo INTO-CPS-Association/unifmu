@@ -87,7 +87,7 @@ python3 -m pip install numpy
 The easiest way to install this is using pip:**
 
 ```
-python3 -m pip install protobuf
+python3 -m pip install protobuf==3.20.3
 ```
 
 # File structure
