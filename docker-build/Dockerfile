@@ -5,21 +5,22 @@ ARG DEBIAN_FRONTEND=noninteractive
 # get system wide dependencies
 RUN apt -qq -y update
 RUN apt -qq -y install \
-    mingw-w64 \
-    # build-essential \ 
-    clang \
-    curl \
-    cmake\
-    git\
-    libxml2-dev\
-    libssl-dev \
-    libz-dev \
-    zip \
-    unzip
+  mingw-w64 \
+  # build-essential \
+  clang \
+  curl \
+  cmake\
+  git\
+  libxml2-dev\
+  libssl-dev \
+  libz-dev \
+  zip \
+  unzip \
+  xz-utils
 
 # install protoc
-RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.17.3/protoc-3.17.3-linux-x86_64.zip
-RUN unzip -oq protoc-3.17.3-linux-x86_64.zip -d /usr
+RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.19.4/protoc-3.19.4-linux-x86_64.zip
+RUN unzip -oq protoc-3.19.4-linux-x86_64.zip -d /usr
 
 # get macos toolchain
 WORKDIR /usr/

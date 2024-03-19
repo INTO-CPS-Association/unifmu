@@ -9,11 +9,11 @@ While this allows efficient execution of a simulation, it is a significant limit
 UniFMU is a command line tool that facilitates the implementation of FMUs in other popular languages that would otherwise not be able to produce C-compatible binaries.
 It does this by providing a precompiled binary that is C-compatible, which then dispatches calls to the implementation of the model in the target language.
 
-| Specification Version | FMU Interface | Languages        | Binaries                 |
-| --------------------- | ------------- | ---------------- | ------------------------ |
-| FMI3                  | Co-Simulation | Python, C#, Java | win64, linux64, darwin64 |
-| FMI2                  | Co-Simulation | Python, C#, Java | win64, linux64, darwin64 |
-| FMI1                  | x             | x                | x                        |
+| Specification Version |  FMU Interface  |  Languages         |  Binaries                  |
+| --------------------- | --------------- | ------------------ | -------------------------  |
+| FMI3 (_in progress_)  | (Co-Simulation) | (Python, C#, Java) | (win64, linux64, darwin64) |
+| FMI2                  |  Co-Simulation  |  Python, C#, Java  |  win64, linux64, darwin64  |
+| FMI1                  |  x              |  x                 |  x                         |
 
 Examples of generated FMUs can be found in the [unifmu_examples](https://github.com/INTO-CPS-Association/unifmu_examples) repo.
 
@@ -27,23 +27,24 @@ It is a single executable that bundles all assets used during FMU generation as 
 To display the synopsis use the `--help` flag.
 
 ```
-UniFMU 0.0.6
-Implement 'Functional Mock-up units' (FMUs) in various source languages.
+unifmu 0.0.8
+
+Implement Functional Mock-up units (FMUs) in various source languages.
+
+* Source:   https://github.com/INTO-CPS-Association/unifmu
+* Examples: https://github.com/INTO-CPS-Association/unifmu_examples
 
 USAGE:
-    unifmu.exe <SUBCOMMAND>
+    unifmu <SUBCOMMAND>
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+OPTIONS:
+    -h, --help       Print help information
+    -V, --version    Print version information
 
 SUBCOMMANDS:
-    generate    Create a new FMU using the specified source language
-    help        Prints this message or the help of the given subcommand(s)
-    validate
-
+    generate     Create a new FMU using the specified source language
+    help         Print this message or the help of the given subcommand(s)
 ```
-
 The command uses _git-style_ subcommands, an example being `generate`.
 Help for the individual commands can be inquired by appending the `--help` after the name of the subcommand.
 
@@ -51,17 +52,16 @@ Help for the individual commands can be inquired by appending the `--help` after
 Create a new FMU using the specified source language
 
 USAGE:
-    unifmu.exe generate [FLAGS] <language> <outpath>
-
-FLAGS:
-    -d, --dockerize    Configure the generated model to deploy and execute code inside a 'Docker' container
-    -h, --help         Prints help information
-    -V, --version      Prints version information
-    -z, --zipped       Compress the generated FMU as a zip-archive and store with '.fmu' extension
+    unifmu generate [OPTIONS] <LANGUAGE> <FMU_VERSION> <OUTPATH>
 
 ARGS:
-    <language>    Source language of the generated FMU [possible values: Python, CSharp, Matlab, Java]
-    <outpath>
+    <LANGUAGE>       Source language of the generated FMU [possible values: python, c-sharp, java]
+    <FMU_VERSION>    Version of the FMI specification to target [possible values: fmi2, fmi3 (in progress)]
+    <OUTPATH>        Output directory or name of the FMU archive if "--zipped" is passed
+
+OPTIONS:
+    -h, --help      Print help information
+    -z, --zipped    Compress the generated FMU as a zip-archive and store with '.fmu' extension
 ```
 
 The generate command can be used to create a new FMU:
@@ -84,7 +84,7 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┃ ┃ ┗ 📜unifmu.dll
  ┣ 📂resources
  ┃ ┣ 📂schemas
- ┃ ┃ ┗ 📜unifmu_fmi2_pb2.py
+ ┃ ┃ ┗ 📜fmi2_messages_pb2.py
  ┃ ┣ 📜backend.py
  ┃ ┣ 📜launch.toml
  ┃ ┣ 📜model.py
@@ -100,7 +100,57 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](htt
 
 ## Supported Features
 
-### FMI3
+### FMI2
+
+| Name                              | Supported | Notes |
+| --------------------------------- | --------- | ----- |
+| fmi2GetTypesPlatform              | ✓         |       |
+| fmi2GetVersion                    | ✓         |       |
+| fmi2SetDebugLogging               | x         |       |
+| fmi2Instantiate                   | ✓         |       |
+| fmi2FreeInstance                  | ✓         |       |
+| fmi2SetupExperiment               | ✓         |       |
+| fmi2EnterInitializationMode       | ✓         |       |
+| fmi2ExitInitializationMode        | ✓         |       |
+| fmi2Terminate                     | ✓         |       |
+| fmi2Reset                         | ✓         |       |
+| fmi2GetReal                       | ✓         |       |
+| fmi2GetInteger                    | ✓         |       |
+| fmi2GetBoolean                    | ✓         |       |
+| fmi2GetString                     | ✓         |       |
+| fmi2SetReal                       | ✓         |       |
+| fmi2SetInteger                    | ✓         |       |
+| fmi2SetBoolean                    | ✓         |       |
+| fmi2SetString                     | ✓         |       |
+| fmi2GetFMUstate                   | ✓         |       |
+| fmi2SetFMUstate                   | ✓         |       |
+| fmi2FreeFMUstate                  | ✓         |       |
+| fmi2SerializedFMUstateSize        | ✓        |       |
+| fmi2SerializeFMUstate             | ✓        |       |
+| fmi2DeSerializeFMUstate           | ✓         |       |
+| fmi2GetDirectionalDerivative      | x         |       |
+| fmi2EnterEventMode                | x         |       |
+| fmi2NewDiscreteStates             | x         |       |
+| fmi2EnterContinuousTimeMode       | x         |       |
+| fmi2CompletedIntegratorStep       | x         |       |
+| fmi2SetTime                       | x         |       |
+| fmi2SetContinuousStates           | x         |       |
+| fmi2GetDerivatives                | x         |       |
+| fmi2GetEventIndicators            | x         |       |
+| fmi2GetContinuousStates           | x         |       |
+| fmi2GetNominalsOfContinuousStates | x         |       |
+| fmi2SetRealInputDerivatives       | x         |       |
+| fmi2GetRealOutputDerivatives      | x         |       |
+| fmi2DoStep                        | ✓         |       |
+| fmi2CancelStep                    | x         |       |
+| fmi2GetStatus                     | x         |       |
+| fmi2GetRealStatus                 | x         |       |
+| fmi2GetIntegerStatus              | x         |       |
+| fmi2GetBooleanStatus              | x         |       |
+| fmi2GetStringStatus               | x         |       |
+
+
+### FMI3 (in progress)
 
 | Name                                | Supported | Notes |
 | ----------------------------------- | --------- | ----- |
@@ -180,60 +230,44 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](htt
 | fmi3DoStep                          | x         |       |
 | fmi3ActivateModelPartition          | x         |       |
 
-### FMI2
+## Building and deployment
 
-| Name                              | Supported | Notes |
-| --------------------------------- | --------- | ----- |
-| fmi2GetTypesPlatform              | ✓         |       |
-| fmi2GetVersion                    | ✓         |       |
-| fmi2SetDebugLogging               | x         |       |
-| fmi2Instantiate                   | ✓         |       |
-| fmi2FreeInstance                  | ✓         |       |
-| fmi2SetupExperiment               | ✓         |       |
-| fmi2EnterInitializationMode       | ✓         |       |
-| fmi2ExitInitializationMode        | ✓         |       |
-| fmi2Terminate                     | ✓         |       |
-| fmi2Reset                         | ✓         |       |
-| fmi2GetReal                       | ✓         |       |
-| fmi2GetInteger                    | ✓         |       |
-| fmi2GetBoolean                    | ✓         |       |
-| fmi2GetString                     | ✓         |       |
-| fmi2SetReal                       | ✓         |       |
-| fmi2SetInteger                    | ✓         |       |
-| fmi2SetBoolean                    | ✓         |       |
-| fmi2SetString                     | ✓         |       |
-| fmi2GetFMUstate                   | ✓         |       |
-| fmi2SetFMUstate                   | ✓         |       |
-| fmi2FreeFMUstate                  | ✓         |       |
-| fmi2SerializedFMUstateSize        | ✓        |       |
-| fmi2SerializeFMUstate             | ✓        |       |
-| fmi2DeSerializeFMUstate           | ✓         |       |
-| fmi2GetDirectionalDerivative      | x         |       |
-| fmi2EnterEventMode                | x         |       |
-| fmi2NewDiscreteStates             | x         |       |
-| fmi2EnterContinuousTimeMode       | x         |       |
-| fmi2CompletedIntegratorStep       | x         |       |
-| fmi2SetTime                       | x         |       |
-| fmi2SetContinuousStates           | x         |       |
-| fmi2GetDerivatives                | x         |       |
-| fmi2GetEventIndicators            | x         |       |
-| fmi2GetContinuousStates           | x         |       |
-| fmi2GetNominalsOfContinuousStates | x         |       |
-| fmi2SetRealInputDerivatives       | x         |       |
-| fmi2GetRealOutputDerivatives      | x         |       |
-| fmi2DoStep                        | ✓         |       |
-| fmi2CancelStep                    | x         |       |
-| fmi2GetStatus                     | x         |       |
-| fmi2GetRealStatus                 | x         |       |
-| fmi2GetIntegerStatus              | x         |       |
-| fmi2GetBooleanStatus              | x         |       |
-| fmi2GetStringStatus               | x         |       |
+
+### Building during development
+
+Building for local machine (with Windows as the example). This is a good method to locally test if the program is running as it should, before cross-compiling to different OSs.
+
+1. make sure you have the following installed on your computer:
+
+    o [rust](https://www.rust-lang.org/tools/install)
+    
+    o a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+
+2. git clone the `unifmu` repository.
+
+3. make the changes you want.
+
+4. install the rust toolchain for your operating systems, e.g. `rustup target add x86_64-pc-windows-msvc` (msvc is the microsoft C-compiler).
+
+5. build the project using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate a unifmu.exe in the folder `target/release`.
+
+### Building for deployment
+
+This method should be followed when building the tool to be deployed for different OSs (windows, macos, linux).
+
+1. you need to have gone through the steps in the previous instructions for the development build.
+
+2. have [docker](https://docs.docker.com/engine/install/) installed on your computer.
+
+3. build the docker image using `docker build -t unifmu-docker docker-build`. `unifmu-docker` is the name of the container, and `docker-build` is the directory where the Dockerfile is (assuming you are running this command from the root of the unifmu repository).
+
+4. build the unifmu project in docker using `docker run --name builder -it -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker`. This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
 
 ## Citing the tool
 
 When citing the tool, please cite the following paper:
 
-- Legaard, Christian M., Daniella Tola, Thomas Schranz, Hugo Daniel Macedo, and Peter Gorm Larsen. “A Universal Mechanism for Implementing Functional Mock-up Units,” to appear. SIMULTECH 2021. Virtual Event, 2021.
+- Legaard, C. M., Tola, D., Schranz, T., Macedo, H. D., & Larsen, P. G. (2021). A Universal Mechanism for Implementing Functional Mock-up Units. In G. Wagner, F. Werner, T. I. Ören, & F. D. Rango (Eds.), Proceedings of the 11th International Conference on Simulation and Modeling Methodologies, Technologies and Applications, SIMULTECH 2021, Online Streaming, July 7-9, 2021 (pp. 121-129). SCITEPRESS Digital Library. https://doi.org/10.5220/0010577601210129
 
 Bibtex:
 

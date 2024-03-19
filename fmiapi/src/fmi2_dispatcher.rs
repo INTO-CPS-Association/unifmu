@@ -446,7 +446,7 @@ impl Fmi2CommandDispatcher {
         &mut self,
         msg: &S,
     ) -> Result<R, DispatcherError> {
-        let bytes_send: Bytes = msg.encode_to_vec().into();
+        let _bytes_send: Bytes = msg.encode_to_vec().into();
 
         match self.send(msg) {
             Ok(_) => (),
@@ -461,7 +461,7 @@ impl Fmi2CommandDispatcher {
 
         match self.rt.block_on(self.socket.send(bytes_send.into())) {
             Ok(_) => Ok(()),
-            Err(e) => Err(DispatcherError::SocketError),
+            Err(_e) => Err(DispatcherError::SocketError),
         }
     }
 
