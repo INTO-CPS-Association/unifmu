@@ -1,4 +1,4 @@
-use clap::ArgEnum;
+use clap::ValueEnum;
 use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use log::info;
@@ -13,15 +13,15 @@ use crate::utils::zip_dir;
 #[macro_use]
 extern crate dlopen_derive;
 
-#[derive(ArgEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug)]
 pub enum Language {
     Python,
     CSharp,
-    Matlab,
+    // Matlab,
     Java,
 }
 
-#[derive(ArgEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug)]
 pub enum FmiFmuVersion {
     FMI2,
     FMI3,
@@ -245,7 +245,7 @@ pub fn generate(
 
         Language::CSharp => copy_to_resources(&CSHARPASSETS),
 
-        Language::Matlab => todo!(),
+        // Language::Matlab => todo!(),
 
         Language::Java => copy_to_resources(&JAVAASSETS),
     };

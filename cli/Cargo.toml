@@ -6,7 +6,7 @@ version = "0.0.8"
 
 [dependencies]
 
-clap = { version = "3.0.14", features = ["derive"] }
+clap = { version = "4.5.3", features = ["derive"] }
 dlopen = "*"
 dlopen_derive = "*"
 env_logger = "*"

@@ -58,7 +58,7 @@ if __name__ == "__main__":
             )
         elif group == "Fmi2SetDebugLogging":
             result = Fmi2StatusReturn()
-            result.status = model.fmiSetDebugLogging(data.categores, data.logging_on)
+            result.status = model.fmi2SetDebugLogging(data.categories, data.logging_on)
         elif group == "Fmi2SetupExperiment":
             result = Fmi2StatusReturn()
             result.status = model.fmi2SetupExperiment(

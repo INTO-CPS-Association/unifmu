@@ -1,5 +1,5 @@
 use clap;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use env_logger::Builder;
 use log::{error, info};
 use std::fs::File;
@@ -32,15 +32,15 @@ enum Command {
     /// Create a new FMU using the specified source language
     Generate {
         /// Source language of the generated FMU
-        #[clap(arg_enum)]
+        #[clap(value_enum)]
         language: Language,
-
-        /// Version of the FMI specification to target
-        #[clap(arg_enum)]
-        fmu_version: FmiFmuVersion,
 
         /// Output directory or name of the FMU archive if "--zipped" is passed
         outpath: PathBuf,
+
+        /// Version of the FMI specification to target
+        #[clap(value_enum, default_value_t=FmiFmuVersion::FMI2)]
+        fmu_version: FmiFmuVersion,
 
         /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
         #[clap(short, long)]
