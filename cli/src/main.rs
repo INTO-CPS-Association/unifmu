@@ -1,10 +1,8 @@
 use clap;
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 use env_logger::Builder;
 use log::{error, info};
-use std::fs::File;
 use std::{path::PathBuf, process::exit};
-use tempfile::tempdir;
 use unifmu::FmiFmuVersion;
 use unifmu::{
     // benchmark::{benchmark, BenchmarkConfig},
@@ -12,7 +10,6 @@ use unifmu::{
     // validation::{validate, ValidationConfig},
     Language,
 };
-use zip::ZipArchive;
 
 static ABOUT: &'static str = "
 Implement Functional Mock-up units (FMUs) in various source languages.
