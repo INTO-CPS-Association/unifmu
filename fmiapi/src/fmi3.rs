@@ -49,7 +49,7 @@ fn c2s(c: *const c_char) -> String {
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 
-static VERSION: &str = "2.0\0";
+static VERSION: &str = "3.0\0";
 
 #[no_mangle]
 pub extern "C" fn fmi3GetVersion() -> *const c_char {

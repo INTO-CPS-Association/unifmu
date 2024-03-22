@@ -37,6 +37,9 @@ class Model:
         self._update_outputs()
         return Fmi2Status.ok
 
+    def fmi2SetDebugLogging(self, categories, logging_on):
+        return Fmi2Status.ok
+
     def fmi2EnterInitializationMode(self):
         return Fmi2Status.ok
 

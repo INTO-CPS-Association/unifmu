@@ -10,6 +10,7 @@
     <Category name="logAll" />
   </LogCategories>
   <ModelVariables>
+  <Float64 name="time" valueReference="0" causality="independent" variability="continuous" description="Simulation time"/>
     <Float64 name="real_a" valueReference="0" variability="continuous" causality="input" start="0.0" />
     <Float64 name="real_b" valueReference="1" variability="continuous" causality="input" start="0.0" />
     <Float64 name="real_c" valueReference="2" variability="continuous" causality="output" initial="calculated" />

@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
     fs::read_to_string,
-    path::{Path, PathBuf},
+    path::{Path},
 };
 
 use crate::fmi2_dispatcher::Fmi2CommandDispatcher;

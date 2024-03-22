@@ -1,9 +1,9 @@
-use clap::ArgEnum;
+use clap::ValueEnum;
 use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use log::info;
 use rust_embed::RustEmbed;
-use std::{fs::File, path::Path};
+use std::{fs::File, path::{Path, PathBuf}};
 use tempfile::TempDir;
 use walkdir::WalkDir;
 use zip::{result::ZipError, CompressionMethod};
@@ -13,15 +13,15 @@ use crate::utils::zip_dir;
 #[macro_use]
 extern crate dlopen_derive;
 
-#[derive(ArgEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug)]
 pub enum Language {
     Python,
     CSharp,
-    Matlab,
+    // Matlab,
     Java,
 }
 
-#[derive(ArgEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug)]
 pub enum FmiFmuVersion {
     FMI2,
     FMI3,
@@ -245,7 +245,7 @@ pub fn generate(
 
         Language::CSharp => copy_to_resources(&CSHARPASSETS),
 
-        Language::Matlab => todo!(),
+        // Language::Matlab => todo!(),
 
         Language::Java => copy_to_resources(&JAVAASSETS),
     };
@@ -253,9 +253,11 @@ pub fn generate(
     match zipped {
         // zip to temporary, change extension from 'zip' to 'fmu', then copy to output directory
         true => {
-            info!("Compressing contents into archive with path {:?}", outpath);
+            let mut zipped_fmu_path = PathBuf::from(outpath);
+            zipped_fmu_path.set_extension("fmu");
+            info!("Compressing contents into archive with path {:?}", zipped_fmu_path);
 
-            let file = match File::create(&outpath) {
+            let file = match File::create(&zipped_fmu_path) {
                 Ok(f) => f,
                 Err(_) => return Err(GenerateError::FileExists),
             };
