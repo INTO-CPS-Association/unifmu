@@ -70,7 +70,7 @@ public class Model
         return Fmi2Status.Fmi2Ok;
     }
 
-    public Fmi2Status FmiSetReal(IEnumerable<uint> references, IEnumerable<double> values)
+    public Fmi2Status Fmi2SetReal(IEnumerable<uint> references, IEnumerable<double> values)
     {
         return this.SetValueReflection(references, values);
     }
