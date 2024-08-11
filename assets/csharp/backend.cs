@@ -92,7 +92,7 @@ namespace Launch
                         {
                             var result = new Fmi2StatusReturn();
                             result = new Fmi2StatusReturn();
-                            result.Status = model.FmiSetReal(command.Fmi2SetReal.References, command.Fmi2SetReal.Values);
+                            result.Status = model.Fmi2SetReal(command.Fmi2SetReal.References, command.Fmi2SetReal.Values);
                             message = result;
                         }
                         break;

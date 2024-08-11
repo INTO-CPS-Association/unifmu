@@ -261,7 +261,7 @@ This method should be followed when building the tool to be deployed for differe
 
 3. build the docker image using `docker build -t unifmu-docker docker-build`. `unifmu-docker` is the name of the container, and `docker-build` is the directory where the Dockerfile is (assuming you are running this command from the root of the unifmu repository).
 
-4. build the unifmu project in docker using `docker run --name builder -it -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker`. This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
+4. build the unifmu project in docker using `docker run --name builder -it -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker` followed by `./docker-build/build_all.sh`. This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
 
 ## Citing the tool
 
