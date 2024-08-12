@@ -66,6 +66,10 @@ message Fmi3EnterInitializationMode {
 
 message Fmi3ExitInitializationMode {}
 
+message Fmi3EnterStepMode {}
+
+message Fmi3EnterEventMode {}
+
 message Fmi3FreeInstance {}
 
 message Fmi3Terminate {}
@@ -130,6 +134,10 @@ message Fmi3GetString {
 }
 
 message FmiGetBinary {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3GetClock {
   repeated uint32 value_references = 1;
 }
 
@@ -218,6 +226,11 @@ message Fmi3SetString {
 message FmiSetBinary {
   repeated uint32 value_references = 1;
   repeated bytes values = 2;
+}
+
+message Fmi3SetClock {
+  repeated uint32 value_references = 1;
+  repeated bool values = 2;
 }
 
 // ----------------------- FMI3 Return Values ----------------------
@@ -325,6 +338,29 @@ message Fmi3SerializeFmuStateReturn {
   bytes state = 2;
 }
 
+message Fmi3GetClockReturn {
+  Fmi3Status status = 1;
+  repeated bool values = 2;
+}
+
+// ----------------------- FMI3 Clock Related Functions -----------------------
+
+enum Fmi3IntervalQualifier {
+  FMI3_INTERVALNOTYETKNOWN = 0;
+  FMI3_INTERVALUNCHANGED=1;
+  FMI3_INTEVALCHANGED=2;
+}
+
+message Fmi3GetIntervalDecimal {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3GetIntervalDecimalReturn {
+  Fmi3Status status = 1;
+  repeated double interval = 2;
+  repeated int32 qualifier = 3; 
+}
+
 
 
 // ----------------------- FMI Command Wrapper ----------------------
@@ -375,5 +411,10 @@ message Fmi3Command {
     FmiSetBinary FmiSetBinary = 41;
     Fmi3SerializeFmuState Fmi3SerializeFmuState = 42;
     Fmi3DeserializeFmuState Fmi3DeserializeFmuState = 43;
+	Fmi3GetClock Fmi3GetClock = 44;
+	Fmi3SetClock Fmi3SetClock = 45;
+	Fmi3GetIntervalDecimal Fmi3GetIntervalDecimal = 46;
+	Fmi3EnterStepMode Fmi3EnterStepMode = 47;
+	Fmi3EnterEventMode Fmi3EnterEventMode = 48;
   }
 }
