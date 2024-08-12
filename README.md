@@ -2,6 +2,19 @@
 
 # UniFMU - Universal Functional Mock-Up Units
 
+- [UniFMU - Universal Functional Mock-Up Units](#unifmu---universal-functional-mock-up-units)
+  - [Getting the tool](#getting-the-tool)
+  - [How to use the command line interface?](#how-to-use-the-command-line-interface)
+  - [Language specific documentation](#language-specific-documentation)
+  - [Supported Features](#supported-features)
+    - [FMI2](#fmi2)
+    - [FMI3 (in progress)](#fmi3-in-progress)
+  - [Building and deployment](#building-and-deployment)
+    - [Building during development](#building-during-development)
+    - [Building for deployment](#building-for-deployment)
+  - [Citing the tool](#citing-the-tool)
+
+
 The [_Functional Mock-Up Interface_](https://fmi-standard.org/) _(FMI)_ defines an exchange format that allows models, referred to as _Functional Mock-Up Unit (FMU)_, to be shared between tools supporting the standard.
 In general, an FMU must be implemented in a programming language that can produce binaries that can be called from C, such as C itself or C++.
 While this allows efficient execution of a simulation, it is a significant limitation when prototyping models.
@@ -249,7 +262,7 @@ Building for local machine (with Windows as the example). This is a good method 
 
 4. install the rust toolchain for your operating systems, e.g. `rustup target add x86_64-pc-windows-msvc` (msvc is the microsoft C-compiler).
 
-5. build the project using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate a unifmu.exe in the folder `target/release`.
+5. build the project using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate a unifmu.exe in the folder [target/release](target/release).
 
 ### Building for deployment
 
