@@ -131,7 +131,8 @@ pub fn generate(
     let tmpdir = TempDir::new().unwrap();
 
     info!(
-        "Generating FMU for language '{:?}' with tmpdir {:?} and final output path {:?}",
+        "Generating FMU version `{:?}` for language '{:?}' with tmpdir {:?} and final output path {:?}",
+        fmu_version,
         language,
         tmpdir.path(),
         outpath
@@ -186,6 +187,12 @@ pub fn generate(
     let md = tmpdir.path().join("modelDescription.xml");
 
     info!("{:?}", &bin_win);
+    let ass = Assets::get("auto_generated/unifmu.dll");
+
+    match ass {
+        Some(_) => error!("Could not find unifmu.dll in ", &bin_win);,
+        None => println!("The asset does not exist."),
+    }
     std::fs::write(
         bin_win,
         Assets::get("auto_generated/unifmu.dll").unwrap().data,
