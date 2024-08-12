@@ -2,6 +2,7 @@ use clap::ValueEnum;
 use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use log::info;
+use log::error;
 use rust_embed::RustEmbed;
 use std::{fs::File, path::{Path, PathBuf}};
 use tempfile::TempDir;
@@ -131,7 +132,8 @@ pub fn generate(
     let tmpdir = TempDir::new().unwrap();
 
     info!(
-        "Generating FMU for language '{:?}' with tmpdir {:?} and final output path {:?}",
+        "Generating FMU version `{:?}` for language '{:?}' with tmpdir {:?} and final output path {:?}",
+        fmu_version,
         language,
         tmpdir.path(),
         outpath
@@ -186,6 +188,10 @@ pub fn generate(
     let md = tmpdir.path().join("modelDescription.xml");
 
     info!("{:?}", &bin_win);
+
+    if Assets::get("auto_generated/unifmu.dll").is_none() {
+        error!("Could not find unifmu.dll in {:?}", &bin_win);
+    }
     std::fs::write(
         bin_win,
         Assets::get("auto_generated/unifmu.dll").unwrap().data,

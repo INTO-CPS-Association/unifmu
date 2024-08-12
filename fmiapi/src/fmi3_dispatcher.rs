@@ -9,11 +9,14 @@ use crate::fmi3_messages::{
     Fmi3GetUInt16Return, Fmi3GetUInt32, Fmi3GetUInt32Return, Fmi3GetUInt64, Fmi3GetUInt64Return,
     Fmi3GetUInt8, Fmi3GetUInt8Return, Fmi3InstantiateCoSimulation, Fmi3InstantiateModelExchange,
     Fmi3Reset, Fmi3SerializeFmuState, Fmi3SerializeFmuStateReturn, Fmi3StatusReturn, Fmi3Terminate,
+	Fmi3GetClock, Fmi3GetClockReturn, Fmi3SetClock, Fmi3GetIntervalDecimal, Fmi3GetIntervalDecimalReturn,
+	Fmi3EnterStepMode, Fmi3EnterEventMode, Fmi3InstantiateScheduledExecution
 };
 
 use crate::fmi3::Fmi3Status;
 use crate::fmi3_messages::fmi3_command::Command as c_enum;
 use crate::fmi3_messages::Fmi3Command as c_obj;
+use crate::fmi3::Fmi3IntervalQualifier;
 
 use bytes::Bytes;
 use prost::Message;
@@ -62,15 +65,22 @@ impl Fmi3CommandDispatcher {
 
     // ================= FMI3 ======================
     // https://github.com/modelica/fmi-standard/blob/master/headers/fmi3FunctionTypes.h
-    pub fn fmi3InstantiateModelExchange(&mut self) -> Result<Fmi3EmptyReturn, DispatcherError> {
+    pub fn fmi3InstantiateModelExchange(
+        &mut self,
+        instance_name: String,
+        instantiation_token: String,
+        resource_path: String,
+        visible: bool,
+        logging_on: bool,
+        ) -> Result<Fmi3EmptyReturn, DispatcherError> {
         let cmd = c_obj {
             command: Some(c_enum::Fmi3InstantiateModelExchange(
                 Fmi3InstantiateModelExchange {
-                    instance_name: todo!(),
-                    instantiation_token: todo!(),
-                    resource_path: todo!(),
-                    visible: todo!(),
-                    logging_on: todo!(),
+                    instance_name,
+                    instantiation_token,
+                    resource_path,
+                    visible,
+                    logging_on,
                 },
             )),
         };
@@ -111,6 +121,30 @@ impl Fmi3CommandDispatcher {
             .map(|s| s.into())
     }
 
+    pub fn fmi3InstantiateScheduledExecution(
+        &mut self,
+        instance_name: String,
+        instantiation_token: String,
+        resource_path: String,
+        visible: bool,
+        logging_on: bool,
+    ) -> Result<Fmi3EmptyReturn, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3InstantiateScheduledExecution(
+                Fmi3InstantiateScheduledExecution {
+                    instance_name,
+                    instantiation_token,
+                    resource_path,
+                    visible,
+                    logging_on,
+                },
+            )),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3EmptyReturn>(&cmd)
+            .map(|s| s.into())
+    }
+
     pub fn fmi3EnterInitializationMode(
         &mut self,
         tolerance: Option<f64>,
@@ -139,6 +173,26 @@ impl Fmi3CommandDispatcher {
         self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
             .map(|s| s.into())
     }
+	
+	pub fn fmi3EnterEventMode(&mut self) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3EnterEventMode(
+                Fmi3EnterEventMode {},
+            )),
+        };
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
+	
+	pub fn fmi3EnterStepMode(&mut self) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3EnterStepMode(
+                Fmi3EnterStepMode {},
+            )),
+        };
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| s.into())
+    }
 
     pub fn fmi3DoStep(
         &mut self,
@@ -156,6 +210,22 @@ impl Fmi3CommandDispatcher {
 
         self.send_and_recv::<_, fmi3_messages::Fmi3DoStepReturn>(&cmd)
             .map(|s| s.status().into())
+    }
+
+    pub fn fmi3SetClock(
+        &mut self,
+        references: &[u32],
+        values: &[bool],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetClock(Fmi3SetClock {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
     }
 
     pub fn fmi3GetFloat32(
@@ -191,6 +261,27 @@ impl Fmi3CommandDispatcher {
                 (Fmi3Status::try_from(result.status).unwrap(), values)
             })
     }
+	
+	pub fn fmi3GetIntervalDecimal(
+		&mut self,
+		value_references: Vec<u32>,
+	) -> Result<(Fmi3Status, Option<Vec<f64>>, Option<Vec<i32>>), DispatcherError> {
+		let cmd = c_obj {
+			command: Some(c_enum::Fmi3GetIntervalDecimal(Fmi3GetIntervalDecimal { value_references })),
+		};
+		self.send_and_recv::<_, Fmi3GetIntervalDecimalReturn>(&cmd)
+			.map(|result| {
+				let interval = match result.interval.is_empty() {
+					true => None,
+					false => Some(result.interval),
+				};
+				let qualifier = match result.qualifier.is_empty() {
+					true => None,
+					false => Some(result.qualifier),
+				};
+				(Fmi3Status::try_from(result.status).unwrap(), interval, qualifier)
+			})
+	}
 
     pub fn fmi3GetInt8(
         &mut self,
@@ -367,6 +458,23 @@ impl Fmi3CommandDispatcher {
         value_references: Vec<u32>,
     ) -> Result<(Fmi3Status, Option<Vec<Vec<u8>>>), DispatcherError> {
         todo!()
+    }
+
+    pub fn fmi3GetClock(
+        &mut self,
+        value_references: Vec<u32>,
+    ) -> Result<(Fmi3Status, Option<Vec<bool>>), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3GetClock(Fmi3GetClock { value_references })),
+        };
+        self.send_and_recv::<_, Fmi3GetClockReturn>(&cmd)
+            .map(|result| {
+                let values = match result.values.is_empty() {
+                    true => None,
+                    false => Some(result.values),
+                };
+                (Fmi3Status::try_from(result.status).unwrap(), values)
+            })
     }
 
     pub fn fmi3Terminate(&mut self) -> Result<Fmi3Status, DispatcherError> {
