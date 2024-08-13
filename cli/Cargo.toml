@@ -20,5 +20,3 @@ tempfile = "*"
 url = "*"
 walkdir = "*"
 zip = { version = "*", default-features = false, features = ["deflate"] }
-
-common = { path = "../common" }

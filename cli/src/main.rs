@@ -5,9 +5,7 @@ use log::{error, info};
 use std::{path::PathBuf, process::exit};
 use unifmu::FmiFmuVersion;
 use unifmu::{
-    // benchmark::{benchmark, BenchmarkConfig},
     generate,
-    // validation::{validate, ValidationConfig},
     Language,
 };
 
@@ -42,21 +40,7 @@ enum Command {
         /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
         #[clap(short, long)]
         zipped: bool,
-    },
-
-    // Run a suite of checks to detect potential defects of the FMU.
-    //Commented out for now, as the only validation performed is on the provided FMI version, which currently doesn't validate properly.
-    // Validate {
-    //     /// Path to FMU directory or archive
-    //     path: PathBuf,
-    // },
-
-    // Benchmark the performance of the FMU. 
-    //Commented out for now, as it is not yet implemented.
-    // Benchmark {
-    //     /// Path to FMU directory or archive
-    //     path: PathBuf,
-    // },
+    }
 }
 
 fn main() {
@@ -83,80 +67,6 @@ fn main() {
                 error!("an error ocurred during the generation of the FMU: {:?}", e);
                 exit(-1);
             }
-        },
-        // Command::Validate { path } => {
-        //     let config = ValidationConfig::default();
-
-        //     let path = match path.is_absolute() {
-        //         true => path,
-        //         false => std::env::current_dir().unwrap().join(path),
-        //     };
-
-        //     info!("Validating FMU at location {:?}", &path);
-
-        //     if !path.exists() {
-        //         error!("Unable to open FMU, the specified path is neither a directory or a file. Make sure the file exists");
-        //         exit(-1);
-        //     };
-
-        //     let path = match path.is_dir() {
-        //         true => {
-        //             info!("Path points to a directory, treating this as an extracted FMU archive.");
-        //             path
-        //         }
-        //         false => {
-        //             let outdir = tempdir().unwrap().path().join(&path.file_stem().unwrap());
-        //             info!("Path points to a file, attempting to extract archive to temporary directory {:?}", &outdir);
-        //             let file = File::open(&path).unwrap();
-
-        //             match ZipArchive::new(file) {
-        //                 Ok(mut archive) => match archive.extract(&outdir) {
-        //                     Ok(_) => outdir,
-        //                     Err(_) => {
-        //                         error!(
-        //                             "Unable to extract the contents of FMU, the archive could not be extracted."
-        //                         );
-        //                         exit(-1);
-        //                     }
-        //                 },
-        //                 Err(_) => {
-        //                     error!(
-        //                     "Unable to extract the contents of FMU, the archive could not be opened."
-        //                 );
-        //                     exit(-1);
-        //                 }
-        //             }
-        //         }
-        //     };
-
-        //     let md_path = path.join("modelDescription.xml");
-
-        //     info!(
-        //         "Attempting to locate 'modelDescription.xml' at path {:?}",
-        //         md_path
-        //     );
-
-        //     if !md_path.exists() {
-        //         error!("Unable to locate 'modelDescription.xml' inside the FMU");
-        //         exit(-1);
-        //     }
-
-        //     info!(
-        //         "validating the following FMU {:?} with the following checks {:?}",
-        //         path, config
-        //     );
-
-        //     match validate(&path, &config) {
-        //         Ok(_) => info!("no errors detected during validation of the FMU"),
-        //         Err(e) => {
-        //             error!(
-        //                 "a defect was detected during the validation of the FMU: {:?} ",
-        //                 e
-        //             );
-        //             exit(-1);
-        //         }
-        //     }
-        // }
-        // Command::Benchmark { path } => benchmark(&path, &BenchmarkConfig::default()),
+        }
     }
 }

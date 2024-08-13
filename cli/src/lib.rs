@@ -12,7 +12,6 @@ use zip::{result::ZipError, CompressionMethod};
 
 use crate::utils::zip_dir;
 
-#[macro_use]
 extern crate dlopen_derive;
 
 #[derive(ValueEnum, Clone, Debug)]
@@ -33,9 +32,7 @@ pub enum FmiFmuVersion {
 #[folder = "../assets"]
 struct Assets;
 
-pub mod benchmark;
 pub mod utils;
-pub mod validation;
 
 struct LanguageAssets {
     fmi2_resources: Vec<(&'static str, &'static str)>,
