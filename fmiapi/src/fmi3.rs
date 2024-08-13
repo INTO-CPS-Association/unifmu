@@ -106,22 +106,23 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     instance_environment: *const c_void,
     log_message: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-    let instantiation_token = c2s(instantiation_token);
-    let resource_path = c2s(resource_path);
-
-    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
-
-    match dispatcher.fmi3InstantiateModelExchange(
-        instance_name,
-        instantiation_token,
-        resource_path,
-        visible != 0,
-        logging_on != 0,
-    ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
-        Err(_) => None,
-    }
+    // let instance_name = c2s(instance_name);
+    // let instantiation_token = c2s(instantiation_token);
+    // let resource_path = c2s(resource_path);
+    //
+    // let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
+    //
+    // match dispatcher.fmi3InstantiateModelExchange(
+    //     instance_name,
+    //     instantiation_token,
+    //     resource_path,
+    //     visible != 0,
+    //     logging_on != 0,
+    // ) {
+    //     Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
+    //     Err(_) => None,
+    // }
+    None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 type Fmi3SlaveType = Box<Fmi3Slave>;
 #[no_mangle]
@@ -179,22 +180,23 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     lock_preemption: *const c_void,
     unlock_preemption: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-    let instantiation_token = c2s(instantiation_token);
-    let resource_path = c2s(resource_path);
-
-    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
-
-    match dispatcher.fmi3InstantiateScheduledExecution(
-        instance_name,
-        instantiation_token,
-        resource_path,
-        visible != 0,
-        logging_on != 0
-    ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
-        Err(_) => None,
-    }
+    // let instance_name = c2s(instance_name);
+    // let instantiation_token = c2s(instantiation_token);
+    // let resource_path = c2s(resource_path);
+    //
+    // let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
+    //
+    // match dispatcher.fmi3InstantiateScheduledExecution(
+    //     instance_name,
+    //     instantiation_token,
+    //     resource_path,
+    //     visible != 0,
+    //     logging_on != 0
+    // ) {
+    //     Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
+    //     Err(_) => None,
+    // }
+    None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 #[no_mangle]
 pub extern "C" fn fmi3DoStep(
