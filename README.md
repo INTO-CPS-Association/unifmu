@@ -255,7 +255,7 @@ The cross compilation happens via Docker and the script can be read in [docker-b
 1. Make sure you have the following installed on your computer:
    - [rust](https://www.rust-lang.org/tools/install)
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
-   - Python to test the generated FMU.
+   - [Python](https://www.python.org/) to test the generated FMU.
 
 2. Clone the `unifmu` repository.
 
