@@ -158,3 +158,10 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 /.idea
+
+# Local scripts
+test_local.ps1
+
+# Ignore test fmu
+myfmu.fmu
+myfmu/

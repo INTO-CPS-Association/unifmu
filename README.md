@@ -250,8 +250,6 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](htt
 
 Building for local machine (with Windows as the example, and PowerShell commands for reference). This is a good method to locally test if the program is running as it should. A reference script is provided for some of the instructions below: [test_local.sh](test_local.sh)
 
-The cross compilation happens via Docker and the script can be read in [docker-build/build_all.sh](docker-build/build_all.sh)
-
 1. Make sure you have the following installed on your computer:
    - [rust](https://www.rust-lang.org/tools/install)
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
@@ -288,7 +286,7 @@ The cross compilation happens via Docker and the script can be read in [docker-b
 
 ### Building for deployment
 
-This method should be followed when building the tool to be deployed for different OSs (windows, macos, linux).
+This method should be followed when building the tool to be deployed for different OSs (windows, macos, linux). The cross compilation happens via Docker and the script can be read in [docker-build/build_all.sh](docker-build/build_all.sh)
 
 1. You need to have gone through the steps in the previous instructions for the development build.
 
