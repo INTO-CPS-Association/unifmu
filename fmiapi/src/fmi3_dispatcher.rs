@@ -16,7 +16,6 @@ use crate::fmi3_messages::{
 use crate::fmi3::Fmi3Status;
 use crate::fmi3_messages::fmi3_command::Command as c_enum;
 use crate::fmi3_messages::Fmi3Command as c_obj;
-use crate::fmi3::Fmi3IntervalQualifier;
 
 use bytes::Bytes;
 use prost::Message;
@@ -455,7 +454,7 @@ impl Fmi3CommandDispatcher {
 
     pub fn fmi3GetBinary(
         &mut self,
-        value_references: Vec<u32>,
+        _value_references: Vec<u32>,
     ) -> Result<(Fmi3Status, Option<Vec<Vec<u8>>>), DispatcherError> {
         todo!()
     }
@@ -525,7 +524,7 @@ impl Fmi3CommandDispatcher {
         &mut self,
         msg: &S,
     ) -> Result<R, DispatcherError> {
-        let bytes_send: Bytes = msg.encode_to_vec().into();
+        let _bytes_send: Bytes = msg.encode_to_vec().into();
 
         match self.send(msg) {
             Ok(_) => (),
@@ -540,7 +539,7 @@ impl Fmi3CommandDispatcher {
 
         match self.rt.block_on(self.socket.send(bytes_send.into())) {
             Ok(_) => Ok(()),
-            Err(e) => Err(DispatcherError::SocketError),
+            Err(_e) => Err(DispatcherError::SocketError),
         }
     }
 

@@ -63,7 +63,7 @@ impl Fmi2CommandDispatcher {
     pub fn fmi2Instantiate(
         &mut self,
         instance_name: &str,
-        fmu_type: Fmi2Type,
+        _fmu_type: Fmi2Type,
         fmu_guid: &str,
         fmu_resources_location: &str,
         visible: bool,

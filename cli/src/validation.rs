@@ -1,5 +1,5 @@
 #![allow(non_snake_case, non_camel_case_types)]
-use std::ffi::{CStr, CString};
+use std::ffi::{CString};
 use std::path::Path;
 
 extern crate dlopen;

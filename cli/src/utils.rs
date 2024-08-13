@@ -5,7 +5,6 @@ use std::io::{Seek, Write};
 use std::iter::Iterator;
 use std::path::Path;
 use walkdir::DirEntry;
-use zip::result::ZipError;
 use zip::write::FileOptions;
 
 pub fn zip_dir<T>(
@@ -18,7 +17,7 @@ where
     T: Write + Seek,
 {
     let mut zip = zip::ZipWriter::new(writer);
-    let options: FileOptions<()> = FileOptions::default()
+    let options = FileOptions::default()
         .compression_method(method)
         .unix_permissions(0o755);
 

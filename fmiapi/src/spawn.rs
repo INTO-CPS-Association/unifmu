@@ -75,7 +75,7 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
         },
     ) {
         Ok(popen) => popen,
-        Err(e) => {
+        Err(_e) => {
             eprintln!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command);
             return Err(());
         }
@@ -83,7 +83,7 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
 
     match dispatcher.await_handshake() {
         Ok(handshake) => Ok((dispatcher, popen)),
-        Err(e) => Err(()),
+        Err(_e) => Err(()),
     }
 }
 
@@ -153,6 +153,6 @@ pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<(Fmi3CommandDispatcher, 
 
     match dispatcher.await_handshake() {
         Ok(handshake) => Ok((dispatcher, popen)),
-        Err(e) => Err(()),
+        Err(_e) => Err(()),
     }
 }

@@ -3,6 +3,7 @@ use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use log::info;
 use log::error;
+use log::warn;
 use rust_embed::RustEmbed;
 use std::{fs::File, path::{Path, PathBuf}};
 use tempfile::TempDir;
@@ -187,26 +188,38 @@ pub fn generate(
 
     let md = tmpdir.path().join("modelDescription.xml");
 
-    info!("{:?}", &bin_win);
-
-    if Assets::get("auto_generated/unifmu.dll").is_none() {
-        error!("Could not find unifmu.dll in {:?}", &bin_win);
+    let unifmu_src_win = "auto_generated/unifmu.dll";
+    if Assets::get(unifmu_src_win).is_none() {
+        error!("Could not find unifmu.dll in {:?}", unifmu_src_win);
+    } else {
+        std::fs::write(
+            bin_win,
+            Assets::get(unifmu_src_win).unwrap().data,
+        )
+        .unwrap();
     }
-    std::fs::write(
-        bin_win,
-        Assets::get("auto_generated/unifmu.dll").unwrap().data,
-    )
-    .unwrap();
-    std::fs::write(
-        bin_linux,
-        Assets::get("auto_generated/unifmu.so").unwrap().data,
-    )
-    .unwrap();
-    std::fs::write(
-        bin_macos,
-        Assets::get("auto_generated/unifmu.dylib").unwrap().data,
-    )
-    .unwrap();
+
+    let unifmu_src_linux = "auto_generated/unifmu.so";
+    if Assets::get(unifmu_src_linux).is_none() {
+        warn!("Could not find unifmu.dll in {:?}", unifmu_src_linux);
+    } else {
+        std::fs::write(
+            bin_linux,
+            Assets::get(unifmu_src_linux).unwrap().data,
+        )
+        .unwrap();
+    }
+    
+    let unifmu_src_macos = "auto_generated/unifmu.dylib";
+    if Assets::get(unifmu_src_macos).is_none() {
+        warn!("Could not find unifmu.dll in {:?}", unifmu_src_macos);
+    } else {
+        std::fs::write(
+            bin_macos,
+            Assets::get(unifmu_src_macos).unwrap().data,
+        )
+        .unwrap();
+    }
 
     // copy language specific files to 'resources' directory
 
@@ -242,6 +255,11 @@ pub fn generate(
 
             info!("copying resource {:?} to {:?}", src, dst_resources);
             std::fs::create_dir_all(dst_resources.parent().unwrap()).unwrap();
+
+            if Assets::get(src).is_none() {
+                error!("File does not exist: {:?}", src);
+            }
+
             std::fs::write(dst_resources, Assets::get(src).unwrap().data).unwrap();
         }
     };

@@ -248,33 +248,60 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](htt
 
 ### Building during development
 
-Building for local machine (with Windows as the example). This is a good method to locally test if the program is running as it should, before cross-compiling to different OSs.
+Building for local machine (with Windows as the example, and PowerShell commands for reference). This is a good method to locally test if the program is running as it should. A reference script is provided for some of the instructions below: [test_local.sh](test_local.sh)
 
-1. make sure you have the following installed on your computer:
+The cross compilation happens via Docker and the script can be read in [docker-build/build_all.sh](docker-build/build_all.sh)
 
-    o [rust](https://www.rust-lang.org/tools/install)
-    
-    o a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+1. Make sure you have the following installed on your computer:
+   - [rust](https://www.rust-lang.org/tools/install)
+   - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+   - Python to test the generated FMU.
 
-2. git clone the `unifmu` repository.
+2. Clone the `unifmu` repository.
 
-3. make the changes you want.
+3. Make the changes you want.
 
-4. install the rust toolchain for your operating systems, e.g. `rustup target add x86_64-pc-windows-msvc` (msvc is the microsoft C-compiler).
+4. Install the rust toolchain for your operating systems, e.g. `rustup target add x86_64-pc-windows-msvc` (msvc is the microsoft C-compiler).
 
-5. build the project using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate a unifmu.exe in the folder [target/release](target/release).
+5. Build the FMU dll using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate a the `fmiapi.dll` in the folder [target/x86_64-pc-windows-msvc/release](target/x86_64-pc-windows-msvc/release/). The dll contains the FMU headers' implementation.
+
+6. Generate the content for the [./assets/auto_generated/](./assets/auto_generated/) folder, that the CLI is packaged with.
+   1. Copy the generated dll into the assets folder (needed by the CLI): `Copy-Item -Force ./target/x86_64-pc-windows-msvc/release/fmiapi.dll ./assets/auto_generated/unifmu.dll`
+   2. Generate the protobuf schemas for python, csharp, and java backends:
+      ```powershell
+      protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
+      ```
+
+7. Compile the CLI and generate an FMU called `myfmu.fmu` using the newly compiled CLI: `cargo run --bin unifmu --release -- generate --zipped python myfmu.fmu fmi2`
+
+8. To test the FMU, we recommend:
+   1. Installing [FMPy](https://github.com/CATIA-Systems/FMPy), and use it to simulate the FMU:
+      ```powershell
+      pip install fmpy[complete]
+      fmpy --validate simulate myfmu.fmu --show-plot
+      ```
+    2. Download the [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) tool and use it to validate the FMU:
+        ```powershell
+        java -jar <path to vdmcheck2.jar> myfmu.fmu
+        ```
+        where `<path to vdmcheck2.jar>` is the path to the `vdmcheck2.jar` file. If the FMU exported implements FMI 3.0, then use `vdmcheck3.jar`
 
 ### Building for deployment
 
 This method should be followed when building the tool to be deployed for different OSs (windows, macos, linux).
 
-1. you need to have gone through the steps in the previous instructions for the development build.
+1. You need to have gone through the steps in the previous instructions for the development build.
 
-2. have [docker](https://docs.docker.com/engine/install/) installed on your computer.
+2. Have [docker](https://docs.docker.com/engine/install/) installed on your computer.
 
-3. build the docker image using `docker build -t unifmu-docker docker-build`. `unifmu-docker` is the name of the container, and `docker-build` is the directory where the Dockerfile is (assuming you are running this command from the root of the unifmu repository).
+3. Build the docker image using `docker build -t unifmu-docker docker-build`. `unifmu-docker` is the name of the container, and `docker-build` is the directory where the Dockerfile is (assuming you are running this command from the root of the unifmu repository).
 
-4. build the unifmu project in docker using `docker run --name builder -it -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker` followed by `./docker-build/build_all.sh`. This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
+4. Build the unifmu project in docker using the following command:
+    ```powershell
+    docker run --name builder -it -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker ./docker-build/build_all.sh
+    ```
+    where `<location_of_unifmu_repository_on_local_pc>` should be replaced by the path of the unifmu repository location.
+    This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
 
 ## Citing the tool
 
@@ -290,7 +317,7 @@ Bibtex:
   booktitle = {11th {{International}} Conference on Simulation and Modeling Methodologies, Technologies and Applications},
   author = {Legaard, Christian M. and Tola, Daniella and Schranz, Thomas and Macedo, Hugo Daniel and Larsen, Peter Gorm},
   year = {2021},
-  pages = {to appear},
+  pages = {121--129},
   address = {{Virtual Event}},
   series = {{{SIMULTECH}} 2021}
 }
