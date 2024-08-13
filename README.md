@@ -296,7 +296,7 @@ This method should be followed when building the tool to be deployed for differe
 
 4. Build the unifmu project in docker using the following command:
     ```powershell
-    docker run --name builder -it -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker ./docker-build/build_all.sh
+    docker run --name builder -it --rm -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker ./docker-build/build_all.sh
     ```
     where `<location_of_unifmu_repository_on_local_pc>` should be replaced by the path of the unifmu repository location.
     This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
