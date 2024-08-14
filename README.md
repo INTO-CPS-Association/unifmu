@@ -6,7 +6,7 @@
   - [Getting the tool](#getting-the-tool)
   - [Getting help](#getting-help)
   - [How to use the command line interface](#how-to-use-the-command-line-interface)
-  - [Language specific documentation](#language-specific-documentation)
+  - [Language specific documentation and backend development](#language-specific-documentation-and-backend-development)
   - [Supported Features](#supported-features)
     - [FMI2](#fmi2)
     - [FMI3 (in progress)](#fmi3-in-progress)
@@ -118,11 +118,15 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┗ 📜modelDescription.xml
 ```
 
-## Language specific documentation
+## Language specific documentation and backend development
 
 Like the file structure, the workflow for modifying FMUs varies depending on the implementation language.
 Depending on the language a `README.md` is placed in the root of the generated FMU, which serves as documentation for the particular language.
-For reference the `README.md` copied into Python FMUs looks like [README.md](https://github.com/INTO-CPS-Association/unifmu/blob/f921f645d420c236464330abef79de5ce76bdf6b/assets/python/fmi3/README.md).
+The readme file, as well as other source files for each backend are in the respective folder:
+- [Python](./assets/python/)
+- [Csharp](./assets/csharp/)
+- [Java](./assets/java/)
+- [Matlab](./assets/matlab/) - This backend is not supported, but documentation is left in case you wish to implement it.
 
 ## Supported Features
 
@@ -264,8 +268,9 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](htt
 Building for local machine (with Windows as the example, and PowerShell commands for reference). This is a good method to locally test if the program is running as it should. A reference script is provided for some of the instructions below: [test_local.sh](test_local.sh)
 
 1. Make sure you have the following installed on your computer:
-   - [rust](https://www.rust-lang.org/tools/install)
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+   - [rust](https://www.rust-lang.org/tools/install)
+   - [Protocol Buffers v27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3). **Note: If you download a different version, you will have to update the build scripts and the dependencies of all backends.**
    - For testing:
      - [Python](https://www.python.org/)
      - [Java](https://openjdk.org/) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
