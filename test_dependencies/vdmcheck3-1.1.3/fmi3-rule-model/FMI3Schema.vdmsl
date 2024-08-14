@@ -1,0 +1,894 @@
+/**
+ * VDM schema created from fmi3.xsd on Fri Jun 16 12:55:06 BST 2023
+ * DO NOT EDIT!
+ */
+types
+
+AnyString = seq of char;
+
+NormalizedString = seq of char
+inv ns ==
+    forall c in seq ns & c not in set {'\r', '\n', '\t'};
+
+Location ::
+    file : seq1 of char
+    line : nat1
+;
+
+FmiModelDescription ::
+    location                  : Location
+    fmiVersion                : NormalizedString
+    modelName                 : AnyString
+    instantiationToken        : NormalizedString
+    description               : [AnyString]
+    author                    : [AnyString]
+    version                   : [NormalizedString]
+    copyright                 : [AnyString]
+    license                   : [AnyString]
+    generationTool            : [NormalizedString]
+    generationDateAndTime     : [seq1 of char]
+    variableNamingConvention  : [VariableNamingConvention]
+    modelExchange             : [ModelExchange]
+    coSimulation              : [CoSimulation]
+    scheduledExecution        : [ScheduledExecution]
+    unitDefinitions           : [UnitDefinitions]
+    typeDefinitions           : [TypeDefinitions]
+    logCategories             : [LogCategories]
+    defaultExperiment         : [DefaultExperiment]
+    modelVariables            : ModelVariables
+    modelStructure            : ModelStructure
+    annotations               : [Annotations]
+inv rec ==
+    (XSD`xsdPattern(rec.fmiVersion, "3[.](0|[1-9][0-9]*)([.](0|[1-9][0-9]*))?(-.+)?"))
+;
+
+ModelExchange ::
+    location                             : Location
+    modelIdentifier                      : NormalizedString
+    needsExecutionTool                   : [bool]
+    canBeInstantiatedOnlyOncePerProcess  : [bool]
+    canGetAndSetFMUState                 : [bool]
+    canSerializeFMUState                 : [bool]
+    providesDirectionalDerivatives       : [bool]
+    providesAdjointDerivatives           : [bool]
+    providesPerElementDependencies       : [bool]
+    any                                  : [seq1 of (token)]
+    needsCompletedIntegratorStep         : [bool]
+    providesEvaluateDiscreteStates       : [bool]
+    annotations                          : [Annotations]
+;
+
+Annotations = seq1 of (Annotation);
+
+Annotation ::
+    location  : Location
+    type      : NormalizedString
+    any       : [seq of (token)]
+;
+
+CoSimulation ::
+    location                                : Location
+    modelIdentifier                         : NormalizedString
+    needsExecutionTool                      : [bool]
+    canBeInstantiatedOnlyOncePerProcess     : [bool]
+    canGetAndSetFMUState                    : [bool]
+    canSerializeFMUState                    : [bool]
+    providesDirectionalDerivatives          : [bool]
+    providesAdjointDerivatives              : [bool]
+    providesPerElementDependencies          : [bool]
+    any                                     : [seq1 of (token)]
+    canHandleVariableCommunicationStepSize  : [bool]
+    fixedInternalStepSize                   : [real]
+    maxOutputDerivativeOrder                : [nat]
+    recommendedIntermediateInputSmoothness  : [int]
+    providesIntermediateUpdate              : [bool]
+    mightReturnEarlyFromDoStep              : [bool]
+    canReturnEarlyAfterIntermediateUpdate   : [bool]
+    hasEventMode                            : [bool]
+    providesEvaluateDiscreteStates          : [bool]
+    annotations                             : [Annotations]
+;
+
+ScheduledExecution ::
+    location                             : Location
+    modelIdentifier                      : NormalizedString
+    needsExecutionTool                   : [bool]
+    canBeInstantiatedOnlyOncePerProcess  : [bool]
+    canGetAndSetFMUState                 : [bool]
+    canSerializeFMUState                 : [bool]
+    providesDirectionalDerivatives       : [bool]
+    providesAdjointDerivatives           : [bool]
+    providesPerElementDependencies       : [bool]
+    any                                  : [seq1 of (token)]
+    annotations                          : [Annotations]
+;
+
+UnitDefinitions = seq1 of (Unit);
+
+Unit ::
+    location     : Location
+    name         : NormalizedString
+    baseUnit     : [BaseUnit]
+    displayUnit  : [seq of (DisplayUnit)]
+    annotations  : [Annotations]
+;
+
+BaseUnit ::
+    location  : Location
+    kg        : [int]
+    m         : [int]
+    s         : [int]
+    a         : [int]
+    k         : [int]
+    mol       : [int]
+    cd        : [int]
+    rad       : [int]
+    factor    : [real]
+    offset    : [real]
+;
+
+DisplayUnit ::
+    location     : Location
+    name         : NormalizedString
+    factor       : [real]
+    offset       : [real]
+    $inverse     : [bool]
+    annotations  : [Annotations]
+;
+
+TypeDefinitions = seq1 of (fmi3TypeDefinition);
+
+Float32Type ::
+    location          : Location
+    name              : NormalizedString
+    description       : [AnyString]
+    quantity          : [NormalizedString]
+    unit              : [NormalizedString]
+    displayUnit       : [NormalizedString]
+    relativeQuantity  : [bool]
+    unbounded         : [bool]
+    min               : [real]
+    max               : [real]
+    nominal           : [real]
+    annotations       : [Annotations]
+;
+
+Float64Type ::
+    location          : Location
+    name              : NormalizedString
+    description       : [AnyString]
+    quantity          : [NormalizedString]
+    unit              : [NormalizedString]
+    displayUnit       : [NormalizedString]
+    relativeQuantity  : [bool]
+    unbounded         : [bool]
+    min               : [real]
+    max               : [real]
+    nominal           : [real]
+    annotations       : [Annotations]
+;
+
+Int8Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [int]
+    max          : [int]
+    annotations  : [Annotations]
+;
+
+UInt8Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [nat]
+    max          : [nat]
+    annotations  : [Annotations]
+;
+
+Int16Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [int]
+    max          : [int]
+    annotations  : [Annotations]
+;
+
+UInt16Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [nat]
+    max          : [nat]
+    annotations  : [Annotations]
+;
+
+Int32Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [int]
+    max          : [int]
+    annotations  : [Annotations]
+;
+
+UInt32Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [nat]
+    max          : [nat]
+    annotations  : [Annotations]
+;
+
+Int64Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [int]
+    max          : [int]
+    annotations  : [Annotations]
+;
+
+UInt64Type ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [nat]
+    max          : [nat]
+    annotations  : [Annotations]
+;
+
+BooleanType ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    annotations  : [Annotations]
+;
+
+StringType ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    annotations  : [Annotations]
+;
+
+BinaryType ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    mimeType     : [NormalizedString]
+    maxSize      : [nat]
+    annotations  : [Annotations]
+;
+
+EnumerationType ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    quantity     : [NormalizedString]
+    min          : [int]
+    max          : [int]
+    annotations  : [Annotations]
+    item         : seq1 of (Item)
+;
+
+Item ::
+    location     : Location
+    name         : NormalizedString
+    value        : int
+    description  : [AnyString]
+    annotations  : [Annotations]
+;
+
+ClockType ::
+    location             : Location
+    name                 : NormalizedString
+    description          : [AnyString]
+    canBeDeactivated     : [bool]
+    priority             : [nat]
+    intervalVariability  : IntervalVariability
+    intervalDecimal      : [real]
+    shiftDecimal         : [real]
+    supportsFraction     : [bool]
+    resolution           : [nat]
+    intervalCounter      : [nat]
+    shiftCounter         : [nat]
+    annotations          : [Annotations]
+;
+
+IntervalVariability = <constant> | <fixed> | <tunable> | <changing> | <countdown> | <triggered>;
+
+fmi3TypeDefinition = Float32Type | Float64Type | Int8Type | UInt8Type | Int16Type | UInt16Type | Int32Type | UInt32Type | Int64Type | UInt64Type | BooleanType | StringType | BinaryType | EnumerationType | ClockType;
+
+LogCategories = seq1 of (Category);
+
+Category ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    annotations  : [Annotations]
+;
+
+DefaultExperiment ::
+    location     : Location
+    startTime    : [real]
+    stopTime     : [real]
+    tolerance    : [real]
+    stepSize     : [real]
+    annotations  : [Annotations]
+;
+
+ModelVariables = seq1 of (fmi3Variable);
+
+Float32 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    unit                                : [NormalizedString]
+    displayUnit                         : [NormalizedString]
+    relativeQuantity                    : [bool]
+    unbounded                           : [bool]
+    min                                 : [real]
+    max                                 : [real]
+    nominal                             : [real]
+    start                               : [seq of (real)]
+    derivative                          : [nat]
+    reinit                              : [bool]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+Causality = <parameter> | <calculatedParameter> | <input> | <output> | <local> | <independent> | <structuralParameter>;
+
+Variability = <constant> | <fixed> | <tunable> | <discrete> | <continuous>;
+
+Dimension ::
+    location        : Location
+    start           : [nat]
+    valueReference  : [nat]
+;
+
+fmi3Dimensions = [seq of (Dimension)];
+
+Initial = <exact> | <approx> | <calculated>;
+
+Alias ::
+    location     : Location
+    name         : NormalizedString
+    description  : [AnyString]
+    displayUnit  : [NormalizedString]
+;
+
+Float64 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    unit                                : [NormalizedString]
+    displayUnit                         : [NormalizedString]
+    relativeQuantity                    : [bool]
+    unbounded                           : [bool]
+    min                                 : [real]
+    max                                 : [real]
+    nominal                             : [real]
+    start                               : [seq of (real)]
+    derivative                          : [nat]
+    reinit                              : [bool]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+Int8 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [int]
+    max                                 : [int]
+    start                               : [seq of (int)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+UInt8 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [nat]
+    max                                 : [nat]
+    start                               : [seq of (nat)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+Int16 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [int]
+    max                                 : [int]
+    start                               : [seq of (int)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+UInt16 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [nat]
+    max                                 : [nat]
+    start                               : [seq of (nat)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+Int32 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [int]
+    max                                 : [int]
+    start                               : [seq of (int)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+UInt32 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [nat]
+    max                                 : [nat]
+    start                               : [seq of (nat)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+Int64 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [int]
+    max                                 : [int]
+    start                               : [seq of (int)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+UInt64 ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [nat]
+    max                                 : [nat]
+    start                               : [seq of (nat)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+Boolean ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    start                               : [seq of (bool)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+String ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    start                               : [seq of (Start)]
+    alias                               : [seq of (Alias)]
+;
+
+Start = [AnyString];
+
+Binary ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : [NormalizedString]
+    initial                             : [Initial]
+    mimeType                            : [NormalizedString]
+    maxSize                             : [nat]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    start                               : [seq of (Start)]
+    alias                               : [seq of (Alias)]
+;
+
+Enumeration ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    intermediateUpdate                  : [bool]
+    previous                            : [nat]
+    declaredType                        : NormalizedString
+    initial                             : [Initial]
+    quantity                            : [NormalizedString]
+    min                                 : [int]
+    max                                 : [int]
+    start                               : [seq of (int)]
+    annotations                         : [Annotations]
+    fmi3Dimensions                      : fmi3Dimensions
+    alias                               : [seq of (Alias)]
+;
+
+Clock ::
+    location                            : Location
+    name                                : NormalizedString
+    valueReference                      : nat
+    description                         : [AnyString]
+    causality                           : [Causality]
+    variability                         : [Variability]
+    canHandleMultipleSetPerTimeInstant  : [bool]
+    clocks                              : [seq of (nat)]
+    declaredType                        : [NormalizedString]
+    canBeDeactivated                    : [bool]
+    priority                            : [nat]
+    intervalVariability                 : IntervalVariability
+    intervalDecimal                     : [real]
+    shiftDecimal                        : [real]
+    supportsFraction                    : [bool]
+    resolution                          : [nat]
+    intervalCounter                     : [nat]
+    shiftCounter                        : [nat]
+    annotations                         : [Annotations]
+    alias                               : [seq of (Alias)]
+;
+
+fmi3Variable = Float32 | Float64 | Int8 | UInt8 | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Boolean | String | Binary | Enumeration | Clock;
+
+ModelStructure ::
+    location                   : Location
+    output                     : [seq of (Output)]
+    continuousStateDerivative  : [seq of (ContinuousStateDerivative)]
+    clockedState               : [seq of (ClockedState)]
+    initialUnknown             : [seq of (InitialUnknown)]
+    eventIndicator             : [seq of (EventIndicator)]
+;
+
+Output ::
+    location          : Location
+    valueReference    : nat
+    dependencies      : [seq of (nat)]
+    dependenciesKind  : [seq of (DependenciesKind)]
+    annotations       : [Annotations]
+;
+
+DependenciesKind = <dependent> | <constant> | <fixed> | <tunable> | <discrete>;
+
+ContinuousStateDerivative ::
+    location          : Location
+    valueReference    : nat
+    dependencies      : [seq of (nat)]
+    dependenciesKind  : [seq of (DependenciesKind)]
+    annotations       : [Annotations]
+;
+
+ClockedState ::
+    location          : Location
+    valueReference    : nat
+    dependencies      : [seq of (nat)]
+    dependenciesKind  : [seq of (DependenciesKind)]
+    annotations       : [Annotations]
+;
+
+InitialUnknown ::
+    location          : Location
+    valueReference    : nat
+    dependencies      : [seq of (nat)]
+    dependenciesKind  : [seq of (DependenciesKind)]
+    annotations       : [Annotations]
+;
+
+EventIndicator ::
+    location          : Location
+    valueReference    : nat
+    dependencies      : [seq of (nat)]
+    dependenciesKind  : [seq of (DependenciesKind)]
+    annotations       : [Annotations]
+;
+
+VariableNamingConvention = <flat> | <structured>;
+
+FmiBuildDescription ::
+    location            : Location
+    fmiVersion          : NormalizedString
+    buildConfiguration  : seq1 of (BuildConfiguration)
+    annotations         : [Annotations]
+inv rec ==
+    (XSD`xsdPattern(rec.fmiVersion, "3[.](0|[1-9][0-9]*)([.](0|[1-9][0-9]*))?(-.+)?"))
+;
+
+BuildConfiguration ::
+    location         : Location
+    modelIdentifier  : NormalizedString
+    platform         : [NormalizedString]
+    description      : [AnyString]
+    sourceFileSet    : [seq of (SourceFileSet)]
+    library          : [seq of (Library)]
+    annotations      : [Annotations]
+;
+
+SourceFileSet ::
+    location                : Location
+    name                    : [NormalizedString]
+    language                : [NormalizedString]
+    compiler                : [NormalizedString]
+    compilerOptions         : [AnyString]
+    sourceFile              : seq1 of (SourceFile)
+    preprocessorDefinition  : [seq of (PreprocessorDefinition)]
+    includeDirectory        : [seq of (IncludeDirectory)]
+    annotations             : [Annotations]
+;
+
+SourceFile ::
+    location     : Location
+    name         : NormalizedString
+    annotations  : [Annotations]
+;
+
+PreprocessorDefinition ::
+    location     : Location
+    name         : NormalizedString
+    optional     : [bool]
+    value        : [NormalizedString]
+    description  : [AnyString]
+    option       : [seq of (Option)]
+    annotations  : [Annotations]
+;
+
+Option ::
+    location     : Location
+    value        : [NormalizedString]
+    description  : [AnyString]
+;
+
+IncludeDirectory ::
+    location     : Location
+    name         : NormalizedString
+    annotations  : [Annotations]
+;
+
+Library ::
+    location     : Location
+    name         : NormalizedString
+    version      : [NormalizedString]
+    external     : [bool]
+    description  : [AnyString]
+    annotations  : [Annotations]
+;
+
+FmiTerminalsAndIcons ::
+    location                 : Location
+    fmiVersion               : NormalizedString
+    graphicalRepresentation  : [GraphicalRepresentation]
+    terminals                : [Terminals]
+    annotations              : [Annotations]
+inv rec ==
+    (XSD`xsdPattern(rec.fmiVersion, "3[.](0|[1-9][0-9]*)([.](0|[1-9][0-9]*))?(-.+)?"))
+;
+
+GraphicalRepresentation ::
+    location          : Location
+    coordinateSystem  : [CoordinateSystem]
+    icon              : [Icon]
+    annotations       : [Annotations]
+;
+
+CoordinateSystem ::
+    location                     : Location
+    x1                           : real
+    y1                           : real
+    x2                           : real
+    y2                           : real
+    suggestedScalingFactorTo_mm  : real
+;
+
+Icon ::
+    location  : Location
+    x1        : real
+    y1        : real
+    x2        : real
+    y2        : real
+;
+
+Terminals = seq1 of (Terminal);
+
+Terminal ::
+    location                         : Location
+    name                             : NormalizedString
+    matchingRule                     : NormalizedString
+    terminalKind                     : [NormalizedString]
+    description                      : [AnyString]
+    terminalMemberVariable           : [seq of (TerminalMemberVariable)]
+    terminalStreamMemberVariable     : [seq of (TerminalStreamMemberVariable)]
+    terminal                         : [seq of (Terminal)]
+    terminalGraphicalRepresentation  : [TerminalGraphicalRepresentation]
+    annotations                      : [Annotations]
+;
+
+TerminalMemberVariable ::
+    location      : Location
+    variableName  : NormalizedString
+    memberName    : [NormalizedString]
+    variableKind  : NormalizedString
+    annotations   : [Annotations]
+;
+
+TerminalStreamMemberVariable ::
+    location              : Location
+    inStreamMemberName    : NormalizedString
+    outStreamMemberName   : NormalizedString
+    inStreamVariableName  : NormalizedString
+    outStreamVariableName : NormalizedString
+    annotations           : [Annotations]
+;
+
+TerminalGraphicalRepresentation ::
+    location                     : Location
+    defaultConnectionColor       : [seq of (nat)]
+    defaultConnectionStrokeSize  : [real]
+    x1                           : real
+    y1                           : real
+    x2                           : real
+    y2                           : real
+    iconBaseName                 : AnyString
+    annotations                  : [Annotations]
+;
+

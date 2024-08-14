@@ -1,0 +1,10 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:include schemaLocation="fmi3ModelDescription.xsd"/>
+	<xs:include schemaLocation="fmi3BuildDescription.xsd"/>
+	<xs:include schemaLocation="fmi3TerminalsAndIcons.xsd"/>
+	<xs:annotation>
+		<xs:documentation>
+			This is a top level schema file to include everything.
+		</xs:documentation>
+	</xs:annotation>
+</xs:schema>

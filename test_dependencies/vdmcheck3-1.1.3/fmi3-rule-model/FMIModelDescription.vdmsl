@@ -1,0 +1,73 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+types
+	/**
+	 * The invariant type for the top level FmiModelDescription.
+	 */
+	FmiModelDescription' = FmiModelDescription
+	inv fmd == allOf
+	([
+		inv_ModelExchange'(fmd.modelExchange),
+		inv_CoSimulation'(fmd.coSimulation),
+		inv_ScheduledExecution'(fmd.scheduledExecution),
+		inv_UnitDefinitions'(fmd.unitDefinitions),
+		inv_TypeDefinitions'(fmd.typeDefinitions),
+		inv_LogCategories'(fmd.logCategories),
+		inv_DefaultExperiment'(fmd.defaultExperiment),
+		inv_ModelVariables'(fmd.modelVariables),	-- raw variable values
+		inv_ModelStructure'(fmd.modelStructure),
+		inv_Annotations'(fmd.annotations),
+
+		-- If these rules use variables at all, they are the "raw" values
+		-- The rules are defined in FmiModelDescription.adoc
+		validGenerationDateAndTime(fmd),
+		validModelTypes(fmd),
+		validTypeUnits(fmd),
+		validVariableTypes(fmd),
+		validVariableNames(fmd),
+		validTypeNames(fmd),
+		validReinits(fmd),
+		validCSEventMode(fmd),
+		
+		let evs = effectiveVariables(fmd.modelVariables, fmd.typeDefinitions) in
+		[
+			-- If these rules use variables, they use the effective values
+			-- The rules are defined in FmiModelDescription.adoc
+			validMinMax(fmd, evs),
+			validStart(fmd, evs),
+			validMultipleSets(fmd, evs),
+			validClockPriorities(fmd, evs),
+			validOutput(fmd, evs),
+			validStateDerivatives(fmd, evs),
+			validInitialUnknowns(fmd, evs),
+			validEventIndicators(fmd, evs),
+			validOutputReferences(fmd, evs),
+			validUnknownDependencies(fmd, evs)
+		]
+	]);

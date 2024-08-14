@@ -1,0 +1,191 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+types
+	TypeDefinitions' = [TypeDefinitions]
+	inv tdefs == allOf
+	([
+		invs_fmi3TypeDefinition'(tdefs),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeDefinitionNames(tdefs)
+	]);
+
+	fmi3TypeDefinition' = fmi3TypeDefinition	-- The union of all types
+	inv tdef ==
+		cases kindOf(tdef):
+			<Float64>	-> inv_Float64Type'(tdef),
+			<Float32>	-> inv_Float32Type'(tdef),
+
+			<Int64>		-> inv_Int64Type'(tdef),
+			<Int32>		-> inv_Int32Type'(tdef),
+			<Int16>		-> inv_Int16Type'(tdef),
+			<Int8>		-> inv_Int8Type'(tdef),
+
+			<UInt64>	-> inv_UInt64Type'(tdef),
+			<UInt32>	-> inv_UInt32Type'(tdef),
+			<UInt16>	-> inv_UInt16Type'(tdef),
+			<UInt8>		-> inv_UInt8Type'(tdef),
+
+			<Boolean>	-> inv_BooleanType'(tdef),
+			<String>	-> inv_StringType'(tdef),
+			<Binary>	-> inv_BinaryType'(tdef),
+			<Enumeration>	-> inv_EnumerationType'(tdef),
+			<Clock>		-> inv_ClockType'(tdef),
+
+			others		-> undefined
+		end;
+
+	Float64Type' = Float64Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef),
+		validTypeDisplayUnit(tdef)
+	]);
+
+	Float32Type' = Float32Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef),
+		validTypeDisplayUnit(tdef)
+	]);
+
+	Int64Type' = Int64Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	Int32Type' = Int32Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	Int16Type' = Int16Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	Int8Type' = Int8Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	UInt64Type' = UInt64Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	UInt32Type' = UInt32Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	UInt16Type' = UInt16Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	UInt8Type' = UInt8Type
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	BooleanType' = BooleanType
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations)
+	]);
+
+	StringType' = StringType
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations)
+	]);
+
+	BinaryType' = BinaryType
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations)
+	]);
+
+	EnumerationType' = EnumerationType
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef),
+		validEnumerationTypeBijection(tdef)
+	]);
+
+	ClockType' = ClockType
+	inv tdef == allOf
+	([
+		inv_Annotations'(tdef.annotations),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validClockType(tdef)
+	]);

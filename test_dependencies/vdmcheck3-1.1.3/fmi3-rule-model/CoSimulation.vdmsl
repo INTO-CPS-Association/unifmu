@@ -1,0 +1,68 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+types
+	CoSimulation' = [CoSimulation]
+	inv cs == cs <> nil => allOf
+	([
+		inv_Annotations'(cs.annotations),
+	
+		let ecs = effectiveCoSimulation(cs) in
+		[
+			-- Rules a defined in CoSimulation.adoc
+			validCSModelIdentifier(ecs),
+			validCSIntermediateUpdate(ecs)
+		]
+	]);
+
+functions
+	effectiveCoSimulation: CoSimulation +> CoSimulation
+	effectiveCoSimulation(cs) ==
+		mk_CoSimulation
+		(
+			cs.location,
+			cs.modelIdentifier,
+			default[bool](cs.needsExecutionTool, false),
+			default[bool](cs.canBeInstantiatedOnlyOncePerProcess, false),
+			default[bool](cs.canGetAndSetFMUState, false),
+			default[bool](cs.canSerializeFMUState, false),
+			default[bool](cs.providesDirectionalDerivatives, false),
+			default[bool](cs.providesAdjointDerivatives, false),
+			default[bool](cs.providesPerElementDependencies, false),
+			cs.any,
+			default[bool](cs.canHandleVariableCommunicationStepSize, false),
+			cs.fixedInternalStepSize,
+			default[nat](cs.maxOutputDerivativeOrder, 0),
+			default[nat](cs.recommendedIntermediateInputSmoothness, 0),
+			default[bool](cs.providesIntermediateUpdate, false),
+			default[bool](cs.mightReturnEarlyFromDoStep, false),
+			default[bool](cs.canReturnEarlyAfterIntermediateUpdate, false),
+			default[bool](cs.hasEventMode, false),
+			default[bool](cs.providesEvaluateDiscreteStates, false),
+			cs.annotations
+		);

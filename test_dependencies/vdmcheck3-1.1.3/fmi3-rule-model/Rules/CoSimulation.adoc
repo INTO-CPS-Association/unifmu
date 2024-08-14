@@ -1,0 +1,46 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} CoSimulation Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validCSModelIdentifier
+[[validCSModelIdentifier]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#modelIdentifier", "<FMI3_STANDARD>#header-files-and-naming-of-functions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validCSModelIdentifier: CoSimulation +> bool
+validCSModelIdentifier(ecs) ==
+	-- @OnFail("%NAME: %s not valid C variable name at %#s",
+	-- ecs.modelIdentifier, loc2str(ecs.location))
+	( validIdentifier(ecs.modelIdentifier) );
+----
+// {vdm}
+- See <<modelIdentifier>>.
+- See <<header-files-and-naming-of-functions>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validCSIntermediateUpdate
+[[validCSIntermediateUpdate]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#table-CoSimulation-details")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validCSIntermediateUpdate: CoSimulation +> bool
+validCSIntermediateUpdate(ecs) ==
+	-- @OnFail("%NAME: canReturnEarlyAfterIntermediateUpdate requires providesIntermediateUpdate")
+	( ecs.canReturnEarlyAfterIntermediateUpdate = true => ecs.providesIntermediateUpdate );
+----
+// {vdm}
+- See <<table-CoSimulation-details>>.

@@ -1,0 +1,68 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+
+/**
+ * The XSD module contains functions that support the XSD parser, checking
+ * various facets of values. For test purposes, they are all "true".
+ */
+module XSD
+exports all
+definitions
+values
+
+#ifdef HIGH_PRECISION
+	NEGATIVE_INFINITY : nat1 = 0xfff0000000000000;
+	NOT_A_NUMBER : nat1      = 0x7ff8000000000000;
+	POSITIVE_INFINITY : nat1 = 0x7ff0000000000000;
+#else
+	NEGATIVE_INFINITY = 0xfff00000;
+	NOT_A_NUMBER      = 0x7ff80000;
+	POSITIVE_INFINITY = 0x7ff00000;
+#endif
+
+functions
+	xsdTotalDigits: real +> bool
+	xsdTotalDigits(-) == true;
+	
+	xsdFractionDigits: real +> bool
+	xsdFractionDigits(-) == true;
+	
+	xsdAssertion: ? * seq of char +> bool
+	xsdAssertion(-, -) == true;
+	
+	xsdPattern: ? * seq of char +> bool
+	xsdPattern(-, -) == true;
+	
+	xsdExplicitTimezone: seq1 of char * seq of char +> bool
+	xsdExplicitTimezone(-, -) == true;
+	
+	xsdWhitespace: seq of char * seq of char +> bool
+	xsdWhitespace(-, -) == true;
+
+end XSD

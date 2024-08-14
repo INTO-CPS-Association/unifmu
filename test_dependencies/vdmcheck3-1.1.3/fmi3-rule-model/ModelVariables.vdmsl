@@ -1,0 +1,183 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+types
+	ModelVariables' = ModelVariables	-- raw model variables, not effective values
+	inv mvs == allOf
+	([
+		invs_fmi3Variable'(mvs),
+
+		-- Rules are defined in ModelVariables.adoc
+		validModelVariables(mvs),
+		validValueReferences(mvs),
+		validAliasNames(mvs),
+		validIndependentVariable(mvs),
+		validPreviousVariables(mvs),
+		validVariableDimensions(mvs),
+		validAliasDisplayUnits(mvs)
+	]);
+
+	fmi3Variable' = fmi3Variable	-- The union of all kinds
+	inv mv ==
+		cases kindOf(mv):
+			<Float64>	-> inv_Float64'(mv),
+			<Float32>	-> inv_Float32'(mv),
+
+			<Int64>		-> inv_Int64'(mv),
+			<Int32>		-> inv_Int32'(mv),
+			<Int16>		-> inv_Int16'(mv),
+			<Int8>		-> inv_Int8'(mv),
+
+			<UInt64>	-> inv_UInt64'(mv),
+			<UInt32>	-> inv_UInt32'(mv),
+			<UInt16>	-> inv_UInt16'(mv),
+			<UInt8>		-> inv_UInt8'(mv),
+
+			<Boolean>	-> inv_Boolean'(mv),
+			<String>	-> inv_String'(mv),
+			<Binary>	-> inv_Binary'(mv),
+			<Enumeration>	-> inv_Enumeration'(mv),
+			<Clock>		-> inv_Clock'(mv),
+
+			others		-> undefined
+		end;
+
+	/**
+	 * The "prime" type invarants are tests for the variables, after the
+	 * derivation of their effective values.
+	 */
+	Float64' = Float64
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Float32' = Float32
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Int64' = Int64
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Int32' = Int32
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Int16' = Int16
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Int8' = Int8
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	UInt64' = UInt64
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	UInt32' = UInt32
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	UInt16' = UInt16
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	UInt8' = UInt8
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Boolean' = Boolean
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	String' = String
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Binary' = Binary
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Enumeration' = Enumeration
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations),
+		invs_Dimension'(mv.fmi3Dimensions)
+	]);
+
+	Clock' = Clock
+	inv mv == allOf
+	([
+		inv_Annotations'(mv.annotations)
+	]);
+
+	Dimension' = Dimension
+	inv d == allOf
+	([
+		-- Rules are defined in ModelVariables.adoc
+		validStartAndVRef(d)
+	]);

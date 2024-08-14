@@ -10,7 +10,7 @@
     <Category name="logAll" />
   </LogCategories>
   <ModelVariables>
-  <Float64 name="time" valueReference="0" causality="independent" variability="continuous" description="Simulation time"/>
+  <Float64 name="time" valueReference="999" causality="independent" variability="continuous" description="Simulation time"/>
     <Float64 name="real_a" valueReference="0" variability="continuous" causality="input" start="0.0" />
     <Float64 name="real_b" valueReference="1" variability="continuous" causality="input" start="0.0" />
     <Float64 name="real_c" valueReference="2" variability="continuous" causality="output" initial="calculated" />
@@ -30,13 +30,13 @@
 
   </ModelVariables>
   <ModelStructure>
-    <Output valueReference="2" dependencies="1 2" />
+    <Output valueReference="2" dependencies="0 1" />
     <Output valueReference="5" dependencies="3 4" />
     <Output valueReference="8" dependencies="6 7" />
-    <!-- <Output valueReference="11" dependencies="9 10" /> -->
+    <Output valueReference="11" dependencies="9 10" />
     <InitialUnknown valueReference="2" dependencies="" />
     <InitialUnknown valueReference="5" dependencies="" />
     <InitialUnknown valueReference="8" dependencies="" />
-    <!-- <InitialUnknown valueReference="11" dependencies="" /> -->
+    <InitialUnknown valueReference="11" dependencies="" />
   </ModelStructure>
 </fmiModelDescription>

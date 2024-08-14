@@ -1,0 +1,916 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+functions
+	override[@T]: [@T] * [@T] * [@T] +> [@T]
+	override(value, typedef, neither) ==
+		if value <> nil
+		then value
+		elseif typedef <> nil
+		then typedef
+		else neither;
+
+	effectiveVariables: seq1 of fmi3Variable * [TypeDefinitions] +> seq1 of fmi3Variable
+	effectiveVariables(mvs, tdefs) ==
+		[ effectiveVariable(mv, tdefs) | mv in seq mvs ];
+
+	/**
+	 * Calculate the effective value of a variables fields, taking defaults from any declaredType,
+	 * setting optional boolean fields to true/false, and setting any defined defaults for other
+	 * fields.
+	 */
+	effectiveVariable: fmi3Variable * [TypeDefinitions] +> fmi3Variable
+	effectiveVariable(mv, tdefs) ==
+		let decltype = lookupType(mv.declaredType, tdefs),
+			kind     = kindOf(mv)
+		in
+			if decltype = nil
+			then effectiveSimpleVariable(mv)
+			elseif kindOf(decltype) = kind
+			then effectiveTypedVariable(mv, decltype)
+			else mv;		-- Type error reported elsewhere
+
+	effectiveTypedVariable: fmi3Variable * fmi3TypeDefinition +> fmi3Variable
+	effectiveTypedVariable(mv, decltype) ==
+		let kind = kindOf(mv) in
+		cases kind:
+			<Float64> -> 
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Float64
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[NormalizedString](mv.unit, decltype.unit, nil),
+						override[NormalizedString](mv.displayUnit, decltype.displayUnit, nil),
+						override[bool](mv.relativeQuantity, decltype.relativeQuantity, false),
+						override[bool](mv.unbounded, decltype.unbounded, false),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						override[real](mv.nominal, decltype.nominal, 1),
+						mv.start,
+						mv.derivative,
+						default[bool](mv.reinit, false),
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Float32> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Float32
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[NormalizedString](mv.unit, decltype.unit, nil),
+						override[NormalizedString](mv.displayUnit, decltype.displayUnit, nil),
+						override[bool](mv.relativeQuantity, decltype.relativeQuantity, false),
+						override[bool](mv.unbounded, decltype.unbounded, false),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						override[real](mv.nominal, decltype.nominal, 1),
+						mv.start,
+						mv.derivative,
+						default[bool](mv.reinit, false),
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int64> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int64
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int32> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int32
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int16> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int16
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int8> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int8
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt64> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt64
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt32> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt32
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt16> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt16
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt8> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt8
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Boolean> ->
+				-- Nothing inherited from decltype?
+				mk_Boolean
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,		-- NOT inherited?
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					default[bool](mv.intermediateUpdate, false),
+					mv.previous,
+					mv.declaredType,
+					effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+					mv.start,
+					mv.annotations,		-- NOT inherited?
+					mv.fmi3Dimensions,
+					mv.alias
+				),
+
+			<String> ->
+				-- Nothing inherited from decltype?
+				mk_String
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,		-- NOT inherited?
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					default[bool](mv.intermediateUpdate, false),
+					mv.previous,
+					mv.declaredType,
+					effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+					mv.annotations,		-- NOT inherited?
+					mv.fmi3Dimensions,
+					mv.start,
+					mv.alias
+				),
+
+			<Binary> ->
+				mk_Binary
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,		-- NOT inherited?
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					default[bool](mv.intermediateUpdate, false),
+					mv.previous,
+					mv.declaredType,
+					effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+					default[NormalizedString](mv.mimeType, "application/octet-stream"),
+					override[nat](mv.maxSize, decltype.maxSize, nil),
+					mv.annotations,		-- NOT inherited?
+					mv.fmi3Dimensions,
+					mv.start,
+					mv.alias
+				),
+
+			<Enumeration> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Enumeration
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,		-- NOT inherited?
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						override[NormalizedString](mv.quantity, decltype.quantity, nil),
+						override[real](mv.min, decltype.min, kmin),
+						override[real](mv.max, decltype.max, kmax),
+						mv.start,
+						mv.annotations,		-- NOT inherited?
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Clock> ->
+				mk_Clock
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,		-- NOT inherited?
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					mv.declaredType,
+					override[bool](mv.canBeDeactivated, decltype.canBeDeactivated, false),
+					override[nat](mv.priority, decltype.priority, nil),
+					mv.intervalVariability,
+					override[real](mv.intervalDecimal, decltype.intervalDecimal, nil),
+					override[real](mv.shiftDecimal, decltype.shiftDecimal, 0),
+					override[bool](mv.supportsFraction, decltype.supportsFraction, false),
+					override[nat](mv.resolution, decltype.resolution, nil),
+					override[nat](mv.intervalCounter, decltype.intervalCounter, nil),
+					override[nat](mv.shiftCounter, decltype.shiftCounter, 0),
+					mv.annotations,		-- NOT inherited?
+					mv.alias
+				),
+
+			others -> undefined
+		end
+	pre kindOf(decltype) = kindOf(mv);
+
+	effectiveSimpleVariable: fmi3Variable +> fmi3Variable
+	effectiveSimpleVariable(mv) ==
+		let kind = kindOf(mv) in
+		cases kind:
+			<Float64> -> 
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Float64
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						mv.unit,
+						mv.displayUnit,
+						default[bool](mv.relativeQuantity, false),
+						default[bool](mv.unbounded, false),
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						default[real](mv.nominal, 1),
+						mv.start,
+						mv.derivative,
+						default[bool](mv.reinit, false),
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Float32> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Float32
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						mv.unit,
+						mv.displayUnit,
+						default[bool](mv.relativeQuantity, false),
+						default[bool](mv.unbounded, false),
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						default[real](mv.nominal, 1),
+						mv.start,
+						mv.derivative,
+						default[bool](mv.reinit, false),
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int64> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int64
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int32> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int32
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int16> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int16
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Int8> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Int8
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt64> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt64
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt32> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt32
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt16> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt16
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<UInt8> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_UInt8
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Boolean> ->
+				mk_Boolean
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					default[bool](mv.intermediateUpdate, false),
+					mv.previous,
+					mv.declaredType,
+					effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+					mv.start,
+					mv.annotations,
+					mv.fmi3Dimensions,
+					mv.alias
+				),
+
+			<String> ->
+				mk_String
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					default[bool](mv.intermediateUpdate, false),
+					mv.previous,
+					mv.declaredType,
+					effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+					mv.annotations,
+					mv.fmi3Dimensions,
+					mv.start,
+					mv.alias
+				),
+
+			<Binary> ->
+				mk_Binary
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					default[bool](mv.intermediateUpdate, false),
+					mv.previous,
+					mv.declaredType,
+					effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+					default[NormalizedString](mv.mimeType, "application/octet-stream"),
+					mv.maxSize,
+					mv.annotations,
+					mv.fmi3Dimensions,
+					mv.start,
+					mv.alias
+				),
+
+			<Enumeration> ->
+				let mk_(kmin, kmax) = minMaxOfKind(kind) in
+					mk_Enumeration
+					(
+						mv.location,
+						mv.name,
+						mv.valueReference,
+						mv.description,
+						effectiveCausality(mv.causality, kind),
+						effectiveVariability(mv.variability, kind),
+						default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+						mv.clocks,
+						default[bool](mv.intermediateUpdate, false),
+						mv.previous,
+						mv.declaredType,
+						effectiveInitial(mv.causality, mv.variability, mv.initial, kind),
+						mv.quantity,
+						default[real](mv.min, kmin),
+						default[real](mv.max, kmax),
+						mv.start,
+						mv.annotations,
+						mv.fmi3Dimensions,
+						mv.alias
+					),
+
+			<Clock> ->
+				mk_Clock
+				(
+					mv.location,
+					mv.name,
+					mv.valueReference,
+					mv.description,
+					effectiveCausality(mv.causality, kind),
+					effectiveVariability(mv.variability, kind),
+					default[bool](mv.canHandleMultipleSetPerTimeInstant, false),
+					mv.clocks,
+					mv.declaredType,
+					default[bool](mv.canBeDeactivated, false),
+					mv.priority,
+					mv.intervalVariability,
+					mv.intervalDecimal,
+					default[real](mv.shiftDecimal, 0),
+					default[bool](mv.supportsFraction, false),
+					mv.resolution,
+					mv.intervalCounter,
+					default[nat](mv.shiftCounter, 0),
+					mv.annotations,
+					mv.alias
+				),
+
+			others -> undefined
+		end;
+
+
+	effectiveCausality: [Causality] * Kind +> Causality
+	effectiveCausality(causality, -) ==
+		if causality <> nil
+		then causality
+		else <local>;
+
+	effectiveVariability: [Variability] * Kind +> Variability
+	effectiveVariability(variability, kind) ==
+		if variability <> nil
+		then variability
+		else
+			cases kind:
+				<Float64>, <Float32> -> <continuous>,
+				others -> <discrete>
+			end;
+
+	effectiveInitial: [Causality] * [Variability] * [Initial] * Kind +> [Initial]
+	effectiveInitial(causality, variability, initial, kind) ==
+		if initial <> nil
+		then initial
+		else
+			let eCausality   = effectiveCausality(causality, kind),
+				eVariability = effectiveVariability(variability, kind)
+			in
+				-- See fmi-standard/docs/index.html#table-definition-initial
+				cases eCausality:
+					<structuralParameter> ->
+						cases eVariability:
+							<constant>		-> nil,
+							<fixed>			-> <exact>,
+							<tunable>		-> <exact>,
+							<discrete>		-> nil,
+							<continuous>	-> nil
+						end,
+					<parameter> ->
+						cases eVariability:
+							<constant>		-> nil,
+							<fixed>			-> <exact>,
+							<tunable>		-> <exact>,
+							<discrete>		-> nil,
+							<continuous>	-> nil
+						end,
+					<calculatedParameter> ->
+						cases eVariability:
+							<constant>		-> nil,
+							<fixed>			-> <calculated>,
+							<tunable>		-> <calculated>,
+							<discrete>		-> nil,
+							<continuous>	-> nil
+						end,
+					<input> ->
+						cases eVariability:
+							<constant>		-> nil,
+							<fixed>			-> nil,
+							<tunable>		-> nil,
+							<discrete>		-> <exact>,
+							<continuous>	-> <exact>
+						end,
+					<output> ->
+						cases eVariability:
+							<constant>		-> <exact>,
+							<fixed>			-> nil,
+							<tunable>		-> nil,
+							<discrete>		-> <calculated>,
+							<continuous>	-> <calculated>
+						end,
+					<local> ->
+						cases eVariability:
+							<constant>		-> <exact>,
+							<fixed>			-> <calculated>,
+							<tunable>		-> <calculated>,
+							<discrete>		-> <calculated>,
+							<continuous>	-> <calculated>
+						end,
+					<independent> ->
+						cases eVariability:
+							<constant>		-> nil,
+							<fixed>			-> nil,
+							<tunable>		-> nil,
+							<discrete>		-> nil,
+							<continuous>	-> nil
+						end
+				end;
