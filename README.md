@@ -25,11 +25,11 @@ While this allows efficient execution of a simulation, it is a significant limit
 UniFMU is a command line tool that facilitates the implementation of FMUs in other popular languages that would otherwise not be able to produce C-compatible binaries.
 It does this by providing a precompiled binary that is C-compatible, which then dispatches calls to the implementation of the model in the target language.
 
-| Specification Version |  FMU Interface  |  Languages         |  Binaries                  |
-| --------------------- | --------------- | ------------------ | -------------------------  |
+| Specification Version | FMU Interface   | Languages          | Binaries                   |
+| --------------------- | --------------- | ------------------ | -------------------------- |
 | FMI3 (_in progress_)  | (Co-Simulation) | (Python, C#, Java) | (win64, linux64, darwin64) |
-| FMI2                  |  Co-Simulation  |  Python, C#, Java  |  win64, linux64, darwin64  |
-| FMI1                  |  x              |  x                 |  x                         |
+| FMI2                  | Co-Simulation   | Python, C#, Java   | win64, linux64, darwin64   |
+| FMI1                  | x               | x                  | x                          |
 
 Examples of generated FMUs can be found in the [unifmu_examples](https://github.com/INTO-CPS-Association/unifmu_examples) repo.
 
@@ -145,8 +145,8 @@ For reference the `README.md` copied into Python FMUs looks like [README.md](htt
 | fmi2GetFMUstate                   | ✓         |       |
 | fmi2SetFMUstate                   | ✓         |       |
 | fmi2FreeFMUstate                  | ✓         |       |
-| fmi2SerializedFMUstateSize        | ✓        |       |
-| fmi2SerializeFMUstate             | ✓        |       |
+| fmi2SerializedFMUstateSize        | ✓         |       |
+| fmi2SerializeFMUstate             | ✓         |       |
 | fmi2DeSerializeFMUstate           | ✓         |       |
 | fmi2GetDirectionalDerivative      | x         |       |
 | fmi2EnterEventMode                | x         |       |
