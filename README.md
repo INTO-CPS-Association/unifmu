@@ -260,7 +260,10 @@ Building for local machine (with Windows as the example, and PowerShell commands
 1. Make sure you have the following installed on your computer:
    - [rust](https://www.rust-lang.org/tools/install)
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
-   - [Python](https://www.python.org/) and [Java](https://openjdk.org/) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
+   - For testing:
+     - [Python](https://www.python.org/)
+     - [Java](https://openjdk.org/) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
+     - [LLVM](https://releases.llvm.org/download.html) and set the corresponding `LIBCLANG_PATH` environment variable that is used by the `fmi` crate, to load and interact with FMUs. See [installation instructions](https://rust-lang.github.io/rust-bindgen/requirements.html#installing-clang).
 
 2. Clone the `unifmu` repository.
 

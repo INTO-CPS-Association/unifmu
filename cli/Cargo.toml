@@ -21,5 +21,6 @@ walkdir = "*"
 zip = { version = "*", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
-assert_cmd = "2.0"
-predicates = "3.0"
+assert_cmd = "*"
+predicates = "*"
+fmi = "*"

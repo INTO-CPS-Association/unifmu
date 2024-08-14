@@ -1,7 +1,8 @@
-use std::path::PathBuf;
+use std::{fs::File, path::PathBuf};
 
 use assert_cmd::Command;
 use predicates::str::contains;
+use fmi::{fmi2::{import::Fmi2Import, instance::Common}, import, traits::FmiImport};
 
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
@@ -42,7 +43,7 @@ fn test_python_fmi2() {
         .success()
         .stderr(contains("the FMU was generated successfully"));
 
-    let python_fmu = generated_fmus_dir.join("pythonfmu.fmu");
+    let python_fmu: PathBuf = generated_fmus_dir.join("pythonfmu.fmu");
     assert!(python_fmu.exists(), "The file {} does not exist", python_fmu.display());
 
     let vdm_check_2_jar = get_vdm_check2_jar();
@@ -56,4 +57,15 @@ fn test_python_fmi2() {
         .assert()
         .success()
         .stdout(contains("No errors found."));
+
+    let python_fmu_file = File::open(python_fmu).unwrap();
+
+    let import: Fmi2Import = import::new::<File,Fmi2Import>(python_fmu_file).unwrap();
+    
+    assert_eq!(import.model_description().fmi_version, "2.0");
+
+    let cs_instance = import.instantiate_cs("instance", false, true).unwrap();
+    assert_eq!(cs_instance.get_version(), "2.0");
+
+    
 }

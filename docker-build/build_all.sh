@@ -24,6 +24,8 @@ mkdir -p assets/auto_generated/fmi3
 protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
 # ------------------------------ cli ------------------------------
 tgt=unifmu
+echo "installing dependencies for testing cli in linux"
+apt install -qq -y python3-zmq python3-protobuf # Used by python backend
 echo "testing cli for linux"
 cargo test --target x86_64-unknown-linux-gnu --release
 echo "building cli for linux"
