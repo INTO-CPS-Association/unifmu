@@ -4,6 +4,7 @@
 
 - [UniFMU - Universal Functional Mock-Up Units](#unifmu---universal-functional-mock-up-units)
   - [Getting the tool](#getting-the-tool)
+  - [Getting help](#getting-help)
   - [How to use the command line interface?](#how-to-use-the-command-line-interface)
   - [Language specific documentation](#language-specific-documentation)
   - [Supported Features](#supported-features)
@@ -12,6 +13,7 @@
   - [Building and deployment](#building-and-deployment)
     - [Building during development](#building-during-development)
     - [Building for deployment](#building-for-deployment)
+    - [Troubleshooting](#troubleshooting)
   - [Citing the tool](#citing-the-tool)
 
 
@@ -34,6 +36,10 @@ Examples of generated FMUs can be found in the [unifmu_examples](https://github.
 
 The tool can be downloaded from [releases](https://github.com/INTO-CPS-Association/unifmu/releases) tab of the repository.
 It is a single executable that bundles all assets used during FMU generation as part of the binary.
+
+## Getting help
+
+The current responsible for the tool maintenance is [Claudio Gomes](https://clagms.github.io/contact/). Feel free to reach out for help.
 
 ## How to use the command line interface?
 
@@ -253,7 +259,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
 1. Make sure you have the following installed on your computer:
    - [rust](https://www.rust-lang.org/tools/install)
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
-   - [Python](https://www.python.org/) to test the generated FMU.
+   - [Python](https://www.python.org/) and [Java](https://openjdk.org/) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
 
 2. Clone the `unifmu` repository.
 
@@ -264,7 +270,10 @@ Building for local machine (with Windows as the example, and PowerShell commands
 5. Build the FMU dll using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate a the `fmiapi.dll` in the folder [target/x86_64-pc-windows-msvc/release](target/x86_64-pc-windows-msvc/release/). The dll contains the FMU headers' implementation.
 
 6. Generate the content for the [./assets/auto_generated/](./assets/auto_generated/) folder, that the CLI is packaged with.
-   1. Copy the generated dll into the assets folder (needed by the CLI): `Copy-Item -Force ./target/x86_64-pc-windows-msvc/release/fmiapi.dll ./assets/auto_generated/unifmu.dll`
+   1. Copy the generated dll into the assets folder (needed by the CLI):
+      ```powershell
+      Copy-Item -Force ./target/x86_64-pc-windows-msvc/release/fmiapi.dll ./assets/auto_generated/unifmu.dll
+      ```
    2. Generate the protobuf schemas for python, csharp, and java backends:
       ```powershell
       protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
@@ -272,7 +281,10 @@ Building for local machine (with Windows as the example, and PowerShell commands
 
 7. Run the integration tests: `cargo test`
 
-8. Compile the CLI and generate an FMU called `myfmu.fmu` using the newly compiled CLI: `cargo run --bin unifmu --release -- generate --zipped python myfmu.fmu fmi2`
+8. Compile the CLI and generate an FMU called `myfmu.fmu` using the newly compiled CLI:
+    ```powershell
+    cargo run --bin unifmu --release -- generate --zipped python myfmu.fmu fmi2
+    ```
 
 9. To test the FMU, we recommend:
    1. Installing [FMPy](https://github.com/CATIA-Systems/FMPy), and use it to simulate the FMU:
@@ -280,11 +292,11 @@ Building for local machine (with Windows as the example, and PowerShell commands
       pip install fmpy[complete]
       fmpy --validate simulate myfmu.fmu --show-plot
       ```
-    2. Download the [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) tool and use it to validate the FMU:
+    2. Use [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) tool to validate the FMU:
         ```powershell
-        java -jar <path to vdmcheck2.jar> myfmu.fmu
+        java -jar ./test_dependencies/vdmcheck-1.1.3/vdmcheck2.jar myfmu.fmu
         ```
-        where `<path to vdmcheck2.jar>` is the path to the `vdmcheck2.jar` file. If the FMU exported implements FMI 3.0, then use `vdmcheck3.jar`
+        If the FMU exported implements FMI 3.0, then use `vdmcheck3.jar`
 
 ### Building for deployment
 
@@ -306,6 +318,13 @@ This method should be followed when building the tool to be deployed for differe
     docker run --name builder -it --rm -v .:/workdir unifmu-docker ./docker-build/build_all.sh
     ```
     This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
+
+### Troubleshooting
+
+If having errors while running the docker build. It's useful to open a terminal in the container and debug your way around:
+```powershell
+docker run --name builder -it --rm -v .:/workdir unifmu-docker bash
+```
 
 ## Citing the tool
 
