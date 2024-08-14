@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 
 use libc::{c_char, size_t};
+use url::Url;
 use std::ffi::c_void;
 use std::ffi::CStr;
 use std::ffi::CString;
@@ -151,7 +152,17 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     }
     .to_owned();
 
-    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
+    let resource_uri = match Url::parse(&resource_path) {
+        Ok(url) => url,
+        Err(e) => panic!("unable to parse resource url"),
+    };
+
+    let resources_dir = resource_uri.to_file_path().expect(&format!(
+        "URI was parsed but could not be converted into a file path, got: '{:?}'.",
+        resource_uri
+    ));
+
+    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resources_dir)).unwrap();
 
     match dispatcher.fmi3InstantiateCoSimulation(
         instance_name,
