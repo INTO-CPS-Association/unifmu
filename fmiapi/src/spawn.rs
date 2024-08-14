@@ -19,6 +19,7 @@ pub struct LaunchConfig {
 
 pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, Popen), ()> {
     let config_path = resource_path.join("launch.toml");
+    println!("Reading configuration file at path '{:?}'",config_path);
 
     let config = read_to_string(&config_path).expect(&format!(
              "Unable to read configuration file stored at path: '{:?}', ensure that 'launch.toml' exists in the resources directory of the fmu.",
@@ -89,6 +90,7 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
 
 pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<(Fmi3CommandDispatcher, Popen), ()> {
     let config_path = resource_path.join("launch.toml");
+    println!("Reading configuration file at path '{:?}'",config_path);
 
     // Check if file is there and give error if not.
     if !config_path.exists() {

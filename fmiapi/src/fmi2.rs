@@ -17,6 +17,7 @@ use std::os::raw::c_int;
 use std::os::raw::c_uint;
 use std::os::raw::c_ulonglong;
 use std::os::raw::c_void;
+use std::path::Path;
 use std::slice::from_raw_parts;
 use std::slice::from_raw_parts_mut;
 
@@ -191,7 +192,7 @@ pub extern "C" fn fmi2Instantiate(
         resource_uri
     ));
 
-    let (mut dispatcher, popen) = spawn_fmi2_slave(&resources_dir).unwrap();
+    let (mut dispatcher, popen) = spawn_fmi2_slave(&Path::new(&resources_dir)).unwrap();
 
     dispatcher
         .fmi2Instantiate(
