@@ -1,17 +1,21 @@
 use std::convert::TryFrom;
 
-use crate::fmi3_messages::{
-    self, Fmi3DeserializeFmuState, Fmi3DoStep, Fmi3EmptyReturn, Fmi3EnterInitializationMode,
-    Fmi3ExitInitializationMode, Fmi3FreeInstance, Fmi3GetBoolean, Fmi3GetBooleanReturn,
-    Fmi3GetFloat32, Fmi3GetFloat32Return, Fmi3GetFloat64, Fmi3GetFloat64Return, Fmi3GetInt16,
-    Fmi3GetInt16Return, Fmi3GetInt32, Fmi3GetInt32Return, Fmi3GetInt64, Fmi3GetInt64Return,
-    Fmi3GetInt8, Fmi3GetInt8Return, Fmi3GetString, Fmi3GetStringReturn, Fmi3GetUInt16,
-    Fmi3GetUInt16Return, Fmi3GetUInt32, Fmi3GetUInt32Return, Fmi3GetUInt64, Fmi3GetUInt64Return,
-    Fmi3GetUInt8, Fmi3GetUInt8Return, Fmi3InstantiateCoSimulation, Fmi3InstantiateModelExchange,
-    Fmi3Reset, Fmi3SerializeFmuState, Fmi3SerializeFmuStateReturn, Fmi3StatusReturn, Fmi3Terminate,
-	Fmi3GetClock, Fmi3GetClockReturn, Fmi3SetClock, Fmi3GetIntervalDecimal, Fmi3GetIntervalDecimalReturn,
-	Fmi3EnterStepMode, Fmi3EnterEventMode, Fmi3InstantiateScheduledExecution
-};
+use crate::fmi3_messages::{self, Fmi3DeserializeFmuState, Fmi3DoStep, Fmi3EmptyReturn,
+                           Fmi3EnterInitializationMode, Fmi3ExitInitializationMode,
+                           Fmi3FreeInstance, Fmi3GetBoolean, Fmi3GetBooleanReturn, Fmi3GetFloat32,
+                           Fmi3GetFloat32Return, Fmi3GetFloat64, Fmi3GetFloat64Return, Fmi3GetInt16,
+                           Fmi3GetInt16Return, Fmi3GetInt32, Fmi3GetInt32Return, Fmi3GetInt64,
+                           Fmi3GetInt64Return, Fmi3GetInt8, Fmi3GetInt8Return, Fmi3GetString,
+                           Fmi3GetStringReturn, Fmi3GetUInt16, Fmi3GetUInt16Return, Fmi3GetUInt32,
+                           Fmi3GetUInt32Return, Fmi3GetUInt64, Fmi3GetUInt64Return, Fmi3GetUInt8,
+                           Fmi3GetUInt8Return, Fmi3InstantiateCoSimulation,
+                           Fmi3InstantiateModelExchange, Fmi3Reset, Fmi3SerializeFmuState,
+                           Fmi3SerializeFmuStateReturn, Fmi3StatusReturn, Fmi3Terminate,
+                           Fmi3GetClock, Fmi3GetClockReturn, Fmi3GetIntervalDecimal,
+                           Fmi3GetIntervalDecimalReturn, Fmi3EnterStepMode, Fmi3EnterEventMode,
+                           Fmi3InstantiateScheduledExecution, Fmi3SetFloat32, Fmi3SetFloat64,
+                           Fmi3SetInt8, Fmi3SetUInt8, Fmi3SetInt16, Fmi3SetUInt16, Fmi3SetInt32,
+                           Fmi3SetUInt32, Fmi3SetInt64, Fmi3SetUInt64, Fmi3SetBoolean, Fmi3SetClock};
 
 use crate::fmi3::Fmi3Status;
 use crate::fmi3_messages::fmi3_command::Command as c_enum;
@@ -209,22 +213,6 @@ impl Fmi3CommandDispatcher {
 
         self.send_and_recv::<_, fmi3_messages::Fmi3DoStepReturn>(&cmd)
             .map(|s| s.status().into())
-    }
-
-    pub fn fmi3SetClock(
-        &mut self,
-        references: &[u32],
-        values: &[bool],
-    ) -> Result<Fmi3Status, DispatcherError> {
-        let cmd = c_obj {
-            command: Some(c_enum::Fmi3SetClock(Fmi3SetClock {
-                value_references: references.to_owned(),
-                values: values.to_owned(),
-            })),
-        };
-
-        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
-            .map(|s| Fmi3Status::try_from(s.status).unwrap())
     }
 
     pub fn fmi3GetFloat32(
@@ -474,6 +462,198 @@ impl Fmi3CommandDispatcher {
                 };
                 (Fmi3Status::try_from(result.status).unwrap(), values)
             })
+    }
+
+    pub fn fmi3SetFloat32(
+        &mut self,
+        references: &[u32],
+        values: &[f32],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetFloat32(Fmi3SetFloat32 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetFloat64(
+        &mut self,
+        references: &[u32],
+        values: &[f64],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetFloat64(Fmi3SetFloat64 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetInt8(
+        &mut self,
+        references: &[u32],
+        values: &[i32],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetInt8(Fmi3SetInt8 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetUInt8(
+        &mut self,
+        references: &[u32],
+        values: &[u32],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetUInt8(Fmi3SetUInt8 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetInt16(
+        &mut self,
+        references: &[u32],
+        values: &[i32],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetInt16(Fmi3SetInt16 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetUInt16(
+        &mut self,
+        references: &[u32],
+        values: &[u32],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetUInt16(Fmi3SetUInt16 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetInt32(
+        &mut self,
+        references: &[u32],
+        values: &[i32],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetInt32(Fmi3SetInt32 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetUInt32(
+        &mut self,
+        references: &[u32],
+        values: &[u32],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetUInt32(Fmi3SetUInt32 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetInt64(
+        &mut self,
+        references: &[u32],
+        values: &[i64],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetInt64(Fmi3SetInt64 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetUInt64(
+        &mut self,
+        references: &[u32],
+        values: &[u64],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetUInt64(Fmi3SetUInt64 {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetBoolean(
+        &mut self,
+        references: &[u32],
+        values: &[bool],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetBoolean(Fmi3SetBoolean {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetClock(
+        &mut self,
+        references: &[u32],
+        values: &[bool],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetClock(Fmi3SetClock {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
     }
 
     pub fn fmi3Terminate(&mut self) -> Result<Fmi3Status, DispatcherError> {
