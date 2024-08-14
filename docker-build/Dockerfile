@@ -19,11 +19,11 @@ RUN apt -qq -y install \
   xz-utils
 
 # Install packages required for testing and backends
-RUN apt -qq -y install default-jre python3-wheel python3
+RUN apt -qq -y install default-jre python3-wheel python3 dotnet-sdk-8.0
 
 # install protoc
-RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.19.4/protoc-3.19.4-linux-x86_64.zip
-RUN unzip -oq protoc-3.19.4-linux-x86_64.zip -d /usr
+RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v27.3/protoc-27.3-linux-x86_64.zip
+RUN unzip -oq protoc-27.3-linux-x86_64.zip -d /usr
 
 # get macos toolchain
 WORKDIR /usr/

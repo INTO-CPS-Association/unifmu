@@ -18,7 +18,6 @@ extern crate dlopen_derive;
 pub enum Language {
     Python,
     CSharp,
-    // Matlab,
     Java,
 }
 
@@ -265,8 +264,6 @@ pub fn generate(
         Language::Python => copy_to_resources(&PYTHONASSETS),
 
         Language::CSharp => copy_to_resources(&CSHARPASSETS),
-
-        // Language::Matlab => todo!(),
 
         Language::Java => copy_to_resources(&JAVAASSETS),
     };

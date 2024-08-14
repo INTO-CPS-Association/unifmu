@@ -1,6 +1,6 @@
 use std::{fs::File, path::PathBuf};
 
-use assert_cmd::Command;
+use assert_cmd::{assert, Command};
 use fmi::{
     fmi2::{
         import::Fmi2Import,
@@ -105,6 +105,24 @@ fn test_java_fmi2() {
 }
 
 #[test]
+fn test_csharp_fmi2() {
+    let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
+
+    let generated_fmus_dir = get_generated_fmus_dir();
+
+    unifmu_cmd
+        .current_dir(generated_fmus_dir.as_path())
+        .args(&["generate", "c-sharp", "csharpfmu_fmi2.fmu", "--zipped"])
+        .assert()
+        .success()
+        .stderr(contains("the FMU was generated successfully"));
+
+    let fmu_file: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2.fmu");
+
+    test_fmu_fmi2(fmu_file);
+}
+
+#[test]
 fn test_python_fmi3() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
@@ -155,7 +173,13 @@ fn test_python_fmi3() {
     );
 }
 
-fn test_fmu_fmi2(python_fmu: PathBuf){
+fn test_fmu_fmi2(fmu_path: PathBuf){
+    assert!(
+        fmu_path.exists(),
+        "The file {} was not generated successfully.",
+        fmu_path.display()
+    );
+    
     let vdm_check_2_jar = get_vdm_check_jar("2");
 
     let mut vdm_check_cmd: Command = Command::new("java");
@@ -163,16 +187,16 @@ fn test_fmu_fmi2(python_fmu: PathBuf){
     vdm_check_cmd
         .arg("-jar")
         .arg(vdm_check_2_jar.as_path())
-        .arg(python_fmu.as_path())
+        .arg(fmu_path.as_path())
         .assert()
         .success()
         .stdout(contains("No errors found."));
 
     // Load FMU and interact with it
 
-    let python_fmu_file = File::open(python_fmu).unwrap();
+    let fmu_file = File::open(fmu_path).unwrap();
 
-    let import: Fmi2Import = import::new::<File, Fmi2Import>(python_fmu_file).unwrap();
+    let import: Fmi2Import = import::new::<File, Fmi2Import>(fmu_file).unwrap();
 
     assert_eq!(import.model_description().fmi_version, "2.0");
 
