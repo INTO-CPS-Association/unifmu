@@ -24,6 +24,8 @@ mkdir -p assets/auto_generated/fmi3
 protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
 # ------------------------------ cli ------------------------------
 tgt=unifmu
+echo "testing cli for linux"
+cargo test --target x86_64-unknown-linux-gnu --release
 echo "building cli for linux"
 cargo build --package ${tgt} --target x86_64-unknown-linux-gnu --release
 

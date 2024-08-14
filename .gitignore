@@ -162,6 +162,7 @@ cython_debug/
 # Local scripts
 test_local.ps1
 
-# Ignore test fmu
+# Ignore test fmus
 myfmu.fmu
 myfmu/
+generated_fmus/*.fmu

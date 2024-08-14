@@ -270,9 +270,11 @@ Building for local machine (with Windows as the example, and PowerShell commands
       protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
       ```
 
-7. Compile the CLI and generate an FMU called `myfmu.fmu` using the newly compiled CLI: `cargo run --bin unifmu --release -- generate --zipped python myfmu.fmu fmi2`
+7. Run the integration tests: `cargo test`
 
-8. To test the FMU, we recommend:
+8. Compile the CLI and generate an FMU called `myfmu.fmu` using the newly compiled CLI: `cargo run --bin unifmu --release -- generate --zipped python myfmu.fmu fmi2`
+
+9. To test the FMU, we recommend:
    1. Installing [FMPy](https://github.com/CATIA-Systems/FMPy), and use it to simulate the FMU:
       ```powershell
       pip install fmpy[complete]
@@ -299,6 +301,10 @@ This method should be followed when building the tool to be deployed for differe
     docker run --name builder -it --rm -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker ./docker-build/build_all.sh
     ```
     where `<location_of_unifmu_repository_on_local_pc>` should be replaced by the path of the unifmu repository location.
+    For example:
+    ```powershell
+    docker run --name builder -it --rm -v .:/workdir unifmu-docker ./docker-build/build_all.sh
+    ```
     This should generate three folders in the `target` directory on your local computer, one folder for each OS (windows, macos, linux).
 
 ## Citing the tool

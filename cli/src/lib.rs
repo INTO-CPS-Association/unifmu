@@ -280,7 +280,10 @@ pub fn generate(
 
             let file = match File::create(&zipped_fmu_path) {
                 Ok(f) => f,
-                Err(_) => return Err(GenerateError::FileExists),
+                Err(e) => {
+                    error!("Could not create file: {:?}", e);
+                    return Err(GenerateError::Error)
+                },
             };
 
             let walkdir = WalkDir::new(tmpdir.path());
