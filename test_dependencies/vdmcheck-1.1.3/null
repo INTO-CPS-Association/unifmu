@@ -1,0 +1,443 @@
+/**
+ * VDM value created from /workdir/generated_fmus/pythonfmu.fmu
+ */
+values
+    modelDescription =
+    mk_FmiModelDescription
+    (
+        mk_Location("modelDescription.xml", 2),
+        "2.0",  -- fmiVersion
+        "unifmu",  -- modelName
+        "77236337-210e-4e9c-8f2c-c1a0677db21b",  -- guid
+        nil,  -- description
+        "Christian Møldrup Legaard",  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        "unifmu",  -- generationTool
+        "2020-10-23T19:51:25Z",  -- generationDateAndTime
+        <flat>,  -- variableNamingConvention
+        nil,  -- numberOfEventIndicators
+        nil,  -- modelExchange
+        mk_CoSimulation
+        (
+            mk_Location("modelDescription.xml", 3),
+            "unifmu",  -- modelIdentifier
+            true,  -- needsExecutionTool
+            true,  -- canHandleVariableCommunicationStepSize
+            nil,  -- canInterpolateInputs
+            nil,  -- maxOutputDerivativeOrder
+            nil,  -- canRunAsynchronuously
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            false,  -- canNotUseMemoryManagementFunctions
+            nil,  -- canGetAndSetFMUstate
+            nil,  -- canSerializeFMUstate
+            nil,  -- providesDirectionalDerivative
+            nil   -- sourceFiles
+        ),
+        nil,  -- unitDefinitions
+        nil,  -- typeDefinitions
+        [
+            mk_Category
+            (
+                mk_Location("modelDescription.xml", 5),
+                "logStatusWarning",  -- name
+                nil   -- description
+            ),
+            mk_Category
+            (
+                mk_Location("modelDescription.xml", 6),
+                "logStatusDiscard",  -- name
+                nil   -- description
+            ),
+            mk_Category
+            (
+                mk_Location("modelDescription.xml", 7),
+                "logStatusError",  -- name
+                nil   -- description
+            ),
+            mk_Category
+            (
+                mk_Location("modelDescription.xml", 8),
+                "logStatusFatal",  -- name
+                nil   -- description
+            ),
+            mk_Category
+            (
+                mk_Location("modelDescription.xml", 9),
+                "logStatusPending",  -- name
+                nil   -- description
+            ),
+            mk_Category
+            (
+                mk_Location("modelDescription.xml", 10),
+                "logAll",  -- name
+                nil   -- description
+            )
+        ],
+        nil,  -- defaultExperiment
+        nil,  -- vendorAnnotations
+        [
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 14),
+                "real_a",  -- name
+                0,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <continuous>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 15),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 18),
+                "real_b",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <continuous>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 19),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 22),
+                "real_c",  -- name
+                2,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                <continuous>,  -- variability
+                <calculated>,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 23),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 26),
+                "integer_a",  -- name
+                3,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Integer
+                (
+                    mk_Location("modelDescription.xml", 27),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- min
+                    nil,  -- max
+                    0   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 30),
+                "integer_b",  -- name
+                4,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Integer
+                (
+                    mk_Location("modelDescription.xml", 31),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- min
+                    nil,  -- max
+                    0   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 34),
+                "integer_c",  -- name
+                5,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                <discrete>,  -- variability
+                <calculated>,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Integer
+                (
+                    mk_Location("modelDescription.xml", 35),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 38),
+                "boolean_a",  -- name
+                6,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 39),
+                    nil,  -- declaredType
+                    false   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 42),
+                "boolean_b",  -- name
+                7,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 43),
+                    nil,  -- declaredType
+                    false   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 46),
+                "boolean_c",  -- name
+                8,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                <discrete>,  -- variability
+                <calculated>,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 47),
+                    nil,  -- declaredType
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 50),
+                "string_a",  -- name
+                9,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_String
+                (
+                    mk_Location("modelDescription.xml", 51),
+                    nil,  -- declaredType
+                    ""   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 54),
+                "string_b",  -- name
+                10,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_String
+                (
+                    mk_Location("modelDescription.xml", 55),
+                    nil,  -- declaredType
+                    ""   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 58),
+                "string_c",  -- name
+                11,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                <discrete>,  -- variability
+                <calculated>,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_String
+                (
+                    mk_Location("modelDescription.xml", 59),
+                    nil,  -- declaredType
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("modelDescription.xml", 63),
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 65),
+                    3,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 66),
+                    6,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 67),
+                    9,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 68),
+                    12,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                )
+            ],
+            nil,  -- derivatives
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 71),
+                    3,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 72),
+                    6,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 73),
+                    9,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 74),
+                    12,  -- index
+                    -- dependencies
+                    [
+
+                    ],
+                    nil   -- dependenciesKind
+                )
+            ] 
+        ) 
+    );
+
+/**
+ * VDM value missing
+ */
+values
+    buildDescription = nil;
+
+
+
+/**
+ * VDM value missing
+ */
+values
+    terminalsAndIcons = nil;
+
+
+

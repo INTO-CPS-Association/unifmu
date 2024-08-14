@@ -1,0 +1,471 @@
+// This adds the "functions" section header for vdm only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} FmiModelDescription Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validModelAttributes
+[[validModelAttributes]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_inquire_platform_and_version_number_of_header_files")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validModelAttributes: FmiModelDescription +> bool
+validModelAttributes(md) ==
+	-- @OnFail("%NAME: ModelAttribute fmiVersion should be 2.0")
+	( md.fmiVersion in set { "2.0" } );
+----
+// {vdm}
+See <<_inquire_platform_and_version_number_of_header_files>>
+
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validVendorAnnotations
+[[validVendorAnnotations]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_vendor_annotations_vendorannotations")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validVendorAnnotations:FmiModelDescription +> bool
+validVendorAnnotations(fmd) ==
+	let tools = fmd.vendorAnnotations in
+		tools <> nil =>
+			-- @OnFail("%NAME: VendorAnnotations tool names are not unique: %s",
+			--	{ tools(a) | a, b in set inds tools & a <> b and tools(a) = tools(b) })
+			( card { name | name in seq tools } = len tools );
+----
+// {vdm}
+See <<_definition_of_vendor_annotations_vendorannotations>>
+
+
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validModelTypes
+[[validModelTypes]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_an_fmu_fmimodeldescription")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validModelTypes: FmiModelDescription +> bool
+validModelTypes(fmd) ==
+	-- @OnFail("%NAME: Either ModelExchange or CoSimulation must be defined")
+	( fmd.modelExchange <> nil or fmd.coSimulation <> nil );
+----
+// {vdm}
+See <<_definition_of_an_fmu_fmimodeldescription>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validGenerationDateAndTime
+[[validGenerationDateAndTime]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_an_fmu_fmimodeldescription")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validGenerationDateAndTime: FmiModelDescription +> bool
+validGenerationDateAndTime(fmd) ==
+	-- @OnFail("%NAME: generationDateAndTime should be YYYY-MM-DDThh:mm:ssZ at %#s",
+	-- loc2str(fmd.location))
+	( fmd.generationDateAndTime <> nil => iso8601(fmd.generationDateAndTime) );
+----
+// {vdm}
+See <<_definition_of_an_fmu_fmimodeldescription>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeUnits
+[[validTypeUnits]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeUnits: FmiModelDescription +> bool
+validTypeUnits(fmd) ==
+	fmd.typeDefinitions <> nil => allOf
+	([
+		tdef.fmi2SimpleType.unit <> nil =>
+			-- @OnFail("%NAME: Type %s, unit %s not defined in UnitDefinitions at %#s",
+			-- tdef.name, tdef.fmi2SimpleType.unit, loc2str(tdef.location))
+			( fmd.unitDefinitions <> nil
+				and exists u in seq fmd.unitDefinitions & u.name = tdef.fmi2SimpleType.unit )
+
+		| tdef in seq fmd.typeDefinitions & is_Real(tdef.fmi2SimpleType)
+	]);
+----
+// {vdm}
+See <<_definition_of_types_typedefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validVariableTypes
+[[validVariableTypes]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validVariableTypes: FmiModelDescription +> bool
+validVariableTypes(fmd) == allOf
+	([
+		mv.fmi2ScalarVariable.declaredType <> nil =>
+		let tdef = lookupType(mv.fmi2ScalarVariable.declaredType, fmd.typeDefinitions) in
+			-- @OnFail("%NAME: %s type %s not found at %#s",
+			-- mv.name, mv.fmi2ScalarVariable.declaredType, loc2str(mv.location))
+			( tdef <> nil )
+
+			-- @OnFail("%NAME: %s type %s mismatch at %#s",
+			-- mv.name, mv.fmi2ScalarVariable.declaredType, loc2str(mv.location))
+			and ( kindOf(tdef.fmi2SimpleType) = kindOf(mv.fmi2ScalarVariable) )
+
+		| mv in seq fmd.modelVariables
+	]);
+----
+// {vdm}
+- See <<_definition_of_model_variables_modelvariables>>
+- See <<_definition_of_types_typedefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeNames
+[[validTypeNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeNames: FmiModelDescription +> bool
+validTypeNames(fmd) == fmd.typeDefinitions <> nil => allOf
+	([
+		-- @OnFail("%NAME: TypeDefinition and Variable names overlap: %s at %#s",
+		-- tdef.name, loc2str(tdef.location))
+		( not exists mv in seq fmd.modelVariables & mv.name = tdef.name )
+
+		| tdef in seq fmd.typeDefinitions
+	]);
+----
+// {vdm}
+See <<_definition_of_types_typedefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validVariableNames
+[[validVariableNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validVariableNames: FmiModelDescription +> bool
+validVariableNames(fmd) ==
+	fmd.variableNamingConvention = <structured> => allOf(conc
+	[
+		[
+			-- @OnFail("%NAME: Structured name %s invalid at %#s", mv.name, loc2str(mv.location))
+			( validStructuredName(mv.name) ),
+
+			-- @OnFail("%NAME: Name %s is not Real at %#s", mv.name, loc2str(mv.location))
+			( mv.name(1, ..., 4) = "der(" => is_Real(mv.fmi2ScalarVariable) )
+		]
+
+		| mv in seq fmd.modelVariables
+	]);
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validStart
+[[validStart]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validStart: FmiModelDescription * ModelVariables +> bool
+validStart(-, evs) == allOf
+	([
+		let type = ev.fmi2ScalarVariable in
+		[
+			type.start <> nil =>
+				-- @OnFail("%NAME: all start values must be between %s and %s at %#s",
+				-- ev.fmi2ScalarVariable.min, ev.fmi2ScalarVariable.max, loc2str(ev.location))
+				( type.min <= type.start and type.max >= type.start ),
+
+			type.start = nil and ev.initial <> <calculated> =>
+				-- @OnFail("%NAME: Warning: implicit start of 0 not within min/max at %#s",
+				-- loc2str(ev.location))
+				( (type.min <> nil => type.min <= 0) and
+				  (type.max <> nil => type.max >= 0) ) or true	-- NOTE warning
+		]
+
+		| ev in seq evs & is_MinMaxType(ev.fmi2ScalarVariable)
+	]);
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validMinMax
+[[validMinMax]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validMinMax: FmiModelDescription * ModelVariables +> bool
+validMinMax(fmd, evs) == allOf
+	([
+		let type = ev.fmi2ScalarVariable,
+			tdef = lookupType(type.declaredType, fmd.typeDefinitions),
+			mk_(kmin, kmax) = minMaxOfKind(kindOf(type)) in
+		[
+			-- @OnFail("%NAME: max %s is not a valid value of this type", type.max)
+			( type.max <= kmax and type.max >= kmin ),
+
+			-- @OnFail("%NAME: min %s is not a valid value of this type", type.min)
+			( type.min <= kmax and type.min >= kmin ),
+
+			-- @OnFail("%NAME: max %s not >= min %s", type.max, type.min)
+			( type.max >= type.min ),
+
+			-- @OnFail("%NAME: ScalarVariable %s min/max exceeds RealType %s at %#s",
+			-- ev.name, ev.fmi2ScalarVariable.declaredType, loc2str(ev.location))
+			( tdef <> nil and tdef.fmi2SimpleType.min <> nil and type.min <> nil =>
+				tdef.fmi2SimpleType.min <= type.min ),
+
+			-- @OnFail("%NAME: ScalarVariable %s min/max exceeds RealType %s at %#s",
+			-- ev.name, ev.fmi2ScalarVariable.declaredType, loc2str(ev.location))
+			( tdef <> nil and tdef.fmi2SimpleType.max <> nil and type.max <> nil =>
+				tdef.fmi2SimpleType.max >= type.max )
+		]
+
+		| ev in seq evs & is_MinMaxType(ev.fmi2ScalarVariable)
+	]);
+----
+// {vdm}
+See <<_definition_of_types_typedefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validMultipleSets
+[[validMultipleSets]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validMultipleSets: FmiModelDescription * ModelVariables +> bool
+validMultipleSets(fmd, evs) == allOf
+	([
+		ev.canHandleMultipleSetPerTimeInstant = true =>
+			-- @OnFail("%NAME: Variable %s, canHandleMultipleSetPerTimeInstant invalid at %#s",
+			-- ev.name, loc2str(ev.location))
+			( fmd.modelExchange <> nil and ev.causality = <input> )
+
+		| ev in seq evs
+	]);
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validReinits
+[[validReinits]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validReinits: FmiModelDescription +> bool
+validReinits(fmd) == allOf
+	([
+		let mv = fmd.modelVariables(i) in
+			is_Real(mv.fmi2ScalarVariable) and mv.fmi2ScalarVariable.reinit <> nil =>
+				-- @OnFail("%NAME: %s, Real reinit for model exchange continuous time only at %#s",
+				-- mv.name, loc2str(mv.location))
+				( isContinuousTimeState(i, fmd.modelVariables) and fmd.modelExchange <> nil )
+
+		| i in set inds fmd.modelVariables
+	]);
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validVariableUnits
+[[validVariableUnits]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#table-variableBase-attributes")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validVariableUnits: FmiModelDescription * ModelVariables +> bool
+validVariableUnits(fmd, evs) == allOf
+([
+	is_Real(sv.fmi2ScalarVariable) => allOf
+	([
+		-- @OnFail("%NAME: ScalarVariable %s, Real unit must be defined for displayUnit %s at %#s",
+		--	sv.name, sv.fmi2ScalarVariable.displayUnit, loc2str(sv.location))
+		( sv.fmi2ScalarVariable.displayUnit <> nil => sv.fmi2ScalarVariable.unit <> nil ),
+
+		sv.fmi2ScalarVariable.unit <> nil =>
+			-- @OnFail("%NAME: ScalarVariable %s, Real unit %s not defined in UnitDefinitions at %#s",
+			--	sv.name, sv.fmi2ScalarVariable.unit, loc2str(sv.location))
+			( fmd.unitDefinitions <> nil
+				and exists u in seq fmd.unitDefinitions & u.name = sv.fmi2ScalarVariable.unit )
+	])
+
+	| sv in seq evs
+]);
+----
+// {vdm}
+See <<table-variableBase-attributes>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validOutputs
+[[validOutputs]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_the_model_structure_modelstructure")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validOutputs: FmiModelDescription * ModelVariables +> bool
+validOutputs(fmd, evs) ==
+	let outputIndexes = { svi | svi in set inds evs & evs(svi).causality = <output> } in
+		if outputIndexes <> {}
+		then
+			-- @OnFail("%NAME: Output variables but no outputs declared at %#s",
+			--	loc2str(fmd.modelStructure.location))
+			( fmd.modelStructure.outputs <> nil )
+
+			and let structIndexes = { u.index | u in seq fmd.modelStructure.outputs } in allOf
+			([
+
+				-- @OnFail("%NAME: Outputs section does not match output variables at %#s",
+				--	loc2str(fmd.modelStructure.location))
+				( structIndexes = outputIndexes ),
+
+				-- @OnFail("%NAME: Output indexes out of range at %#s",
+				--	loc2str(fmd.modelStructure.location))
+				( forall i in set structIndexes & i <= len evs )
+			])
+		else
+			-- @OnFail("%NAME: Outputs should be omitted at %#s",
+			--	loc2str(fmd.modelStructure.location))
+			( fmd.modelStructure.outputs = nil );
+----
+// {vdm}
+See <<_definition_of_the_model_structure_modelstructure>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validDerivatives
+[[validDerivatives]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_the_model_structure_modelstructure")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validDerivatives: FmiModelDescription * ModelVariables +> bool
+validDerivatives(fmd, evs) ==
+	fmd.modelExchange <> nil
+	or (fmd.coSimulation <> nil and fmd.coSimulation.providesDirectionalDerivative = true) =>
+		fmd.modelStructure.derivatives <> nil => allOf
+		([
+			-- @OnFail("%NAME: Derivative index out of range at %#s", loc2str(u.location))
+			( u.index <= len evs )
+
+			and let sv = evs(u.index) in allOf
+			([
+				-- @OnFail("%NAME: SV not a state derivative at %#s", loc2str(u.location))
+				( isStateDerivative(sv) ),
+
+				-- @OnFail("%NAME: Derivative must be continuous at %#s", loc2str(u.location))
+				( u.dependencies <> nil => sv.variability = <continuous> )
+			])
+
+			| u in seq fmd.modelStructure.derivatives
+		]);
+----
+// {vdm}
+See <<_definition_of_the_model_structure_modelstructure>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validInitialUnknowns
+[[validInitialUnknowns]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_the_model_structure_modelstructure")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validInitialUnknowns: FmiModelDescription * ModelVariables +> bool
+validInitialUnknowns(fmd, evs) ==
+	let ctVars = continuousTimeStates(evs),
+		sdVars = stateDerivatives(evs),
+		initIndexes = { svi | svi in set inds evs &
+			let sv = evs(svi) in
+				(sv.causality = <output>
+					and sv.initial in set { <approx>, <calculated> })
+
+				or (sv.causality = <calculatedParameter>)
+
+				or (sv in set ctVars
+					and sv.initial in set { <approx>, <calculated> })
+
+				or (sv in set sdVars
+					and sv.initial in set { <approx>, <calculated> }) }
+	in
+		initIndexes <> {} =>
+			let ius = fmd.modelStructure.initialUnknowns in allOf
+			([
+				-- @OnFail("%NAME: InitialUnknowns must include: %s", initIndexes)
+				( ius <> nil ),
+
+				-- @OnFail("%NAME: InitialUnknowns must not include: %s",
+				-- { u.index | u in seq ius } \ initIndexes )
+				( ius <> nil => { u.index | u in seq ius } subset initIndexes ),
+
+				-- @OnFail("%NAME: InitialUnknowns are not sorted: %s",
+				-- [ u.index | u in seq ius ])
+				( ius <> nil => 
+						forall i in set inds ius &
+							i = len ius or ius(i).index < ius(i+1).index )
+			]);
+----
+// {vdm}
+See <<_definition_of_the_model_structure_modelstructure>>

@@ -1,0 +1,16 @@
+FMI-VDM-Model Licensing
+=======================
+
+Portions of this project are released under a GPLv3 licence, parts under an MIT licence and parts
+under a BSD 2-Clause licence.
+
+The GPLv3 licence covers the VDMCheck tool and the supporting xsd2vdm and VDMJ tools.
+
+The MIT licence covers the VDM sources themselves.
+
+The files above are Copyright(c) 2017-2022, INTO-CPS Association, c/o Professor Peter Gorm Larsen,
+Department of Engineering, Finlandsgade 22, 8200 Aarhus N.
+
+The FMI schema files, distributed with the package, are issued under a BSD 2-Clause licence, and
+are Copyright(c) 2008-2011 MODELISAR consortium, 2012-2022 Modelica Association Project "FMI".
+

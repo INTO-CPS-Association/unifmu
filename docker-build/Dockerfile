@@ -16,7 +16,8 @@ RUN apt -qq -y install \
   libz-dev \
   zip \
   unzip \
-  xz-utils
+  xz-utils \
+  default-jre # for vdmcheck
 
 # install protoc
 RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.19.4/protoc-3.19.4-linux-x86_64.zip

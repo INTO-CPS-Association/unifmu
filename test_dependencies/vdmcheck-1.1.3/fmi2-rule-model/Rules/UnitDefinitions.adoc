@@ -1,0 +1,48 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} UnitDefinitions Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validUnitNames
+[[validUnitNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_units_unitdefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validUnitNames: UnitDefinitions +> bool
+validUnitNames(units) ==
+	-- @OnFail("%NAME: Unit names must be unique")
+	( let names = [ u.name | u in seq units ] in
+		len names = card elems names );
+----
+// {vdm}
+See <<_definition_of_units_unitdefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validDisplayUnitNames
+[[validDisplayUnitNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_units_unitdefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validDisplayUnitNames: Unit +> bool
+validDisplayUnitNames(unit) ==
+	unit.displayUnit <> nil =>
+		-- @OnFail("%NAME: DisplayUnit names must be unique within %s at %#s",
+		-- unit.name, loc2str(unit.location))
+		( let names = [ u.name | u in seq unit.displayUnit ] in
+			len names = card elems names );
+----
+// {vdm}
+See <<_definition_of_units_unitdefinitions>>

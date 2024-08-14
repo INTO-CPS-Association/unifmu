@@ -1,0 +1,92 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} SourceFileSet Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validCompilerOptions
+[[validCompilerOptions]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#table-SourceFileSet-details")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validCompilerOptions: SourceFileSet +> bool
+validCompilerOptions(sfs) ==
+	-- @OnFail("%NAME: Compiler options set without compiler at %#s", loc2str(sfs.location))
+	( sfs.compilerOptions <> nil => sfs.compiler <> nil );
+----
+// {vdm}
+See <<table-SourceFileSet-details>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validSourceFileNames
+[[validSourceFileNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#table-SourceFile-details"). Note, from FMI3
+// {vdm}
+endif::[]
+// {vdm}
+----
+validSourceFileNames: SourceFileSet +> bool
+validSourceFileNames(sfs) ==
+	let files = sfs.sourceFile in
+	let names = [ sf.name | sf in seq files ] in
+		-- @OnFail("%NAME: SourceFileSet has duplicate names: %s",
+		--	{ files(a) | a, b in set inds names & a <> b and files(a) = files(b) })
+		( card elems names = len names );
+----
+// {vdm}
+See <<table-SourceFile-details>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validPreprocessorDefinitionNames
+[[validPreprocessorDefinitionNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#table-ProcessorDefinition-details"). Note, from FMI3
+// {vdm}
+endif::[]
+// {vdm}
+----
+validPreprocessorDefinitionNames: SourceFileSet +> bool
+validPreprocessorDefinitionNames(sfs) ==
+	let defs = sfs.preprocessorDefinition in
+	defs <> nil =>
+		let names = [ d.name | d in seq defs ] in
+			-- @OnFail("%NAME: PreprocessorDefinitions has duplicate names: %s",
+			--	{ names(a) | a, b in set inds names & a <> b and names(a) = names(b) })
+			( card elems names = len names );
+----
+// {vdm}
+See <<table-ProcessorDefinition-details>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validIncludeDirectoryNames
+[[validIncludeDirectoryNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#table-IncludeDirectory-details"). Note, from FMI3
+// {vdm}
+endif::[]
+// {vdm}
+----
+validIncludeDirectoryNames: SourceFileSet +> bool
+validIncludeDirectoryNames(sfs) ==
+	let incs = sfs.includeDirectory in
+	incs <> nil =>
+		let names = [ d.name | d in seq incs ] in
+			-- @OnFail("%NAME: IncludeDirectories has duplicate names: %s",
+			--	{ names(a) | a, b in set inds names & a <> b and names(a) = names(b) })
+			( card elems names = len names );
+
+----
+// {vdm}
+See <<table-IncludeDirectory-details>>

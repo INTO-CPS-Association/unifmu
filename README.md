@@ -5,7 +5,7 @@
 - [UniFMU - Universal Functional Mock-Up Units](#unifmu---universal-functional-mock-up-units)
   - [Getting the tool](#getting-the-tool)
   - [Getting help](#getting-help)
-  - [How to use the command line interface?](#how-to-use-the-command-line-interface)
+  - [How to use the command line interface](#how-to-use-the-command-line-interface)
   - [Language specific documentation](#language-specific-documentation)
   - [Supported Features](#supported-features)
     - [FMI2](#fmi2)
@@ -14,6 +14,7 @@
     - [Building during development](#building-during-development)
     - [Building for deployment](#building-for-deployment)
     - [Troubleshooting](#troubleshooting)
+      - [Errors while running the docker build](#errors-while-running-the-docker-build)
   - [Citing the tool](#citing-the-tool)
 
 
@@ -41,7 +42,7 @@ It is a single executable that bundles all assets used during FMU generation as 
 
 The current responsible for the tool maintenance is [Claudio Gomes](https://clagms.github.io/contact/). Feel free to reach out for help.
 
-## How to use the command line interface?
+## How to use the command line interface
 
 To display the synopsis use the `--help` flag.
 
@@ -321,7 +322,9 @@ This method should be followed when building the tool to be deployed for differe
 
 ### Troubleshooting
 
-If having errors while running the docker build. It's useful to open a terminal in the container and debug your way around:
+#### Errors while running the docker build
+
+It's useful to open a terminal in the container and debug your way around:
 ```powershell
 docker run --name builder -it --rm -v .:/workdir unifmu-docker bash
 ```

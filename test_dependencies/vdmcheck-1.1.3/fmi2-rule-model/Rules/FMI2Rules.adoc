@@ -1,0 +1,66 @@
+== Appendix A: Formal Static Semantics of FMI2
+
+=== A.{counter:section} Introduction
+
+The FMI Standard document contains a complete description of the semantics of the FMI API, and the structure of an FMU and its configuration files.
+
+This document contains formally specified rules that clarify the textual description in the Standard. The formal rules can be used to automatically test the compliance of an FMU with the Standard, and rule violations give references back to the Standard where the issue is discussed. Similarly, links in the Standard refer to the rules given in this document.
+
+The rules currently only cover the _static_ semantics of the Standard. That is, they describe the rules for correctly configured XML files. The dynamic semantics, defining the behaviour of the API, may be formally specified subsequently.
+
+=== A.{counter:section} VDM-SL Specifications
+
+The rules are defined in VDM-SL, the specification language of the https://en.wikipedia.org/wiki/Vienna_Development_Method[Vienna Development Method].  The language has a formal semantics, enabling proof of the properties of models to a high level of assurance. It also has an executable subset, so that real world data can be processed.
+
+Free https://github.com/overturetool/vdm-vscode[open source tools] are available to process the VDM-SL rules.
+
+=== A.{counter:section} Structure of the Rules
+
+Each formal rule has a unique name and is associated with one XML type in the FMI Schema.
+
+Rules are associated with the most nested XML type that encapsulates all of the data involved. For example, the rule that Category names must be unique within LogCategories is associated with the LogCategories type itself, since that includes all the Categories concerned. The rule that a TypeDefinition's unit names must be defined in the UnitDefinitions is associated with the top level FmiModelDescription type, since that type encompasses both the TypeDefinitions and UnitDefinitions.
+
+All rules are functions that return a boolean success/fail result. They are passed the record that contains the data to check. For example:
+
+----
+validTolerance: DefaultExperiment +> bool
+validTolerance(de) ==
+	-- @OnFail("%NAME: tolerance must be >= 0 at %#s", loc2str(de.location))
+	( de.tolerance <> nil => de.tolerance >= 0 );
+----
+
+This defines a rule called "validTolerance" which is passed a DefaultExperiment record to test. The record is referred to by the name "de" within the body of the rule, which follows the "==".
+
+Rules contain _@OnFail_ comments, which define error messages associated with clauses in the rule. The comments themselves are not part of the rules and do not affect whether the rule succeeds or fails. The _%NAME_ placeholder is expanded to the rule name. All XML types have a _location_ field added which contains the filename and line number of the data in the original XML. The _loc2str_ function turns locations into useful strings.
+
+Rules sometimes use a function called _allOf_, which is passed a comma-separated list of boolean tests in square brackets, all of which must be true for the overall rule to be met.
+
+=== A.{counter:section} Rules
+
+include::ModelExchange.adoc[]
+
+include::CoSimulation.adoc[]
+
+include::UnitDefinitions.adoc[]
+
+include::TypeDefinitions.adoc[]
+
+include::LogCategories.adoc[]
+
+include::DefaultExperiment.adoc[]
+
+include::ModelVariables.adoc[]
+
+include::ModelStructure.adoc[]
+
+include::FmiModelDescription.adoc[]
+
+include::BuildConfiguration.adoc[]
+
+include::Terminals.adoc[]
+
+ifdef::hidden[]
+// {vdm}
+-- Rules for individual XML types are in <type>.adoc.
+// {vdm}
+endif::[]

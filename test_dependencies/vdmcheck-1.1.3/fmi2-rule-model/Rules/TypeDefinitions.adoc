@@ -1,0 +1,97 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} TypeDefinitions Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeDefinitionNames
+[[validTypeDefinitionNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeDefinitionNames: [TypeDefinitions] +> bool
+validTypeDefinitionNames(tdefs) ==
+	tdefs <> nil =>
+		-- @OnFail("%NAME: TypeDefinition names must be unique")
+		( let names = [ td.name | td in seq tdefs ] in
+			len names = card elems names );
+----
+// {vdm}
+See <<_definition_of_types_typedefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeMinMax
+[[validTypeMinMax]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeMinMax: MinMaxType +> bool
+validTypeMinMax(type) ==
+	let mk_(kmin, kmax) = minMaxOfKind(kindOf(type)) in allOf
+	([
+		-- @OnFail("%NAME: max %s is not a valid value of this type", type.max)
+		( type.max <> nil => type.max <= kmax and type.max >= kmin ),
+
+		-- @OnFail("%NAME: min %s is not a valid value of this type", type.min)
+		( type.min <> nil => type.min <= kmax and type.min >= kmin ),
+
+		-- @OnFail("%NAME: max %s not >= min %s", type.max, type.min)
+		( type.min <> nil and type.max <> nil => type.max >= type.min )
+	]);
+----
+// {vdm}
+See <<_definition_of_types_typedefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeDisplayUnit
+[[validTypeDisplayUnit]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeDisplayUnit: SimpleType +> bool
+validTypeDisplayUnit(tdef) ==
+	is_Real(tdef.fmi2SimpleType) =>
+		-- @OnFail("%NAME: Real %s, unit must be defined for displayUnit %s",
+		-- tdef.name, tdef.fmi2SimpleType.displayUnit)
+		( tdef.fmi2SimpleType.displayUnit <> nil => tdef.fmi2SimpleType.unit <> nil );
+----
+// {vdm}
+See <<_definition_of_types_typedefinitions>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validEnumerationTypeBijection
+[[validEnumerationTypeBijection]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_types_typedefinitions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validEnumerationTypeBijection: EnumerationType +> bool
+validEnumerationTypeBijection(tdef) ==
+	-- @OnFail("%NAME: Enumeration item items do not form a bijection at %#s",
+	-- loc2str(tdef.location))
+	(
+		card { i.name | i in seq tdef.item } = len tdef.item
+		and	card { i.value | i in seq tdef.item } = len tdef.item
+	);
+----
+// {vdm}
+See <<_definition_of_types_typedefinitions>>

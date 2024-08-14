@@ -1,0 +1,425 @@
+/**
+ * VDM schema created from fmi2.xsd on Tue Jul 26 10:41:14 BST 2022
+ * DO NOT EDIT!
+ */
+types
+
+AnyString = seq of char;
+
+NormalizedString = seq of char
+inv ns ==
+	forall c in seq ns & c not in set {'\r', '\n', '\t'};
+
+Location ::
+	file : seq1 of char
+	line : nat1
+;
+
+FmiModelDescription ::
+	location                  : Location
+	fmiVersion                : NormalizedString
+	modelName                 : AnyString
+	guid                      : NormalizedString
+	description               : [AnyString]
+	author                    : [AnyString]
+	version                   : [NormalizedString]
+	copyright                 : [AnyString]
+	license                   : [AnyString]
+	generationTool            : [NormalizedString]
+	generationDateAndTime     : [seq1 of char]
+	variableNamingConvention  : [VariableNamingConvention]
+	numberOfEventIndicators   : [nat]
+	modelExchange             : [ModelExchange]
+	coSimulation              : [CoSimulation]
+	unitDefinitions           : [UnitDefinitions]
+	typeDefinitions           : [TypeDefinitions]
+	logCategories             : [LogCategories]
+	defaultExperiment         : [DefaultExperiment]
+	vendorAnnotations         : [VendorAnnotations]
+	modelVariables            : ModelVariables
+	modelStructure            : ModelStructure
+inv rec ==
+	(rec.fmiVersion = "2.0")
+;
+
+ModelExchange ::
+	location                             : Location
+	modelIdentifier                      : NormalizedString
+	needsExecutionTool                   : [bool]
+	completedIntegratorStepNotNeeded     : [bool]
+	canBeInstantiatedOnlyOncePerProcess  : [bool]
+	canNotUseMemoryManagementFunctions   : [bool]
+	canGetAndSetFMUstate                 : [bool]
+	canSerializeFMUstate                 : [bool]
+	providesDirectionalDerivative        : [bool]
+	sourceFiles                          : [SourceFiles]
+;
+
+SourceFiles = seq1 of (File);
+
+File = NormalizedString;
+
+CoSimulation ::
+	location                                : Location
+	modelIdentifier                         : NormalizedString
+	needsExecutionTool                      : [bool]
+	canHandleVariableCommunicationStepSize  : [bool]
+	canInterpolateInputs                    : [bool]
+	maxOutputDerivativeOrder                : [nat]
+	canRunAsynchronuously                   : [bool]
+	canBeInstantiatedOnlyOncePerProcess     : [bool]
+	canNotUseMemoryManagementFunctions      : [bool]
+	canGetAndSetFMUstate                    : [bool]
+	canSerializeFMUstate                    : [bool]
+	providesDirectionalDerivative           : [bool]
+	sourceFiles                             : [SourceFiles]
+;
+
+UnitDefinitions = seq1 of (Unit);
+
+Unit ::
+	location     : Location
+	name         : NormalizedString
+	baseUnit     : [BaseUnit]
+	displayUnit  : [seq of (DisplayUnit)]
+;
+
+BaseUnit ::
+	location  : Location
+	kg        : [int]
+	m         : [int]
+	s         : [int]
+	a         : [int]
+	k         : [int]
+	mol       : [int]
+	cd        : [int]
+	rad       : [int]
+	factor    : [real]
+	offset    : [real]
+;
+
+DisplayUnit ::
+	location  : Location
+	name      : NormalizedString
+	factor    : [real]
+	offset    : [real]
+;
+
+TypeDefinitions = seq1 of (SimpleType);
+
+SimpleType ::
+	location        : Location
+	name            : NormalizedString
+	description     : [AnyString]
+	fmi2SimpleType  : RealType | IntegerType | BooleanType | StringType | EnumerationType
+;
+
+RealType ::
+	location          : Location
+	quantity          : [NormalizedString]
+	unit              : [NormalizedString]
+	displayUnit       : [NormalizedString]
+	relativeQuantity  : [bool]
+	min               : [real]
+	max               : [real]
+	nominal           : [real]
+	unbounded         : [bool]
+;
+
+IntegerType ::
+	location  : Location
+	quantity  : [NormalizedString]
+	min       : [int]
+	max       : [int]
+;
+
+BooleanType ::
+	location  : Location
+;
+
+StringType ::
+	location  : Location
+;
+
+EnumerationType ::
+	location  : Location
+	quantity  : [NormalizedString]
+	item      : seq1 of (Item)
+;
+
+Item ::
+	location     : Location
+	name         : NormalizedString
+	value        : int
+	description  : [AnyString]
+;
+
+LogCategories = seq1 of (Category);
+
+Category ::
+	location     : Location
+	name         : NormalizedString
+	description  : [AnyString]
+;
+
+DefaultExperiment ::
+	location  : Location
+	startTime : [real]
+	stopTime  : [real]
+	tolerance : [real]
+	stepSize  : [real]
+;
+
+VendorAnnotations = seq1 of (Tool);
+
+Tool ::
+	location  : Location
+	name      : NormalizedString
+	any       : [token]
+;
+
+ModelVariables = seq1 of (ScalarVariable);
+
+ScalarVariable ::
+	location                            : Location
+	name                                : NormalizedString
+	valueReference                      : nat
+	description                         : [AnyString]
+	causality                           : [Causality]
+	variability                         : [Variability]
+	initial                             : [Initial]
+	canHandleMultipleSetPerTimeInstant  : [bool]
+	fmi2ScalarVariable                  : Real | Integer | Boolean | String | Enumeration
+	vendorAnnotations                   : [VendorAnnotations]
+;
+
+Real ::
+	location          : Location
+	declaredType      : [NormalizedString]
+	quantity          : [NormalizedString]
+	unit              : [NormalizedString]
+	displayUnit       : [NormalizedString]
+	relativeQuantity  : [bool]
+	min               : [real]
+	max               : [real]
+	nominal           : [real]
+	unbounded         : [bool]
+	start             : [real]
+	derivative        : [nat]
+	reinit            : [bool]
+;
+
+Integer ::
+	location      : Location
+	declaredType  : [NormalizedString]
+	quantity      : [NormalizedString]
+	min           : [int]
+	max           : [int]
+	start         : [int]
+;
+
+Boolean ::
+	location      : Location
+	declaredType  : [NormalizedString]
+	start         : [bool]
+;
+
+String ::
+	location      : Location
+	declaredType  : [NormalizedString]
+	start         : [AnyString]
+;
+
+Enumeration ::
+	location      : Location
+	declaredType  : NormalizedString
+	quantity      : [NormalizedString]
+	min           : [int]
+	max           : [int]
+	start         : [int]
+;
+
+Causality = <parameter> | <calculatedParameter> | <input> | <output> | <local> | <independent>;
+
+Variability = <constant> | <fixed> | <tunable> | <discrete> | <continuous>;
+
+Initial = <exact> | <approx> | <calculated>;
+
+ModelStructure ::
+	location         : Location
+	outputs          : [Outputs]
+	derivatives      : [Derivatives]
+	initialUnknowns  : [InitialUnknowns]
+;
+
+Outputs = seq1 of (Unknown);
+
+Unknown ::
+	location          : Location
+	index             : nat
+	dependencies      : [seq of (nat)]
+	dependenciesKind  : [seq of (DependenciesKind)]
+;
+
+DependenciesKind = <dependent> | <constant> | <fixed> | <tunable> | <discrete>;
+
+Derivatives = seq1 of (Unknown);
+
+InitialUnknowns = seq1 of (Unknown);
+
+VariableNamingConvention = <flat> | <structured>;
+
+FmiBuildDescription ::
+	location            : Location
+	fmiVersion          : NormalizedString
+	buildConfiguration  : seq1 of (BuildConfiguration)
+	annotations         : [Annotations]
+inv rec ==
+	(XSD`xsdPattern(rec.fmiVersion, "3[.](0-.*)"))
+;
+
+BuildConfiguration ::
+	location         : Location
+	modelIdentifier  : NormalizedString
+	platform         : [NormalizedString]
+	description      : [AnyString]
+	sourceFileSet    : [seq of (SourceFileSet)]
+	library          : [seq of (Library)]
+	annotations      : [Annotations]
+;
+
+SourceFileSet ::
+	location                : Location
+	name                    : [NormalizedString]
+	language                : [NormalizedString]
+	compiler                : [NormalizedString]
+	compilerOptions         : [AnyString]
+	sourceFile              : seq1 of (SourceFile)
+	preprocessorDefinition  : [seq of (PreprocessorDefinition)]
+	includeDirectory        : [seq of (IncludeDirectory)]
+	annotations             : [Annotations]
+;
+
+SourceFile ::
+	location     : Location
+	name         : NormalizedString
+	annotations  : [Annotations]
+;
+
+Annotations = seq1 of (Annotation);
+
+Annotation ::
+	location  : Location
+	type      : NormalizedString
+	any       : [seq of (token)]
+;
+
+PreprocessorDefinition ::
+	location     : Location
+	name         : NormalizedString
+	optional     : [bool]
+	value        : [NormalizedString]
+	description  : [AnyString]
+	option       : [seq of (Option)]
+	annotations  : [Annotations]
+;
+
+Option ::
+	location     : Location
+	value        : [NormalizedString]
+	description  : [AnyString]
+;
+
+IncludeDirectory ::
+	location     : Location
+	name         : NormalizedString
+	annotations  : [Annotations]
+;
+
+Library ::
+	location     : Location
+	name         : NormalizedString
+	version      : [NormalizedString]
+	external     : [bool]
+	description  : [AnyString]
+	annotations  : [Annotations]
+;
+
+FmiTerminalsAndIcons ::
+	location                 : Location
+	fmiVersion               : NormalizedString
+	graphicalRepresentation  : [GraphicalRepresentation]
+	terminals                : [Terminals]
+	annotations              : [Annotations]
+inv rec ==
+	(XSD`xsdPattern(rec.fmiVersion, "3[.](0-.*)"))
+;
+
+GraphicalRepresentation ::
+	location          : Location
+	coordinateSystem  : [CoordinateSystem]
+	icon              : [Icon]
+	annotations       : [Annotations]
+;
+
+CoordinateSystem ::
+	location                     : Location
+	x1                           : real
+	y1                           : real
+	x2                           : real
+	y2                           : real
+	suggestedScalingFactorTo_mm  : real
+;
+
+Icon ::
+	location  : Location
+	x1        : real
+	y1        : real
+	x2        : real
+	y2        : real
+;
+
+Terminals = seq1 of (Terminal);
+
+Terminal ::
+	location                         : Location
+	name                             : NormalizedString
+	matchingRule                     : NormalizedString
+	terminalKind                     : [NormalizedString]
+	description                      : [AnyString]
+	terminalMemberVariable           : [seq of (TerminalMemberVariable)]
+	terminalStreamMemberVariable     : [seq of (TerminalStreamMemberVariable)]
+	terminal                         : [seq of (Terminal)]
+	terminalGraphicalRepresentation  : [TerminalGraphicalRepresentation]
+	annotations                      : [Annotations]
+;
+
+TerminalMemberVariable ::
+	location      : Location
+	variableName  : NormalizedString
+	memberName    : [NormalizedString]
+	variableKind  : NormalizedString
+	annotations   : [Annotations]
+;
+
+TerminalStreamMemberVariable ::
+	location              : Location
+	inStreamMemberName    : NormalizedString
+	outStreamMemberName   : NormalizedString
+	inStreamVariableName  : NormalizedString
+	outStreamVariableName : NormalizedString
+	annotations           : [Annotations]
+;
+
+TerminalGraphicalRepresentation ::
+	location                     : Location
+	defaultConnectionColor       : [seq of (nat)]
+	defaultConnectionStrokeSize  : [real]
+	x1                           : real
+	y1                           : real
+	x2                           : real
+	y2                           : real
+	iconBaseName                 : AnyString
+	annotations                  : [Annotations]
+;
+
