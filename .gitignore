@@ -166,4 +166,5 @@ test_local.ps1
 myfmu.fmu
 myfmu/
 generated_fmus/*.fmu
-test_dependencies/vdmcheck-1.1.3/null
+test_dependencies/vdmcheck2-1.1.3/null
+test_dependencies/vdmcheck3-1.1.3/null
