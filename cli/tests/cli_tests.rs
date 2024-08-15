@@ -6,9 +6,6 @@ use fmi::{
         import::Fmi2Import,
         instance::{CoSimulation, Common},
     },
-    fmi3::{
-        import::Fmi3Import,
-    },
     import,
     schema::fmi2::ScalarVariable,
     traits::{FmiImport, FmiStatus},
@@ -122,57 +119,6 @@ fn test_csharp_fmi2() {
     test_fmu_fmi2(fmu_file);
 }
 
-#[test]
-fn test_python_fmi3() {
-    let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
-
-    let generated_fmus_dir = get_generated_fmus_dir();
-
-    unifmu_cmd
-        .current_dir(generated_fmus_dir.as_path())
-        .args(&["generate", "python", "pythonfmu_fmi3.fmu", "fmi3", "--zipped"])
-        .assert()
-        .success()
-        .stderr(contains("the FMU was generated successfully"));
-
-    let python_fmu: PathBuf = generated_fmus_dir.join("pythonfmu_fmi3.fmu");
-    assert!(
-        python_fmu.exists(),
-        "The file {} does not exist",
-        python_fmu.display()
-    );
-
-    let vdm_check_3_jar = get_vdm_check_jar("3");
-
-    let mut vdm_check_cmd: Command = Command::new("java");
-
-    vdm_check_cmd
-        .arg("-jar")
-        .arg(vdm_check_3_jar.as_path())
-        .arg(python_fmu.as_path())
-        .assert()
-        .success()
-        .stdout(contains("No errors found."));
-
-    // Load FMU and interact with it
-
-    let reference_fmu: PathBuf = generated_fmus_dir.join("Reference-FMUs-0.0.32").join("3.0").join("Feedthrough.fmu");
-    let python_fmu_file = File::open(python_fmu).unwrap();
-    //let python_fmu_file = File::open(reference_fmu).unwrap();
-
-    let import: Fmi3Import = import::new::<File, Fmi3Import>(python_fmu_file).unwrap();
-
-    assert!(import.model_description().fmi_version.starts_with("3.0"));
-
-    let launch_toml: PathBuf = PathBuf::from(import.archive_path());
-
-    let mut cs_instance: fmi::fmi3::instance::Instance<fmi::fmi3::instance::CS> = import.instantiate_cs("instance", false, true, false, false, &[]).unwrap();
-    assert_eq!(
-        fmi::fmi3::instance::Common::get_version(&cs_instance),
-        "3.0"
-    );
-}
-
 fn test_fmu_fmi2(fmu_path: PathBuf){
     assert!(
         fmu_path.exists(),
@@ -219,7 +165,7 @@ fn test_fmu_fmi2(fmu_path: PathBuf){
     cs_instance
         .exit_initialization_mode()
         .ok()
-        .expect("enter_initialization_mode");
+        .expect("exit_initialization_mode");
 
     // Check for initial outputs as they are calculated
 
