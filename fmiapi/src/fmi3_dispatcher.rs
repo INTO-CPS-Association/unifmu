@@ -202,7 +202,7 @@ impl Fmi3CommandDispatcher {
         current_communication_point: f64,
         communication_step_size: f64,
         no_set_fmu_state_prior_to_current_point: bool,
-    ) -> Result<Fmi3Status, DispatcherError> {
+    ) -> Result<(Fmi3Status, bool, bool, bool, f64), DispatcherError> {
         let cmd = c_obj {
             command: Some(c_enum::Fmi3DoStep(Fmi3DoStep {
                 current_communication_point,
@@ -212,7 +212,15 @@ impl Fmi3CommandDispatcher {
         };
 
         self.send_and_recv::<_, fmi3_messages::Fmi3DoStepReturn>(&cmd)
-            .map(|s| s.status().into())
+            .map(|result| {
+                let event_handling_needed = result.event_handling_needed;
+                let terminate_simulation = result.terminate_simulation;
+                let early_return = result.early_return;
+                let last_successful_time = result.last_successful_time;
+
+                (Fmi3Status::try_from(result.status).unwrap(), event_handling_needed,
+                 terminate_simulation, early_return, last_successful_time)
+            })
     }
 
     pub fn fmi3GetFloat32(

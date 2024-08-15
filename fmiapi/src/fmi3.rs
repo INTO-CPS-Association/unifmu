@@ -188,26 +188,41 @@ pub extern "C" fn fmi3DoStep(
     instance: &mut Fmi3Slave,
     current_communication_point: f64,
     communication_step_size: f64,
-    no_set_fmu_state_prior_to_current_point: i32,
-    event_handling_needed: *const i32,
-    terminate_simulation: *const i32,
-    early_return: *const i32,
-    last_successful_time: f64,
+    no_set_fmu_state_prior_to_current_point: bool,
+    event_handling_needed: *mut bool,
+    terminate_simulation: *mut bool,
+    early_return: *mut bool,
+    last_successful_time: *mut f64,
 ) -> Fmi3Status {
     match instance.dispatcher.fmi3DoStep(
         current_communication_point,
         communication_step_size,
-        no_set_fmu_state_prior_to_current_point != 0,
+        no_set_fmu_state_prior_to_current_point,
     ) {
-        Ok(s) => match s {
-            Fmi3Status::OK | Fmi3Status::Warning => {
-                instance.last_successful_time =
-                    Some(current_communication_point + communication_step_size);
-                s
+        Ok((status, event_handling, terminate, early, successful_time)) => {
+            if !last_successful_time.is_null() {
+                unsafe {
+                    *last_successful_time = successful_time;
+                }
             }
-            s => s,
-        },
-        Err(e) => Fmi3Status::Error,
+            if !event_handling_needed.is_null() {
+                unsafe {
+                    *event_handling_needed = event_handling;
+                }
+            }
+            if !terminate_simulation.is_null() {
+                unsafe {
+                    *terminate_simulation = terminate;
+                }
+            }
+            if !early_return.is_null() {
+                unsafe {
+                    *early_return = early;
+                }
+            }
+            status
+        }
+        Err(_) => Fmi3Status::Error,
     }
 }
 #[no_mangle]
