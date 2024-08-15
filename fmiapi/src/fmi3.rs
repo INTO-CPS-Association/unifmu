@@ -530,7 +530,7 @@ pub extern "C" fn fmi3GetBoolean(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    values: *mut i32,
+    values: *mut bool,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
@@ -542,16 +542,7 @@ pub extern "C" fn fmi3GetBoolean(
     {
         Ok((status, values)) => {
             match values {
-                Some(values) => values_out.copy_from_slice(
-                    &values
-                        .iter()
-                        .map(|v| match v {
-                            true => 0,
-                            false => 1,
-                        })
-                        .collect::<Vec<i32>>(),
-                ),
-
+                Some(values) => values_out.copy_from_slice(&values),
                 None => (),
             };
             status
@@ -1081,14 +1072,11 @@ pub extern "C" fn fmi3SetBoolean(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    values: *const i32,
+    values: *const bool,
     n_values: size_t,
 ) -> Fmi3Status {
     let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values: Vec<bool> = unsafe { from_raw_parts(values, n_values) }
-        .iter()
-        .map(|v| *v != 0)
-        .collect();
+    let values = unsafe { from_raw_parts(values, n_values) };
 
     match instance
         .dispatcher
