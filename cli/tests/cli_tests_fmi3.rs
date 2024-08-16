@@ -111,8 +111,8 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
     assert!(import.model_description().fmi_version.starts_with("3.0"));
 
 
-    // Instantiate FMU, not using event mode (event_mode_used = False)
-    let mut cs_instance: InstanceCS = import.instantiate_cs("instance", false, true, false, false, &[]).unwrap();
+    // Instantiate FMU, using event mode (event_mode_used = True)
+    let mut cs_instance: InstanceCS = import.instantiate_cs("instance", false, true, true, false, &[]).unwrap();
     assert_eq!(
         cs_instance.get_version(),
         "3.0"
@@ -130,7 +130,12 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
         Err(e) => panic!("exit_initialization_mode failed: {:?}", e),
     }
 
-    // Not using event mode, so FMu should now be in step mode
+    // Using event mode, so we should now be in event mode
+    // Enter step mode instead
+    match cs_instance.enter_step_mode().ok() {
+        Ok(..) => {},
+        Err(e) => panic!("enter_step_mode failed: {:?}", e),
+    }
 
     // Do step
     let mut last_successful_time = 0.0;
@@ -254,12 +259,9 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
     assert_eq!(boolean_c, true);
 
     // Enter event mode
-    //cs_instance.enter_event_mode().ok().expect("enter_event_mode failed");
+    cs_instance.enter_event_mode().ok().expect("enter_event_mode failed");
 
-    // Enter step mode
-    //cs_instance.enter_step_mode().ok().expect("enter_step_mode failed");
-
-    // Try to enter event mode
+    // Terminate
     cs_instance.terminate().ok().expect("terminate failed");
 }
 
