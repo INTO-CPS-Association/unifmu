@@ -23,6 +23,7 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetBooleanReturn,
     Fmi3GetStringReturn,
     FmiGetBinaryReturn,
+    Fmi3GetClockReturn,
 )
 from model import Model
 
@@ -31,8 +32,6 @@ logger = logging.getLogger(__file__)
 
 
 if __name__ == "__main__":
-
-    model = Model()
 
     # initializing message queue
     context = zmq.Context()
@@ -57,14 +56,31 @@ if __name__ == "__main__":
         group = command.WhichOneof("command")
         data = getattr(command, command.WhichOneof("command"))
 
+        print('Command:\n' + repr(command))
+
         # ================= FMI3 =================
         if group == "Fmi3InstantiateModelExchange":
             result = Fmi3EmptyReturn()
         elif group == "Fmi3InstantiateCoSimulation":
+            model = Model(
+                data.instance_name,
+                data.instantiation_token,
+                data.resource_path,
+                data.visible,
+                data.logging_on,
+                data.event_mode_used,
+                data.early_return_allowed,
+                data.required_intermediate_variables
+            )
             result = Fmi3EmptyReturn()
         elif group == "Fmi3InstantiateScheduledExecution":
             result = Fmi3EmptyReturn()
-
+        elif group == "Fmi3EnterStepMode":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3EnterStepMode()
+        elif group == "Fmi3EnterEventMode":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3EnterEventMode()
         elif group == "Fmi3DoStep":
             result = Fmi3DoStepReturn()
             (
@@ -104,14 +120,10 @@ if __name__ == "__main__":
             result.status = model.fmi3DeserializeFmuState(data.state)
         elif group == "Fmi3GetFloat32":
             result = Fmi3GetFloat32Return()
-            result.status, result.values[:] = model.fmi3GetFloat32(
-                data.value_references
-            )
+            result.status, result.values[:] = model.fmi3GetFloat32(data.value_references)
         elif group == "Fmi3GetFloat64":
             result = Fmi3GetFloat64Return()
-            result.status, result.values[:] = model.fmi3GetFloat64(
-                data.value_references
-            )
+            result.status, result.values[:] = model.fmi3GetFloat64(data.value_references)
         elif group == "Fmi3GetInt8":
             result = Fmi3GetInt8Return()
             result.status, result.values[:] = model.fmi3GetInt8(data.value_references)
@@ -138,15 +150,16 @@ if __name__ == "__main__":
             result.status, result.values[:] = model.fmi3GetUInt64(data.value_references)
         elif group == "Fmi3GetBoolean":
             result = Fmi3GetBooleanReturn()
-            result.status, result.values[:] = model.fmi3GetBoolean(
-                data.value_references
-            )
+            result.status, result.values[:] = model.fmi3GetBoolean(data.value_references)
         elif group == "Fmi3GetString":
             result = Fmi3GetStringReturn()
             result.status, result.values[:] = model.fmi3GetString(data.value_references)
         elif group == "FmiGetBinary":
             result = FmiGetBinaryReturn()
             result.status, result.values[:] = model.fmi3GetBinary(data.value_references)
+        elif group == "Fmi3GetClock":
+            result = Fmi3GetClockReturn()
+            result.status, result.values[:] = model.fmi3GetClock(data.value_references)
         elif group == "Fmi3SetFloat32":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetFloat32(data.value_references, data.values)
@@ -186,9 +199,13 @@ if __name__ == "__main__":
         elif group == "Fmi3SetBinary":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetBinary(data.value_references, data.values)
+        elif group == "Fmi3SetClock":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetClock(data.value_references, data.values)
         else:
             logger.error(f"unrecognized command '{group}' received, shutting down")
             sys.exit(-1)
 
+        print('Result:\n' + repr(result))
         state = result.SerializeToString()
         socket.send(state)

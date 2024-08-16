@@ -2,7 +2,26 @@ import pickle
 
 
 class Model:
-    def __init__(self) -> None:
+    def __init__(
+            self,
+            instance_name,
+            instantiation_token,
+            resource_path,
+            visible,
+            logging_on,
+            event_mode_used,
+            early_return_allowed,
+            required_intermediate_variables,
+    ) -> None:
+        self.instance_name = instance_name
+        self.instantiation_token = instantiation_token
+        self.resource_path = resource_path
+        self.visible = visible
+        self.logging_on = logging_on
+        self.event_mode_used = event_mode_used
+        self.early_return_allowed = early_return_allowed
+        self.required_intermediate_variables = required_intermediate_variables
+
         self.float32_a = 0.0
         self.float32_b = 0.0
         self.float64_a = 0.0
@@ -104,6 +123,12 @@ class Model:
 
     def fmi3ExitInitializationMode(self):
         self._update_outputs()
+        return Fmi3Status.ok
+
+    def fmi3EnterEventMode(self):
+        return Fmi3Status.ok
+
+    def fmi3EnterStepMode(self):
         return Fmi3Status.ok
 
     def fmi3Terminate(self):
@@ -244,6 +269,9 @@ class Model:
     def fmi3GetBinary(self, value_references):
         return self._get_value(value_references)
 
+    def fmi3GetClock(self, value_references):
+        return self._get_value(value_references)
+
     def fmi3SetFloat32(self, value_references, values):
         return self._set_value(value_references, values)
 
@@ -281,6 +309,9 @@ class Model:
         return self._set_value(value_references, values)
 
     def fmi3SetBinary(self, value_references, values):
+        return self._set_value(value_references, values)
+
+    def fmi3SetClock(self, value_references, values):
         return self._set_value(value_references, values)
 
     # ================= Helpers =================
