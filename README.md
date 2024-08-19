@@ -282,10 +282,10 @@ Building for local machine (with Windows as the example, and PowerShell commands
 
 4. Install the rust toolchain for your operating systems, e.g. `rustup target add x86_64-pc-windows-msvc` (msvc is the microsoft C-compiler).
 
-5. Build the FMU dll using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate a the `fmiapi.dll` in the folder [target/x86_64-pc-windows-msvc/release](target/x86_64-pc-windows-msvc/release/). The dll contains the FMU headers' implementation.
+5. Build the FMU dll using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate the `fmiapi.dll` in the folder [target/x86_64-pc-windows-msvc/release](target/x86_64-pc-windows-msvc/release/). The dll contains the FMU headers' implementation.
 
 6. Generate the content for the [./assets/auto_generated/](./assets/auto_generated/) folder, that the CLI is packaged with.
-   1. Copy the generated dll into the assets folder (needed by the CLI):
+   1. Copy the generated dll into the assets folder (needed by the CLI). **Note the change of filename.**
       ```powershell
       Copy-Item -Force ./target/x86_64-pc-windows-msvc/release/fmiapi.dll ./assets/auto_generated/unifmu.dll
       ```
@@ -295,13 +295,14 @@ Building for local machine (with Windows as the example, and PowerShell commands
       ```
 
 7. Run the integration tests: `cargo test`
+   1. If the tests fail, it may be because you do not have the runtime dependencies for each backend, as they are all tested. Install any runtime dependencies needed for each backend. Check the readme files in each backend. See the  [Language specific documentation and backend development](#language-specific-documentation-and-backend-development) section for more information.
 
 8. Compile the CLI and generate an FMU called `myfmu.fmu` using the newly compiled CLI:
     ```powershell
     cargo run --bin unifmu --release -- generate --zipped python myfmu.fmu fmi2
     ```
 
-9. To test the FMU, we recommend:
+9.  To test the FMU, we recommend:
    1. Installing [FMPy](https://github.com/CATIA-Systems/FMPy), and use it to simulate the FMU:
       ```powershell
       pip install fmpy[complete]
