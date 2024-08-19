@@ -197,7 +197,7 @@ pub fn generate(
 
     let unifmu_src_linux = "auto_generated/unifmu.so";
     if Assets::get(unifmu_src_linux).is_none() {
-        warn!("Could not find unifmu.dll in {:?}", unifmu_src_linux);
+        warn!("Could not find unifmu.so in {:?}", unifmu_src_linux);
     } else {
         std::fs::write(
             bin_linux,
@@ -208,7 +208,7 @@ pub fn generate(
     
     let unifmu_src_macos = "auto_generated/unifmu.dylib";
     if Assets::get(unifmu_src_macos).is_none() {
-        warn!("Could not find unifmu.dll in {:?}", unifmu_src_macos);
+        warn!("Could not find unifmu.dylib in {:?}", unifmu_src_macos);
     } else {
         std::fs::write(
             bin_macos,
