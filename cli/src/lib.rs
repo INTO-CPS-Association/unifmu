@@ -186,7 +186,7 @@ pub fn generate(
 
     let unifmu_src_win = "auto_generated/unifmu.dll";
     if Assets::get(unifmu_src_win).is_none() {
-        error!("Could not find unifmu.dll in {:?}", unifmu_src_win);
+        warn!("Could not find unifmu.dll in {:?}", unifmu_src_win);
     } else {
         std::fs::write(
             bin_win,
