@@ -270,30 +270,36 @@ Building for local machine (with Windows as the example, and PowerShell commands
 1. Make sure you have the following installed on your computer:
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
    - [rust](https://www.rust-lang.org/tools/install)
-   - [Protocol Buffers v27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3). **Note: If you download a different version, you will have to update the build scripts and the dependencies of all backends.**
+   - [Protocol Buffers v27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3). **Note: If you download a different version, you will have to update the build scripts and the dependencies of all backends.**.  **For Linux users:** be sure to have the *bin* file of protobuf in your path, e.g., `export PATH=/path/to/protobuf/protoc-27.3-linux-x86_64/bin:$PATH`
+   
+.
    - For testing:
      - [Python](https://www.python.org/)
      - [Java](https://openjdk.org/) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
      - [LLVM](https://releases.llvm.org/download.html) and set the corresponding `LIBCLANG_PATH` environment variable that is used by the `fmi` crate, to load and interact with FMUs. See [installation instructions](https://rust-lang.github.io/rust-bindgen/requirements.html#installing-clang).
+     - **For Linux users:** [.NET SDK (for C#)](https://learn.microsoft.com/en-us/dotnet/core/install/linux?WT.mc_id=dotnet-35129-website).
 
 2. Clone the `unifmu` repository.
 
 3. Make the changes you want.
 
-4. Install the rust toolchain for your operating systems, e.g. `rustup target add x86_64-pc-windows-msvc` (msvc is the microsoft C-compiler).
+4. Install the rust toolchain for your operating systems, e.g. `rustup target add x86_64-pc-windows-msvc` (msvc is the microsoft C-compiler).  **For Linux users:** run the command `rustup toolchain list` to identify the toolchain for your architecture and modify the command with the corresponding result, e.g., `rustup target add x86_64-unknown-linux-gnu`.
 
-5. Build the FMU dll using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate the `fmiapi.dll` in the folder [target/x86_64-pc-windows-msvc/release](target/x86_64-pc-windows-msvc/release/). The dll contains the FMU headers' implementation.
+5. **Windows:** Build the FMU dll using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate the `fmiapi.dll` in the folder [target/x86_64-pc-windows-msvc/release](target/x86_64-pc-windows-msvc/release/). The dll contains the FMU headers' implementation. **Linux:** Build the FMU `so` using the toolchain of your machine, e.g., `cargo build --target x86_64-unknown-linux-gnu --release`. This generates the `libfmiapi.so` in the folder [target/x86_64-unknown-linux-gnu/release](target/x86_64-unknown-linux-gnu/release/), which contains the FMU headers' implementation.
 
 6. Generate the content for the [./assets/auto_generated/](./assets/auto_generated/) folder, that the CLI is packaged with.
-   1. Copy the generated dll into the assets folder (needed by the CLI). **Note the change of filename.**
+   1. **Windows:** Copy the generated dll into the assets folder (needed by the CLI). **Note the change of filename.**
       ```powershell
       Copy-Item -Force ./target/x86_64-pc-windows-msvc/release/fmiapi.dll ./assets/auto_generated/unifmu.dll
+      ```  
+      **Linux:** Copy the generated `so` into the assets folder (**Note the change of filename**).
+      ```
+      cp target/x86_64-unknown-linux-gnu/release/libfmiapi.so assets/auto_generated/unifmu.so
       ```
    2. Generate the protobuf schemas for python, csharp, and java backends:
       ```powershell
       protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
       ```
-
 7. Run the integration tests: `cargo test`
    1. If the tests fail, it may be because you do not have the runtime dependencies for each backend, as they are all tested. Install any runtime dependencies needed for each backend. Check the readme files in each backend. See the  [Language specific documentation and backend development](#language-specific-documentation-and-backend-development) section for more information.
 
