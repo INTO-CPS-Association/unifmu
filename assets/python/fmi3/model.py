@@ -46,10 +46,14 @@ class Model:
         self.boolean_b = False
         self.string_a = ""
         self.string_b = ""
-        self.binary_a = 0
-        self.binary_b = 0
+        self.binary_a = bytes([0])
+        self.binary_b = bytes([0])
+
+        self.clock_a = False
+        self.clock_b = False
 
         self.reference_to_attribute = {
+            999: "time",
             0: "float32_a",
             1: "float32_b",
             2: "float32_c",
@@ -89,9 +93,17 @@ class Model:
             36: "binary_a",
             37: "binary_b",
             38: "binary_c",
+            1001: "clock_a",
+            1002: "clock_b",
+            1003: "clock_c",
+        }
+
+        self.clock_reference_to_interval = {
+            1001: 1.0,
         }
 
         self._update_outputs()
+        self._update_clocks()
 
     # ================= FMI3 =================
 
@@ -117,7 +129,12 @@ class Model:
         )
 
     def fmi3EnterInitializationMode(
-            self, tolerance: bool, start_time: float, stop_time: float
+            self,
+            tolerance_defined: bool,
+            tolerance: float,
+            start_time: float,
+            stop_time_defined: bool,
+            stop_time: float
     ):
         return Fmi3Status.ok
 
@@ -167,6 +184,8 @@ class Model:
                 self.string_b,
                 self.binary_a,
                 self.binary_b,
+                self.clock_a,
+                self.clock_b,
             )
         )
         return Fmi3Status.ok, bytes
@@ -199,6 +218,8 @@ class Model:
             string_b,
             binary_a,
             binary_b,
+            clock_a,
+            clock_b,
         ) = pickle.loads(bytes)
         self.float32_a = float32_a
         self.float32_b = float32_b
@@ -226,7 +247,11 @@ class Model:
         self.string_b = string_b
         self.binary_a = binary_a
         self.binary_b = binary_b
+        self.clock_a = clock_a
+        self.clock_b = clock_b
+
         self._update_outputs()
+        self._update_clocks()
 
         return Fmi3Status.ok
 
@@ -272,6 +297,16 @@ class Model:
     def fmi3GetClock(self, value_references):
         return self._get_value(value_references)
 
+    def fmi3GetIntervalDecimal(self, value_references):
+        intervals = []
+        qualifiers = []
+
+        for r in value_references:
+            intervals.append(self.clock_reference_to_interval[r])
+            qualifiers.append(2)
+
+        return Fmi3Status.ok, intervals, qualifiers
+
     def fmi3SetFloat32(self, value_references, values):
         return self._set_value(value_references, values)
 
@@ -312,7 +347,20 @@ class Model:
         return self._set_value(value_references, values)
 
     def fmi3SetClock(self, value_references, values):
-        return self._set_value(value_references, values)
+        status = self._set_value(value_references, values)
+        self._update_clocks()
+        return status
+
+    def fmi3UpdateDiscreteStates(self):
+        status = Fmi3Status.ok
+        discrete_states_need_update = False
+        terminate_simulation = False
+        nominals_continuous_states_changed = False
+        values_continuous_states_changed = False
+        next_event_time_defined = True
+        next_event_time = 1.0
+        return (status, discrete_states_need_update, terminate_simulation, nominals_continuous_states_changed,
+                values_continuous_states_changed, next_event_time_defined, next_event_time)
 
     # ================= Helpers =================
 
@@ -345,7 +393,10 @@ class Model:
         self.uint64_c = self.uint64_a + self.uint64_b
         self.boolean_c = self.boolean_a or self.boolean_b
         self.string_c = self.string_a + self.string_b
-        self.binary_c = self.binary_a ^ self.binary_b
+        self.binary_c = bytes(a ^ b for a, b in zip(self.binary_a, self.binary_b))
+
+    def _update_clocks(self):
+        self.clock_c = self.clock_a and self.clock_b
 
 
 class Fmi3Status:
@@ -409,6 +460,9 @@ if __name__ == "__main__":
     assert m.binary_a == 0
     assert m.binary_b == 0
     assert m.binary_c == 0
+    assert m.clock_a == False
+    assert m.clock_b == False
+    assert m.clock_c == False
 
     m.float32_a = 1.0
     m.float32_b = 2.0

@@ -2,3 +2,9 @@
 resolver = "2"
 
 members = ["fmiapi", "cli"]
+
+[patch.crates-io]
+#fmi = { path = 'D:\Users\Yon\stack\School\PhD\Git\rust-fmi\fmi' }
+#fmi-sys = { path = 'D:\Users\Yon\stack\School\PhD\Git\rust-fmi\fmi-sys' }
+fmi = { git = "https://github.com/YonVanom/rust-fmi.git", branch = "dev_fmi3" }
+fmi-sys = { git = "https://github.com/YonVanom/rust-fmi.git", branch = "dev_fmi3" }

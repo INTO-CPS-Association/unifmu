@@ -124,6 +124,11 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
         Err(e) => panic!("enter_initialization_mode failed: {:?}", e),
     }
 
+    // Get interval of periodic input clock
+    let (interval, qualifier): (f64, i32) = get_interval_decimal(&import, &mut cs_instance, &1001);
+    assert_eq!(interval, 1.0);
+    assert_eq!(qualifier, 2);
+
     // Exit initialization mode
     match cs_instance.exit_initialization_mode().ok() {
         Ok(..) => {},
@@ -131,6 +136,20 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
     }
 
     // Using event mode, so we should now be in event mode
+    // Call update discrete states to signal end of event mode
+    let mut next_event_time: Option<f64> = None;
+    match cs_instance.update_discrete_states(&mut false, &mut false, &mut false, &mut false, &mut next_event_time).ok() {
+        Ok(..) => {
+            assert_eq!(
+                next_event_time,
+                Some(1.0),
+                "Expected next_event_time to be Some(1.0), but got: {:?}",
+                next_event_time
+            );
+        },
+        Err(e) => panic!("do_step failed: {:?}", e),
+    }
+
     // Enter step mode instead
     match cs_instance.enter_step_mode().ok() {
         Ok(..) => {},
@@ -140,15 +159,16 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
     // Do step
     let mut last_successful_time = 0.0;
     match cs_instance.do_step(0.0, 1.0, false, &mut false, &mut false, &mut false, &mut last_successful_time).ok() {
-        Ok(..) => {},
+        Ok(..) => {
+            assert_eq!(
+                last_successful_time,
+                1.0,
+                "Expected last_successful_time to be 1.0, but got: {}",
+                last_successful_time
+            );
+        },
         Err(e) => panic!("do_step failed: {:?}", e),
     }
-    assert_eq!(
-        last_successful_time,
-        1.0,
-        "Expected last_successful_time to be 1.0, but got: {}",
-        last_successful_time
-    );
 
     // Check for initial outputs as they are calculated
     let float32_c: f32 = get_float32(&import, &mut cs_instance, "float32_c");
@@ -184,6 +204,12 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
     let boolean_c: bool = get_boolean(&import, &mut cs_instance, "boolean_c");
     assert_eq!(boolean_c, false);
 
+    let clock_c: bool = get_clock(&import, &mut cs_instance, &1003);
+    assert_eq!(clock_c, false);
+
+    let string_c: String = get_string(&import, &mut cs_instance, "string_c");
+    assert_eq!(string_c, "");
+
     // Set inputs
     set_float32(&import, &mut cs_instance, "float32_a", 1.0);
     set_float32(&import, &mut cs_instance, "float32_b", 2.0);
@@ -207,22 +233,23 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
     set_uint64(&import, &mut cs_instance, "uint64_b", 2);
     set_boolean(&import, &mut cs_instance, "boolean_a", true);
     set_boolean(&import, &mut cs_instance, "boolean_b", false);
-    // set_string(&import, &mut cs_instance, "string_a", "Hello ");
-    // set_string(&import, &mut cs_instance, "string_b", "World!");
-    // set_binary(&import, &mut cs_instance, "binary_a", 1);
-    // set_binary(&import, &mut cs_instance, "binary_b", 2);
+    set_string(&import, &mut cs_instance, "string_a", "Hello ".to_string());
+    set_string(&import, &mut cs_instance, "string_b", "World!".to_string());
+    set_binary(&import, &mut cs_instance, "binary_a", vec![1]);
+    set_binary(&import, &mut cs_instance, "binary_b", vec![2]);
 
     // Do step
     match cs_instance.do_step(last_successful_time, 1.0, false, &mut false, &mut false, &mut false, &mut last_successful_time).ok() {
-        Ok(..) => {},
+        Ok(..) => {
+            assert_eq!(
+                last_successful_time,
+                2.0,
+                "Expected last_successful_time to be 2.0, but got: {}",
+                last_successful_time
+            );
+        },
         Err(e) => panic!("do_step failed: {:?}", e),
     }
-    assert_eq!(
-        last_successful_time,
-        2.0,
-        "Expected last_successful_time to be 1.0, but got: {}",
-        last_successful_time
-    );
 
     // Check outputs
     let float32_c = get_float32(&import, &mut cs_instance, "float32_c");
@@ -258,8 +285,19 @@ fn test_fmu_fmi3(fmu_path: PathBuf) {
     let boolean_c: bool = get_boolean(&import, &mut cs_instance, "boolean_c");
     assert_eq!(boolean_c, true);
 
+    let string_c: String = get_string(&import, &mut cs_instance, "string_c");
+    assert_eq!(string_c, "Hello World!");
+
     // Enter event mode
     cs_instance.enter_event_mode().ok().expect("enter_event_mode failed");
+
+    // Tick input clocks
+    set_clock(&import, &mut cs_instance, &1001, true);
+    set_clock(&import, &mut cs_instance, &1002, true);
+
+    // Get output clocks
+    let clock_c: bool = get_clock(&import, &mut cs_instance, &1003);
+    assert_eq!(clock_c, true);
 
     // Terminate
     cs_instance.terminate().ok().expect("terminate failed");
@@ -365,6 +403,32 @@ fn get_boolean(import: &Fmi3Import, cs_instance: &mut InstanceCS, var: &str) -> 
     val[0]
 }
 
+fn get_string(import: &Fmi3Import, cs_instance: &mut InstanceCS, var: &str) -> String {
+    let mut val: [String; 1] = [String::new()];
+    let vr: u32 = get_model_variable_reference_by_name(&import, var);
+    let error_msg = format!("get_string failed for {}", var);
+    cs_instance.get_string(&[vr], &mut val).ok().expect(&error_msg);
+
+    val[0].clone()
+}
+
+fn get_clock(import: &Fmi3Import, cs_instance: &mut InstanceCS, vr: &u32) -> bool {
+    let mut val: [bool; 1] = [false];
+    let error_msg = format!("get_clock failed for {}", vr);
+    cs_instance.get_clock(&[*vr], &mut val).ok().expect(&error_msg);
+
+    val[0]
+}
+
+fn get_interval_decimal(import: &Fmi3Import, cs_instance: &mut InstanceCS, vr: &u32) -> (f64, i32) {
+    let mut interval: [f64; 1] = [0.0];
+    let mut qualifier: [i32; 1] = [0];
+    let error_msg = format!("get_interval_decimal failed for {}", vr);
+    cs_instance.get_interval_decimal(&[*vr], &mut interval, &mut qualifier).ok().expect(&error_msg);
+
+    (interval[0], qualifier[0])
+}
+
 fn set_float32(import: &Fmi3Import, cs_instance: &mut InstanceCS, var: &str, value: f32) {
     let vr: u32 = get_model_variable_reference_by_name(&import, var);
     let error_msg = format!("set_float32 failed for {}", var);
@@ -429,6 +493,33 @@ fn set_boolean(import: &Fmi3Import, cs_instance: &mut InstanceCS, var: &str, val
     let vr: u32 = get_model_variable_reference_by_name(&import, var);
     let error_msg = format!("set_boolean failed for {}", var);
     cs_instance.set_boolean(&[vr], &[value]).ok().expect(&error_msg);
+}
+
+fn set_string(import: &Fmi3Import, cs_instance: &mut InstanceCS, var: &str, value: String) {
+    let vr: u32 = get_model_variable_reference_by_name(&import, var);
+    let error_msg = format!("set_boolean failed for {}", var);
+    // Wrap the value in an iterator that yields references to str
+    let value_iter = std::iter::once(value.as_str());
+
+    // Pass the value iterator to cs_instance.set_string
+    cs_instance.set_string(&[vr], value_iter).ok().expect(&error_msg);
+}
+
+fn set_binary(import: &Fmi3Import, cs_instance: &mut InstanceCS, var: &str, value: Vec<u8>
+) {
+    let vr: u32 = get_model_variable_reference_by_name(import, var);
+    let error_msg = format!("set_binary failed for {}", var);
+    // Convert the Vec<u8> into an iterator of &[u8]
+    let value_iter = std::iter::once(value.as_slice());
+
+    // Call the set_binary function with the value reference and binary data
+    cs_instance.set_binary(&[vr], value_iter).ok().expect(&error_msg);
+}
+
+
+fn set_clock(import: &Fmi3Import, cs_instance: &mut InstanceCS, vr: &u32, value: bool) {
+    let error_msg = format!("set_clock failed for {}", vr);
+    cs_instance.set_clock(&[*vr], &[value]).ok().expect(&error_msg);
 }
 
 fn get_model_variable_reference_by_name(import: &Fmi3Import, name: &str) -> u32 {

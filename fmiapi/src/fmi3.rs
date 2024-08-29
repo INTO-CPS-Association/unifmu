@@ -6,12 +6,13 @@ use url::Url;
 use std::ffi::c_void;
 use std::ffi::CStr;
 use std::ffi::CString;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::slice::from_raw_parts;
 use std::slice::from_raw_parts_mut;
 use subprocess::Popen;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use crate::fmi2::Fmi2Status;
 use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
 use crate::spawn::spawn_fmi3_slave;
 
@@ -114,10 +115,10 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     instance_name: *const c_char,
     instantiation_token: *const c_char,
     resource_path: *const c_char,
-    visible: i32,
-    logging_on: i32,
-    event_mode_used: i32,
-    early_return_allowed: i32,
+    visible: bool,
+    logging_on: bool,
+    event_mode_used: bool,
+    early_return_allowed: bool,
     required_intermediate_variables: *const u32,
     n_required_intermediate_variables: size_t,
     instance_environment: *const c_void,
@@ -134,23 +135,44 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     }
     .to_owned();
 
-    let resource_uri = unsafe {
+    let resource_path_str = unsafe {
         match resource_path.as_ref() {
             Some(b) => match CStr::from_ptr(b).to_str() {
-                Ok(s) => match Url::parse(s) {
-                    Ok(url) => url,
-                    Err(e) => panic!("unable to parse resource url"),
-                },
-                Err(e) => panic!("resource url was not valid utf-8"),
+                Ok(s) => s.to_string(),
+                Err(e) => panic!("resource path was not valid utf-8"),
             },
-            None => panic!("fmuResourcesLocation was null"),
+            None => panic!("resourcePath was null"),
         }
     };
 
-    let resources_dir = resource_uri.to_file_path().expect(&format!(
-        "URI was parsed but could not be converted into a file path, got: '{:?}'.",
-        resource_uri
-    ));
+    // NOTE: In version 3 of the FMI standard, resourcePath should be a path, e.g., "C:\...". At
+    // least one tool seems to still follow version 2 in that it passes a URI, e.g., starting with
+    // "file:///C://..." instead. The current implementation maintains this "backwards
+    // compatibility" with this incorrect implementation of version 3 of the standard.
+
+    // Check for supported URI schemes or treat as a direct file path
+    let resources_dir = if resource_path_str.starts_with("file:")
+        || resource_path_str.starts_with("http:")
+        || resource_path_str.starts_with("https:")
+        || resource_path_str.starts_with("ftp:")
+        || resource_path_str.starts_with("fmi2:")
+    {
+        // Parse as a URI
+        let resource_uri = Url::parse(&resource_path_str).expect("unable to parse resource URI");
+        if resource_uri.scheme() == "file" {
+            resource_uri.to_file_path().unwrap_or_else(|_| {
+                panic!(
+                    "URI was parsed but could not be converted into a file path, got: '{:?}'.",
+                    resource_uri
+                )
+            })
+        } else {
+            panic!("Unsupported URI scheme: '{}'", resource_uri.scheme())
+        }
+    } else {
+        // Treat it as a direct file path
+        PathBuf::from(resource_path_str)
+    };
 
     let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resources_dir)).unwrap();
 
@@ -158,10 +180,10 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         instance_name,
         instantiation_token,
         resources_dir.into_os_string().into_string().unwrap(),
-        visible != 0,
-        logging_on != 0,
-        event_mode_used != 0,
-        early_return_allowed != 0,
+        visible,
+        logging_on,
+        event_mode_used,
+        early_return_allowed,
         required_intermediate_variables,
     ) {
         Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
@@ -228,21 +250,21 @@ pub extern "C" fn fmi3DoStep(
 #[no_mangle]
 pub extern "C" fn fmi3EnterInitializationMode(
     instance: &mut Fmi3Slave,
-    tolerance_defined: i32,
+    tolerance_defined: bool,
     tolerance: f64,
     start_time: f64,
-    stop_time_defined: i32,
+    stop_time_defined: bool,
     stop_time: f64,
 ) -> Fmi3Status {
     let tolerance = {
-        if tolerance_defined != 0 {
+        if tolerance_defined {
             Some(tolerance)
         } else {
             None
         }
     };
     let stop_time = {
-        if stop_time_defined != 0 {
+        if stop_time_defined {
             Some(stop_time)
         } else {
             None
@@ -558,7 +580,7 @@ pub extern "C" fn fmi3GetString(
     values: *mut *const c_char,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_values) };
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
 
     match instance
         .dispatcher
@@ -623,11 +645,10 @@ pub extern "C" fn fmi3GetClock(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    values: *mut i32,
-    n_values: size_t,
+    values: *mut bool,
 ) -> Fmi3Status {
     let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let values_out = unsafe { from_raw_parts_mut(values, n_value_references) };
 
     match instance
         .dispatcher
@@ -635,16 +656,7 @@ pub extern "C" fn fmi3GetClock(
     {
         Ok((status, values)) => {
             match values {
-                Some(values) => values_out.copy_from_slice(
-                    &values
-                        .iter()
-                        .map(|v| match v {
-                            true => 1,
-                            false => 0,
-                        })
-                        .collect::<Vec<i32>>(),
-                ),
-
+                Some(values) => values_out.copy_from_slice(&values),
                 None => (),
             };
             status
@@ -657,31 +669,30 @@ pub extern "C" fn fmi3GetIntervalDecimal(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    interval: *mut f64,
-	qualifier: *mut i32,
-    n_values: size_t,
+    intervals: *mut f64,
+	qualifiers: *mut i32,
 ) -> Fmi3Status {
-	let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-	let interval_out = unsafe { from_raw_parts_mut(interval, n_values) };
-	let qualifier_out = unsafe { from_raw_parts_mut(qualifier, n_values) };
-	
-	match instance
-		.dispatcher
-		.fmi3GetIntervalDecimal(value_references.to_owned())
-	{
-		Ok((status, interval, qualifier)) => {
-			match interval {
-				Some(interval) => interval_out.copy_from_slice(&interval),
-				None => (),
-			};
-			match qualifier {
-				Some(qualifier) => qualifier_out.copy_from_slice(&qualifier),
-				None => (),
-			};
-			status
-		}
-		Err(e) => Fmi3Status::Error,
-	}
+    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let intervals_out = unsafe { from_raw_parts_mut(intervals, n_value_references) };
+    let qualifiers_out = unsafe { from_raw_parts_mut(qualifiers, n_value_references) };
+
+    match instance
+        .dispatcher
+        .fmi3GetIntervalDecimal(value_references.to_owned())
+    {
+        Ok((status, intervals, qualifiers)) => {
+            match intervals {
+                Some(values) => intervals_out.copy_from_slice(&values),
+                None => (),
+            };
+            match qualifiers {
+                Some(qualifiers) => qualifiers_out.copy_from_slice(&qualifiers),
+                None => (),
+            };
+            status
+        }
+        Err(e) => Fmi3Status::Error,
+    }
 }
 #[no_mangle]
 pub extern "C" fn fmi3GetIntervalFraction(
@@ -761,14 +772,51 @@ pub extern "C" fn fmi3EvaluateDiscreteStates(
 #[no_mangle]
 pub extern "C" fn fmi3UpdateDiscreteStates(
     instance: &mut Fmi3Slave,
-	discrete_states_need_update: *const i32,
-	terminate_simulation: *const i32,
-	nominals_continuous_states_changed: *const i32,
-	values_continuous_states_changed: *const i32,
-	next_event_time_defined: *const i32,
-	next_event_time: *const f64,
+	discrete_states_need_update: *mut bool,
+	terminate_simulation: *mut bool,
+	nominals_continuous_states_changed: *mut bool,
+	values_continuous_states_changed: *mut bool,
+	next_event_time_defined: *mut bool,
+	next_event_time: *mut f64,
 ) -> Fmi3Status {
-    Fmi3Status::Error
+    match instance.dispatcher.fmi3UpdateDiscreteStates(
+    ) {
+        Ok((status, states_need_update, terminate, nominals_changed,
+               values_changed, next_time_defined, next_time)) => {
+            if !discrete_states_need_update.is_null() {
+                unsafe {
+                    *discrete_states_need_update = states_need_update;
+                }
+            }
+            if !terminate_simulation.is_null() {
+                unsafe {
+                    *terminate_simulation = terminate;
+                }
+            }
+            if !nominals_continuous_states_changed.is_null() {
+                unsafe {
+                    *nominals_continuous_states_changed = nominals_changed;
+                }
+            }
+            if !values_continuous_states_changed.is_null() {
+                unsafe {
+                    *values_continuous_states_changed = values_changed;
+                }
+            }
+            if !next_event_time_defined.is_null() {
+                unsafe {
+                    *next_event_time_defined = next_time_defined;
+                }
+            }
+            if !next_event_time.is_null() {
+                unsafe {
+                    *next_event_time = next_time;
+                }
+            }
+            status
+        }
+        Err(_) => Fmi3Status::Error,
+    }
 }
 #[no_mangle]
 pub extern "C" fn fmi3EnterContinuousTimeMode(
@@ -1088,38 +1136,74 @@ pub extern "C" fn fmi3SetBoolean(
 }
 #[no_mangle]
 pub extern "C" fn fmi3SetString(
-    instance: *mut c_void,
-    value_references: *const i32,
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
     n_value_references: size_t,
     values: *const *const c_char,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::Error
+    let references = unsafe { from_raw_parts(value_references, n_value_references) };
+
+    let values: Vec<String> = unsafe {
+        from_raw_parts(values, n_values)
+            .iter()
+            .map(|v| CStr::from_ptr(*v).to_str().unwrap().to_owned())
+            .collect()
+    };
+    match instance
+        .dispatcher
+        .fmi3SetString(references, &values)
+    {
+        Ok(s) => s,
+        Err(_e) => Fmi3Status::Error,
+    }
 }
 #[no_mangle]
 pub extern "C" fn fmi3SetBinary(
     instance: *mut c_void,
-    value_references: *const i32,
+    value_references: *const u32,
     n_value_references: size_t,
-    valueSizes: *const size_t,
-    values: *const i32,
+    value_sizes: *const size_t,
+    values: *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::Error
+    // Convert raw pointers to Rust slices
+    let references = unsafe { std::slice::from_raw_parts(value_references, n_value_references) };
+    let sizes = unsafe { std::slice::from_raw_parts(value_sizes, n_values) };
+
+    // Create a vector of slices for the binary values
+    let mut binary_values: Vec<&[u8]> = Vec::with_capacity(n_value_references);
+
+    // Use an offset to correctly slice the values based on sizes
+    let mut offset = 0;
+    for &size in sizes {
+        let value_slice = unsafe { std::slice::from_raw_parts(values.add(offset), size) };
+        binary_values.push(value_slice);
+        offset += size;
+    }
+
+    // Ensure the instance pointer is valid
+    let instance = unsafe { &mut *(instance as *mut Fmi3Slave) };
+
+    // Call the dispatcher with references, binary values, and their sizes
+    match instance
+        .dispatcher
+        .fmi3SetBinary(references, sizes, &binary_values)
+    {
+        Ok(s) => s,
+        Err(_e) => Fmi3Status::Error,
+    }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetClock(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    values: *const i32,
-    n_values: size_t,
+    values: *const bool,
 ) -> Fmi3Status {
 	let references = unsafe { from_raw_parts(value_references, n_value_references) };
-	let values: Vec<bool> = unsafe { from_raw_parts(values, n_values) }
-        .iter()
-        .map(|v| *v != 0)
-        .collect();
+	let values = unsafe { from_raw_parts(values, n_value_references) };
 	
 	match instance
         .dispatcher
