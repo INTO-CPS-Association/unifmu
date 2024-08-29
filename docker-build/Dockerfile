@@ -19,7 +19,7 @@ RUN apt -qq -y install \
   xz-utils
 
 # Install packages required for testing and backends
-RUN apt -qq -y install default-jre python3-wheel python3 dotnet-sdk-8.0
+RUN apt -qq -y install openjdk-17-jre python3-wheel python3 dotnet-sdk-8.0
 
 # install protoc
 RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v27.3/protoc-27.3-linux-x86_64.zip
