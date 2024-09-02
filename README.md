@@ -274,8 +274,8 @@ Building for local machine (with Windows as the example, and PowerShell commands
    
 .
    - For testing:
-     - [Python](https://www.python.org/)
-     - [Java](https://openjdk.org/) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
+     - [Python](https://www.python.org/) along with the packages [zmq](https://pypi.org/project/zmq/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/).
+     - [Java](https://openjdk.org/) (no higher than **version 17**) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
      - [LLVM](https://releases.llvm.org/download.html) and set the corresponding `LIBCLANG_PATH` environment variable that is used by the `fmi` crate, to load and interact with FMUs. See [installation instructions](https://rust-lang.github.io/rust-bindgen/requirements.html#installing-clang).
      - [.NET SDK (for C#)](https://dotnet.microsoft.com/en-us/download).
 
