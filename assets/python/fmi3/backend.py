@@ -24,6 +24,8 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetStringReturn,
     FmiGetBinaryReturn,
     Fmi3GetClockReturn,
+    Fmi3GetIntervalDecimalReturn,
+    Fmi3UpdateDiscreteStatesReturn,
 )
 from model import Model
 
@@ -56,7 +58,8 @@ if __name__ == "__main__":
         group = command.WhichOneof("command")
         data = getattr(command, command.WhichOneof("command"))
 
-        print('Command:\n' + repr(command))
+        logger.info(f"Command: {command}")
+        #print('Command:\n' + repr(command))
 
         # ================= FMI3 =================
         if group == "Fmi3InstantiateModelExchange":
@@ -97,7 +100,7 @@ if __name__ == "__main__":
         elif group == "Fmi3EnterInitializationMode":
             result = Fmi3StatusReturn()
             result.status = model.fmi3EnterInitializationMode(
-                data.tolerance, data.start_time, data.stop_time
+                data.tolerance_defined, data.tolerance, data.start_time, data.stop_time_defined, data.stop_time
             )
         elif group == "Fmi3ExitInitializationMode":
             result = Fmi3StatusReturn()
@@ -160,6 +163,15 @@ if __name__ == "__main__":
         elif group == "Fmi3GetClock":
             result = Fmi3GetClockReturn()
             result.status, result.values[:] = model.fmi3GetClock(data.value_references)
+        elif group == "Fmi3GetIntervalDecimal":
+            result = Fmi3GetIntervalDecimalReturn()
+            (
+                result.status,
+                result.intervals[:],
+                result.qualifiers[:]
+            ) = model.fmi3GetIntervalDecimal(
+                data.value_references
+            )
         elif group == "Fmi3SetFloat32":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetFloat32(data.value_references, data.values)
@@ -202,10 +214,22 @@ if __name__ == "__main__":
         elif group == "Fmi3SetClock":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetClock(data.value_references, data.values)
+        elif group == "Fmi3UpdateDiscreteStates":
+            result = Fmi3UpdateDiscreteStatesReturn()
+            (
+                result.status,
+                result.discrete_states_need_update,
+                result.terminate_simulation,
+                result.nominals_continuous_states_changed,
+                result.values_continuous_states_changed,
+                result.next_event_time_defined,
+                result.next_event_time,
+            ) = model.fmi3UpdateDiscreteStates()
         else:
             logger.error(f"unrecognized command '{group}' received, shutting down")
             sys.exit(-1)
 
-        print('Result:\n' + repr(result))
+        #print('Result:\n' + repr(result))
+        logger.info(f"Result: {result}")
         state = result.SerializeToString()
         socket.send(state)

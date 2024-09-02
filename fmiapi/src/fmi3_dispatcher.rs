@@ -15,7 +15,9 @@ use crate::fmi3_messages::{self, Fmi3DeserializeFmuState, Fmi3DoStep, Fmi3EmptyR
                            Fmi3GetIntervalDecimalReturn, Fmi3EnterStepMode, Fmi3EnterEventMode,
                            Fmi3InstantiateScheduledExecution, Fmi3SetFloat32, Fmi3SetFloat64,
                            Fmi3SetInt8, Fmi3SetUInt8, Fmi3SetInt16, Fmi3SetUInt16, Fmi3SetInt32,
-                           Fmi3SetUInt32, Fmi3SetInt64, Fmi3SetUInt64, Fmi3SetBoolean, Fmi3SetClock};
+                           Fmi3SetUInt32, Fmi3SetInt64, Fmi3SetUInt64, Fmi3SetBoolean, Fmi3SetClock,
+                           Fmi3UpdateDiscreteStates, Fmi3UpdateDiscreteStatesReturn, Fmi3SetString,
+                           Fmi3SetBinary};
 
 use crate::fmi3::Fmi3Status;
 use crate::fmi3_messages::fmi3_command::Command as c_enum;
@@ -154,11 +156,16 @@ impl Fmi3CommandDispatcher {
         start_time: f64,
         stop_time: Option<f64>,
     ) -> Result<Fmi3Status, DispatcherError> {
+        let tolerance_defined = tolerance.is_some();
+        let stop_time_defined = stop_time.is_some();
+
         let cmd = c_obj {
             command: Some(c_enum::Fmi3EnterInitializationMode(
                 Fmi3EnterInitializationMode {
+                    tolerance_defined,
                     tolerance,
                     start_time,
+                    stop_time_defined,
                     stop_time,
                 },
             )),
@@ -266,13 +273,13 @@ impl Fmi3CommandDispatcher {
 		};
 		self.send_and_recv::<_, Fmi3GetIntervalDecimalReturn>(&cmd)
 			.map(|result| {
-				let interval = match result.interval.is_empty() {
+				let interval = match result.intervals.is_empty() {
 					true => None,
-					false => Some(result.interval),
+					false => Some(result.intervals),
 				};
-				let qualifier = match result.qualifier.is_empty() {
+				let qualifier = match result.qualifiers.is_empty() {
 					true => None,
-					false => Some(result.qualifier),
+					false => Some(result.qualifiers),
 				};
 				(Fmi3Status::try_from(result.status).unwrap(), interval, qualifier)
 			})
@@ -472,6 +479,29 @@ impl Fmi3CommandDispatcher {
             })
     }
 
+    pub fn fmi3UpdateDiscreteStates(
+        &mut self
+    ) -> Result<(Fmi3Status, bool, bool, bool, bool, bool, f64), DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3UpdateDiscreteStates(Fmi3UpdateDiscreteStates {
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3UpdateDiscreteStatesReturn>(&cmd)
+            .map(|result| {
+                let discrete_states_need_update = result.discrete_states_need_update;
+                let terminate_simulation = result.terminate_simulation;
+                let nominals_continuous_states_changed = result.nominals_continuous_states_changed;
+                let values_continuous_states_changed = result.values_continuous_states_changed;
+                let next_event_time_defined = result.next_event_time_defined;
+                let next_event_time = result.next_event_time;
+
+                (Fmi3Status::try_from(result.status).unwrap(), discrete_states_need_update,
+                 terminate_simulation, nominals_continuous_states_changed,
+                 values_continuous_states_changed, next_event_time_defined, next_event_time)
+            })
+    }
+
     pub fn fmi3SetFloat32(
         &mut self,
         references: &[u32],
@@ -647,6 +677,42 @@ impl Fmi3CommandDispatcher {
         self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
             .map(|s| Fmi3Status::try_from(s.status).unwrap())
     }
+
+    pub fn fmi3SetString(
+        &mut self,
+        references: &[u32],
+        values: &[String],
+    ) -> Result<Fmi3Status, DispatcherError> {
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetString(Fmi3SetString {
+                value_references: references.to_owned(),
+                values: values.to_owned(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
+    pub fn fmi3SetBinary(
+        &mut self,
+        references: &[u32],
+        value_sizes: &[usize],
+        binary_values: &[&[u8]],
+    ) -> Result<Fmi3Status, DispatcherError> {
+
+        let cmd = c_obj {
+            command: Some(c_enum::Fmi3SetBinary(Fmi3SetBinary {
+                value_references: references.to_owned(),
+                value_sizes:value_sizes.iter().map(|&size| size as u64).collect(),
+                values: binary_values.iter().map(|&v| v.to_vec()).collect(),
+            })),
+        };
+
+        self.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+            .map(|s| Fmi3Status::try_from(s.status).unwrap())
+    }
+
 
     pub fn fmi3SetClock(
         &mut self,

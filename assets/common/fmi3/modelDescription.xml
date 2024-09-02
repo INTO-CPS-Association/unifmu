@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <fmiModelDescription fmiVersion="3.0-beta.4" modelName="unifmu" instantiationToken="77236337-210e-4e9c-8f2c-c1a0677db21b" author="Yon Vanommeslaeghe" version="0.0.1" license="MIT" generationDateAndTime="2024-08-14T15:12:25Z" variableNamingConvention="flat" generationTool="unifmu">
-  <CoSimulation modelIdentifier="unifmu" needsExecutionTool="true" canBeInstantiatedOnlyOncePerProcess="false" canGetAndSetFMUState="true" canSerializeFMUState="true" canHandleVariableCommunicationStepSize="true" />
+  <CoSimulation modelIdentifier="unifmu" needsExecutionTool="true" canBeInstantiatedOnlyOncePerProcess="false" canGetAndSetFMUState="true" canSerializeFMUState="true" canHandleVariableCommunicationStepSize="true" hasEventMode="true" />
   <LogCategories>
     <Category name="logStatusWarning" />
     <Category name="logStatusDiscard" />
@@ -73,6 +73,10 @@
 	</Binary>
 	<Binary name="binary_c" valueReference="38" variability="discrete" causality="output" initial="calculated" />
 
+	<Clock name="clock_a" valueReference="1001" causality="input" intervalVariability="constant" intervalDecimal="1.0"/>
+	<Clock name="clock_b" valueReference="1002" causality="input" intervalVariability="triggered"/>
+	<Clock name="clock_c" valueReference="1003" causality="output" intervalVariability="triggered" clocks="1001 1002"/>
+
   </ModelVariables>
   <ModelStructure>
 	<Output valueReference="2" dependencies="0 1" />
@@ -88,6 +92,7 @@
 	<Output valueReference="32" dependencies="30 31" />
 	<Output valueReference="35" dependencies="33 34" />
 	<Output valueReference="38" dependencies="36 37" />
+  	<Output valueReference="1003" dependencies="1001 1002"/>
 	<InitialUnknown valueReference="2" dependencies="" />
 	<InitialUnknown valueReference="5" dependencies="" />
 	<InitialUnknown valueReference="8" dependencies="" />
