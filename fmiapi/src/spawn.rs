@@ -29,7 +29,7 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
     let config: LaunchConfig = toml::from_str(config.as_str())
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
-    let mut dispatcher = Fmi2CommandDispatcher::new("tcp://127.0.0.1:0");
+    let mut dispatcher = Fmi2CommandDispatcher::new("tcp://0.0.0.0:0");
 
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = endpoint
@@ -106,8 +106,7 @@ pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<(Fmi3CommandDispatcher, 
     let config: LaunchConfig = toml::from_str(config.as_str())
         .expect("configuration file was opened, but the contents does not appear to be valid");
 
-    let mut dispatcher = Fmi3CommandDispatcher::new("tcp://127.0.0.1:0");
-
+    let mut dispatcher = Fmi3CommandDispatcher::new("tcp://0.0.0.0:0");
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = endpoint
         .split(":")

@@ -205,7 +205,7 @@ pub fn generate(
         )
         .unwrap();
     }
-    
+
     let unifmu_src_macos = "auto_generated/unifmu.dylib";
     if Assets::get(unifmu_src_macos).is_none() {
         warn!("Could not find unifmu.dylib in {:?}", unifmu_src_macos);

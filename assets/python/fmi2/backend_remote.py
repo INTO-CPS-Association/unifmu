@@ -1,7 +1,9 @@
-import logging
+import coloredlogs,logging
+import colorama
 import os
 import sys
 import zmq
+import toml
 
 from schemas.fmi2_messages_pb2 import (
     Fmi2EmptyReturn,
@@ -18,21 +20,33 @@ from model import Model
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
-
+coloredlogs.install(level='DEBUG')
+colorama.init()
 
 if __name__ == "__main__":
 
     model = Model()
+    input_ok = False
+    while not input_ok:
+        port_str = input(f'{colorama.Back.GREEN}Input the port for remote proxy FMU:{colorama.Style.RESET_ALL}\n')
+        try:
+            proxy_port = int(port_str)
+            input_ok = True
+        except:
+            logger.error(f'Only integers accepted')
 
     # initializing message queue
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
 
-    #dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
-    dispatcher_endpoint =  "192.168.247.1" # Update Santiago -> change for an IP address coming from the arguments when building the FMU
+    with open('endpoint.toml', 'r') as f:
+        endpoint_config = toml.load(f)
+        proxy_ip_address = endpoint_config["ip"]
+    dispatcher_endpoint =  str(proxy_ip_address) + ":" + str(proxy_port)
     logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
 
-    socket.connect(dispatcher_endpoint)
+    socket.connect("tcp://" + dispatcher_endpoint)
+    logger.info(f"Socket connected successfully.")
 
     # send handshake
     state = Fmi2EmptyReturn().SerializeToString()
