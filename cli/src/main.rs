@@ -6,6 +6,7 @@ use std::{path::PathBuf, process::exit};
 use unifmu::FmiFmuVersion;
 use unifmu::{
     generate,
+    generate_virtual,
     Language,
 };
 
@@ -40,6 +41,27 @@ enum Command {
         /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
         #[clap(short, long)]
         zipped: bool,
+    },
+
+    /// Generates a pair of FMUs for distributed co-simulation, where one FMU works as a master and the other one as a slave.
+    Generate_virtual {
+        /// Source language of the generated FMU
+        #[clap(value_enum)]
+        language: Language,
+
+        /// Output directory or name of the FMU archive if "--zipped" is passed
+        outpath: PathBuf,
+
+        /// This argument shall be passed with the host IP address for the virtual FMU
+        endpoint: String,
+
+        /// Version of the FMI specification to target
+        #[clap(value_enum, default_value_t=FmiFmuVersion::FMI2)]
+        fmu_version: FmiFmuVersion,
+
+        /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
+        #[clap(short, long)]
+        zipped: bool,
     }
 }
 
@@ -65,6 +87,22 @@ fn main() {
             }
             Err(e) => {
                 error!("an error ocurred during the generation of the FMU: {:?}", e);
+                exit(-1);
+            }
+        }
+
+        Command::Generate_virtual {
+            language,
+            fmu_version,
+            outpath,
+            zipped,
+            endpoint,
+        } => match generate_virtual(&language, &fmu_version, &outpath, zipped, endpoint) {
+            Ok(_) => {
+                info!("the FMUs were generated successfully");
+            }
+            Err(e) => {
+                error!("an error ocurred during the generation of the FMUs: {:?}", e);
                 exit(-1);
             }
         }
