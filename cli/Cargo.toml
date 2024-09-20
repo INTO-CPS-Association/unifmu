@@ -19,6 +19,8 @@ tempfile = "*"
 url = "*"
 walkdir = "*"
 zip = { version = "*", default-features = false, features = ["deflate"] }
+serde = {version = "1.0.127", features = ["derive"]}
+toml = "*"
 
 [dev-dependencies]
 assert_cmd = "*"

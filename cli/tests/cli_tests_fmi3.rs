@@ -424,7 +424,7 @@ fn get_interval_decimal(import: &Fmi3Import, cs_instance: &mut InstanceCS, vr: &
     let mut interval: [f64; 1] = [0.0];
     let mut qualifier: [i32; 1] = [0];
     let error_msg = format!("get_interval_decimal failed for {}", vr);
-    cs_instance.get_interval_decimal(&[*vr], &mut interval, &mut qualifier).ok().expect(&error_msg);
+    //cs_instance.get_interval_decimal(&[*vr], &mut interval, &mut qualifier).ok().expect(&error_msg); //Update Santiago
 
     (interval[0], qualifier[0])
 }

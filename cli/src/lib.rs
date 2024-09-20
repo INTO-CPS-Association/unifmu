@@ -432,28 +432,25 @@ pub fn generate_virtual(
     endpoint: String,
 ) -> Result<(), GenerateError>  {
     // creates two FMUs with a master and a slave for distributed co-simulation
-    let ipaddr = &endpoint;
     let config = Config {
         ip: endpoint.to_string(),
     };
-    let tmpdir = TempDir::new().unwrap();
     let tmpdir_proxy = TempDir::new().unwrap();
     let tmpdir_private = TempDir::new().unwrap();
     let output_string = outpath.to_str();
     let proxy_string : &str = "_proxy";
     let private_string : &str = "_private";
-    let mut output_proxy_string = output_string.clone().unwrap();
-    let mut output_private_string = output_string.clone().unwrap();
+    let output_proxy_string = output_string.clone().unwrap();
+    let output_private_string = output_string.clone().unwrap();
 
-    let mut output_proxy_string = format!("{}{}",output_proxy_string,proxy_string);
-    let mut output_private_string = format!("{}{}",output_private_string,private_string);
+    let output_proxy_string = format!("{}{}",output_proxy_string,proxy_string);
+    let output_private_string = format!("{}{}",output_private_string,private_string);
 
 
     let outpath_proxy = Path::new(&output_proxy_string);
     let outpath_private = Path::new(&output_private_string);
     let toml = toml::to_string(&config).unwrap();
     let endpoint_file = "endpoint.toml";
-    let endpoint_folder = "assets/common";
     let dst_endpoint_file = tmpdir_private.path().join("resources").join(endpoint_file);
 
     info!(

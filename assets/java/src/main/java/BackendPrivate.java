@@ -28,6 +28,16 @@ public class Backend {
         boolean inputOk = false;
         String port_str = "";
         int port_int = 0;
+        if (args.length > 0 && args.length == 1){
+            try {
+                port_str = args[0];
+                port_int = Integer.parseInt(port_str);
+                inputOk = true;
+            } catch(NumberFormatException nfe) {
+                System.err.println(RED + "Only one argument for the port in integer format is accepted." + RESET);
+            }
+        }
+
         while (!inputOk) {
             System.out.println(BACKGROUNDGREEN + "Input the port for remote proxy FMU:" + RESET);
             port_str = new BufferedReader(new InputStreamReader(System.in)).readLine();
@@ -35,7 +45,7 @@ public class Backend {
                 port_int = Integer.parseInt(port_str);
                 inputOk = true;
             } catch(NumberFormatException nfe) {
-                System.err.println(RED + "Only integers accepted" + RESET);
+                System.err.println(RED + "Only integers accepted." + RESET);
             }
         }
         Toml toml = new Toml().read(new File("endpoint.toml"));

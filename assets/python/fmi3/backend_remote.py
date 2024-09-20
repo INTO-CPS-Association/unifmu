@@ -35,23 +35,32 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 coloredlogs.install(level='DEBUG')
 colorama.init()
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 if __name__ == "__main__":
 
     input_ok = False
+    if sys.argv is not None:
+        try:
+            proxy_port = int(sys.argv[1])
+            input_ok = True
+        except:
+            logger.error(f'Only one argument for the port in integer format is accepted.')
+            sys.exit(-1)
+
     while not input_ok:
         port_str = input(f'{colorama.Back.GREEN}Input the port for remote proxy FMU:{colorama.Style.RESET_ALL}\n')
         try:
             proxy_port = int(port_str)
             input_ok = True
         except:
-            logger.error(f'Only integers accepted')
+            logger.error(f'Only integers accepted.')
 
     # initializing message queue
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
 
-    with open('endpoint.toml', 'r') as f:
+    with open(os.path.join(__location__,'endpoint.toml'), 'r') as f:
         endpoint_config = toml.load(f)
         proxy_ip_address = endpoint_config["ip"]
     dispatcher_endpoint =  str(proxy_ip_address) + ":" + str(proxy_port)
