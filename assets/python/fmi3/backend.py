@@ -27,6 +27,13 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetIntervalDecimalReturn,
     Fmi3UpdateDiscreteStatesReturn,
 )
+
+from schemas.unifmu_handshake_pb2 import (
+    HandshakeStatus,
+    HandshakeRequest,
+    HandshakeResponse,
+)
+
 from model import Model
 
 logging.basicConfig(level=logging.DEBUG)
@@ -37,16 +44,18 @@ if __name__ == "__main__":
 
     # initializing message queue
     context = zmq.Context()
-    socket = context.socket(zmq.REQ)
+    socket = context.socket(zmq.REP)
 
     dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
     logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
 
     socket.connect(dispatcher_endpoint)
 
-    # send handshake
-    state = Fmi3EmptyReturn().SerializeToString()
-    socket.send(state)
+    # do handshake
+    handshake = socket.recv()
+    handshake_response = HandshakeResponse()
+    handshake_response.status = HandshakeStatus.OK
+    socket.send(handshake_response.SerializeToString())
 
     # dispatch commands to model
     command = Fmi3Command()

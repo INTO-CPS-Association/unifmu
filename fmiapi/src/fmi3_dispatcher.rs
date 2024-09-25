@@ -22,14 +22,15 @@ use crate::fmi3_messages::{self, Fmi3DeserializeFmuState, Fmi3DoStep, Fmi3EmptyR
 use crate::fmi3::Fmi3Status;
 use crate::fmi3_messages::fmi3_command::Command as c_enum;
 use crate::fmi3_messages::Fmi3Command as c_obj;
+use crate::unifmu_handshake::{HandshakeStatus, HandshakeRequest, HandshakeResponse};
 
 use bytes::Bytes;
 use prost::Message;
 use tokio::runtime::Runtime;
-use zeromq::{RepSocket, Socket, SocketRecv, SocketSend};
+use zeromq::{ReqSocket, Socket, SocketRecv, SocketSend};
 
 pub struct Fmi3CommandDispatcher {
-    socket: zeromq::RepSocket,
+    socket: zeromq::ReqSocket,
     rt: Runtime,
     pub endpoint: String,
 }
@@ -46,7 +47,8 @@ pub enum DispatcherError {
 #[allow(non_snake_case)]
 impl Fmi3CommandDispatcher {
     pub fn await_handshake(&mut self) -> Result<(), DispatcherError> {
-        self.recv::<Fmi3EmptyReturn>().map(|_| ())
+        let msg = HandshakeRequest {};
+        self.send_and_recv::<HandshakeRequest, HandshakeResponse>(&msg).map(|_| ())
     }
 
     pub fn Fmi3SerializeFmuState(&mut self) -> Result<(Fmi3Status, Vec<u8>), DispatcherError> {
