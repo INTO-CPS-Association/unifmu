@@ -9,10 +9,10 @@ use std::ffi::CString;
 use std::path::{Path, PathBuf};
 use std::slice::from_raw_parts;
 use std::slice::from_raw_parts_mut;
-use subprocess::Popen;
+use tracing::{debug, error, info, span, warn, Level};
+use tracing_subscriber;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use crate::fmi2::Fmi2Status;
 use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
 use crate::spawn::spawn_fmi3_slave;
 
@@ -49,14 +49,12 @@ pub struct Fmi3Slave {
     dispatcher: Fmi3CommandDispatcher,
     last_successful_time: Option<f64>,
     string_buffer: Vec<CString>,
-    popen: Popen,
 }
 
 impl Fmi3Slave {
-    pub fn new(dispatcher: Fmi3CommandDispatcher, popen: Popen) -> Self {
+    pub fn new(dispatcher: Fmi3CommandDispatcher) -> Self {
         Self {
             dispatcher,
-            popen,
             last_successful_time: None,
             string_buffer: Vec::new(),
         }
@@ -125,6 +123,8 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     log_message: *const c_void,
     intermediate_update: *const c_void,
 ) -> Option<Fmi3SlaveType> {
+    tracing_subscriber::fmt::init();
+
     let instance_name = c2s(instance_name);
     let instantiation_token = c2s(instantiation_token);
     let required_intermediate_variables = unsafe {
@@ -174,7 +174,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         PathBuf::from(resource_path_str)
     };
 
-    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resources_dir)).unwrap();
+    let mut dispatcher = spawn_fmi3_slave(&Path::new(&resources_dir)).unwrap();
 
     match dispatcher.fmi3InstantiateCoSimulation(
         instance_name,
@@ -186,7 +186,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         early_return_allowed,
         required_intermediate_variables,
     ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
+        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher))),
         Err(_) => None,
     }
 }

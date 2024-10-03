@@ -5,3 +5,4 @@ pub mod fmi3;
 mod fmi3_dispatcher;
 pub mod fmi3_messages;
 mod spawn;
+pub mod unifmu_handshake;

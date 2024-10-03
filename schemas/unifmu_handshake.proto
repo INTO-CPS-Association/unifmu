@@ -1,11 +1,10 @@
 syntax = "proto3";
 
-
 package unifmu_handshake;
 
 // https://developers.google.com/protocol-buffers/docs/reference/java-generated#package
 option java_package = "";
-option java_outer_classname = "Fmi3Messages";
+option java_outer_classname = "UnifmuHandshake";
 
 enum HandshakeStatus {
     STATUS_UNSPECIFIED = 0;
@@ -15,6 +14,6 @@ enum HandshakeStatus {
 
 message HandshakeRequest {}
 
-message HandshakeResponse {
+message HandshakeReply {
     HandshakeStatus status = 1;
 }

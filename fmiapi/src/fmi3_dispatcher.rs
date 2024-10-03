@@ -1,54 +1,151 @@
-use std::convert::TryFrom;
+use std::{
+    ffi::OsString,
+    path::Path,
+    convert::TryFrom,
+};
 
-use crate::fmi3_messages::{self, Fmi3DeserializeFmuState, Fmi3DoStep, Fmi3EmptyReturn,
-                           Fmi3EnterInitializationMode, Fmi3ExitInitializationMode,
-                           Fmi3FreeInstance, Fmi3GetBoolean, Fmi3GetBooleanReturn, Fmi3GetFloat32,
-                           Fmi3GetFloat32Return, Fmi3GetFloat64, Fmi3GetFloat64Return, Fmi3GetInt16,
-                           Fmi3GetInt16Return, Fmi3GetInt32, Fmi3GetInt32Return, Fmi3GetInt64,
-                           Fmi3GetInt64Return, Fmi3GetInt8, Fmi3GetInt8Return, Fmi3GetString,
-                           Fmi3GetStringReturn, Fmi3GetUInt16, Fmi3GetUInt16Return, Fmi3GetUInt32,
-                           Fmi3GetUInt32Return, Fmi3GetUInt64, Fmi3GetUInt64Return, Fmi3GetUInt8,
-                           Fmi3GetUInt8Return, Fmi3InstantiateCoSimulation,
-                           Fmi3InstantiateModelExchange, Fmi3Reset, Fmi3SerializeFmuState,
-                           Fmi3SerializeFmuStateReturn, Fmi3StatusReturn, Fmi3Terminate,
-                           Fmi3GetClock, Fmi3GetClockReturn, Fmi3GetIntervalDecimal,
-                           Fmi3GetIntervalDecimalReturn, Fmi3EnterStepMode, Fmi3EnterEventMode,
-                           Fmi3InstantiateScheduledExecution, Fmi3SetFloat32, Fmi3SetFloat64,
-                           Fmi3SetInt8, Fmi3SetUInt8, Fmi3SetInt16, Fmi3SetUInt16, Fmi3SetInt32,
-                           Fmi3SetUInt32, Fmi3SetInt64, Fmi3SetUInt64, Fmi3SetBoolean, Fmi3SetClock,
-                           Fmi3UpdateDiscreteStates, Fmi3UpdateDiscreteStatesReturn, Fmi3SetString,
-                           Fmi3SetBinary};
+use crate::fmi3_messages::{
+    self, Fmi3DeserializeFmuState, Fmi3DoStep, Fmi3EmptyReturn,
+    Fmi3EnterInitializationMode, Fmi3ExitInitializationMode,
+    Fmi3FreeInstance, Fmi3GetBoolean, Fmi3GetBooleanReturn, Fmi3GetFloat32,
+    Fmi3GetFloat32Return, Fmi3GetFloat64, Fmi3GetFloat64Return, Fmi3GetInt16,
+    Fmi3GetInt16Return, Fmi3GetInt32, Fmi3GetInt32Return, Fmi3GetInt64,
+    Fmi3GetInt64Return, Fmi3GetInt8, Fmi3GetInt8Return, Fmi3GetString,
+    Fmi3GetStringReturn, Fmi3GetUInt16, Fmi3GetUInt16Return, Fmi3GetUInt32,
+    Fmi3GetUInt32Return, Fmi3GetUInt64, Fmi3GetUInt64Return, Fmi3GetUInt8,
+    Fmi3GetUInt8Return, Fmi3InstantiateCoSimulation,
+    Fmi3InstantiateModelExchange, Fmi3Reset, Fmi3SerializeFmuState,
+    Fmi3SerializeFmuStateReturn, Fmi3StatusReturn, Fmi3Terminate,
+    Fmi3GetClock, Fmi3GetClockReturn, Fmi3GetIntervalDecimal,
+    Fmi3GetIntervalDecimalReturn, Fmi3EnterStepMode, Fmi3EnterEventMode,
+    Fmi3InstantiateScheduledExecution, Fmi3SetFloat32, Fmi3SetFloat64,
+    Fmi3SetInt8, Fmi3SetUInt8, Fmi3SetInt16, Fmi3SetUInt16, Fmi3SetInt32,
+    Fmi3SetUInt32, Fmi3SetInt64, Fmi3SetUInt64, Fmi3SetBoolean, Fmi3SetClock,
+    Fmi3UpdateDiscreteStates, Fmi3UpdateDiscreteStatesReturn, Fmi3SetString,
+    Fmi3SetBinary,
+};
 
 use crate::fmi3::Fmi3Status;
 use crate::fmi3_messages::fmi3_command::Command as c_enum;
 use crate::fmi3_messages::Fmi3Command as c_obj;
-use crate::unifmu_handshake::{HandshakeStatus, HandshakeRequest, HandshakeResponse};
+
+use crate::unifmu_handshake::{HandshakeStatus, HandshakeReply,};
 
 use bytes::Bytes;
 use prost::Message;
+use subprocess::{ExitStatus, Popen, PopenConfig};
 use tokio::runtime::Runtime;
-use zeromq::{ReqSocket, Socket, SocketRecv, SocketSend};
+use tokio::time::{Duration, sleep};
+use tokio::select;
+use tracing::{debug, error, info, span, warn, Level};
+use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend};
 
-pub struct Fmi3CommandDispatcher {
-    socket: zeromq::ReqSocket,
-    rt: Runtime,
-    pub endpoint: String,
+struct BackendSocket {
+    socket: zeromq::RepSocket
+}
+
+impl BackendSocket {
+    async fn send<S: Message>(&mut self, msg: &S) -> Result<(), DispatcherError> {
+        let bytes_send: Bytes = msg.encode_to_vec().into();
+        match  self.socket.send(bytes_send.into()).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                warn!("Sending message {:?} failed with error {:?}", msg, e);
+                Err(DispatcherError::SocketError)
+            }
+        }
+    }
+
+    async fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
+        match self.socket.recv().await {
+            Ok(buf) => {
+                let buf: Bytes = buf.get(0).unwrap().to_owned();
+                match R::decode(buf.as_ref()) {
+                    Ok(msg) => Ok(msg),
+                    Err(e) => Err(DispatcherError::DecodeError(e)),
+                }
+            },
+            Err(_) => Err(DispatcherError::SocketError)
+        }
+    }
+
+    async fn send_and_recv<S: Message, R: Message + Default>(
+        &mut self,
+        msg: &S,
+    ) -> Result<R, DispatcherError> {
+        self.send(msg).await?;
+        self.recv().await
+    }
+}
+
+struct BackendSubprocess {
+    subprocess: Popen
+}
+
+impl BackendSubprocess {
+    async fn monitor_subprocess(&mut self) -> Result<(), DispatcherError> {
+        loop {
+            match self.subprocess.poll() {
+                Some(exit_status) => {
+                    match exit_status {
+                        ExitStatus::Exited(code) => {
+                            error!("Backend exited unexpectedly with exit status {}.", code);
+                        },
+                        ExitStatus::Signaled(signal) => {
+                            error!("Backend exited unexpectedly because of signal {}.", signal);
+                        },
+                        _ => {
+                            error!("Backend exited unexpectedly.");
+                        }
+                    }
+                    return Err(DispatcherError::SubprocessError)
+                },
+                None => {
+                    sleep(Duration::from_millis(100)).await;
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
 pub enum DispatcherError {
     DecodeError(prost::DecodeError),
+    EnumDecodeError(prost::UnknownEnumValue),
     EncodeError,
     SocketError,
+    SubprocessError,
     Timeout,
     BackendImplementationError,
 }
 
+pub struct Fmi3CommandDispatcher {
+    socket: BackendSocket,
+    rt: Runtime,
+    pub endpoint: Endpoint,
+    pub subprocess: BackendSubprocess,
+}
+
 #[allow(non_snake_case)]
 impl Fmi3CommandDispatcher {
-    pub fn await_handshake(&mut self) -> Result<(), DispatcherError> {
-        let msg = HandshakeRequest {};
-        self.send_and_recv::<HandshakeRequest, HandshakeResponse>(&msg).map(|_| ())
+    pub fn await_handshake(&mut self) -> Result<(), DispatcherError>  {
+        match self.recv::<HandshakeReply>() {
+            Ok(response) => match HandshakeStatus::try_from(response.status) {
+                Ok(HandshakeStatus::Ok) => {
+                    info!("Handshake successful.");
+                    Ok(())
+                },
+                Ok(_) => {
+                    error!("Backend reported error as part of handshake.");
+                    Err(DispatcherError::BackendImplementationError)
+                },
+                Err(e) => {
+                    error!("Malformed handshake response.");
+                    Err(DispatcherError::EnumDecodeError(e))
+                }
+            },
+            Err(dispatcher_error) => Err(dispatcher_error)
+        }
     }
 
     pub fn Fmi3SerializeFmuState(&mut self) -> Result<(Fmi3Status, Vec<u8>), DispatcherError> {
@@ -759,55 +856,95 @@ impl Fmi3CommandDispatcher {
     }
 
     // socket
-    pub fn new(endpoint: &str) -> Self {
+    pub fn new(
+        resource_path: &Path,
+        launch_command: &Vec<String>,
+        endpoint: &str
+    ) -> Result<Self, DispatcherError> {
         let mut socket = RepSocket::new();
 
         let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_io()
+            .enable_all()
             .build()
             .unwrap();
 
-        let endpoint = rt.block_on(socket.bind(endpoint)).unwrap();
+        let endpoint = rt.block_on(socket.bind(endpoint)).unwrap();        
+        let endpoint_string = endpoint.to_string();
+        let endpoint_port = endpoint_string
+            .split(":")
+            .last()
+            .expect("There should be a port after the colon")
+            .to_owned();
+        
+        // set environment variables
+        info!("Collecting local environment variables.");
+        let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
 
-        Self {
-            socket,
-            rt,
-            endpoint: endpoint.to_string(),
-        }
+        env_vars.push((
+            OsString::from("UNIFMU_DISPATCHER_ENDPOINT"),
+            OsString::from(endpoint_string),
+        ));
+        env_vars.push((
+            OsString::from("UNIFMU_DISPATCHER_ENDPOINT_PORT"),
+            OsString::from(endpoint_port),
+        ));
+
+        info!("Spawning backend process.");
+        debug!("Launch command: {}", &launch_command[0]);
+        debug!("Environment variables: {:#?}", env_vars);
+        // spawn process
+        let subprocess = match Popen::create(
+            &launch_command,
+            PopenConfig {
+                cwd: Some(resource_path.as_os_str().to_owned()),
+                env: Some(env_vars),
+                ..Default::default()
+            },
+        ) {
+            Ok(subprocess) => subprocess,
+            Err(_e) => {
+                panic!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command);
+            }
+        };
+
+        Ok(
+            Self {
+                socket: BackendSocket{socket},
+                rt,
+                endpoint,
+                subprocess: BackendSubprocess{subprocess},
+            }
+        )
     }
 
-    pub fn send_and_recv<S: Message, R: Message + Default>(
+    fn send_and_recv<S: Message, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> Result<R, DispatcherError> {
-        let _bytes_send: Bytes = msg.encode_to_vec().into();
-
-        match self.send(msg) {
-            Ok(_) => (),
-            Err(e) => return Err(e),
-        };
-
-        self.recv()
+        self.rt.block_on(async {
+            select! {
+                result = self.socket.send_and_recv::<S, R>(msg) => result,
+                Err(e) = self.subprocess.monitor_subprocess() => Err(e),
+            }
+        })
     }
 
-    pub fn send<S: Message>(&mut self, msg: &S) -> Result<(), DispatcherError> {
-        let bytes_send: Bytes = msg.encode_to_vec().into();
-
-        match self.rt.block_on(self.socket.send(bytes_send.into())) {
-            Ok(_) => Ok(()),
-            Err(_e) => Err(DispatcherError::SocketError),
-        }
+    fn send<S: Message>(&mut self, msg: &S) -> Result<(), DispatcherError> {
+        self.rt.block_on(async {
+            select! {
+                Err(e) = self.subprocess.monitor_subprocess() => Err(e),
+                result = self.socket.send::<S>(msg) => result,
+            }
+        })
     }
 
-    pub fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
-        let buf = self.rt.block_on(self.socket.recv()).unwrap();
-
-        let buf: Bytes = buf.get(0).unwrap().to_owned();
-
-        match R::decode(buf.as_ref()) {
-            Ok(msg) => Ok(msg),
-            Err(e) => Err(DispatcherError::DecodeError(e)),
-        }
+    fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
+        self.rt.block_on(async {
+            select! {
+                Err(e) = self.subprocess.monitor_subprocess() => Err(e),
+                result = self.socket.recv::<R>() => result,
+            }
+        })
     }
 }
 

@@ -7,6 +7,8 @@ package fmi3_messages;
 option java_package = "";
 option java_outer_classname = "Fmi3Messages";
 
+import "unifmu_handshake.proto";
+
 
 // ----------------------- FMI3 ----------------------
 
@@ -426,11 +428,12 @@ message Fmi3Command {
     Fmi3SetBinary Fmi3SetBinary = 41;
     Fmi3SerializeFmuState Fmi3SerializeFmuState = 42;
     Fmi3DeserializeFmuState Fmi3DeserializeFmuState = 43;
-	Fmi3GetClock Fmi3GetClock = 44;
-	Fmi3SetClock Fmi3SetClock = 45;
-	Fmi3GetIntervalDecimal Fmi3GetIntervalDecimal = 46;
-	Fmi3EnterStepMode Fmi3EnterStepMode = 47;
-	Fmi3EnterEventMode Fmi3EnterEventMode = 48;
-	Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
+	  Fmi3GetClock Fmi3GetClock = 44;
+	  Fmi3SetClock Fmi3SetClock = 45;
+	  Fmi3GetIntervalDecimal Fmi3GetIntervalDecimal = 46;
+	  Fmi3EnterStepMode Fmi3EnterStepMode = 47;
+	  Fmi3EnterEventMode Fmi3EnterEventMode = 48;
+	  Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
+    unifmu_handshake.HandshakeRequest HandshakeRequest = 50;
   }
 }

@@ -47,6 +47,10 @@ lazy_static! {
                 "auto_generated/fmi2_messages_pb2.py",
                 "schemas/fmi2_messages_pb2.py"
             ),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
+            ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi2/README.md", "README.md"),
         ],
@@ -55,7 +59,11 @@ lazy_static! {
             ("python/fmi3/model.py", "model.py"),
             (
                 "auto_generated/fmi3_messages_pb2.py",
-                "schemas/fmi3_messages_pb2.py"
+                "fmi3_messages_pb2.py"
+            ),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),
@@ -67,6 +75,10 @@ lazy_static! {
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
@@ -101,6 +113,10 @@ lazy_static! {
             (
                 "auto_generated/Fmi2Messages.java",
                 "src/main/java/Fmi2Messages.java"
+            ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
             ),
         ],
         fmi3_resources: vec![

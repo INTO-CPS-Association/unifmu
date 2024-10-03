@@ -1,9 +1,10 @@
 import logging
 import os
 import sys
+import time
 import zmq
 
-from schemas.fmi3_messages_pb2 import (
+from fmi3_messages_pb2 import (
     Fmi3Command,
     Fmi3DoStepReturn,
     Fmi3EmptyReturn,
@@ -27,11 +28,10 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetIntervalDecimalReturn,
     Fmi3UpdateDiscreteStatesReturn,
 )
-
-from schemas.unifmu_handshake_pb2 import (
+from unifmu_handshake_pb2 import (
     HandshakeStatus,
     HandshakeRequest,
-    HandshakeResponse,
+    HandshakeReply,
 )
 
 from model import Model
@@ -44,20 +44,21 @@ if __name__ == "__main__":
 
     # initializing message queue
     context = zmq.Context()
-    socket = context.socket(zmq.REP)
+    socket = context.socket(zmq.REQ)
 
     dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
     logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
 
     socket.connect(dispatcher_endpoint)
 
-    # do handshake
-    handshake = socket.recv()
-    handshake_response = HandshakeResponse()
-    handshake_response.status = HandshakeStatus.OK
-    socket.send(handshake_response.SerializeToString())
+    time.sleep(3)
 
-    # dispatch commands to model
+    raise Exception("Exitting on purpose!")
+
+    handshake = HandshakeReply()
+    handshake.status = HandshakeStatus.OK
+    socket.send(handshake.SerializeToString())
+
     command = Fmi3Command()
     while True:
 
