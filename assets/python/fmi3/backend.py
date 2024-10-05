@@ -51,10 +51,6 @@ if __name__ == "__main__":
 
     socket.connect(dispatcher_endpoint)
 
-    time.sleep(3)
-
-    raise Exception("Exitting on purpose!")
-
     handshake = HandshakeReply()
     handshake.status = HandshakeStatus.OK
     socket.send(handshake.SerializeToString())
