@@ -212,6 +212,41 @@ lazy_static! {
             ("docker/README.md", "README_DOCKER.md"),
         ],
     };
+
+    static ref CSHARPASSETSREMOTE: LanguageAssets = LanguageAssets {
+        fmi2_resources: vec![
+            ("csharp/backend_private.cs", "backend.cs"),
+            ("csharp/model.cs", "model.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
+        ],
+        fmi3_resources: vec![
+            ("docker/Dockerfile_csharp", "Dockerfile"),
+            ("docker/deploy_csharp.py", "deploy.py"),
+            ("docker/docker-compose.yml", "docker-compose.yml"),
+            ("docker/launch_csharp.toml", "launch.toml"),
+            ("docker/README.md", "README_DOCKER.md"),
+        ],
+    };
+
+    static ref CSHARPASSETSPROXY: LanguageAssets = LanguageAssets {
+        fmi2_resources: vec![
+            ("csharp/backend_proxy.cs", "backend.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
+        ],
+        fmi3_resources: vec![
+            ("docker/Dockerfile_csharp", "Dockerfile"),
+            ("docker/deploy_csharp.py", "deploy.py"),
+            ("docker/docker-compose.yml", "docker-compose.yml"),
+            ("docker/launch_csharp.toml", "launch.toml"),
+            ("docker/README.md", "README_DOCKER.md"),
+        ],
+    };
 }
 
 #[derive(Debug)]
@@ -638,7 +673,10 @@ pub fn generate_virtual(
             copy_to_resources_proxy(&PYTHONASSETSPROXY);
         }
 
-        Language::CSharp => copy_to_resources(&CSHARPASSETS),
+        Language::CSharp => {
+            copy_to_resources(&CSHARPASSETSREMOTE);
+            copy_to_resources_proxy(&CSHARPASSETSPROXY);
+        }
 
         Language::Java => {
             copy_to_resources(&JAVAASSETSREMOTE);

@@ -52,12 +52,12 @@ public class Backend {
         String proxy_ip_address = toml.getString("ip");
 
 
-        String dispacher_endpoint = "tcp://" + proxy_ip_address + ":" + port_str;
-        System.out.println(YELLOW + "Dispatcher endpoint received:" + BOLD + BACKGROUNDYELLOW + dispacher_endpoint + RESET);
+        String dispatcher_endpoint = "tcp://" + proxy_ip_address + ":" + port_str;
+        System.out.println(YELLOW + "Dispatcher endpoint received:" + BOLD + BACKGROUNDGREEN + dispatcher_endpoint + RESET);
 
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(dispacher_endpoint);
+            socket.connect(dispatcher_endpoint);
             System.out.println(YELLOW + "Socket connected successfully." + RESET);
 
             socket.send(Fmi2Messages.Fmi2EmptyReturn.newBuilder().build().toByteArray(), 0);

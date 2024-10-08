@@ -422,11 +422,11 @@ fn get_clock(import: &Fmi3Import, cs_instance: &mut InstanceCS, vr: &u32) -> boo
 
 fn get_interval_decimal(import: &Fmi3Import, cs_instance: &mut InstanceCS, vr: &u32) -> (f64, i32) {
     let mut interval: [f64; 1] = [0.0];
-    let mut qualifier: [i32; 1] = [0];
+    let mut qualifier: [u32; 1] = [0];
     let error_msg = format!("get_interval_decimal failed for {}", vr);
-    //cs_instance.get_interval_decimal(&[*vr], &mut interval, &mut qualifier).ok().expect(&error_msg); //Update Santiago
+    cs_instance.get_interval_decimal(&[*vr], &mut interval, &mut qualifier).ok().expect(&error_msg);
 
-    (interval[0], qualifier[0])
+    (interval[0], qualifier[0] as i32) // Update Santiago
 }
 
 fn set_float32(import: &Fmi3Import, cs_instance: &mut InstanceCS, var: &str, value: f32) {
