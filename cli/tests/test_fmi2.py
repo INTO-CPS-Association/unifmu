@@ -2,7 +2,11 @@ from fmpy import read_model_description, extract
 from fmpy.fmi2 import FMU2Slave
 import shutil
 import sys
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__file__)
 
+print("Calling FMI2 test")
 
 if __name__ == "__main__":
     input_ok = False
@@ -37,7 +41,6 @@ if __name__ == "__main__":
     fmu.exitInitializationMode()
 
     simulation_time = start_simulation_time
-
     real_c = fmu.getReal([vrs["real_c"]])
     assert real_c == 0.0
     integer_c = fmu.getInteger([vrs["integer_c"]])

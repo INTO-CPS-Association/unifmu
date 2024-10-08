@@ -29,7 +29,6 @@ if __name__ == "__main__":
     model = Model()
     input_ok = False
     if len(sys.argv) == 2:
-        print("Arguments: {}".format(sys.argv))
         try:
             proxy_port = int(sys.argv[1])
             input_ok = True

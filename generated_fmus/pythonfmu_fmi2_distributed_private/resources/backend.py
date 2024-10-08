@@ -23,12 +23,12 @@ logger = logging.getLogger(__file__)
 coloredlogs.install(level='DEBUG')
 colorama.init()
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+BOLD = '\033[1m'
 
 if __name__ == "__main__":
     model = Model()
     input_ok = False
-    if sys.argv is not None:
-        print("Arguments: {}".format(sys.argv))
+    if len(sys.argv) == 2:
         try:
             proxy_port = int(sys.argv[1])
             input_ok = True
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         endpoint_config = toml.load(f)
         proxy_ip_address = endpoint_config["ip"]
     dispatcher_endpoint =  str(proxy_ip_address) + ":" + str(proxy_port)
-    logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
+    logger.info(f"dispatcher endpoint received: {BOLD} {colorama.Back.GREEN} {dispatcher_endpoint} {colorama.Style.RESET_ALL}")
 
     socket.connect("tcp://" + dispatcher_endpoint)
     logger.info(f"Socket connected successfully.")
