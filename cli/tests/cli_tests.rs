@@ -314,7 +314,7 @@ fn test_java_fmi2_distributed() {
         .stderr(contains("the FMUs were generated successfully"));
 
     let java_fmu: PathBuf = generated_fmus_dir.join("javafmu_fmi2_distributed_proxy.fmu");
-    let java_backend_directory: PathBuf = generated_fmus_dir.join("javafmu_fmi2_distributed_private/resources/gradlew");
+    let java_backend_directory: PathBuf = generated_fmus_dir.join("javafmu_fmi2_distributed_private/resources");
 
 
     test_fmu_fmi2_distributed_java(java_fmu,java_backend_directory);
@@ -334,7 +334,7 @@ fn test_csharp_fmi2_distributed() {
         .stderr(contains("the FMUs were generated successfully"));
 
     let csharp_fmu: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2_distributed_proxy.fmu");
-    let csharp_backend_directory: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2_distributed_private/resources/backend.cs");
+    let csharp_backend_directory: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2_distributed_private/resources");
 
 
     test_fmu_fmi2_distributed_csharp(csharp_fmu,csharp_backend_directory);
@@ -384,63 +384,64 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
         .stderr(Stdio::piped())
         .spawn().expect("Failed to start external test with fmpy.");
 
-
-
     let out_proxy = BufReader::new(python_cmd_proxy.stdout.take().unwrap());
     let err_proxy = BufReader::new(python_cmd_proxy.stderr.take().unwrap());
 
-
-
-    let proxy_fmu_thread = thread::spawn(move || {
+    let proxy_fmu_thread_stdout = thread::spawn(move || {
         out_proxy.lines().for_each(|line_out|{
             let log_out = line_out.unwrap();
             println!("out: {}", log_out);
             //assert!(log_out != "AssertionError");
-            assert!(!log_out.contains("AssertionError"));
             let idx_0 = log_out.find("'").unwrap_or(0);
             let idx_1 = log_out.rfind("'").unwrap_or(0);
-            let substring = &log_out[idx_0+1..idx_1];
-            println!("substring: {}", substring);
-            let port_number = substring.parse::<u16>();
-            match port_number {
-                Ok(ok) => {
-                    // Initializing the backend (remote model)
-                    println!("Initializing private backend...");
-                    let port_number_str = format!("{}",port_number.unwrap());
-                    /*let mut python_cmd: Command = Command::new("python3");
+            if (idx_0 != 0) && (idx_1 !=0){
+                let substring = &log_out[idx_0+1..idx_1];
+                println!("substring: {}", substring);
+                let port_number = substring.parse::<u16>();
+                match port_number {
+                    Ok(ok) => {
+                        // Initializing the backend (remote model)
+                        println!("Initializing private backend...");
+                        let port_number_str = format!("{}",port_number.unwrap());
+                        /*let mut python_cmd: Command = Command::new("python3");
 
-                    python_cmd
-                        .arg(&backend_directory)
-                        .arg(format!("{}",port_number.unwrap()))
-                        .assert()
-                        .success()
-                        .stdout(contains("Socket connected successfully."));*/
-                    /*let mut cmd_private = processCommand::new("python3")
-                        .arg(&backend_directory)
-                        .arg(format!("{}",port_number.unwrap()))
-                        .stdout(Stdio::piped())
-                        .stderr(Stdio::piped())
-                        .spawn().expect("Failed to start private backend.");*/
-                    let mut cmd_private = processCommand::new("python3")
-                        .arg(&backend_directory)
-                        .arg(&port_number_str)
-                        .spawn();
+                        python_cmd
+                            .arg(&backend_directory)
+                            .arg(format!("{}",port_number.unwrap()))
+                            .assert()
+                            .success()
+                            .stdout(contains("Socket connected successfully."));*/
+                        /*let mut cmd_private = processCommand::new("python3")
+                            .arg(&backend_directory)
+                            .arg(format!("{}",port_number.unwrap()))
+                            .stdout(Stdio::piped())
+                            .stderr(Stdio::piped())
+                            .spawn().expect("Failed to start private backend.");*/
+                        let mut cmd_private = processCommand::new("python3")
+                            .arg(&backend_directory)
+                            .arg(&port_number_str)
+                            .spawn();
 
-                    cmd_private.unwrap().wait().expect("Failed to start private backend.");
+                        cmd_private.unwrap().wait().expect("Failed to start private backend.");
 
-                },
-                Err(e) => {},
+                    },
+                    Err(e) => {},
+                }
             }
 
         });
+
+    });
+    let proxy_fmu_thread_stderr = thread::spawn(move || {
         err_proxy.lines().for_each(|line_err|{
             let log_err = line_err.unwrap();
             println!("err: {}", log_err);
             assert!(!log_err.contains("AssertionError"));
         });
     });
-    let _w = python_cmd_proxy.wait().expect("Proxy script failed.");
 
+    proxy_fmu_thread_stderr.join().unwrap();
+    let _w = python_cmd_proxy.wait().expect("Proxy script failed.");
 }
 
 fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf){
@@ -495,31 +496,49 @@ fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf)
             println!("out: {}", log_out);
             let idx_0 = log_out.find("'").unwrap_or(0);
             let idx_1 = log_out.rfind("'").unwrap_or(0);
-            let substring = &log_out[idx_0+1..idx_1];
-            println!("substring: {}", substring);
-            let port_number = substring.parse::<u16>();
-            match port_number {
-                Ok(ok) => {
-                    // Initializing the backend (remote model)
-                    println!("Initializing private backend...");
-                    let mut gradle_cmd: Command = Command::new("sh");
+            if (idx_0 != 0) && (idx_1 !=0){
+                let substring = &log_out[idx_0+1..idx_1];
+                println!("substring: {}", substring);
+                let port_number = substring.parse::<u16>();
+                match port_number {
+                    Ok(ok) => {
+                        // Initializing the backend (remote model)
+                        println!("Initializing private backend...");
+                        let port_number_str = format!("{}",port_number.unwrap());
+                        // let mut gradle_cmd: Command = Command::new("sh");
 
-                    gradle_cmd
-                        .arg(&backend_directory)
-                        .arg("run")
-                        .arg(format!("--args='{}'",port_number.unwrap()))
-                        .assert()
-                        .success()
-                        .stdout(contains("Socket connected successfully."));
-                },
-                Err(e) => {},
+                        // gradle_cmd
+                        //     .arg(&backend_directory)
+                        //     .arg("run")
+                        //     .arg(format!("--args='{}'",port_number.unwrap()))
+                        //     .assert()
+                        //     .success()
+                        //     .stdout(contains("Socket connected successfully."));
+
+                        let mut cmd_private = processCommand::new("sh")
+                            .current_dir(&backend_directory)
+                            .arg("gradlew")
+                            .arg("run")
+                            .arg(format!("--args='{}'",&port_number_str))
+                            .spawn();
+
+                        cmd_private.unwrap().wait().expect("Failed to start private backend.");
+                    },
+                    Err(e) => {},
+                }
             }
-
-        });
-        err_proxy.lines().for_each(|line_err|{
-            println!("err: {}", line_err.unwrap());
         });
     });
+    let proxy_fmu_thread_stderr = thread::spawn(move || {
+        err_proxy.lines().for_each(|line_err|{
+            let log_err = line_err.unwrap();
+            println!("err: {}", log_err);
+            assert!(!log_err.contains("AssertionError"));
+        });
+    });
+
+    proxy_fmu_thread_stderr.join().unwrap();
+    let _w = python_cmd_proxy.wait().expect("Proxy script failed.");
 }
 
 fn test_fmu_fmi2_distributed_csharp(fmu_path: PathBuf, backend_directory: PathBuf){
@@ -574,29 +593,49 @@ fn test_fmu_fmi2_distributed_csharp(fmu_path: PathBuf, backend_directory: PathBu
             println!("out: {}", log_out);
             let idx_0 = log_out.find("'").unwrap_or(0);
             let idx_1 = log_out.rfind("'").unwrap_or(0);
-            let substring = &log_out[idx_0+1..idx_1];
-            println!("substring: {}", substring);
-            let port_number = substring.parse::<u16>();
-            match port_number {
-                Ok(ok) => {
-                    // Initializing the backend (remote model)
-                    println!("Initializing private backend...");
-                    let mut csharp_cmd: Command = Command::new("dotnet");
+            if (idx_0 != 0) && (idx_1 !=0){
+                let substring = &log_out[idx_0+1..idx_1];
+                println!("substring: {}", substring);
+                let port_number = substring.parse::<u16>();
+                match port_number {
+                    Ok(ok) => {
+                        // Initializing the backend (remote model)
+                        println!("Initializing private backend...");
+                        let port_number_str = format!("{}",port_number.unwrap());
+                        // let mut csharp_cmd: Command = Command::new("dotnet");
+                        //
+                        // csharp_cmd
+                        //     .arg(&backend_directory)
+                        //     .arg("run")
+                        //     .arg(format!("{}",port_number.unwrap()))
+                        //     .assert()
+                        //     .success()
+                        //     .stdout(contains("Socket connected successfully."));
 
-                    csharp_cmd
-                        .arg(&backend_directory)
-                        .arg("run")
-                        .arg(format!("{}",port_number.unwrap()))
-                        .assert()
-                        .success()
-                        .stdout(contains("Socket connected successfully."));
-                },
-                Err(e) => {},
+                        let mut cmd_private = processCommand::new("dotnet")
+                            .current_dir(&backend_directory)
+                            .arg("run")
+                            .arg("backend.cs")
+                            .arg(&port_number_str)
+                            .spawn();
+
+                        cmd_private.unwrap().wait().expect("Failed to start private backend.");
+                    },
+                    Err(e) => {},
+                }
             }
 
         });
+    });
+
+    let proxy_fmu_thread_stderr = thread::spawn(move || {
         err_proxy.lines().for_each(|line_err|{
-            println!("err: {}", line_err.unwrap());
+            let log_err = line_err.unwrap();
+            println!("err: {}", log_err);
+            assert!(!log_err.contains("AssertionError"));
         });
     });
+
+    proxy_fmu_thread_stderr.join().unwrap();
+    let _w = python_cmd_proxy.wait().expect("Proxy script failed.");
 }

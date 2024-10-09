@@ -3,17 +3,18 @@ from fmpy.fmi2 import FMU2Slave
 import shutil
 import sys
 import logging
+import time
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
-print("Calling FMI2 test")
 
 if __name__ == "__main__":
     input_ok = False
     if sys.argv is not None:
         fmu_filename = str(sys.argv[1])
 
-
+    end_simulation_time = 5.0
     start_simulation_time = 0.0
     threshold = 2.0
     step_size = 0.01
@@ -34,16 +35,22 @@ if __name__ == "__main__":
                     instanceName='instance1')
 
     # initialize
-    print("Initializing FMI2 test")
     fmu.instantiate()
     fmu.setupExperiment(startTime=start_simulation_time)
     fmu.enterInitializationMode()
     fmu.exitInitializationMode()
 
+    assert False
     simulation_time = start_simulation_time
-    real_c = fmu.getReal([vrs["real_c"]])
+
+    # while (simulation_time <= end_simulation_time):
+    #     fmu.doStep(currentCommunicationPoint=simulation_time, communicationStepSize=step_size)
+    #     time.wait(step_size)
+    #     simulation_time += step_size
+
+    real_c = fmu.getReal([vrs["real_c"]])[0]
     assert real_c == 0.0
-    integer_c = fmu.getInteger([vrs["integer_c"]])
+    integer_c = fmu.getInteger([vrs["integer_c"]])[0]
     assert integer_c == 0
 
     fmu.doStep(currentCommunicationPoint=simulation_time, communicationStepSize=step_size)
@@ -53,11 +60,12 @@ if __name__ == "__main__":
 
     fmu.doStep(currentCommunicationPoint=simulation_time, communicationStepSize=step_size)
 
-    real_c = fmu.getReal([vrs["real_c"]])
+    real_c = fmu.getReal([vrs["real_c"]])[0]
     assert real_c == 3.0
-    integer_c = fmu.getInteger([vrs["integer_c"]])
+    integer_c = fmu.getInteger([vrs["integer_c"]])[0]
     assert integer_c == 3
-    print("Finalizing FMI2 test")
+
+    # terminate
     fmu.terminate()
     fmu.freeInstance()
     # clean up
