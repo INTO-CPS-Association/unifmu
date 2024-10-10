@@ -69,6 +69,7 @@ OPTIONS:
 
 SUBCOMMANDS:
     generate     Create a new FMU using the specified source language
+    generate-distributed  Generates a pair of FMU/private folder for distributed co-simulation, where the FMU works as the proxy and the folder as the model
     help         Print this message or the help of the given subcommand(s)
 ```
 The command uses _git-style_ subcommands, an example being `generate`.
@@ -90,7 +91,7 @@ OPTIONS:
     -z, --zipped    Compress the generated FMU as a zip-archive and store with '.fmu' extension
 ```
 
-The generate command can be used to create a new FMU:
+The `generate` command can be used to create a new FMU:
 
 ```bash
 unifmu generate python model
@@ -116,6 +117,50 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┃ ┣ 📜model.py
  ┃ ┗ 📜README.md
  ┗ 📜modelDescription.xml
+```
+
+The `generate-distributed` command can be used to create a new pair FMU (proxy) / folder (model) for distributed co-simulations (FMI2 only):
+```bash
+unifmu generate-distributed python model_distributed 127.0.0.1 --zipped
+```
+
+The command generated a _placeholder FMU_ suffixed with _\_proxy_ and a _placeholder folder_ suffixed with _\_private_ in the specific language.
+The proxy FMU differs from the FMU created with the `generate` command as it does not contain the model file and its dependencies.
+For example the trees below show the placeholder FMU and folder generated when using the `generate-distributed` command with python as the language:
+```python
+📦model_distributed_proxy
+ ┣ 📂binaries
+ ┃ ┣ 📂darwin64
+ ┃ ┃ ┗ 📜unifmu.dylib
+ ┃ ┣ 📂linux64
+ ┃ ┃ ┗ 📜unifmu.so
+ ┃ ┗ 📂win64
+ ┃ ┃ ┗ 📜unifmu.dll
+ ┣ 📂resources
+ ┃ ┣ 📜backend.py
+ ┃ ┣ 📜launch.toml
+ ┃ ┗ 📜README.md
+ ┗ 📜modelDescription.xml
+```
+
+whereas its fellow private folder contains the model file, the dependencies, and a toml file for the connection with the proxy FMU, as follows (**NOTE: This is not an FMU**):
+```python
+📦model_distributed_private
+ ┣ 📂resources
+ ┃ ┣ 📂schemas
+ ┃ ┃ ┗ 📜fmi2_messages_pb2.py
+ ┃ ┣ 📜backend.py
+ ┃ ┣ 📜model.py
+ ┃ ┣ 📜launch.toml
+ ┃ ┣ 📜endpoint.toml
+ ┃ ┗ 📜README.md
+ ┗ 📜modelDescription.xml
+```
+
+In order for the distributed co-simulation to work, the proxy FMU shall be executed first with a co-simulation master algorithm, and then, the private model shall be executed externally, using the IP address provided in `endpoint.toml` and the port opened by the proxy FMU as an argument (or after executing as a console input), for example (**NOTE: The port number is logged by the proxy FMU after initializing it**):
+
+```
+python path/to/model_private/resources/backend.py PORT_NUMBER
 ```
 
 ## Language specific documentation and backend development

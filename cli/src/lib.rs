@@ -459,7 +459,7 @@ pub fn generate(
     }
 }
 
-pub fn generate_virtual(
+pub fn generate_distributed(
     language: &Language,
     fmu_version: &FmiFmuVersion,
     outpath: &Path,

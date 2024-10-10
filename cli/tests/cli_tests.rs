@@ -284,7 +284,7 @@ fn test_python_fmi2_distributed() {
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
-        .args(&["generate-virtual", "python", "pythonfmu_fmi2_distributed","127.0.0.1", "--zipped"])
+        .args(&["generate-distributed", "python", "pythonfmu_fmi2_distributed","127.0.0.1", "--zipped"])
         .assert()
         .success()
         .stderr(contains("the FMUs were generated successfully"));
@@ -303,7 +303,7 @@ fn test_java_fmi2_distributed() {
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
-        .args(&["generate-virtual", "java", "javafmu_fmi2_distributed", "127.0.0.1", "--zipped"])
+        .args(&["generate-distributed", "java", "javafmu_fmi2_distributed", "127.0.0.1", "--zipped"])
         .assert()
         .success()
         .stderr(contains("the FMUs were generated successfully"));
@@ -323,7 +323,7 @@ fn test_csharp_fmi2_distributed() {
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
-        .args(&["generate-virtual", "c-sharp", "csharpfmu_fmi2_distributed", "127.0.0.1", "--zipped"])
+        .args(&["generate-distributed", "c-sharp", "csharpfmu_fmi2_distributed", "127.0.0.1", "--zipped"])
         .assert()
         .success()
         .stderr(contains("the FMUs were generated successfully"));

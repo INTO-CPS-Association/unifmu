@@ -6,7 +6,7 @@ use std::{path::PathBuf, process::exit};
 use unifmu::FmiFmuVersion;
 use unifmu::{
     generate,
-    generate_virtual,
+    generate_distributed,
     Language,
 };
 
@@ -43,8 +43,8 @@ enum Command {
         zipped: bool,
     },
 
-    /// Generates a pair of FMUs for distributed co-simulation, where one FMU works as a master and the other one as a slave.
-    GenerateVirtual {
+    /// Generates a pair of FMU/private folder for distributed co-simulation, where the FMU works as the proxy and the folder as the model.
+    GenerateDistributed {
         /// Source language of the generated FMU
         #[clap(value_enum)]
         language: Language,
@@ -52,7 +52,7 @@ enum Command {
         /// Output directory or name of the FMU archive if "--zipped" is passed
         outpath: PathBuf,
 
-        /// This argument shall be passed with the host IP address for the virtual FMU
+        /// This argument shall be passed with the host IP address for the proxy FMU
         endpoint: String,
 
         /// Version of the FMI specification to target
@@ -91,13 +91,13 @@ fn main() {
             }
         }
 
-        Command::GenerateVirtual {
+        Command::GenerateDistributed {
             language,
             fmu_version,
             outpath,
             zipped,
             endpoint,
-        } => match generate_virtual(&language, &fmu_version, &outpath, zipped, endpoint) {
+        } => match generate_distributed(&language, &fmu_version, &outpath, zipped, endpoint) {
             Ok(_) => {
                 info!("the FMUs were generated successfully");
             }
