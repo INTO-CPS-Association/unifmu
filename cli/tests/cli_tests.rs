@@ -1,6 +1,5 @@
-use std::{fs::File, path::PathBuf, path::Path, process::{Command as processCommand, Stdio}, io::{Read, Write, BufRead, BufReader}};
-
-use assert_cmd::{assert, Command};
+use std::{fs::File, path::PathBuf, process::{Command as processCommand, Stdio}, io::{BufRead, BufReader}};
+use assert_cmd::{Command};
 use fmi::{
     fmi2::{
         import::Fmi2Import,
@@ -11,10 +10,6 @@ use fmi::{
     traits::{FmiImport, FmiStatus},
 };
 use predicates::str::contains;
-
-#[cfg(test)]
-use std::{println as info, println as warn, println as debug};
-
 use std::thread;
 
 fn get_generated_fmus_dir() -> PathBuf {
@@ -349,9 +344,7 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
     );
 
     let fmu_path_str = fmu_path.as_path();
-
     let vdm_check_2_jar = get_vdm_check_jar("2");
-
     let mut vdm_check_cmd: Command = Command::new("java");
 
     vdm_check_cmd
@@ -363,20 +356,13 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
         .stdout(contains("No errors found."));
 
     // Load FMU and interact with it
-
     let fmu_file = File::open(fmu_path.clone()).unwrap();
-
     let import: Fmi2Import = import::new::<File, Fmi2Import>(fmu_file).unwrap();
-
     assert_eq!(import.model_description().fmi_version, "2.0");
 
-
     // Start the proxy
-    println!("Initializing FMU proxy backend...");
-
     let tests_dir = get_tests_dir();
     let fmpy_test_fmi2: PathBuf = tests_dir.join("test_fmi2.py");
-
 
     let mut python_cmd_proxy = processCommand::new("python3")
         .args(&[fmpy_test_fmi2,fmu_path])
@@ -390,34 +376,16 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
     let proxy_fmu_thread_stdout = thread::spawn(move || {
         out_proxy.lines().for_each(|line_out|{
             let log_out = line_out.unwrap();
-            println!("out: {}", log_out);
-            //assert!(log_out != "AssertionError");
             let idx_0 = log_out.find("'").unwrap_or(0);
             let idx_1 = log_out.rfind("'").unwrap_or(0);
             if (idx_0 != 0) && (idx_1 !=0){
                 let substring = &log_out[idx_0+1..idx_1];
-                println!("substring: {}", substring);
                 let port_number = substring.parse::<u16>();
                 match port_number {
-                    Ok(ok) => {
+                    Ok(_ok) => {
                         // Initializing the backend (remote model)
-                        println!("Initializing private backend...");
                         let port_number_str = format!("{}",port_number.unwrap());
-                        /*let mut python_cmd: Command = Command::new("python3");
-
-                        python_cmd
-                            .arg(&backend_directory)
-                            .arg(format!("{}",port_number.unwrap()))
-                            .assert()
-                            .success()
-                            .stdout(contains("Socket connected successfully."));*/
-                        /*let mut cmd_private = processCommand::new("python3")
-                            .arg(&backend_directory)
-                            .arg(format!("{}",port_number.unwrap()))
-                            .stdout(Stdio::piped())
-                            .stderr(Stdio::piped())
-                            .spawn().expect("Failed to start private backend.");*/
-                        let mut cmd_private = processCommand::new("python3")
+                        let cmd_private = processCommand::new("python3")
                             .arg(&backend_directory)
                             .arg(&port_number_str)
                             .spawn();
@@ -425,7 +393,7 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
                         cmd_private.unwrap().wait().expect("Failed to start private backend.");
 
                     },
-                    Err(e) => {},
+                    Err(_e) => {},
                 }
             }
 
@@ -435,13 +403,14 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
     let proxy_fmu_thread_stderr = thread::spawn(move || {
         err_proxy.lines().for_each(|line_err|{
             let log_err = line_err.unwrap();
-            println!("err: {}", log_err);
             assert!(!log_err.contains("AssertionError"));
         });
     });
 
+    // Verify that the proxy threads have finished without errors
     proxy_fmu_thread_stderr.join().unwrap();
-    let _w = python_cmd_proxy.wait().expect("Proxy script failed.");
+    proxy_fmu_thread_stdout.join().unwrap();
+    let _ = python_cmd_proxy.wait().expect("Proxy script failed.");
 }
 
 fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf){
@@ -453,9 +422,7 @@ fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf)
     );
 
     let fmu_path_str = fmu_path.as_path();
-
     let vdm_check_2_jar = get_vdm_check_jar("2");
-
     let mut vdm_check_cmd: Command = Command::new("java");
 
     vdm_check_cmd
@@ -467,19 +434,13 @@ fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf)
         .stdout(contains("No errors found."));
 
     // Load FMU and interact with it
-
     let fmu_file = File::open(fmu_path.clone()).unwrap();
-
     let import: Fmi2Import = import::new::<File, Fmi2Import>(fmu_file).unwrap();
-
     assert_eq!(import.model_description().fmi_version, "2.0");
 
     // Start the proxy
-    println!("Initializing FMU proxy backend...");
-
     let tests_dir = get_tests_dir();
     let fmpy_test_fmi2: PathBuf = tests_dir.join("test_fmi2.py");
-
 
     let mut python_cmd_proxy = processCommand::new("python3")
         .args(&[fmpy_test_fmi2,fmu_path])
@@ -490,32 +451,19 @@ fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf)
     let out_proxy = BufReader::new(python_cmd_proxy.stdout.take().unwrap());
     let err_proxy = BufReader::new(python_cmd_proxy.stderr.take().unwrap());
 
-    let proxy_fmu_thread = thread::spawn(move || {
+    let proxy_fmu_thread_stdout = thread::spawn(move || {
         out_proxy.lines().for_each(|line_out|{
             let log_out = line_out.unwrap();
-            println!("out: {}", log_out);
             let idx_0 = log_out.find("'").unwrap_or(0);
             let idx_1 = log_out.rfind("'").unwrap_or(0);
             if (idx_0 != 0) && (idx_1 !=0){
                 let substring = &log_out[idx_0+1..idx_1];
-                println!("substring: {}", substring);
                 let port_number = substring.parse::<u16>();
                 match port_number {
-                    Ok(ok) => {
+                    Ok(_ok) => {
                         // Initializing the backend (remote model)
-                        println!("Initializing private backend...");
                         let port_number_str = format!("{}",port_number.unwrap());
-                        // let mut gradle_cmd: Command = Command::new("sh");
-
-                        // gradle_cmd
-                        //     .arg(&backend_directory)
-                        //     .arg("run")
-                        //     .arg(format!("--args='{}'",port_number.unwrap()))
-                        //     .assert()
-                        //     .success()
-                        //     .stdout(contains("Socket connected successfully."));
-
-                        let mut cmd_private = processCommand::new("sh")
+                        let cmd_private = processCommand::new("sh")
                             .current_dir(&backend_directory)
                             .arg("gradlew")
                             .arg("run")
@@ -524,7 +472,7 @@ fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf)
 
                         cmd_private.unwrap().wait().expect("Failed to start private backend.");
                     },
-                    Err(e) => {},
+                    Err(_e) => {},
                 }
             }
         });
@@ -532,13 +480,14 @@ fn test_fmu_fmi2_distributed_java(fmu_path: PathBuf, backend_directory: PathBuf)
     let proxy_fmu_thread_stderr = thread::spawn(move || {
         err_proxy.lines().for_each(|line_err|{
             let log_err = line_err.unwrap();
-            println!("err: {}", log_err);
             assert!(!log_err.contains("AssertionError"));
         });
     });
 
+    // Verify that the proxy threads have finished without errors
     proxy_fmu_thread_stderr.join().unwrap();
-    let _w = python_cmd_proxy.wait().expect("Proxy script failed.");
+    proxy_fmu_thread_stdout.join().unwrap();
+    let _ = python_cmd_proxy.wait().expect("Proxy script failed.");
 }
 
 fn test_fmu_fmi2_distributed_csharp(fmu_path: PathBuf, backend_directory: PathBuf){
@@ -550,9 +499,7 @@ fn test_fmu_fmi2_distributed_csharp(fmu_path: PathBuf, backend_directory: PathBu
     );
 
     let fmu_path_str = fmu_path.as_path();
-
     let vdm_check_2_jar = get_vdm_check_jar("2");
-
     let mut vdm_check_cmd: Command = Command::new("java");
 
     vdm_check_cmd
@@ -564,19 +511,13 @@ fn test_fmu_fmi2_distributed_csharp(fmu_path: PathBuf, backend_directory: PathBu
         .stdout(contains("No errors found."));
 
     // Load FMU and interact with it
-
     let fmu_file = File::open(fmu_path.clone()).unwrap();
-
     let import: Fmi2Import = import::new::<File, Fmi2Import>(fmu_file).unwrap();
-
     assert_eq!(import.model_description().fmi_version, "2.0");
 
     // Start the proxy
-    println!("Initializing FMU proxy backend...");
-
     let tests_dir = get_tests_dir();
     let fmpy_test_fmi2: PathBuf = tests_dir.join("test_fmi2.py");
-
 
     let mut python_cmd_proxy = processCommand::new("python3")
         .args(&[fmpy_test_fmi2,fmu_path])
@@ -587,32 +528,19 @@ fn test_fmu_fmi2_distributed_csharp(fmu_path: PathBuf, backend_directory: PathBu
     let out_proxy = BufReader::new(python_cmd_proxy.stdout.take().unwrap());
     let err_proxy = BufReader::new(python_cmd_proxy.stderr.take().unwrap());
 
-    let proxy_fmu_thread = thread::spawn(move || {
+    let proxy_fmu_thread_stdout = thread::spawn(move || {
         out_proxy.lines().for_each(|line_out|{
             let log_out = line_out.unwrap();
-            println!("out: {}", log_out);
             let idx_0 = log_out.find("'").unwrap_or(0);
             let idx_1 = log_out.rfind("'").unwrap_or(0);
             if (idx_0 != 0) && (idx_1 !=0){
                 let substring = &log_out[idx_0+1..idx_1];
-                println!("substring: {}", substring);
                 let port_number = substring.parse::<u16>();
                 match port_number {
-                    Ok(ok) => {
+                    Ok(_ok) => {
                         // Initializing the backend (remote model)
-                        println!("Initializing private backend...");
                         let port_number_str = format!("{}",port_number.unwrap());
-                        // let mut csharp_cmd: Command = Command::new("dotnet");
-                        //
-                        // csharp_cmd
-                        //     .arg(&backend_directory)
-                        //     .arg("run")
-                        //     .arg(format!("{}",port_number.unwrap()))
-                        //     .assert()
-                        //     .success()
-                        //     .stdout(contains("Socket connected successfully."));
-
-                        let mut cmd_private = processCommand::new("dotnet")
+                        let cmd_private = processCommand::new("dotnet")
                             .current_dir(&backend_directory)
                             .arg("run")
                             .arg("backend.cs")
@@ -621,21 +549,21 @@ fn test_fmu_fmi2_distributed_csharp(fmu_path: PathBuf, backend_directory: PathBu
 
                         cmd_private.unwrap().wait().expect("Failed to start private backend.");
                     },
-                    Err(e) => {},
+                    Err(_e) => {},
                 }
             }
-
         });
     });
 
     let proxy_fmu_thread_stderr = thread::spawn(move || {
         err_proxy.lines().for_each(|line_err|{
             let log_err = line_err.unwrap();
-            println!("err: {}", log_err);
             assert!(!log_err.contains("AssertionError"));
         });
     });
 
+    // Verify that the proxy threads have finished without errors
     proxy_fmu_thread_stderr.join().unwrap();
-    let _w = python_cmd_proxy.wait().expect("Proxy script failed.");
+    proxy_fmu_thread_stdout.join().unwrap();
+    let _ = python_cmd_proxy.wait().expect("Proxy script failed.");
 }

@@ -44,7 +44,7 @@ enum Command {
     },
 
     /// Generates a pair of FMUs for distributed co-simulation, where one FMU works as a master and the other one as a slave.
-    Generate_virtual {
+    GenerateVirtual {
         /// Source language of the generated FMU
         #[clap(value_enum)]
         language: Language,
@@ -91,7 +91,7 @@ fn main() {
             }
         }
 
-        Command::Generate_virtual {
+        Command::GenerateVirtual {
             language,
             fmu_version,
             outpath,

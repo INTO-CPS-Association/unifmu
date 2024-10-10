@@ -28,8 +28,7 @@ if __name__ == "__main__":
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
 
-    #dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
-    dispatcher_endpoint =  "192.168.247.1" # Update Santiago -> change for an IP address coming from the arguments when building the FMU
+    dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
     logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
 
     socket.connect(dispatcher_endpoint)

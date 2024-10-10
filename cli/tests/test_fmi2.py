@@ -40,7 +40,6 @@ if __name__ == "__main__":
     fmu.enterInitializationMode()
     fmu.exitInitializationMode()
 
-    assert False
     simulation_time = start_simulation_time
 
     # while (simulation_time <= end_simulation_time):
