@@ -1,4 +1,7 @@
-use std::{fs::File, path::PathBuf};
+use std::{
+    fs::File,
+    path::PathBuf,
+};
 
 use assert_cmd::{assert, Command};
 use fmi::{
@@ -12,6 +15,8 @@ use fmi::{
 };
 use fmi::schema::Error;
 use predicates::str::contains;
+
+mod common;
 
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
@@ -81,6 +86,33 @@ fn test_python_fmi3() {
 
     let python_fmu: PathBuf = generated_fmus_dir.join("pythonfmu_fmi3.fmu");
     test_fmu_fmi3(python_fmu)
+}
+
+#[test]
+fn test_generate_fmu() {
+    let _fmu = common::TestFmu::new(
+        &common::FmiVersion::Fmi3, 
+        &common::FmuBackendImplementationLanguage::Python
+    );
+}
+
+#[test]
+fn test_import_fmu() {
+    let _import: Fmi3Import = import::new::<File, Fmi3Import>(
+        (&*common::PYTHON_FMU3).clone().file
+    ).expect("Should be able to import cloned FMU.");
+}
+
+#[test]
+#[should_panic]
+fn test_backend_subprocess_unexpected_exit_in_handshake() {
+    panic!("WOW");
+}
+
+#[test]
+#[should_panic]
+fn test_backend_subprocess_unexpected_exit_during_fmi3_command() {
+    panic!("WOW");
 }
 
 fn test_fmu_fmi3(fmu_path: PathBuf) {
