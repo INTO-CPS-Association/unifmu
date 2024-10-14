@@ -90,7 +90,7 @@ fn test_python_fmi3() {
 
 #[test]
 fn test_generate_fmu() {
-    let _fmu = common::TestFmu::new(
+    let _fmu = common::TestFmu::create_new(
         &common::FmiVersion::Fmi3, 
         &common::FmuBackendImplementationLanguage::Python
     );
@@ -99,7 +99,10 @@ fn test_generate_fmu() {
 #[test]
 fn test_import_fmu() {
     let _import: Fmi3Import = import::new::<File, Fmi3Import>(
-        (&*common::PYTHON_FMU3).clone().file
+        common::TestFmu::get_clone(
+            &common::FmiVersion::Fmi3, 
+            &common::FmuBackendImplementationLanguage::Python
+        ).file
     ).expect("Should be able to import cloned FMU.");
 }
 
