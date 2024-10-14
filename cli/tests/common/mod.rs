@@ -11,22 +11,22 @@ use tempdir::TempDir;
 use walkdir::WalkDir;
 use zip::{CompressionMethod, write::FileOptions, ZipArchive, ZipWriter};
 
-pub static CSHARP_FMU2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+static CSHARP_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
     &FmiVersion::Fmi2,
     &FmuBackendImplementationLanguage::CSharp,
 )});
 
-pub static JAVA_FMU2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+static JAVA_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
     &FmiVersion::Fmi2,
     &FmuBackendImplementationLanguage::Java,
 )});
 
-pub static PYTHON_FMU2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+static PYTHON_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
     &FmiVersion::Fmi2,
     &FmuBackendImplementationLanguage::Python,
 )});
 
-pub static PYTHON_FMU3: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+static PYTHON_FMI3: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
     &FmiVersion::Fmi3,
     &FmuBackendImplementationLanguage::Python,
 )});
@@ -39,11 +39,27 @@ pub enum FmuBackendImplementationLanguage {
 }
 
 impl FmuBackendImplementationLanguage {
-    pub fn as_str(&self) -> &str {
+    pub fn cmd_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "c-sharp",
             FmuBackendImplementationLanguage::Java => "java",
             FmuBackendImplementationLanguage::Python => "python"
+        }
+    }
+
+    pub fn fault_str(&self) -> &str {
+        match self {
+            FmuBackendImplementationLanguage::CSharp => "throw new Exception();",
+            FmuBackendImplementationLanguage::Java => "throw new Exception();",
+            FmuBackendImplementationLanguage::Python => "raise Exception()"
+        }
+    }
+
+    pub fn model_str(&self) -> &str {
+        match self {
+            FmuBackendImplementationLanguage::CSharp => "model.cs",
+            FmuBackendImplementationLanguage::Java => "Model.java",
+            FmuBackendImplementationLanguage::Python => "model.py"
         }
     }
 }
@@ -71,7 +87,7 @@ pub struct TestFmu {
 }
 
 impl TestFmu {
-    pub fn new(
+    pub fn create_new(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> TestFmu {
@@ -99,7 +115,21 @@ impl TestFmu {
         }
     }
 
-    pub fn inject_fault_in_backend(&mut self, line_number: u64) {
+    pub fn get_clone(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> TestFmu {
+        match language {
+            FmuBackendImplementationLanguage::CSharp => &*CSHARP_FMI2.clone(),
+            FmuBackendImplementationLanguage::Java => &*JAVA_FMI2.clone(),
+            FmuBackendImplementationLanguage::Python => match version {
+                FmiVersion::Fmi2 => &*PYTHON_FMI2.clone(),
+                FmiVersion::Fmi3 => &*PYTHON_FMI3.clone()
+            }
+        }
+    }
+
+    pub fn inject_fault_in_model(&mut self, line_number: u64) {
         todo!("Open FMU dir, find correct file, call correct inject function.");
     }
 
@@ -124,38 +154,27 @@ impl TestFmu {
         todo!("Write a line of reasonable code at the target line.");
     }
 
-    fn get_backend_filename(&self) -> String {
-        match self.language {
-            FmuBackendImplementationLanguage::CSharp => String::from("model.cs"),
-            FmuBackendImplementationLanguage::Java => String::from("Model.java"),
-            FmuBackendImplementationLanguage::Python => String::from("model.py")
-        }
-    }
-
     fn construct_cmd_args(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> Vec<String> {
         let mut args = vec![
             String::from("generate"),
-            String::from(language.as_str()),
+            String::from(language.cmd_str()),
             Self::construct_file_name(version, language),
         ];
 
         match version {
-            FmiVersion::Fmi2 => (),
+            FmiVersion::Fmi2 => args,
             FmiVersion::Fmi3 => args.push(String::from(version.as_str())),
-        };
-
-        args.push(String::from("--zipped"));
-        args
+        }
     }
 
     fn construct_file_name(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> String {
-        format!("{}fmu_{}.fmu", language.as_str(), version.as_str())
+        format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
     }
 }
 
