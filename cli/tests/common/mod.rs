@@ -1,15 +1,16 @@
 use std::{
-    ffi::OsStr,
-    fs::{copy, File},
-    io::{self, BufRead, Read, Write},
+    fs::{copy, create_dir, File, read_dir},
+    io::{self, BufRead, Write},
+    path::{Path, PathBuf},
     sync::LazyLock
 };
 
 use assert_cmd::Command;
 use predicates::str::contains;
-use tempdir::TempDir;
+use tempfile::TempDir;
+use unifmu::utils::zip_dir;
 use walkdir::WalkDir;
-use zip::{CompressionMethod, write::FileOptions, ZipArchive, ZipWriter};
+use zip::CompressionMethod;
 
 static CSHARP_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
     &FmiVersion::Fmi2,
@@ -58,7 +59,7 @@ impl FmuBackendImplementationLanguage {
     pub fn model_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "model.cs",
-            FmuBackendImplementationLanguage::Java => "Model.java",
+            FmuBackendImplementationLanguage::Java => "src/main/java/Model.java",
             FmuBackendImplementationLanguage::Python => "model.py"
         }
     }
@@ -81,9 +82,8 @@ impl FmiVersion {
 
 pub struct TestFmu {
     pub directory: TempDir,
-    pub file: File,
-    pub language: FmuBackendImplementationLanguage,
-    pub version: FmiVersion,
+    language: FmuBackendImplementationLanguage,
+    version: FmiVersion,
 }
 
 impl TestFmu {
@@ -91,7 +91,7 @@ impl TestFmu {
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> TestFmu {
-        let directory = TempDir::new("FmuTestDir")
+        let directory = TempDir::new()
             .expect("Couldn't create temporary Fmu directory.");
 
         Command::cargo_bin("unifmu")
@@ -102,14 +102,8 @@ impl TestFmu {
             .success()
             .stderr(contains("the FMU was generated successfully"));
 
-        let file_path = directory.path().join(
-            Self::construct_file_name(version, language)
-        );
-
         TestFmu {
             directory,
-            file: File::open(file_path)
-                .expect("Fmu file should exist in temporary directory"),
             language: language.clone(),
             version: version.clone()
         }
@@ -120,38 +114,63 @@ impl TestFmu {
         language: &FmuBackendImplementationLanguage
     ) -> TestFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => &*CSHARP_FMI2.clone(),
-            FmuBackendImplementationLanguage::Java => &*JAVA_FMI2.clone(),
+            FmuBackendImplementationLanguage::CSharp => (&*CSHARP_FMI2).clone(),
+            FmuBackendImplementationLanguage::Java => (&*JAVA_FMI2).clone(),
             FmuBackendImplementationLanguage::Python => match version {
-                FmiVersion::Fmi2 => &*PYTHON_FMI2.clone(),
-                FmiVersion::Fmi3 => &*PYTHON_FMI3.clone()
+                FmiVersion::Fmi2 => (&*PYTHON_FMI2).clone(),
+                FmiVersion::Fmi3 => (&*PYTHON_FMI3).clone()
             }
         }
     }
 
-    pub fn inject_fault_in_model(&mut self, line_number: u64) {
-        todo!("Open FMU dir, find correct file, call correct inject function.");
+    pub fn break_model(&self) {
+        inject_line(
+            &self.directory.path()
+                .join(Self::construct_fmu_name(&self.version, &self.language))
+                .join("resources")
+                .join(self.language.model_str()),
+            self.language.fault_str(),
+            1
+        ).expect("Should be able to inject fault into model.");
     }
 
-    fn inject_in_csharp<T>(file: &mut File, writer: T, line_number: u64) 
-    where
-        T: Write,
-    {
-        todo!("Write a line of reasonable code at the target line.");
-    }
+    /// Copies the contents of this FMU and zips them in a new temporary directory.
+    pub fn zipped(&self) -> ZippedTestFmu {
+        let new_directory = TempDir::new()
+            .expect("Should be able to create new temporary FMU directory.");
 
-    fn inject_in_java<T>(file: &mut File, writer: T, line_number: u64) 
-    where
-        T: Write,
-    {
-        todo!("Write a line of reasonable code at the target line.");
-    }
+        let fmu_name = Self::construct_fmu_name(&self.version, &self.language);
 
-    fn inject_in_python<T>(file: &mut File, writer: &mut T, line_number: u64) 
-    where
-        T: Write,
-    {
-        todo!("Write a line of reasonable code at the target line.");
+        let zip_file_path = new_directory
+            .path()
+            .join(&fmu_name);
+
+        let zip_file = File::create(&zip_file_path)
+            .expect("Should be able to create new FMU zipfile.");
+
+        let old_fmu_directory = self.directory.path().join(&fmu_name);
+        
+        let mut iterable_old_fmu_directory = WalkDir::new(&old_fmu_directory)
+            .into_iter()
+            .filter_map(|e| e.ok());
+
+        let old_prefix = old_fmu_directory
+            .to_str()
+            .expect("Should be able to represent old directory as str.");
+
+        zip_dir(
+            &mut iterable_old_fmu_directory,
+            old_prefix,
+            zip_file,
+            CompressionMethod::Deflated
+        ).expect("Should be able to zip old directory into new file.");
+
+        ZippedTestFmu {
+            directory: new_directory,
+            file: File::open(&zip_file_path).expect("Should be able to open newly created zipfile."),
+            language: self.language.clone(),
+            version: self.version.clone(),
+        }
     }
 
     fn construct_cmd_args(
@@ -161,16 +180,18 @@ impl TestFmu {
         let mut args = vec![
             String::from("generate"),
             String::from(language.cmd_str()),
-            Self::construct_file_name(version, language),
+            Self::construct_fmu_name(version, language),
         ];
 
         match version {
-            FmiVersion::Fmi2 => args,
+            FmiVersion::Fmi2 => (),
             FmiVersion::Fmi3 => args.push(String::from(version.as_str())),
-        }
+        };
+
+        args
     }
 
-    fn construct_file_name(
+    fn construct_fmu_name(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> String {
@@ -180,33 +201,88 @@ impl TestFmu {
 
 impl Clone for TestFmu {
     fn clone(&self) -> Self {
-        let new_directory = TempDir::new("FmuTestDir")
-            .expect("Couldn't create temporary Fmu directory.");
+        let new_directory = TempDir::new()
+            .expect("Couldn't create temporary FMU directory.");
 
-        let old_file_path = self.directory.path().join(
-            Self::construct_file_name(&self.version, &self.language)
-        );
-
-        let new_file_path = new_directory.path().join(
-            Self::construct_file_name(&self.version, &self.language)
-        );
-
-        let new_file = File::create_new(
-            new_directory
+        copy_directory_recursive(
+            &self.directory
                 .path()
-                .join(Self::construct_file_name(
-                    &self.version, &self.language
-                ))
-        ).expect("Should have been able to create new file in new temporary directory.");
-
-        copy(old_file_path, new_file_path)
-            .expect("Should have been able to copy files between test directories.");
-
+                .join(Self::construct_fmu_name(&self.version, &self.language)), 
+            &new_directory
+                .path()
+                .join(Self::construct_fmu_name(&self.version, &self.language))
+        )
+            .expect("Should be able to recursively copy cloned FMU into new FMU path");
+        
         Self {
             directory: new_directory,
-            file: new_file,
             language: self.language.clone(),
             version: self.version.clone(),
         }
     }
+}
+
+pub struct ZippedTestFmu {
+    pub directory: TempDir,
+    pub file: File,
+    language: FmuBackendImplementationLanguage,
+    version: FmiVersion,
+}
+
+fn copy_directory_recursive(
+    source: impl AsRef<Path>,
+    destination: impl AsRef<Path>
+)
+    -> io::Result<()>
+{
+    create_dir(&destination)?;
+    for entry in read_dir(source)? {
+        let entry = entry?;
+        let entry_type = entry.file_type()?;
+        if entry_type.is_dir() {
+            copy_directory_recursive(
+                entry.path(), 
+                destination.as_ref().join(entry.file_name())
+            )?;
+        } else {
+            copy(
+                entry.path(), 
+                destination.as_ref().join(entry.file_name())
+            )?;
+        }
+    }
+    Ok(())
+}
+
+/// Modifies the file at file_path by adding the injection at the line_number.
+/// 
+/// Does NOT overwrite the line, instead shifting already present content at
+/// and after line_number with one line.
+fn inject_line(
+    file_path: &PathBuf,
+    injection: &str,
+    line_number: u64
+) -> io::Result<()> {
+    let file = File::open(file_path)?;
+
+    let lines = io::BufReader::new(&file).lines();
+
+    let mut current_line_number: u64 = 1;
+
+    let mut buffer = Vec::<u8>::new();
+
+    for line in lines {
+        let line = line?;
+        if line_number == current_line_number {
+            writeln!(buffer, "{}", injection)?;
+        }
+        writeln!(buffer, "{}", &line)?;
+        current_line_number += 1;
+    }
+
+    let mut file = File::create(file_path)?;
+
+    file.write_all(&buffer)?;
+
+    Ok(())
 }

@@ -1,6 +1,5 @@
 use std::{
-    fs::File,
-    path::PathBuf,
+    fs::{File, read_dir}, io::Read, path::PathBuf
 };
 
 use assert_cmd::{assert, Command};
@@ -15,6 +14,8 @@ use fmi::{
 };
 use fmi::schema::Error;
 use predicates::str::contains;
+use walkdir::WalkDir;
+use zip::read::ZipArchive;
 
 mod common;
 
@@ -89,27 +90,24 @@ fn test_python_fmi3() {
 }
 
 #[test]
-fn test_generate_fmu() {
-    let _fmu = common::TestFmu::create_new(
+fn test_backend_subprocess_unexpected_exit_in_handshake() {
+    let fmu = common::TestFmu::get_clone(
         &common::FmiVersion::Fmi3, 
         &common::FmuBackendImplementationLanguage::Python
     );
-}
 
-#[test]
-fn test_import_fmu() {
-    let _import: Fmi3Import = import::new::<File, Fmi3Import>(
-        common::TestFmu::get_clone(
-            &common::FmiVersion::Fmi3, 
-            &common::FmuBackendImplementationLanguage::Python
-        ).file
-    ).expect("Should be able to import cloned FMU.");
-}
+    fmu.break_model();
 
-#[test]
-#[should_panic]
-fn test_backend_subprocess_unexpected_exit_in_handshake() {
-    panic!("WOW");
+    let import = import::new::<File, Fmi3Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let import_panic_result = std::panic::catch_unwind(|| {
+        import.instantiate_cs("instance", false, true, true, false, &[])
+            .expect("Expected panic!")
+        }
+    );
+
+    assert!(import_panic_result.is_err());
 }
 
 #[test]
