@@ -52,7 +52,8 @@ enum Command {
         /// Output directory or name of the FMU archive if "--zipped" is passed
         outpath: PathBuf,
 
-        /// This argument shall be passed with the host IP address for the proxy FMU
+        /// IP address of the host running the proxy FMU
+        #[clap(short, long, default_value="127.0.0.1")]
         endpoint: String,
 
         /// Version of the FMI specification to target

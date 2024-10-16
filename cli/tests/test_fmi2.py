@@ -41,10 +41,10 @@ if __name__ == "__main__":
     fmu.exitInitializationMode()
 
     simulation_time = start_simulation_time
-
+    
     # while (simulation_time <= end_simulation_time):
     #     fmu.doStep(currentCommunicationPoint=simulation_time, communicationStepSize=step_size)
-    #     time.wait(step_size)
+    #     time.sleep(step_size)
     #     simulation_time += step_size
 
     real_c = fmu.getReal([vrs["real_c"]])[0]
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     assert real_c == 3.0
     integer_c = fmu.getInteger([vrs["integer_c"]])[0]
     assert integer_c == 3
-
+        
     # terminate
     fmu.terminate()
     fmu.freeInstance()

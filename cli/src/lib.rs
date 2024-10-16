@@ -486,7 +486,7 @@ pub fn generate_distributed(
     let outpath_private = Path::new(&output_private_string);
     let toml = toml::to_string(&config).unwrap();
     let endpoint_file = "endpoint.toml";
-    let dst_endpoint_file = tmpdir_private.path().join("resources").join(endpoint_file);
+    let dst_endpoint_file = tmpdir_private.path().join(endpoint_file);
 
     info!(
         "Generating virtual FMUs version `{:?}` for language '{:?}' with tmpdir (proxy) {:?}/tmpdir (private) {:?}  and final output paths {:?} / {:?}",
@@ -622,8 +622,6 @@ pub fn generate_distributed(
         }
     };
 
-    let md = tmpdir_private.path().join("modelDescription.xml");
-
     // copy language specific files to 'resources' directory
 
     let copy_to_resources = |assets: &LanguageAssets| {
@@ -632,29 +630,8 @@ pub fn generate_distributed(
             FmiFmuVersion::FMI3 => assets.fmi3_resources.to_owned(),
         };
 
-        match fmu_version {
-            FmiFmuVersion::FMI2 => {
-                std::fs::write(
-                    &md,
-                    Assets::get("common/fmi2/modelDescription.xml")
-                        .unwrap()
-                        .data,
-                )
-                .unwrap();
-            }
-            FmiFmuVersion::FMI3 => {
-                std::fs::write(
-                    &md,
-                    Assets::get("common/fmi3/modelDescription.xml")
-                        .unwrap()
-                        .data,
-                )
-                .unwrap();
-            }
-        }
-
         for (src, dst) in assets_all {
-            let dst_resources = tmpdir_private.path().join("resources").join(dst);
+            let dst_resources = tmpdir_private.path().join(dst);
 
             info!("copying resource {:?} to {:?}", src, dst_resources);
             std::fs::create_dir_all(dst_resources.parent().unwrap()).unwrap();

@@ -284,13 +284,13 @@ fn test_python_fmi2_distributed() {
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
-        .args(&["generate-distributed", "python", "pythonfmu_fmi2_distributed","127.0.0.1", "--zipped"])
+        .args(&["generate-distributed", "python", "pythonfmu_fmi2_distributed", "--zipped"])
         .assert()
         .success()
         .stderr(contains("the FMUs were generated successfully"));
 
     let python_fmu: PathBuf = generated_fmus_dir.join("pythonfmu_fmi2_distributed_proxy.fmu");
-    let python_backend_directory: PathBuf = generated_fmus_dir.join("pythonfmu_fmi2_distributed_private/resources/backend.py");
+    let python_backend_directory: PathBuf = generated_fmus_dir.join("pythonfmu_fmi2_distributed_private/backend.py");
 
     test_fmu_fmi2_distributed_python(python_fmu,python_backend_directory);
 }
@@ -303,13 +303,13 @@ fn test_java_fmi2_distributed() {
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
-        .args(&["generate-distributed", "java", "javafmu_fmi2_distributed", "127.0.0.1", "--zipped"])
+        .args(&["generate-distributed", "java", "javafmu_fmi2_distributed", "--zipped"])
         .assert()
         .success()
         .stderr(contains("the FMUs were generated successfully"));
 
     let java_fmu: PathBuf = generated_fmus_dir.join("javafmu_fmi2_distributed_proxy.fmu");
-    let java_backend_directory: PathBuf = generated_fmus_dir.join("javafmu_fmi2_distributed_private/resources");
+    let java_backend_directory: PathBuf = generated_fmus_dir.join("javafmu_fmi2_distributed_private");
 
 
     test_fmu_fmi2_distributed_java(java_fmu,java_backend_directory);
@@ -323,13 +323,13 @@ fn test_csharp_fmi2_distributed() {
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
-        .args(&["generate-distributed", "c-sharp", "csharpfmu_fmi2_distributed", "127.0.0.1", "--zipped"])
+        .args(&["generate-distributed", "c-sharp", "csharpfmu_fmi2_distributed", "--zipped"])
         .assert()
         .success()
         .stderr(contains("the FMUs were generated successfully"));
 
     let csharp_fmu: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2_distributed_proxy.fmu");
-    let csharp_backend_directory: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2_distributed_private/resources");
+    let csharp_backend_directory: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2_distributed_private");
 
 
     test_fmu_fmi2_distributed_csharp(csharp_fmu,csharp_backend_directory);
