@@ -1,20 +1,28 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
+use std::{
+    ffi::{c_void, CStr, CString},
+    path::{Path, PathBuf},
+    slice::{from_raw_parts, from_raw_parts_mut},
+    sync::LazyLock
+};
+
 use libc::{c_char, size_t};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 use url::Url;
-use std::ffi::c_void;
-use std::ffi::CStr;
-use std::ffi::CString;
-use std::path::{Path, PathBuf};
-use std::slice::from_raw_parts;
-use std::slice::from_raw_parts_mut;
 use tracing::{debug, error, info, span, warn, Level};
 use tracing_subscriber;
 
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
 use crate::spawn::spawn_fmi3_slave;
+
+static ENABLE_LOGGING: LazyLock<Result<(), Fmi3Status>> = LazyLock::new(|| {
+    if tracing_subscriber::fmt::try_init().is_err() {
+        return Err(Fmi3Status::Fatal);
+    }
+    Ok(())
+});
 
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
@@ -46,14 +54,16 @@ pub enum Fmi3IntervalQualifier {
 }
 
 pub struct Fmi3Slave {
+    name: String,
     dispatcher: Fmi3CommandDispatcher,
     last_successful_time: Option<f64>,
     string_buffer: Vec<CString>,
 }
 
 impl Fmi3Slave {
-    pub fn new(dispatcher: Fmi3CommandDispatcher) -> Self {
+    pub fn new(name: String, dispatcher: Fmi3CommandDispatcher) -> Self {
         Self {
+            name,
             dispatcher,
             last_successful_time: None,
             string_buffer: Vec::new(),
@@ -123,9 +133,16 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     log_message: *const c_void,
     intermediate_update: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    tracing_subscriber::fmt::init();
-
     let instance_name = c2s(instance_name);
+
+    let span = span!(Level::INFO, "Instantiation", %instance_name);
+    let _guard = span.enter();
+    
+    if (&*ENABLE_LOGGING).is_err() {
+        error!("Tried to set already set glogal tracing subscriber.");
+        return None;
+    }
+
     let instantiation_token = c2s(instantiation_token);
     let required_intermediate_variables = unsafe {
         from_raw_parts(
@@ -139,9 +156,15 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         match resource_path.as_ref() {
             Some(b) => match CStr::from_ptr(b).to_str() {
                 Ok(s) => s.to_string(),
-                Err(e) => panic!("resource path was not valid utf-8"),
+                Err(e) => {
+                    error!("resource path was not valid utf-8");
+                    return None;
+                },
             },
-            None => panic!("resourcePath was null"),
+            None => {
+                error!("resourcePath was null");
+                return None
+            },
         }
     };
 
@@ -160,24 +183,35 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         // Parse as a URI
         let resource_uri = Url::parse(&resource_path_str).expect("unable to parse resource URI");
         if resource_uri.scheme() == "file" {
-            resource_uri.to_file_path().unwrap_or_else(|_| {
-                panic!(
-                    "URI was parsed but could not be converted into a file path, got: '{:?}'.",
-                    resource_uri
-                )
-            })
+            match resource_uri.to_file_path() {
+                Ok(path) => path,
+                Err(_) => {
+                    error!(
+                        "URI was parsed but could not be converted into a file path, got: '{:?}'.",
+                        resource_uri
+                    );
+                    return None;
+                }
+            }
         } else {
-            panic!("Unsupported URI scheme: '{}'", resource_uri.scheme())
+            error!("Unsupported URI scheme: '{}'", resource_uri.scheme());
+            return None;
         }
     } else {
         // Treat it as a direct file path
         PathBuf::from(resource_path_str)
     };
 
-    let mut dispatcher = spawn_fmi3_slave(&Path::new(&resources_dir)).unwrap();
+    let mut dispatcher = match spawn_fmi3_slave(&Path::new(&resources_dir)) {
+        Ok(dispatcher) => dispatcher,
+        Err(_) => {
+            error!("Spawning fmi3 slave failed.");
+            return None;
+        }
+    };
 
     match dispatcher.fmi3InstantiateCoSimulation(
-        instance_name,
+        instance_name.clone(),
         instantiation_token,
         resources_dir.into_os_string().into_string().unwrap(),
         visible,
@@ -186,8 +220,11 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         early_return_allowed,
         required_intermediate_variables,
     ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher))),
-        Err(_) => None,
+        Ok(_) => Some(Box::new(Fmi3Slave::new(instance_name, dispatcher))),
+        Err(_) => {
+            error!("Instantiation of fmi3 slave '{}' failed.", instance_name);
+            None
+        },
     }
 }
 #[no_mangle]

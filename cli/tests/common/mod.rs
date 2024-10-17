@@ -256,8 +256,9 @@ fn copy_directory_recursive(
 
 /// Modifies the file at file_path by adding the injection at the line_number.
 /// 
-/// Does NOT overwrite the line, instead shifting already present content at
-/// and after line_number with one line.
+/// This does NOT overwrite the line. Instead, all content that is located at
+/// and after the line at line_number is shifted one line, effectively increasing
+/// the total number of lines by one.
 fn inject_line(
     file_path: &PathBuf,
     injection: &str,
