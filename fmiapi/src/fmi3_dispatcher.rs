@@ -59,13 +59,25 @@ impl BackendSocket {
     async fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
         match self.socket.recv().await {
             Ok(buf) => {
-                let buf: Bytes = buf.get(0).unwrap().to_owned();
+                let buf: Bytes = match buf.get(0) {
+                    Some(bytes) => bytes,
+                    None => {
+                        warn!("No bytes in socket buffer");
+                        return Err(DispatcherError::SocketError);
+                    }
+                }.to_owned();
                 match R::decode(buf.as_ref()) {
                     Ok(msg) => Ok(msg),
-                    Err(e) => Err(DispatcherError::DecodeError(e)),
+                    Err(e) => {
+                        error!("Couldn't decode message.");
+                        Err(DispatcherError::DecodeError(e))
+                    },
                 }
             },
-            Err(_) => Err(DispatcherError::SocketError)
+            Err(e) => {
+                error!("Receiving on socket failed with error '{:#?}'", e);
+                Err(DispatcherError::SocketError)
+            }
         }
     }
 
@@ -115,6 +127,7 @@ pub enum DispatcherError {
     EncodeError,
     SocketError,
     SubprocessError,
+    ConcurrencyError,
     Timeout,
     BackendImplementationError,
 }
@@ -863,17 +876,27 @@ impl Fmi3CommandDispatcher {
     ) -> Result<Self, DispatcherError> {
         let mut socket = RepSocket::new();
 
-        let rt = tokio::runtime::Builder::new_current_thread()
+        let rt = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
-            .build()
-            .unwrap();
+            .build() {
+                Ok(runtime) => runtime,
+                Err(e) => {
+                    error!("Couldn't setup concurrency runtime: {:#?}", e);
+                    return Err(DispatcherError::ConcurrencyError);
+                }
+            };
 
         let endpoint = rt.block_on(socket.bind(endpoint)).unwrap();        
         let endpoint_string = endpoint.to_string();
-        let endpoint_port = endpoint_string
+        let endpoint_port = match endpoint_string
             .split(":")
-            .last()
-            .expect("There should be a port after the colon")
+            .last() {
+                Some(port) => port,
+                None => {
+                    error!("No port was specified for endpoint.");
+                    return Err(DispatcherError::SocketError);
+                }
+            }
             .to_owned();
         
         // set environment variables
@@ -903,7 +926,8 @@ impl Fmi3CommandDispatcher {
         ) {
             Ok(subprocess) => subprocess,
             Err(_e) => {
-                panic!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command);
+                error!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command);
+                return Err(DispatcherError::SubprocessError);
             }
         };
 

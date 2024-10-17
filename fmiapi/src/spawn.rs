@@ -14,7 +14,7 @@ use crate::fmi3_dispatcher::{
 
 use serde::Deserialize;
 use subprocess::{Popen, PopenConfig};
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{debug, dispatcher, error, info, span, warn, Level};
 
 #[derive(Deserialize)]
 pub struct LaunchConfig {
@@ -34,13 +34,24 @@ impl LaunchConfig {
             return Err(());
         }
 
-        let config = read_to_string(&config_path).expect(&format!(
-                 "Unable to read configuration file stored at path: '{:?}', ensure that 'launch.toml' exists in the resources directory of the fmu.",
-                 config_path
-             ));
+        let config = match read_to_string(&config_path) {
+            Ok(config) => config,
+            Err(_) => {
+                error!(
+                    "Unable to read configuration file stored at path: '{:?}', ensure that 'launch.toml' exists in the resources directory of the fmu.",
+                     config_path
+                );
+                return Err(());
+            }
+        };
 
-        let config: LaunchConfig = toml::from_str(config.as_str())
-            .expect("configuration file was opened, but the contents does not appear to be valid");
+        let config: LaunchConfig = match toml::from_str(config.as_str()) {
+            Ok(config) => config,
+            Err(_) => {
+                error!("configuration file was opened, but the contents does not appear to be valid");
+                return Err(());
+            }
+        };
 
         return Ok(config);
 
@@ -74,10 +85,15 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
     let mut dispatcher = Fmi2CommandDispatcher::new("tcp://127.0.0.1:0");
 
     let endpoint = dispatcher.endpoint.to_owned();
-    let endpoint_port = endpoint
+    let endpoint_port = match endpoint
         .split(":")
-        .last()
-        .expect("There should be a port after the colon")
+        .last() {
+            Some(port) => port,
+            None => {
+                error!("No port was specified for endpoint.");
+                return Err(());
+            }
+        }
         .to_owned();
 
     // set environment variables
@@ -121,11 +137,17 @@ pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<Fmi3CommandDispatcher, (
     .get_launch_command()?;
 
     info!("Establishing command dispatcher.");
-    let mut dispatcher = Fmi3CommandDispatcher::new(
-            resource_path,
-            &launch_command,
-            "tcp://127.0.0.1:0"
-        ).unwrap();
+    let mut dispatcher = match Fmi3CommandDispatcher::new(
+        resource_path,
+        &launch_command,
+        "tcp://127.0.0.1:0"
+    ) {
+        Ok(dispatcher) => dispatcher,
+        Err(_) => {
+            error!("Couldn't create new dispatcher.");
+            return Err(());
+        }
+    };
 
     info!("Awaiting handshake.");
     match dispatcher.await_handshake() {

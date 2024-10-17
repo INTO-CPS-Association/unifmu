@@ -82,8 +82,15 @@ impl SlaveState {
     }
 }
 
+type Fmi3SlaveType = Box<Fmi3Slave>;
+
 fn c2s(c: *const c_char) -> String {
-    unsafe { CStr::from_ptr(c).to_str().unwrap().to_owned() }
+    unsafe {
+        CStr::from_ptr(c)
+            .to_str()
+            .expect("Should be able to convert CStr to String!") //Grave error, should abort!
+            .to_owned()
+    }
 }
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
@@ -102,6 +109,10 @@ pub extern "C" fn fmi3SetDebugLogging(
     n_categories: size_t,
     categories: *const *const c_char
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetDebugLogging is not implemented.");
     Fmi3Status::Error
 }
 
@@ -115,9 +126,20 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     instance_environment: *const c_void,
     log_message: *const c_void,
 ) -> Option<Fmi3SlaveType> {
+    let instance_name = c2s(instance_name);
+
+    let span = span!(Level::INFO, "Instantiation", %instance_name);
+    let _guard = span.enter();
+    
+    if (&*ENABLE_LOGGING).is_err() {
+        error!("Tried to set already set glogal tracing subscriber.");
+        return None;
+    }
+
+    error!("fmi3InstantiateModelExchange is not implemented.");
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
-type Fmi3SlaveType = Box<Fmi3Slave>;
+
 #[no_mangle]
 pub extern "C" fn fmi3InstantiateCoSimulation(
     instance_name: *const c_char,
@@ -181,7 +203,14 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         || resource_path_str.starts_with("fmi2:")
     {
         // Parse as a URI
-        let resource_uri = Url::parse(&resource_path_str).expect("unable to parse resource URI");
+        let resource_uri = match Url::parse(&resource_path_str) {
+            Ok(uri) => uri,
+            Err(e) => {
+                error!("Unable to parse uri: {:#?}", e);
+                return None;
+            }
+        };
+
         if resource_uri.scheme() == "file" {
             match resource_uri.to_file_path() {
                 Ok(path) => path,
@@ -210,10 +239,18 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         }
     };
 
+    let resource_path = match resources_dir.into_os_string().into_string() {
+        Ok(string_path) => string_path,
+        Err(e) => {
+            error!("Couldn't convert resource directory path into String.");
+            return None;
+        }
+    };
+
     match dispatcher.fmi3InstantiateCoSimulation(
         instance_name.clone(),
         instantiation_token,
-        resources_dir.into_os_string().into_string().unwrap(),
+        resource_path,
         visible,
         logging_on,
         event_mode_used,
@@ -227,6 +264,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         },
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3InstantiateScheduledExecution(
     instance_name: *const c_char,
@@ -240,8 +278,20 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     lock_preemption: *const c_void,
     unlock_preemption: *const c_void,
 ) -> Option<Fmi3SlaveType> {
+    let instance_name = c2s(instance_name);
+
+    let span = span!(Level::INFO, "Instantiation", %instance_name);
+    let _guard = span.enter();
+    
+    if (&*ENABLE_LOGGING).is_err() {
+        error!("Tried to set already set glogal tracing subscriber.");
+        return None;
+    }
+
+    error!("fmi3InstantiateScheduledExecution is not implemented.");
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3DoStep(
     instance: &mut Fmi3Slave,
@@ -284,6 +334,7 @@ pub extern "C" fn fmi3DoStep(
         Err(_) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterInitializationMode(
     instance: &mut Fmi3Slave,
@@ -316,6 +367,7 @@ pub extern "C" fn fmi3EnterInitializationMode(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3Status {
     match instance.dispatcher.fmi3ExitInitializationMode() {
@@ -323,6 +375,7 @@ pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3St
         Err(_) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
     match instance.dispatcher.fmi3EnterEventMode() {
@@ -330,6 +383,7 @@ pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         Err(_) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
     match instance.dispatcher.fmi3EnterStepMode() {
@@ -337,6 +391,7 @@ pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         Err(_) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetFloat32(
     instance: &mut Fmi3Slave,
@@ -362,6 +417,7 @@ pub extern "C" fn fmi3GetFloat32(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetFloat64(
     instance: &mut Fmi3Slave,
@@ -387,6 +443,7 @@ pub extern "C" fn fmi3GetFloat64(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetInt8(
     instance: &mut Fmi3Slave,
@@ -409,6 +466,7 @@ pub extern "C" fn fmi3GetInt8(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetUInt8(
     instance: &mut Fmi3Slave,
@@ -434,6 +492,7 @@ pub extern "C" fn fmi3GetUInt8(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetInt16(
     instance: &mut Fmi3Slave,
@@ -459,6 +518,7 @@ pub extern "C" fn fmi3GetInt16(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetUInt16(
     instance: &mut Fmi3Slave,
@@ -484,6 +544,7 @@ pub extern "C" fn fmi3GetUInt16(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetInt32(
     instance: &mut Fmi3Slave,
@@ -509,6 +570,7 @@ pub extern "C" fn fmi3GetInt32(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetUInt32(
     instance: &mut Fmi3Slave,
@@ -534,6 +596,7 @@ pub extern "C" fn fmi3GetUInt32(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetInt64(
     instance: &mut Fmi3Slave,
@@ -559,6 +622,7 @@ pub extern "C" fn fmi3GetInt64(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetUInt64(
     instance: &mut Fmi3Slave,
@@ -584,6 +648,7 @@ pub extern "C" fn fmi3GetUInt64(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetBoolean(
     instance: &mut Fmi3Slave,
@@ -609,6 +674,7 @@ pub extern "C" fn fmi3GetBoolean(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetString(
     instance: &mut Fmi3Slave,
@@ -644,6 +710,7 @@ pub extern "C" fn fmi3GetString(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetBinary(
     instance: &mut Fmi3Slave,
@@ -677,6 +744,7 @@ pub extern "C" fn fmi3GetBinary(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetClock(
     instance: &mut Fmi3Slave,
@@ -701,6 +769,7 @@ pub extern "C" fn fmi3GetClock(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetIntervalDecimal(
     instance: &mut Fmi3Slave,
@@ -731,6 +800,7 @@ pub extern "C" fn fmi3GetIntervalDecimal(
         Err(e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetIntervalFraction(
     instance: &mut Fmi3Slave,
@@ -741,8 +811,13 @@ pub extern "C" fn fmi3GetIntervalFraction(
 	qualifier: *mut Fmi3IntervalQualifier,
     n_values: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetIntervalFraction is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetShiftDecimal(
     instance: &mut Fmi3Slave,
@@ -750,8 +825,13 @@ pub extern "C" fn fmi3GetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetShiftDecimal is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetShiftFraction(
     instance: &mut Fmi3Slave,
@@ -760,8 +840,13 @@ pub extern "C" fn fmi3GetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetShiftFraction is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetIntervalDecimal(
     instance: &mut Fmi3Slave,
@@ -769,8 +854,13 @@ pub extern "C" fn fmi3SetIntervalDecimal(
     n_value_references: size_t,
     intervals: *mut f64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetIntervalDecimal is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetIntervalFraction(
     instance: &mut Fmi3Slave,
@@ -779,8 +869,13 @@ pub extern "C" fn fmi3SetIntervalFraction(
     interval_counters: *const u64,
 	resolutions: *mut u64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetIntervalFraction is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetShiftDecimal(
     instance: &mut Fmi3Slave,
@@ -788,8 +883,13 @@ pub extern "C" fn fmi3SetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetShiftDecimal is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetShiftFraction(
     instance: &mut Fmi3Slave,
@@ -798,14 +898,24 @@ pub extern "C" fn fmi3SetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetShiftFraction is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EvaluateDiscreteStates(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Evaluating", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3EvaluateDiscreteStates is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3UpdateDiscreteStates(
     instance: &mut Fmi3Slave,
@@ -855,12 +965,18 @@ pub extern "C" fn fmi3UpdateDiscreteStates(
         Err(_) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterContinuousTimeMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Changing Mode", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3EnterContinuousTimeMode is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3CompletedIntegratorStep(
     instance: &mut Fmi3Slave,
@@ -868,69 +984,114 @@ pub extern "C" fn fmi3CompletedIntegratorStep(
 	enter_event_mode: *const i32,
 	terminate_simulation: *const i32,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Stepping", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3CompletedIntegratorStep is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetTime(
     instance: &mut Fmi3Slave,
 	time: f64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetTime is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetContinuousStates(
     instance: &mut Fmi3Slave,
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetContinuousStates is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetContinuousStateDerivatives(
     instance: &mut Fmi3Slave,
 	derivatives: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetContinuousStateDerivatives is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetEventIndicators(
     instance: &mut Fmi3Slave,
 	event_indicators: *const f64,
 	n_event_indicators: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetEventIndicators is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetContinuousStates(
     instance: &mut Fmi3Slave,
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetContinuousStates is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNominalsOfContinuousStates(
     instance: &mut Fmi3Slave,
 	nominals: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetNominalsOfContinuousStates is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNumberOfEventIndicators(
     instance: &mut Fmi3Slave,
 	n_event_indicators: *const size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetNumberOfEventIndicators is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNumberOfContinuousStates(
     instance: &mut Fmi3Slave,
 	n_continuous_states: *const size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetNumberOfContinuousStates is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetOutputDerivatives(
     instance: &mut Fmi3Slave,
@@ -940,16 +1101,26 @@ pub extern "C" fn fmi3GetOutputDerivatives(
 	values: *const f64,
 	n_values: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetOutputDerivatives is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3ActivateModelPartition(
     instance: &mut Fmi3Slave,
 	value_reference: u32,
 	activation_time: f64,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "Scheduling", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3ActivateModelPartition is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetFloat32(
     instance: &mut Fmi3Slave,
@@ -969,6 +1140,7 @@ pub extern "C" fn fmi3SetFloat32(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetFloat64(
     instance: &mut Fmi3Slave,
@@ -988,6 +1160,7 @@ pub extern "C" fn fmi3SetFloat64(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetInt8(
     instance: &mut Fmi3Slave,
@@ -1010,6 +1183,7 @@ pub extern "C" fn fmi3SetInt8(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetUInt8(
     instance: &mut Fmi3Slave,
@@ -1032,6 +1206,7 @@ pub extern "C" fn fmi3SetUInt8(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetInt16(
     instance: &mut Fmi3Slave,
@@ -1054,6 +1229,7 @@ pub extern "C" fn fmi3SetInt16(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetUInt16(
     instance: &mut Fmi3Slave,
@@ -1076,6 +1252,7 @@ pub extern "C" fn fmi3SetUInt16(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetInt32(
     instance: &mut Fmi3Slave,
@@ -1095,6 +1272,7 @@ pub extern "C" fn fmi3SetInt32(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetUInt32(
     instance: &mut Fmi3Slave,
@@ -1114,6 +1292,7 @@ pub extern "C" fn fmi3SetUInt32(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetInt64(
     instance: &mut Fmi3Slave,
@@ -1133,6 +1312,7 @@ pub extern "C" fn fmi3SetInt64(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetUInt64(
     instance: &mut Fmi3Slave,
@@ -1152,6 +1332,7 @@ pub extern "C" fn fmi3SetUInt64(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetBoolean(
     instance: &mut Fmi3Slave,
@@ -1171,6 +1352,7 @@ pub extern "C" fn fmi3SetBoolean(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetString(
     instance: &mut Fmi3Slave,
@@ -1195,6 +1377,7 @@ pub extern "C" fn fmi3SetString(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetBinary(
     instance: *mut c_void,
@@ -1250,17 +1433,23 @@ pub extern "C" fn fmi3SetClock(
         Err(_e) => Fmi3Status::Error,
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNumberOfVariableDependencies(
-    instance: *mut c_void,
+    instance: &mut Fmi3Slave,
     value_reference: *const i32,
     n_dependencies: *const size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3GetNumberOfVariableDependencies", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetNumberOfVariableDependencies is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetVariableDependencies(
-    instance: *mut c_void,
+    instance: &mut Fmi3Slave,
     dependent: *const i32,
     element_indices_of_dependent: *const size_t,
 	independents: *const i32,
@@ -1268,37 +1457,62 @@ pub extern "C" fn fmi3GetVariableDependencies(
 	dependency_kinds: *const Fmi3DependencyKind,
 	n_dependencies: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3GetVariableDependencies", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetVariableDependencies is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetFMUState(
     instance: &mut Fmi3Slave,
     state: &mut Option<SlaveState>,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3GetFMUState", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetFMUState is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetFMUState(
 	instance: &mut Fmi3Slave,
 	state: &SlaveState,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3SetFMUState", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SetFMUState is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3FreeFMUState(
     instance: &mut Fmi3Slave,
     state: Option<Box<SlaveState>>,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3FreeFMUState", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3FreeFMUState is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SerializedFMUStateSize(
     instance: &mut Fmi3Slave,
     state: Option<Box<SlaveState>>,
 	size: *const size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3SerializedFMUStateSize", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SerializedFMUStateSize is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SerializeFMUState(
     instance: &mut Fmi3Slave,
@@ -1306,8 +1520,13 @@ pub extern "C" fn fmi3SerializeFMUState(
 	serialized_state: *const u8,
 	size: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3SerializeFMUState", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3SerializeFMUState is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3DeserializeFMUState(
     instance: &mut Fmi3Slave,
@@ -1315,8 +1534,13 @@ pub extern "C" fn fmi3DeserializeFMUState(
 	size: size_t,
 	state: &SlaveState,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3DeserializeFMUState", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3DeserializeFMUState is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetDirectionalDerivative(
     instance: &mut Fmi3Slave,
@@ -1329,8 +1553,13 @@ pub extern "C" fn fmi3GetDirectionalDerivative(
 	delta_unknowns: *const f64,
 	n_delta_unknowns: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3GetDirectionalDerivative", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetDirectionalDerivative is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetAdjointDerivative(
     instance: &mut Fmi3Slave,
@@ -1343,45 +1572,75 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 	delta_knowns: *const f64,
 	n_delta_knowns: size_t,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3GetAdjointDerivative", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3GetAdjointDerivative is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3EnterConfigurationMode", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3EnterConfigurationMode is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3ExitConfigurationMode", instance_name = instance.name);
+    let _guard = span.enter();
+
+    error!("fmi3ExitConfigurationMode is not implemented.");
     Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3Terminate", instance_name = slave.name);
+    let _guard = span.enter();
+
     slave
         .dispatcher
         .fmi3Terminate()
-        .unwrap_or(Fmi3Status::Error)
+        .unwrap_or_else(|_| {
+            error!("Instance didn't terminate properly!");
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
+    let span = span!(Level::INFO, "fmi3FreeInstance");
+    let _guard = span.enter();
+
     let mut slave = slave;
 
     match slave.as_mut() {
         Some(s) => {
+            let span = span!(Level::INFO, "fmi3FreeInstance", instance_name = s.name);
+            let _guard = span.enter();
             match s.dispatcher.fmi3FreeInstance() {
                 Ok(result) => (),
-                Err(e) => eprintln!("An error ocurred when freeing slave"),
+                Err(e) => error!("An error ocurred when freeing slave"),
             };
 
             drop(slave)
         }
-        None => {}
+        None => {warn!("No slave given.")}
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
+    let span = span!(Level::INFO, "fmi3Reset", instance_name = slave.name);
+    let _guard = span.enter();
+
     slave.dispatcher.fmi3Reset().unwrap_or(Fmi3Status::Error)
 }
