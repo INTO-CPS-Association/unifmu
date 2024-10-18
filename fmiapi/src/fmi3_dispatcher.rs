@@ -40,11 +40,39 @@ use tokio::select;
 use tracing::{debug, error, info, span, warn, Level};
 use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend};
 
+/// Represents the communication socket with the backend process.
+/// 
+/// Stores the actual ZeroMQ Socket for concurrency reasons.
 struct BackendSocket {
-    socket: zeromq::RepSocket
+    socket: zeromq::RepSocket,
+    pub endpoint: zeromq::Endpoint
 }
 
 impl BackendSocket {
+    pub async fn create(endpoint: &str) -> Result<Self, DispatcherError> {
+        let mut socket = RepSocket::new();
+
+        let endpoint = match socket.bind(endpoint).await {
+            Ok(endpoint) => endpoint,
+            Err(e) => {
+                error!("Couldn't bind to backend socket; {:#?}", e);
+                return Err(DispatcherError::SocketError);
+            }
+        };
+
+        Ok(Self {socket, endpoint})
+    }
+
+    /// Sends the contents of a message through the ZeroMQ socket to
+    /// the backend.
+    /// 
+    /// A call to BackendSocket::recv() must have been made successfully
+    /// previous to a call to BackendSocket::send(). If not, send() will fail.
+    /// 
+    /// A call to send() will return when the message has been put on the
+    /// ZeroMQ message queue, NOT when the message has actually been received
+    /// by the backend. As such, there is no absolute guarantee that the
+    /// message has been received when this returns. 
     async fn send<S: Message>(&mut self, msg: &S) -> Result<(), DispatcherError> {
         let bytes_send: Bytes = msg.encode_to_vec().into();
         match  self.socket.send(bytes_send.into()).await {
@@ -56,6 +84,15 @@ impl BackendSocket {
         }
     }
 
+    /// Receives a message from the backend through the ZeroMQ socket.
+    /// 
+    /// Communication with the backend must be initiated by a call to
+    /// this function.
+    /// Any subsequent calls to this function must be preceded by a call to
+    /// BackendSocket::send(). Otherwise the recv() call will fail.
+    /// 
+    /// A call to recv() will await until a message is received through the
+    /// ZeroMQ socket.
     async fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
         match self.socket.recv().await {
             Ok(buf) => {
@@ -81,6 +118,8 @@ impl BackendSocket {
         }
     }
 
+    /// Shorthand for a call to BackendSocket::send() followed by a call to
+    /// BackendSocket::recv().
     async fn send_and_recv<S: Message, R: Message + Default>(
         &mut self,
         msg: &S,
@@ -90,11 +129,67 @@ impl BackendSocket {
     }
 }
 
+/// Representes the subprocess containing the backend.
+/// 
+/// Stores the subprocess handle for concurrency reasons.
 struct BackendSubprocess {
     subprocess: Popen
 }
 
 impl BackendSubprocess {
+    pub fn create(
+        endpoint: String,
+        launch_command: &Vec<String>,
+        resource_path: &Path
+    ) -> Result<Self, DispatcherError> {
+        let endpoint_port = match endpoint
+            .split(":")
+            .last() {
+                Some(port) => port,
+                None => {
+                    error!("No port was specified for endpoint.");
+                    return Err(DispatcherError::SocketError);
+                }
+            }
+            .to_owned();
+        
+        info!("Collecting local environment variables.");
+        let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
+
+        env_vars.push((
+            OsString::from("UNIFMU_DISPATCHER_ENDPOINT"),
+            OsString::from(endpoint),
+        ));
+        env_vars.push((
+            OsString::from("UNIFMU_DISPATCHER_ENDPOINT_PORT"),
+            OsString::from(endpoint_port),
+        ));
+
+        info!("Spawning backend process.");
+        debug!("Launch command: {}", &launch_command[0]);
+        debug!("Environment variables: {:#?}", env_vars);
+        let subprocess = match Popen::create(
+            &launch_command,
+            PopenConfig {
+                cwd: Some(resource_path.as_os_str().to_owned()),
+                env: Some(env_vars),
+                ..Default::default()
+            },
+        ) {
+            Ok(subprocess) => subprocess,
+            Err(_e) => {
+                error!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell.", launch_command);
+                return Err(DispatcherError::SubprocessError);
+            }
+        };
+
+        Ok(Self{subprocess})
+    }
+
+    /// Continously polls the backend subprocess and returns if the subprocess
+    /// returns an exit status.
+    /// 
+    /// Will only ever return an Err.
     async fn monitor_subprocess(&mut self) -> Result<(), DispatcherError> {
         loop {
             match self.subprocess.poll() {
@@ -113,7 +208,7 @@ impl BackendSubprocess {
                     return Err(DispatcherError::SubprocessError)
                 },
                 None => {
-                    sleep(Duration::from_millis(100)).await;
+                    sleep(Duration::from_millis(100)).await; // Is magic number.
                 }
             }
         }
@@ -134,13 +229,15 @@ pub enum DispatcherError {
 
 pub struct Fmi3CommandDispatcher {
     socket: BackendSocket,
-    rt: Runtime,
-    pub endpoint: Endpoint,
-    pub subprocess: BackendSubprocess,
+    runtime: Runtime,
+    subprocess: BackendSubprocess,
 }
 
 #[allow(non_snake_case)]
 impl Fmi3CommandDispatcher {
+    /// Awaits a handshake response from the backend.
+    /// 
+    /// Blocks until a handshake is received or the backend subprocess exits.
     pub fn await_handshake(&mut self) -> Result<(), DispatcherError>  {
         match self.recv::<HandshakeReply>() {
             Ok(response) => match HandshakeStatus::try_from(response.status) {
@@ -868,15 +965,12 @@ impl Fmi3CommandDispatcher {
         self.send(&cmd)
     }
 
-    // socket
-    pub fn new(
+    pub fn create(
         resource_path: &Path,
         launch_command: &Vec<String>,
         endpoint: &str
     ) -> Result<Self, DispatcherError> {
-        let mut socket = RepSocket::new();
-
-        let rt = match tokio::runtime::Builder::new_current_thread()
+        let runtime = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build() {
                 Ok(runtime) => runtime,
@@ -886,57 +980,21 @@ impl Fmi3CommandDispatcher {
                 }
             };
 
-        let endpoint = rt.block_on(socket.bind(endpoint)).unwrap();        
-        let endpoint_string = endpoint.to_string();
-        let endpoint_port = match endpoint_string
-            .split(":")
-            .last() {
-                Some(port) => port,
-                None => {
-                    error!("No port was specified for endpoint.");
-                    return Err(DispatcherError::SocketError);
-                }
-            }
-            .to_owned();
-        
-        // set environment variables
-        info!("Collecting local environment variables.");
-        let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
+        let socket = runtime.block_on(
+            BackendSocket::create(endpoint)
+        )?;
 
-        env_vars.push((
-            OsString::from("UNIFMU_DISPATCHER_ENDPOINT"),
-            OsString::from(endpoint_string),
-        ));
-        env_vars.push((
-            OsString::from("UNIFMU_DISPATCHER_ENDPOINT_PORT"),
-            OsString::from(endpoint_port),
-        ));
-
-        info!("Spawning backend process.");
-        debug!("Launch command: {}", &launch_command[0]);
-        debug!("Environment variables: {:#?}", env_vars);
-        // spawn process
-        let subprocess = match Popen::create(
-            &launch_command,
-            PopenConfig {
-                cwd: Some(resource_path.as_os_str().to_owned()),
-                env: Some(env_vars),
-                ..Default::default()
-            },
-        ) {
-            Ok(subprocess) => subprocess,
-            Err(_e) => {
-                error!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell", launch_command);
-                return Err(DispatcherError::SubprocessError);
-            }
-        };
+        let subprocess = BackendSubprocess::create(
+            socket.endpoint.to_string(),
+            launch_command,
+            resource_path
+        )?;
 
         Ok(
             Self {
-                socket: BackendSocket{socket},
-                rt,
-                endpoint,
-                subprocess: BackendSubprocess{subprocess},
+                socket,
+                runtime,
+                subprocess
             }
         )
     }
@@ -945,7 +1003,7 @@ impl Fmi3CommandDispatcher {
         &mut self,
         msg: &S,
     ) -> Result<R, DispatcherError> {
-        self.rt.block_on(async {
+        self.runtime.block_on(async {
             select! {
                 result = self.socket.send_and_recv::<S, R>(msg) => result,
                 Err(e) = self.subprocess.monitor_subprocess() => Err(e),
@@ -954,7 +1012,7 @@ impl Fmi3CommandDispatcher {
     }
 
     fn send<S: Message>(&mut self, msg: &S) -> Result<(), DispatcherError> {
-        self.rt.block_on(async {
+        self.runtime.block_on(async {
             select! {
                 Err(e) = self.subprocess.monitor_subprocess() => Err(e),
                 result = self.socket.send::<S>(msg) => result,
@@ -963,7 +1021,7 @@ impl Fmi3CommandDispatcher {
     }
 
     fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
-        self.rt.block_on(async {
+        self.runtime.block_on(async {
             select! {
                 Err(e) = self.subprocess.monitor_subprocess() => Err(e),
                 result = self.socket.recv::<R>() => result,
