@@ -16,6 +16,7 @@ use serde::Deserialize;
 use subprocess::{Popen, PopenConfig};
 use tracing::{debug, dispatcher, error, info, span, warn, Level};
 
+
 #[derive(Deserialize)]
 pub struct LaunchConfig {
     pub windows: Option<Vec<String>>,
@@ -77,12 +78,12 @@ impl LaunchConfig {
 
 pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, Popen), ()> {
 
-    let launch_command = LaunchConfig::spawn(resource_path)
-        .unwrap()
-        .get_launch_command()
-        .unwrap();
+    let launch_command = LaunchConfig::spawn(resource_path)?
+        .get_launch_command()?;
 
-    let mut dispatcher = Fmi2CommandDispatcher::new("tcp://127.0.0.1:0");
+    let mut dispatcher = Fmi2CommandDispatcher::new(
+        "tcp://127.0.0.1:0"
+    );
 
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = match endpoint
@@ -131,13 +132,12 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
 }
 
 pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<Fmi3CommandDispatcher, ()> {
-
     // grab launch command for host os
     let launch_command = LaunchConfig::spawn(resource_path)?
     .get_launch_command()?;
 
     info!("Establishing command dispatcher.");
-    let mut dispatcher = match Fmi3CommandDispatcher::new(
+    let mut dispatcher = match Fmi3CommandDispatcher::create(
         resource_path,
         &launch_command,
         "tcp://127.0.0.1:0"
