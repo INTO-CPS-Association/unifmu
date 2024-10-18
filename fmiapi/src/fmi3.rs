@@ -17,6 +17,14 @@ use tracing_subscriber;
 use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
 use crate::spawn::spawn_fmi3_slave;
 
+/// One shot function that sets up logging.
+/// 
+/// Checking the result runs the contained function once if it hasn't been run
+/// or returns the stored result.
+/// 
+/// Result should be checked at entrance to instantiation functions, and an
+/// error should be considered a grave error signifying something seriously
+/// wrong (most probably that the global logger was already set somewhere else).
 static ENABLE_LOGGING: LazyLock<Result<(), Fmi3Status>> = LazyLock::new(|| {
     if tracing_subscriber::fmt::try_init().is_err() {
         return Err(Fmi3Status::Fatal);
@@ -132,7 +140,7 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     let _guard = span.enter();
     
     if (&*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set glogal tracing subscriber.");
+        error!("Tried to set already set global tracing subscriber.");
         return None;
     }
 
@@ -161,7 +169,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     let _guard = span.enter();
     
     if (&*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set glogal tracing subscriber.");
+        error!("Tried to set already set global tracing subscriber.");
         return None;
     }
 
@@ -284,7 +292,7 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     let _guard = span.enter();
     
     if (&*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set glogal tracing subscriber.");
+        error!("Tried to set already set global tracing subscriber.");
         return None;
     }
 
