@@ -132,7 +132,12 @@ impl TestFmu {
     }
 
     pub fn break_do_step_function(&self) {
-        let injection = format!("        {}", self.language.fault_str()); 
+        let injection = format!(
+            "{}{}",
+            self.get_do_step_function_injection_prefix(),
+            self.language.fault_str()
+        );
+        
         inject_line(
             &self.get_model_file_path(),
             &injection,
@@ -140,7 +145,8 @@ impl TestFmu {
         ).expect("Should be able to inject fault into model.");
     }
 
-    /// Copies the contents of this FMU and zips them in a new temporary directory.
+    /// Copies the contents of this FMU and zips them in a new temporary
+    /// directory, returning a ZippedTestFmu with the zipped file.
     pub fn zipped(&self) -> ZippedTestFmu {
         let new_directory = TempDir::new()
             .expect("Should be able to create new temporary FMU directory.");
@@ -199,6 +205,13 @@ impl TestFmu {
         }
     }
 
+    fn get_do_step_function_injection_prefix(&self) -> &str {
+        match self.language {
+            FmuBackendImplementationLanguage::Python => "        ",
+            _ => ""
+        }
+    }
+
     fn construct_cmd_args(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -248,6 +261,9 @@ impl Clone for TestFmu {
     }
 }
 
+/// Zipped version of a TestFMU.
+/// 
+/// ZippedTestFmu.file contains the zipped FMU.
 pub struct ZippedTestFmu {
     pub directory: TempDir,
     pub file: File,
