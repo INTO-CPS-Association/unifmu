@@ -125,12 +125,18 @@ impl TestFmu {
 
     pub fn break_model(&self) {
         inject_line(
-            &self.directory.path()
-                .join(Self::construct_fmu_name(&self.version, &self.language))
-                .join("resources")
-                .join(self.language.model_str()),
+            &self.get_model_file_path(),
             self.language.fault_str(),
             1
+        ).expect("Should be able to inject fault into model.");
+    }
+
+    pub fn break_do_step_function(&self) {
+        let injection = format!("        {}", self.language.fault_str()); 
+        inject_line(
+            &self.get_model_file_path(),
+            &injection,
+            self.get_do_step_function_line_number()
         ).expect("Should be able to inject fault into model.");
     }
 
@@ -170,6 +176,26 @@ impl TestFmu {
             file: File::open(&zip_file_path).expect("Should be able to open newly created zipfile."),
             language: self.language.clone(),
             version: self.version.clone(),
+        }
+    }
+
+    fn get_model_file_path(&self) -> PathBuf {
+        self.directory.path()
+            .join(Self::construct_fmu_name(&self.version, &self.language))
+            .join("resources")
+            .join(self.language.model_str())
+    }
+
+    fn get_do_step_function_line_number(&self) -> u64 {
+        match self.language {
+            FmuBackendImplementationLanguage::CSharp => 48,
+            FmuBackendImplementationLanguage::Java => 47,
+            FmuBackendImplementationLanguage::Python => {
+                match self.version {
+                    FmiVersion::Fmi2 => 34,
+                    FmiVersion::Fmi3 => 116
+                }
+            },
         }
     }
 

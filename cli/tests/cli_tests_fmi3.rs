@@ -90,6 +90,7 @@ fn test_python_fmi3() {
 }
 
 #[test]
+#[should_panic(expected = "Expected panic!: Instantiation")]
 fn test_backend_subprocess_unexpected_exit_in_handshake() {
     let fmu = common::TestFmu::get_clone(
         &common::FmiVersion::Fmi3, 
@@ -101,19 +102,57 @@ fn test_backend_subprocess_unexpected_exit_in_handshake() {
     let import = import::new::<File, Fmi3Import>(fmu.zipped().file)
         .expect("Should be able to import FMU.");
 
-    let import_panic_result = std::panic::catch_unwind(|| {
-        import.instantiate_cs("instance", false, true, true, false, &[])
-            .expect("Expected panic!")
-        }
-    );
-
-    assert!(import_panic_result.is_err());
+    let _instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true,
+        true,
+        false,
+        &[]
+    )
+        .expect("Expected panic!");
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "Expected panic!: Error")]
 fn test_backend_subprocess_unexpected_exit_during_fmi3_command() {
-    panic!("WOW");
+    let fmu = common::TestFmu::get_clone(
+        &common::FmiVersion::Fmi3, 
+        &common::FmuBackendImplementationLanguage::Python
+    );
+
+    fmu.break_do_step_function();
+
+    let import = import::new::<File, Fmi3Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let mut instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true,
+        true,
+        false,
+        &[]
+    )
+        .expect("Should be able to instantiate FMU.");
+
+    instance.enter_step_mode()
+        .ok()
+        .expect("Should be able to enter step mode.");
+
+    let mut last_successful_time = 0.0;
+
+    instance.do_step(
+        0.0,
+        1.0,
+        false,
+        &mut false,
+        &mut false,
+        &mut false,
+        &mut last_successful_time
+    )
+        .ok()
+        .expect("Expected panic!");
 }
 
 fn test_fmu_fmi3(fmu_path: PathBuf) {
