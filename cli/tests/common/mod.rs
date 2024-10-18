@@ -12,24 +12,24 @@ use unifmu::utils::zip_dir;
 use walkdir::WalkDir;
 use zip::CompressionMethod;
 
-static CSHARP_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
-    &FmiVersion::Fmi2,
-    &FmuBackendImplementationLanguage::CSharp,
+static CSHARP_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+    FmiVersion::Fmi2,
+    FmuBackendImplementationLanguage::CSharp,
 )});
 
-static JAVA_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
-    &FmiVersion::Fmi2,
-    &FmuBackendImplementationLanguage::Java,
+static JAVA_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+    FmiVersion::Fmi2,
+    FmuBackendImplementationLanguage::Java,
 )});
 
-static PYTHON_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
-    &FmiVersion::Fmi2,
-    &FmuBackendImplementationLanguage::Python,
+static PYTHON_FMI2: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+    FmiVersion::Fmi2,
+    FmuBackendImplementationLanguage::Python,
 )});
 
-static PYTHON_FMI3: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::create_new(
-    &FmiVersion::Fmi3,
-    &FmuBackendImplementationLanguage::Python,
+static PYTHON_FMI3: LazyLock<TestFmu> = LazyLock::new(|| {TestFmu::new(
+    FmiVersion::Fmi3,
+    FmuBackendImplementationLanguage::Python,
 )});
 
 #[derive(Clone)]
@@ -87,9 +87,10 @@ pub struct TestFmu {
 }
 
 impl TestFmu {
-    pub fn create_new(
-        version: &FmiVersion,
-        language: &FmuBackendImplementationLanguage
+    /// Creates an entirely new FMU in a temporary directory.
+    pub fn new(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage
     ) -> TestFmu {
         let directory = TempDir::new()
             .expect("Couldn't create temporary Fmu directory.");
@@ -97,18 +98,20 @@ impl TestFmu {
         Command::cargo_bin("unifmu")
             .expect("The unifmu binary should be present in this crate.")
             .current_dir(directory.path())
-            .args(Self::construct_cmd_args(version, language))
+            .args(Self::construct_cmd_args(&version, &language))
             .assert()
             .success()
             .stderr(contains("the FMU was generated successfully"));
 
         TestFmu {
             directory,
-            language: language.clone(),
-            version: version.clone()
+            language,
+            version
         }
     }
 
+    /// Gets a clone of a lazily evaluated static FMU wit the
+    /// given FMI version and backend implementation language.
     pub fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -123,6 +126,8 @@ impl TestFmu {
         }
     }
 
+    /// Breaks the model by adding an error/exception to the first line of
+    /// the code.
     pub fn break_model(&self) {
         inject_line(
             &self.get_model_file_path(),
@@ -131,13 +136,15 @@ impl TestFmu {
         ).expect("Should be able to inject fault into model.");
     }
 
+    /// Breaks the do_step function in the model by addind an error/exception
+    /// after the function definition.
     pub fn break_do_step_function(&self) {
         let injection = format!(
             "{}{}",
             self.get_do_step_function_injection_prefix(),
             self.language.fault_str()
         );
-        
+
         inject_line(
             &self.get_model_file_path(),
             &injection,
