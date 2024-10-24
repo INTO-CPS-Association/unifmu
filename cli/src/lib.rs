@@ -247,6 +247,27 @@ lazy_static! {
             ("docker/README.md", "README_DOCKER.md"),
         ],
     };
+
+    static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
+        fmi2_resources: vec![
+            ("common/fmi2/backend_remote_FMU.py", "backend.py"),
+            (
+                "auto_generated/fmi2_messages_pb2.py",
+                "schemas/fmi2_messages_pb2.py"
+            ),
+            ("python/launch.toml", "launch.toml"),
+            ("python/fmi2/README.md", "README.md"),
+        ],
+        fmi3_resources: vec![
+            ("common/fmi3/backend_remote_FMU.py", "backend.py"),
+            (
+                "auto_generated/fmi3_messages_pb2.py",
+                "schemas/fmi3_messages_pb2.py"
+            ),
+            ("python/launch.toml", "launch.toml"),
+            ("python/fmi3/README.md", "README.md"),
+        ],
+    };
 }
 
 #[derive(Debug)]
@@ -465,6 +486,7 @@ pub fn generate_distributed(
     outpath: &Path,
     zipped: bool,
     endpoint: String,
+    black_box_fmu: bool,
 ) -> Result<(), GenerateError>  {
     // creates two FMUs with a master and a slave for distributed co-simulation
     let config = Config {
@@ -646,17 +668,29 @@ pub fn generate_distributed(
 
     match language {
         Language::Python => {
-            copy_to_resources(&PYTHONASSETSREMOTE);
+            if black_box_fmu {
+                copy_to_resources(&ASSETSREMOTEFMU);
+            } else {
+                copy_to_resources(&PYTHONASSETSREMOTE);
+            }            
             copy_to_resources_proxy(&PYTHONASSETSPROXY);
         }
 
         Language::CSharp => {
-            copy_to_resources(&CSHARPASSETSREMOTE);
+            if black_box_fmu {
+                copy_to_resources(&ASSETSREMOTEFMU);
+            } else{
+                copy_to_resources(&CSHARPASSETSREMOTE);
+            }            
             copy_to_resources_proxy(&CSHARPASSETSPROXY);
         }
 
         Language::Java => {
-            copy_to_resources(&JAVAASSETSREMOTE);
+            if black_box_fmu {
+                copy_to_resources(&ASSETSREMOTEFMU);
+            } else {
+                copy_to_resources(&JAVAASSETSREMOTE);
+            }            
             copy_to_resources_proxy(&JAVAASSETSPROXY);
         }
     };

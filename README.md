@@ -133,6 +133,7 @@ Arguments:
 Options:
   -e, --endpoint <ENDPOINT>  IP address of the host running the proxy FMU [default: 127.0.0.1]
   -z, --zipped               Compress the generated FMU as a zip-archive and store with '.fmu' extension
+  -b, --black-box-fmu        Additional feature to handle when the private model is an existing black-box FMU with '.fmu' extension. In this case, the private backend always uses Python and its inner FMU requires to have the same name as the output directory or name of the FMU archive
   -h, --help                 Print help
 
 ```
@@ -333,7 +334,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
    
 .
    - For testing:
-     - [Python](https://www.python.org/) along with the packages [zmq](https://pypi.org/project/zmq/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/).
+     - [Python](https://www.python.org/) along with the packages [zmq](https://pypi.org/project/zmq/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/). The packages [colorama](https://pypi.org/project/colorama/), [coloredlogs](https://pypi.org/project/coloredlogs/), and [toml](https://pypi.org/project/toml/) are also required for distributed FMUs.
      - [Java](https://openjdk.org/) (no higher than **version 17**) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
      - [LLVM](https://releases.llvm.org/download.html) and set the corresponding `LIBCLANG_PATH` environment variable that is used by the `fmi` crate, to load and interact with FMUs. See [installation instructions](https://rust-lang.github.io/rust-bindgen/requirements.html#installing-clang).
      - [.NET SDK (for C#)](https://dotnet.microsoft.com/en-us/download).
@@ -530,9 +531,9 @@ These can be accessed during execution by the model implementation or the backen
 
     ![](./figures/how_it_works.svg)
 
-3. For distributed FMUs, the proxy and the private processes run on two different network nodes and the communication between them is carried out with ZeroMQ. The proxy starts a broker-kind connection with ZeroMQ expecting to receive a connection from the private backend. That connection is initiated using the IP address stored in `endpoint.toml` and the port logged by the proxy FMU. Every time there is an FMI call in the proxy FMU, this is propagated to the private backend with ZMQ messages, which is then processed by the model.
+3. For distributed FMUs, the proxy and the private processes run on two different network nodes and the communication between them is carried out with ZeroMQ. The proxy starts a broker-kind connection with ZeroMQ expecting to receive a connection from the private backend. That connection is initiated using the IP address stored in `endpoint.toml` and the port logged by the proxy FMU. Every time there is an FMI call in the proxy FMU, this is propagated to the private backend with ZMQ messages, which is then processed by the model. In case the `--black-box-fmu` option is passed, the private backend uses FMPy to communicate with the existing FMU.
 The following diagram illustrates this:
-![](./figures/unifmu_distributed.svg)
+![](./figures/unifmu_distributed-combined.svg)
 
 
 ## Citing the tool

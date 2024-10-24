@@ -43,7 +43,7 @@ enum Command {
         zipped: bool,
     },
 
-    /// Generates a pair of FMU/private folder for distributed co-simulation, where the FMU works as the proxy and the folder as the model.
+    /// Generates a pair of FMU/private folder for distributed co-simulation, where the FMU works as the proxy and the folder as the model
     GenerateDistributed {
         /// Source language of the generated FMU
         #[clap(value_enum)]
@@ -63,6 +63,10 @@ enum Command {
         /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
         #[clap(short, long)]
         zipped: bool,
+
+        /// Additional feature to handle when the private model is an existing black-box FMU with '.fmu' extension. In this case, the private backend always uses Python and its inner FMU requires to have the same name as the output directory or name of the FMU archive
+        #[clap(short, long)]
+        black_box_fmu: bool,
     }
 }
 
@@ -98,7 +102,8 @@ fn main() {
             outpath,
             zipped,
             endpoint,
-        } => match generate_distributed(&language, &fmu_version, &outpath, zipped, endpoint) {
+            black_box_fmu,
+        } => match generate_distributed(&language, &fmu_version, &outpath, zipped, endpoint, black_box_fmu) {
             Ok(_) => {
                 info!("the FMUs were generated successfully");
             }
