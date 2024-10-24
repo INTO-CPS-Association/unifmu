@@ -171,11 +171,12 @@ whereas its fellow private folder contains the model file, the dependencies, and
 In order for the distributed co-simulation to work, the proxy FMU shall be executed first with a co-simulation master algorithm, and then, the private model shall be executed externally, using the IP address provided in `endpoint.toml` and the port opened by the proxy FMU as an argument (or after executing as a console input), for example (**NOTE: The port number is logged by the proxy FMU after initializing it**).
 To change the default IP address, either run the command `generate-distributed` with the option `--endpoint=IP_ADDRESS` or update the `endpoint.toml` file directly.
 
+In case the model in the private backend is an existing FMU, use the option `--black-box-fmu`. This will generate a private folder that interacts with the existing FMU using FMPy and UniFMU's existing capabilities. The FMU in the private folder should have the same name of the private folder without the suffix `_private`. In this example, the FMU should be called `model_distributed.fmu` and should be located in `path/to/model_distributed_private/`.
 
 The private backend can be executed using the `launch.toml`, which defines the command to execute the model; in the case of python, it would look like (**Note:** `PORT_NUMBER` is an argument to pass directly the port to the process):
 
 ```
-python path/to/model_private/backend.py PORT_NUMBER
+python path/to/model_distributed_private/backend.py PORT_NUMBER
 ```
 
 ## Language specific documentation and backend development
