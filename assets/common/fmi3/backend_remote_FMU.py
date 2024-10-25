@@ -5,7 +5,7 @@ import sys
 import zmq
 import toml
 from fmpy import read_model_description, extract
-from fmpy.fmi3 import FMU3Slave
+from fmpy.fmi3 import FMU3Slave, fmi3Float64, fmi3IntervalQualifier, fmi3ValueReference
 
 from schemas.fmi3_messages_pb2 import (
     Fmi3Command,
@@ -225,14 +225,19 @@ if __name__ == "__main__":
             result.status = 0
         elif group == "Fmi3GetIntervalDecimal":
             ## To be fixed for the FMPy library
-            result = Fmi3GetIntervalDecimalReturn()
-            result.status = 0
-            (
-                result.intervals[:],
-                result.qualifiers[:]
-            ) = fmu.getIntervalDecimal(
-                data.value_references
+            result = Fmi3GetIntervalDecimalReturn()            
+            num_vars = len(data.value_references)
+            vrs = (fmi3ValueReference * num_vars)(*data.value_references)
+            intervals = (fmi3Float64 * num_vars)()
+            qualifiers = (fmi3IntervalQualifier * num_vars)()
+            fmu.getIntervalDecimal(
+                data.value_references, # if not working, use 'vrs' instead
+                intervals,
+                qualifiers
             )
+            result.intervals[:] = intervals
+            result.qualifiers[:] = qualifiers
+            result.status = 0
         elif group == "Fmi3SetFloat32":
             result = Fmi3StatusReturn()
             fmu.setFloat32(data.value_references, data.values)
