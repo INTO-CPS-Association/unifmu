@@ -6,6 +6,7 @@ use std::{path::PathBuf, process::exit};
 use unifmu::FmiFmuVersion;
 use unifmu::{
     generate,
+    generate_distributed,
     Language,
 };
 
@@ -40,6 +41,32 @@ enum Command {
         /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
         #[clap(short, long)]
         zipped: bool,
+    },
+
+    /// Generates a pair of FMU/private folder for distributed co-simulation, where the FMU works as the proxy and the folder as the model
+    GenerateDistributed {
+        /// Source language of the generated FMU
+        #[clap(value_enum)]
+        language: Language,
+
+        /// Output directory or name of the FMU archive if "--zipped" is passed
+        outpath: PathBuf,
+
+        /// IP address of the host running the proxy FMU
+        #[clap(short, long, default_value="127.0.0.1")]
+        endpoint: String,
+
+        /// Version of the FMI specification to target
+        #[clap(value_enum, default_value_t=FmiFmuVersion::FMI2)]
+        fmu_version: FmiFmuVersion,
+
+        /// Compress the generated FMU as a zip-archive and store with '.fmu' extension
+        #[clap(short, long)]
+        zipped: bool,
+
+        /// Additional feature to handle when the private model is an existing black-box FMU with '.fmu' extension. In this case, the private backend always uses Python and its inner FMU requires to have the same name as the output directory or name of the FMU archive
+        #[clap(short, long)]
+        black_box_fmu: bool,
     }
 }
 
@@ -65,6 +92,23 @@ fn main() {
             }
             Err(e) => {
                 error!("an error ocurred during the generation of the FMU: {:?}", e);
+                exit(-1);
+            }
+        }
+
+        Command::GenerateDistributed {
+            language,
+            fmu_version,
+            outpath,
+            zipped,
+            endpoint,
+            black_box_fmu,
+        } => match generate_distributed(&language, &fmu_version, &outpath, zipped, endpoint, black_box_fmu) {
+            Ok(_) => {
+                info!("the FMUs were generated successfully");
+            }
+            Err(e) => {
+                error!("an error ocurred during the generation of the FMUs: {:?}", e);
                 exit(-1);
             }
         }

@@ -81,9 +81,7 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
     let launch_command = LaunchConfig::spawn(resource_path)?
         .get_launch_command()?;
 
-    let mut dispatcher = Fmi2CommandDispatcher::new(
-        "tcp://127.0.0.1:0"
-    );
+    let mut dispatcher = Fmi2CommandDispatcher::new("tcp://0.0.0.0:0");
 
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = match endpoint

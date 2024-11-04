@@ -69,28 +69,29 @@ OPTIONS:
 
 SUBCOMMANDS:
     generate     Create a new FMU using the specified source language
+    generate-distributed  Generates a pair of FMU/private folder for distributed co-simulation, where the FMU works as the proxy and the folder as the model
     help         Print this message or the help of the given subcommand(s)
 ```
-The command uses _git-style_ subcommands, an example being `generate`.
+The command uses _git-style_ subcommands.
 Help for the individual commands can be inquired by appending the `--help` after the name of the subcommand.
 
+Help for the command `generate`:
 ```
 Create a new FMU using the specified source language
 
-USAGE:
-    unifmu generate [OPTIONS] <LANGUAGE> <FMU_VERSION> <OUTPATH>
+Usage: unifmu generate [OPTIONS] <LANGUAGE> <OUTPATH> [FMU_VERSION]
 
-ARGS:
-    <LANGUAGE>       Source language of the generated FMU [possible values: python, c-sharp, java]
-    <FMU_VERSION>    Version of the FMI specification to target [possible values: fmi2, fmi3 (in progress)]
-    <OUTPATH>        Output directory or name of the FMU archive if "--zipped" is passed
+Arguments:
+  <LANGUAGE>     Source language of the generated FMU [possible values: python, c-sharp, java]
+  <OUTPATH>      Output directory or name of the FMU archive if "--zipped" is passed
+  [FMU_VERSION]  Version of the FMI specification to target [default: fmi2] [possible values: fmi2, fmi3]
 
-OPTIONS:
-    -h, --help      Print help information
-    -z, --zipped    Compress the generated FMU as a zip-archive and store with '.fmu' extension
+Options:
+  -z, --zipped  Compress the generated FMU as a zip-archive and store with '.fmu' extension
+  -h, --help    Print help
 ```
 
-The generate command can be used to create a new FMU:
+The `generate` command can be used to create a new FMU:
 
 ```bash
 unifmu generate python model
@@ -116,6 +117,66 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┃ ┣ 📜model.py
  ┃ ┗ 📜README.md
  ┗ 📜modelDescription.xml
+```
+
+Help for the command `generate-distributed`:
+```
+Generates a pair of FMU/private folder for distributed co-simulation, where the FMU works as the proxy and the folder as the model
+
+Usage: unifmu generate-distributed [OPTIONS] <LANGUAGE> <OUTPATH> [FMU_VERSION]
+
+Arguments:
+  <LANGUAGE>     Source language of the generated FMU [possible values: python, c-sharp, java]
+  <OUTPATH>      Output directory or name of the FMU archive if "--zipped" is passed
+  [FMU_VERSION]  Version of the FMI specification to target [default: fmi2] [possible values: fmi2, fmi3]
+
+Options:
+  -e, --endpoint <ENDPOINT>  IP address of the host running the proxy FMU [default: 127.0.0.1]
+  -z, --zipped               Compress the generated FMU as a zip-archive and store with '.fmu' extension
+  -b, --black-box-fmu        Additional feature to handle when the private model is an existing black-box FMU with '.fmu' extension. In this case, the private backend always uses Python and its inner FMU requires to have the same name as the output directory or name of the FMU archive
+  -h, --help                 Print help
+
+```
+
+The `generate-distributed` command can be used to create a new pair FMU (proxy) / folder (model) for distributed co-simulations (FMI2 only):
+```bash
+unifmu generate-distributed python model_distributed
+```
+
+The command generates a _placeholder FMU_ suffixed with _\_proxy_ and a _placeholder folder_ suffixed with _\_private_ in the specific language.
+The proxy FMU differs from the FMU created with the `generate` command as it does not contain the model file and its dependencies.
+For example the trees below show the placeholder FMU and folder generated when using the `generate-distributed` command with python as the language:
+```python
+📦model_distributed_proxy
+ ┣ 📂binaries
+ ┣ 📂resources
+ ┃ ┣ 📜backend.py
+ ┃ ┣ 📜launch.toml
+ ┃ ┗ 📜README.md
+ ┗ 📜modelDescription.xml
+```
+
+whereas its fellow private folder contains the model file, the dependencies, and a toml file for the connection with the proxy FMU, as follows (**NOTE: This is not an FMU**):
+```python
+📦model_distributed_private
+ ┣ 📂schemas
+ ┃ ┗ 📜fmi2_messages_pb2.py
+ ┣ 📜backend.py
+ ┣ 📜model.py
+ ┣ 📜launch.toml
+ ┣ 📜endpoint.toml
+ ┗ 📜README.md
+```
+
+In order for the distributed co-simulation to work, the proxy FMU shall be executed first with a co-simulation master algorithm, and then, the private model shall be executed externally, using the IP address provided in `endpoint.toml` and the port opened by the proxy FMU as an argument (or after executing as a console input), for example (**NOTE: The port number is logged by the proxy FMU after initializing it**).
+To change the default IP address, either run the command `generate-distributed` with the option `--endpoint=IP_ADDRESS` or update the `endpoint.toml` file directly.
+
+In case the model in the private backend is an existing FMU, use the option `--black-box-fmu`. This will generate a private folder that interacts with the existing FMU using FMPy and UniFMU's existing capabilities. The FMU in the private folder should have the same name of the private folder without the suffix `_private`. In this example, the FMU should be called `model_distributed.fmu` and should be located in `path/to/model_distributed_private/`.
+
+The private backend can be executed using the `launch.toml`, which defines the command to execute the model; in the case of python, it would look like (**Note:** `PORT_NUMBER` is an argument to pass directly the port to the process):
+
+```
+python path/to/model_distributed_private/backend.py PORT_NUMBER
 ```
 
 ## Language specific documentation and backend development
@@ -274,7 +335,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
    
 .
    - For testing:
-     - [Python](https://www.python.org/) along with the packages [zmq](https://pypi.org/project/zmq/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/).
+     - [Python](https://www.python.org/) along with the packages [zmq](https://pypi.org/project/zmq/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/). The packages [colorama](https://pypi.org/project/colorama/), [coloredlogs](https://pypi.org/project/coloredlogs/), and [toml](https://pypi.org/project/toml/) are also required for distributed FMUs.
      - [Java](https://openjdk.org/) (no higher than **version 17**) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
      - [LLVM](https://releases.llvm.org/download.html) and set the corresponding `LIBCLANG_PATH` environment variable that is used by the `fmi` crate, to load and interact with FMUs. See [installation instructions](https://rust-lang.github.io/rust-bindgen/requirements.html#installing-clang).
      - [.NET SDK (for C#)](https://dotnet.microsoft.com/en-us/download).
@@ -470,6 +531,11 @@ These can be accessed during execution by the model implementation or the backen
     The following diagram illustrates this:
 
     ![](./figures/how_it_works.svg)
+
+3. For distributed FMUs, the proxy and the private processes run on two different network nodes and the communication between them is carried out with ZeroMQ. The proxy starts a broker-kind connection with ZeroMQ expecting to receive a connection from the private backend. That connection is initiated using the IP address stored in `endpoint.toml` and the port logged by the proxy FMU. Every time there is an FMI call in the proxy FMU, this is propagated to the private backend with ZMQ messages, which is then processed by the model. In case the `--black-box-fmu` option is passed, the private backend uses FMPy to communicate with the existing FMU.
+The following diagram illustrates this:
+![](./figures/unifmu_distributed-combined.svg)
+
 
 ## Citing the tool
 
