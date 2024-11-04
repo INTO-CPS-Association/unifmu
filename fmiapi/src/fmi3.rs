@@ -11,7 +11,7 @@ use std::{
 use libc::{c_char, size_t};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use url::Url;
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{error, warn};
 use tracing_subscriber;
 
 use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
@@ -62,16 +62,14 @@ pub enum Fmi3IntervalQualifier {
 }
 
 pub struct Fmi3Slave {
-    name: String,
     dispatcher: Fmi3CommandDispatcher,
     last_successful_time: Option<f64>,
     string_buffer: Vec<CString>,
 }
 
 impl Fmi3Slave {
-    pub fn new(name: String, dispatcher: Fmi3CommandDispatcher) -> Self {
+    pub fn new(dispatcher: Fmi3CommandDispatcher) -> Self {
         Self {
-            name,
             dispatcher,
             last_successful_time: None,
             string_buffer: Vec::new(),
@@ -117,9 +115,6 @@ pub extern "C" fn fmi3SetDebugLogging(
     n_categories: size_t,
     categories: *const *const c_char
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetDebugLogging is not implemented.");
     Fmi3Status::Error
 }
@@ -134,11 +129,6 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     instance_environment: *const c_void,
     log_message: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-
-    let span = span!(Level::INFO, "Instantiation", %instance_name);
-    let _guard = span.enter();
-    
     if (&*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
@@ -163,16 +153,12 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     log_message: *const c_void,
     intermediate_update: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-
-    let span = span!(Level::INFO, "Instantiation", %instance_name);
-    let _guard = span.enter();
-    
     if (&*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
 
+    let instance_name = c2s(instance_name);
     let instantiation_token = c2s(instantiation_token);
     let required_intermediate_variables = unsafe {
         from_raw_parts(
@@ -265,7 +251,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         early_return_allowed,
         required_intermediate_variables,
     ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(instance_name, dispatcher))),
+        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher))),
         Err(_) => {
             error!("Instantiation of fmi3 slave '{}' failed.", instance_name);
             None
@@ -286,11 +272,6 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     lock_preemption: *const c_void,
     unlock_preemption: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-
-    let span = span!(Level::INFO, "Instantiation", %instance_name);
-    let _guard = span.enter();
-    
     if (&*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
@@ -819,9 +800,6 @@ pub extern "C" fn fmi3GetIntervalFraction(
 	qualifier: *mut Fmi3IntervalQualifier,
     n_values: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetIntervalFraction is not implemented.");
     Fmi3Status::Error
 }
@@ -833,9 +811,6 @@ pub extern "C" fn fmi3GetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetShiftDecimal is not implemented.");
     Fmi3Status::Error
 }
@@ -848,9 +823,6 @@ pub extern "C" fn fmi3GetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetShiftFraction is not implemented.");
     Fmi3Status::Error
 }
@@ -862,9 +834,6 @@ pub extern "C" fn fmi3SetIntervalDecimal(
     n_value_references: size_t,
     intervals: *mut f64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetIntervalDecimal is not implemented.");
     Fmi3Status::Error
 }
@@ -877,9 +846,6 @@ pub extern "C" fn fmi3SetIntervalFraction(
     interval_counters: *const u64,
 	resolutions: *mut u64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetIntervalFraction is not implemented.");
     Fmi3Status::Error
 }
@@ -891,9 +857,6 @@ pub extern "C" fn fmi3SetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetShiftDecimal is not implemented.");
     Fmi3Status::Error
 }
@@ -906,9 +869,6 @@ pub extern "C" fn fmi3SetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetShiftFraction is not implemented.");
     Fmi3Status::Error
 }
@@ -917,9 +877,6 @@ pub extern "C" fn fmi3SetShiftFraction(
 pub extern "C" fn fmi3EvaluateDiscreteStates(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Evaluating", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3EvaluateDiscreteStates is not implemented.");
     Fmi3Status::Error
 }
@@ -978,9 +935,6 @@ pub extern "C" fn fmi3UpdateDiscreteStates(
 pub extern "C" fn fmi3EnterContinuousTimeMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Changing Mode", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3EnterContinuousTimeMode is not implemented.");
     Fmi3Status::Error
 }
@@ -992,9 +946,6 @@ pub extern "C" fn fmi3CompletedIntegratorStep(
 	enter_event_mode: *const i32,
 	terminate_simulation: *const i32,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Stepping", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3CompletedIntegratorStep is not implemented.");
     Fmi3Status::Error
 }
@@ -1004,9 +955,6 @@ pub extern "C" fn fmi3SetTime(
     instance: &mut Fmi3Slave,
 	time: f64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetTime is not implemented.");
     Fmi3Status::Error
 }
@@ -1017,9 +965,6 @@ pub extern "C" fn fmi3SetContinuousStates(
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Setting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetContinuousStates is not implemented.");
     Fmi3Status::Error
 }
@@ -1030,9 +975,6 @@ pub extern "C" fn fmi3GetContinuousStateDerivatives(
 	derivatives: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetContinuousStateDerivatives is not implemented.");
     Fmi3Status::Error
 }
@@ -1043,9 +985,6 @@ pub extern "C" fn fmi3GetEventIndicators(
 	event_indicators: *const f64,
 	n_event_indicators: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetEventIndicators is not implemented.");
     Fmi3Status::Error
 }
@@ -1056,9 +995,6 @@ pub extern "C" fn fmi3GetContinuousStates(
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetContinuousStates is not implemented.");
     Fmi3Status::Error
 }
@@ -1069,9 +1005,6 @@ pub extern "C" fn fmi3GetNominalsOfContinuousStates(
 	nominals: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetNominalsOfContinuousStates is not implemented.");
     Fmi3Status::Error
 }
@@ -1081,9 +1014,6 @@ pub extern "C" fn fmi3GetNumberOfEventIndicators(
     instance: &mut Fmi3Slave,
 	n_event_indicators: *const size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetNumberOfEventIndicators is not implemented.");
     Fmi3Status::Error
 }
@@ -1093,9 +1023,6 @@ pub extern "C" fn fmi3GetNumberOfContinuousStates(
     instance: &mut Fmi3Slave,
 	n_continuous_states: *const size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetNumberOfContinuousStates is not implemented.");
     Fmi3Status::Error
 }
@@ -1109,9 +1036,6 @@ pub extern "C" fn fmi3GetOutputDerivatives(
 	values: *const f64,
 	n_values: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Getting", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetOutputDerivatives is not implemented.");
     Fmi3Status::Error
 }
@@ -1122,9 +1046,6 @@ pub extern "C" fn fmi3ActivateModelPartition(
 	value_reference: u32,
 	activation_time: f64,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "Scheduling", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3ActivateModelPartition is not implemented.");
     Fmi3Status::Error
 }
@@ -1448,9 +1369,6 @@ pub extern "C" fn fmi3GetNumberOfVariableDependencies(
     value_reference: *const i32,
     n_dependencies: *const size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3GetNumberOfVariableDependencies", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetNumberOfVariableDependencies is not implemented.");
     Fmi3Status::Error
 }
@@ -1465,9 +1383,6 @@ pub extern "C" fn fmi3GetVariableDependencies(
 	dependency_kinds: *const Fmi3DependencyKind,
 	n_dependencies: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3GetVariableDependencies", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetVariableDependencies is not implemented.");
     Fmi3Status::Error
 }
@@ -1477,9 +1392,6 @@ pub extern "C" fn fmi3GetFMUState(
     instance: &mut Fmi3Slave,
     state: &mut Option<SlaveState>,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3GetFMUState", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetFMUState is not implemented.");
     Fmi3Status::Error
 }
@@ -1489,9 +1401,6 @@ pub extern "C" fn fmi3SetFMUState(
 	instance: &mut Fmi3Slave,
 	state: &SlaveState,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3SetFMUState", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SetFMUState is not implemented.");
     Fmi3Status::Error
 }
@@ -1501,9 +1410,6 @@ pub extern "C" fn fmi3FreeFMUState(
     instance: &mut Fmi3Slave,
     state: Option<Box<SlaveState>>,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3FreeFMUState", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3FreeFMUState is not implemented.");
     Fmi3Status::Error
 }
@@ -1514,9 +1420,6 @@ pub extern "C" fn fmi3SerializedFMUStateSize(
     state: Option<Box<SlaveState>>,
 	size: *const size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3SerializedFMUStateSize", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SerializedFMUStateSize is not implemented.");
     Fmi3Status::Error
 }
@@ -1528,9 +1431,6 @@ pub extern "C" fn fmi3SerializeFMUState(
 	serialized_state: *const u8,
 	size: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3SerializeFMUState", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3SerializeFMUState is not implemented.");
     Fmi3Status::Error
 }
@@ -1542,9 +1442,6 @@ pub extern "C" fn fmi3DeserializeFMUState(
 	size: size_t,
 	state: &SlaveState,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3DeserializeFMUState", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3DeserializeFMUState is not implemented.");
     Fmi3Status::Error
 }
@@ -1561,9 +1458,6 @@ pub extern "C" fn fmi3GetDirectionalDerivative(
 	delta_unknowns: *const f64,
 	n_delta_unknowns: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3GetDirectionalDerivative", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetDirectionalDerivative is not implemented.");
     Fmi3Status::Error
 }
@@ -1580,9 +1474,6 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 	delta_knowns: *const f64,
 	n_delta_knowns: size_t,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3GetAdjointDerivative", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3GetAdjointDerivative is not implemented.");
     Fmi3Status::Error
 }
@@ -1591,9 +1482,6 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3EnterConfigurationMode", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3EnterConfigurationMode is not implemented.");
     Fmi3Status::Error
 }
@@ -1602,18 +1490,12 @@ pub extern "C" fn fmi3EnterConfigurationMode(
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3ExitConfigurationMode", instance_name = instance.name);
-    let _guard = span.enter();
-
     error!("fmi3ExitConfigurationMode is not implemented.");
     Fmi3Status::Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3Terminate", instance_name = slave.name);
-    let _guard = span.enter();
-
     slave
         .dispatcher
         .fmi3Terminate()
@@ -1625,15 +1507,10 @@ pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
 
 #[no_mangle]
 pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
-    let span = span!(Level::INFO, "fmi3FreeInstance");
-    let _guard = span.enter();
-
     let mut slave = slave;
 
     match slave.as_mut() {
         Some(s) => {
-            let span = span!(Level::INFO, "fmi3FreeInstance", instance_name = s.name);
-            let _guard = span.enter();
             match s.dispatcher.fmi3FreeInstance() {
                 Ok(result) => (),
                 Err(e) => error!("An error ocurred when freeing slave"),
@@ -1647,8 +1524,5 @@ pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
 
 #[no_mangle]
 pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
-    let span = span!(Level::INFO, "fmi3Reset", instance_name = slave.name);
-    let _guard = span.enter();
-
     slave.dispatcher.fmi3Reset().unwrap_or(Fmi3Status::Error)
 }
