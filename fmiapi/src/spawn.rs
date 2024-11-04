@@ -4,17 +4,14 @@ use std::{
     path::Path,
 };
 
+use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi2_dispatcher::Fmi2CommandDispatcher;
-use crate::fmi3_dispatcher::{
-    Fmi3CommandDispatcher,
-    DispatcherError as Fmi3DispatcherError,
-};
 
 
 
 use serde::Deserialize;
 use subprocess::{Popen, PopenConfig};
-use tracing::{debug, dispatcher, error, info, span, warn, Level};
+use tracing::{error, info};
 
 
 #[derive(Deserialize)]
@@ -25,7 +22,7 @@ pub struct LaunchConfig {
 }
 
 impl LaunchConfig {
-    pub fn spawn(resource_path: &Path) -> Result<LaunchConfig, ()> {
+    pub fn create(resource_path: &Path) -> Result<LaunchConfig, ()> {
         let config_path = resource_path.join("launch.toml");
         info!("Reading configuration file at path '{:?}'",config_path);
 
@@ -78,10 +75,10 @@ impl LaunchConfig {
 
 pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, Popen), ()> {
 
-    let launch_command = LaunchConfig::spawn(resource_path)?
+    let launch_command = LaunchConfig::create(resource_path)?
         .get_launch_command()?;
 
-    let mut dispatcher = Fmi2CommandDispatcher::new("tcp://0.0.0.0:0");
+    let mut dispatcher = Fmi2CommandDispatcher::new("tcp://127.0.0.1:0");
 
     let endpoint = dispatcher.endpoint.to_owned();
     let endpoint_port = match endpoint
@@ -129,16 +126,15 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
     }
 }
 
-pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<Fmi3CommandDispatcher, ()> {
+pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
     // grab launch command for host os
-    let launch_command = LaunchConfig::spawn(resource_path)?
+    let launch_command = LaunchConfig::create(resource_path)?
     .get_launch_command()?;
 
     info!("Establishing command dispatcher.");
-    let mut dispatcher = match Fmi3CommandDispatcher::create(
+    let mut dispatcher = match Dispatcher::local(
         resource_path,
-        &launch_command,
-        "tcp://127.0.0.1:0"
+        &launch_command
     ) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {

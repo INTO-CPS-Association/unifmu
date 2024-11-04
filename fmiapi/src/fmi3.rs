@@ -14,7 +14,8 @@ use url::Url;
 use tracing::{error, warn};
 use tracing_subscriber;
 
-use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
+use crate::dispatcher::{Dispatch, Dispatcher};
+use crate::fmi3_messages::{self, Fmi3Command, fmi3_command::Command};
 use crate::spawn::spawn_fmi3_slave;
 
 /// One shot function that sets up logging.
@@ -42,6 +43,30 @@ pub enum Fmi3Status {
     Fatal = 4,
 }
 
+impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
+    fn from(src: fmi3_messages::Fmi3StatusReturn) -> Self {
+        match src.status() {
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fatal,
+        }
+    }
+}
+
+impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
+    fn from(s: fmi3_messages::Fmi3Status) -> Self {
+        match s {
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fatal,
+        }
+    }
+}
+
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi3DependencyKind {
@@ -62,13 +87,13 @@ pub enum Fmi3IntervalQualifier {
 }
 
 pub struct Fmi3Slave {
-    dispatcher: Fmi3CommandDispatcher,
+    dispatcher: Dispatcher,
     last_successful_time: Option<f64>,
     string_buffer: Vec<CString>,
 }
 
 impl Fmi3Slave {
-    pub fn new(dispatcher: Fmi3CommandDispatcher) -> Self {
+    pub fn new(dispatcher: Dispatcher) -> Self {
         Self {
             dispatcher,
             last_successful_time: None,
@@ -225,7 +250,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         PathBuf::from(resource_path_str)
     };
 
-    let mut dispatcher = match spawn_fmi3_slave(&Path::new(&resources_dir)) {
+    let dispatcher = match spawn_fmi3_slave(&Path::new(&resources_dir)) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi3 slave failed.");
@@ -241,19 +266,31 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         }
     };
 
-    match dispatcher.fmi3InstantiateCoSimulation(
-        instance_name.clone(),
-        instantiation_token,
-        resource_path,
-        visible,
-        logging_on,
-        event_mode_used,
-        early_return_allowed,
-        required_intermediate_variables,
-    ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher))),
-        Err(_) => {
-            error!("Instantiation of fmi3 slave '{}' failed.", instance_name);
+    let mut slave = Fmi3Slave::new(dispatcher);
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3InstantiateCoSimulation(
+            fmi3_messages::Fmi3InstantiateCoSimulation {
+                instance_name: instance_name.clone(),
+                instantiation_token,
+                resource_path,
+                visible,
+                logging_on,
+                event_mode_used,
+                early_return_allowed,
+                required_intermediate_variables,
+            },
+        )),
+    };
+
+    match slave.dispatcher.send_and_recv::<_, fmi3_messages::Fmi3EmptyReturn>(&cmd) {
+        Ok(_) => Some(Box::new(slave)),
+        Err(error) => {
+            error!(
+                "Instantiation of fmi3 slave '{}' failed with error {:?}.",
+                instance_name,
+                error
+            );
             None
         },
     }
@@ -292,35 +329,51 @@ pub extern "C" fn fmi3DoStep(
     early_return: *mut bool,
     last_successful_time: *mut f64,
 ) -> Fmi3Status {
-    match instance.dispatcher.fmi3DoStep(
-        current_communication_point,
-        communication_step_size,
-        no_set_fmu_state_prior_to_current_point,
-    ) {
-        Ok((status, event_handling, terminate, early, successful_time)) => {
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3DoStep(
+            fmi3_messages::Fmi3DoStep {
+                current_communication_point,
+                communication_step_size,
+                no_set_fmu_state_prior_to_current_point,
+            }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3DoStepReturn>(&cmd)
+    {
+        Ok(result) => {
             if !last_successful_time.is_null() {
                 unsafe {
-                    *last_successful_time = successful_time;
+                    *last_successful_time = result.last_successful_time;
                 }
             }
             if !event_handling_needed.is_null() {
                 unsafe {
-                    *event_handling_needed = event_handling;
+                    *event_handling_needed = result.event_handling_needed;
                 }
             }
             if !terminate_simulation.is_null() {
                 unsafe {
-                    *terminate_simulation = terminate;
+                    *terminate_simulation = result.terminate_simulation;
                 }
             }
             if !early_return.is_null() {
                 unsafe {
-                    *early_return = early;
+                    *early_return = result.early_return;
                 }
             }
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(_) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3DoStep failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -348,37 +401,76 @@ pub extern "C" fn fmi3EnterInitializationMode(
         }
     };
 
-    match instance
-        .dispatcher
-        .fmi3EnterInitializationMode(tolerance, start_time, stop_time)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterInitializationMode(
+            fmi3_messages::Fmi3EnterInitializationMode {
+                tolerance_defined,
+                tolerance,
+                start_time,
+                stop_time_defined,
+                stop_time,
+            },
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterInitializationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3Status {
-    match instance.dispatcher.fmi3ExitInitializationMode() {
-        Ok(s) => s,
-        Err(_) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3ExitInitializationMode(
+            fmi3_messages::Fmi3ExitInitializationMode {},
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3ExitInitializationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
-    match instance.dispatcher.fmi3EnterEventMode() {
-        Ok(s) => s,
-        Err(_) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterEventMode(
+            fmi3_messages::Fmi3EnterEventMode {},
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterEventMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
-    match instance.dispatcher.fmi3EnterStepMode() {
-        Ok(s) => s,
-        Err(_) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterStepMode(
+            fmi3_messages::Fmi3EnterStepMode {},
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterStepMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -389,21 +481,38 @@ pub extern "C" fn fmi3GetFloat32(
     values: *mut f32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetFloat32(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetFloat32(
+            fmi3_messages::Fmi3GetFloat32 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetFloat32Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetFloat32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -415,21 +524,38 @@ pub extern "C" fn fmi3GetFloat64(
     values: *mut f64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetFloat64(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetFloat64(
+            fmi3_messages::Fmi3GetFloat64 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetFloat64Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetFloat64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -441,18 +567,43 @@ pub extern "C" fn fmi3GetInt8(
     values: *mut i8,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance.dispatcher.fmi3GetInt8(value_references.to_owned()) {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt8(
+            fmi3_messages::Fmi3GetInt8 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt8Return>(&cmd)
+    {
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<i8> = result.values
+                    .iter()
+                    .map(|v| *v as i8)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -464,21 +615,43 @@ pub extern "C" fn fmi3GetUInt8(
     values: *mut u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt8(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt8(
+            fmi3_messages::Fmi3GetUInt8 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt8Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<u8> = result.values
+                    .iter()
+                    .map(|v| *v as u8)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -490,21 +663,43 @@ pub extern "C" fn fmi3GetInt16(
     values: *mut i16,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetInt16(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt16(
+            fmi3_messages::Fmi3GetInt16 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt16Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<i16> = result.values
+                    .iter()
+                    .map(|v| *v as i16)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -516,21 +711,43 @@ pub extern "C" fn fmi3GetUInt16(
     values: *mut u16,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt16(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt16(
+            fmi3_messages::Fmi3GetUInt16 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt16Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<u16> = result.values
+                    .iter()
+                    .map(|v| *v as u16)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -542,21 +759,38 @@ pub extern "C" fn fmi3GetInt32(
     values: *mut i32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetInt32(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt32(
+            fmi3_messages::Fmi3GetInt32 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt32Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -568,21 +802,38 @@ pub extern "C" fn fmi3GetUInt32(
     values: *mut u32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt32(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt32(
+            fmi3_messages::Fmi3GetUInt32 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt32Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -594,21 +845,38 @@ pub extern "C" fn fmi3GetInt64(
     values: *mut i64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetInt64(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt64(
+            fmi3_messages::Fmi3GetInt64 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt64Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -620,21 +888,38 @@ pub extern "C" fn fmi3GetUInt64(
     values: *mut u64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt64(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt64(
+            fmi3_messages::Fmi3GetUInt64 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt64Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -646,21 +931,38 @@ pub extern "C" fn fmi3GetBoolean(
     values: *mut bool,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetBoolean(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetBoolean(
+            fmi3_messages::Fmi3GetBoolean { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetBooleanReturn>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetBoolean failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -672,31 +974,47 @@ pub extern "C" fn fmi3GetString(
     values: *mut *const c_char,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetString(value_references.to_owned())
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetString(
+            fmi3_messages::Fmi3GetString { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetStringReturn>(&cmd)
     {
-        Ok((status, vals)) => {
-            match vals {
-                Some(vals) => {
-                    instance.string_buffer = vals
-                        .iter()
-                        .map(|s| CString::new(s.as_bytes()).unwrap())
-                        .collect();
-
-                    unsafe {
-                        for (idx, cstr) in instance.string_buffer.iter().enumerate() {
-                            std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
-                        }
+        Ok(result) => {
+            if !result.values.is_empty() {
+                instance.string_buffer = result.values
+                    .iter()
+                    .map(|s| CString::new(s.as_bytes()).unwrap())
+                    .collect();
+                
+                unsafe {
+                    for (idx, cstr)
+                    in instance.string_buffer.iter().enumerate() {
+                        std::ptr::write(
+                            values.offset(idx as isize),
+                            cstr.as_ptr()
+                        );
                     }
                 }
-                None => (),
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetString failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -709,6 +1027,13 @@ pub extern "C" fn fmi3GetBinary(
     values: *mut *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
+    error!("fmi3GetBinary is not implemented.");
+    Fmi3Status::Error
+
+    // Partially implemented: only the privious corresponding dispatcher
+    // function wasn't implemented.
+
+    /*
     let value_references =
         unsafe { from_raw_parts(value_references, n_value_references) }.to_owned();
     let values_v = unsafe { from_raw_parts(values, n_values) };
@@ -720,7 +1045,18 @@ pub extern "C" fn fmi3GetBinary(
         .map(|(v, s)| unsafe { from_raw_parts(*v, *s).to_vec() })
         .collect();
 
-    match instance.dispatcher.fmi3GetBinary(value_references) {
+    let cmd = Fmi3Command {
+        command: Some(Command::??(
+            fmi3_messages::?? { ?? }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, ??>(&cmd)
+        .map(|result| {
+            todo!()
+        })
+    {
         Ok((s, v)) => match v {
             Some(vs) => unsafe {
                 for (idx, v) in vs.iter().enumerate() {
@@ -730,8 +1066,12 @@ pub extern "C" fn fmi3GetBinary(
             },
             None => s,
         },
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetBinary failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
+    */
 }
 
 #[no_mangle]
@@ -741,21 +1081,39 @@ pub extern "C" fn fmi3GetClock(
     n_value_references: size_t,
     values: *mut bool,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_value_references) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetClock(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetClock(
+            fmi3_messages::Fmi3GetClock { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetClockReturn>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetClock failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -767,26 +1125,46 @@ pub extern "C" fn fmi3GetIntervalDecimal(
     intervals: *mut f64,
 	qualifiers: *mut i32,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let intervals_out = unsafe { from_raw_parts_mut(intervals, n_value_references) };
-    let qualifiers_out = unsafe { from_raw_parts_mut(qualifiers, n_value_references) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetIntervalDecimal(value_references.to_owned())
+    let intervals_out = unsafe {
+        from_raw_parts_mut(intervals, n_value_references)
+    };
+
+    let qualifiers_out = unsafe {
+        from_raw_parts_mut(qualifiers, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetIntervalDecimal(
+            fmi3_messages::Fmi3GetIntervalDecimal { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetIntervalDecimalReturn>(&cmd)
     {
-        Ok((status, intervals, qualifiers)) => {
-            match intervals {
-                Some(values) => intervals_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.intervals.is_empty() {
+                intervals_out.copy_from_slice(&result.intervals);
             };
-            match qualifiers {
-                Some(qualifiers) => qualifiers_out.copy_from_slice(&qualifiers),
-                None => (),
+
+            if !result.qualifiers.is_empty() {
+                qualifiers_out.copy_from_slice(&result.qualifiers);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetIntervalDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -891,43 +1269,61 @@ pub extern "C" fn fmi3UpdateDiscreteStates(
 	next_event_time_defined: *mut bool,
 	next_event_time: *mut f64,
 ) -> Fmi3Status {
-    match instance.dispatcher.fmi3UpdateDiscreteStates(
-    ) {
-        Ok((status, states_need_update, terminate, nominals_changed,
-               values_changed, next_time_defined, next_time)) => {
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3UpdateDiscreteStates(
+            fmi3_messages::Fmi3UpdateDiscreteStates {}
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3UpdateDiscreteStatesReturn>(&cmd)
+    {
+        Ok(result) => {
             if !discrete_states_need_update.is_null() {
                 unsafe {
-                    *discrete_states_need_update = states_need_update;
+                    *discrete_states_need_update = result
+                        .discrete_states_need_update;
                 }
             }
             if !terminate_simulation.is_null() {
                 unsafe {
-                    *terminate_simulation = terminate;
+                    *terminate_simulation = result.terminate_simulation;
                 }
             }
             if !nominals_continuous_states_changed.is_null() {
                 unsafe {
-                    *nominals_continuous_states_changed = nominals_changed;
+                    *nominals_continuous_states_changed = result
+                        .nominals_continuous_states_changed;
                 }
             }
             if !values_continuous_states_changed.is_null() {
                 unsafe {
-                    *values_continuous_states_changed = values_changed;
+                    *values_continuous_states_changed = result
+                        .values_continuous_states_changed;
                 }
             }
             if !next_event_time_defined.is_null() {
                 unsafe {
-                    *next_event_time_defined = next_time_defined;
+                    *next_event_time_defined = result
+                        .next_event_time_defined;
                 }
             }
             if !next_event_time.is_null() {
                 unsafe {
-                    *next_event_time = next_time;
+                    *next_event_time = result.next_event_time;
                 }
             }
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+                })
         }
-        Err(_) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3UpdateDiscreteStates failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
 
@@ -1058,16 +1454,30 @@ pub extern "C" fn fmi3SetFloat32(
     values: *const f32,
     n_values: size_t,
 ) -> Fmi3Status{
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values = unsafe { from_raw_parts(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3SetFloat32(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetFloat32(
+            fmi3_messages::Fmi3SetFloat32 {
+                value_references,
+                values,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetFloat32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1078,16 +1488,32 @@ pub extern "C" fn fmi3SetFloat64(
     values: *const f64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values = unsafe { from_raw_parts(values, n_values) };
-
-    match instance
-        .dispatcher
-        .fmi3SetFloat64(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
     }
+        .to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }
+        .to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetFloat64(
+            fmi3_messages::Fmi3SetFloat64 {
+                value_references,
+                values
+            }
+        )),
+    };
+    
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetFloat64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1098,19 +1524,34 @@ pub extern "C" fn fmi3SetInt8(
     values: *const i8,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values: Vec<i32> = unsafe { from_raw_parts(values, n_values) }
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<i32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
         .iter()
         .map(|&v| v as i32)
         .collect();
 
-    match instance
-        .dispatcher
-        .fmi3SetInt8(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt8(
+            fmi3_messages::Fmi3SetInt8 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1121,19 +1562,34 @@ pub extern "C" fn fmi3SetUInt8(
     values: *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values: Vec<u32> = unsafe { from_raw_parts(values, n_values) }
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<u32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
         .iter()
         .map(|&v| v as u32)
         .collect();
 
-    match instance
-        .dispatcher
-        .fmi3SetUInt8(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt8(
+            fmi3_messages::Fmi3SetUInt8 {
+                value_references,
+                values
+            }
+        )),
+    };
+    
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1144,19 +1600,34 @@ pub extern "C" fn fmi3SetInt16(
     values: *const i16,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values: Vec<i32> = unsafe { from_raw_parts(values, n_values) }
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<i32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
         .iter()
         .map(|&v| v as i32)
         .collect();
 
-    match instance
-        .dispatcher
-        .fmi3SetInt16(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt16(
+            fmi3_messages::Fmi3SetInt16 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1167,19 +1638,34 @@ pub extern "C" fn fmi3SetUInt16(
     values: *const u16,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values: Vec<u32> = unsafe { from_raw_parts(values, n_values) }
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<u32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
         .iter()
         .map(|&v| v as u32)
         .collect();
 
-    match instance
-        .dispatcher
-        .fmi3SetUInt16(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt16(
+            fmi3_messages::Fmi3SetUInt16 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1190,16 +1676,30 @@ pub extern "C" fn fmi3SetInt32(
     values: *const i32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values = unsafe { from_raw_parts(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3SetInt32(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt32(
+            fmi3_messages::Fmi3SetInt32 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1210,16 +1710,30 @@ pub extern "C" fn fmi3SetUInt32(
     values: *const u32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values = unsafe { from_raw_parts(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3SetUInt32(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt32(
+            fmi3_messages::Fmi3SetUInt32 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1230,16 +1744,30 @@ pub extern "C" fn fmi3SetInt64(
     values: *const i64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values = unsafe { from_raw_parts(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3SetInt64(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt64(
+            fmi3_messages::Fmi3SetInt64 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1250,16 +1778,30 @@ pub extern "C" fn fmi3SetUInt64(
     values: *const u64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values = unsafe { from_raw_parts(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3SetUInt64(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt64(
+            fmi3_messages::Fmi3SetUInt64 {
+                value_references,
+                values,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1270,16 +1812,30 @@ pub extern "C" fn fmi3SetBoolean(
     values: *const bool,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values = unsafe { from_raw_parts(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3SetBoolean(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetBoolean(
+            fmi3_messages::Fmi3SetBoolean {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetBoolean failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1290,21 +1846,39 @@ pub extern "C" fn fmi3SetString(
     values: *const *const c_char,
     n_values: size_t,
 ) -> Fmi3Status {
-    let references = unsafe { from_raw_parts(value_references, n_value_references) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
 
     let values: Vec<String> = unsafe {
         from_raw_parts(values, n_values)
             .iter()
-            .map(|v| CStr::from_ptr(*v).to_str().unwrap().to_owned())
+            .map(
+                |v| CStr::from_ptr(*v)
+                    .to_str()
+                    .unwrap()
+                    .to_owned()
+            )
             .collect()
     };
-    match instance
-        .dispatcher
-        .fmi3SetString(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetString(
+            fmi3_messages::Fmi3SetString {
+                value_references,
+                values,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetString failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1317,8 +1891,14 @@ pub extern "C" fn fmi3SetBinary(
     n_values: size_t,
 ) -> Fmi3Status {
     // Convert raw pointers to Rust slices
-    let references = unsafe { std::slice::from_raw_parts(value_references, n_value_references) };
-    let sizes = unsafe { std::slice::from_raw_parts(value_sizes, n_values) };
+    let value_references = unsafe {
+        std::slice::from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let sizes = unsafe {
+        std::slice::from_raw_parts(value_sizes, n_values)
+    };
 
     // Create a vector of slices for the binary values
     let mut binary_values: Vec<&[u8]> = Vec::with_capacity(n_value_references);
@@ -1326,22 +1906,44 @@ pub extern "C" fn fmi3SetBinary(
     // Use an offset to correctly slice the values based on sizes
     let mut offset = 0;
     for &size in sizes {
-        let value_slice = unsafe { std::slice::from_raw_parts(values.add(offset), size) };
+        let value_slice = unsafe {
+            std::slice::from_raw_parts(values.add(offset), size)
+        };
         binary_values.push(value_slice);
         offset += size;
     }
 
+    let value_sizes = sizes
+        .iter()
+        .map(|&size| size as u64)
+        .collect();
+
+    let values = binary_values
+        .iter()
+        .map(|&v| v.to_vec())
+        .collect();
+
     // Ensure the instance pointer is valid
     let instance = unsafe { &mut *(instance as *mut Fmi3Slave) };
 
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetBinary(
+            fmi3_messages::Fmi3SetBinary {
+                value_references,
+                value_sizes,
+                values,
+            }
+        )),
+    };
+
     // Call the dispatcher with references, binary values, and their sizes
-    match instance
-        .dispatcher
-        .fmi3SetBinary(references, sizes, &binary_values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetBinary failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1351,16 +1953,30 @@ pub extern "C" fn fmi3SetClock(
     n_value_references: size_t,
     values: *const bool,
 ) -> Fmi3Status {
-	let references = unsafe { from_raw_parts(value_references, n_value_references) };
-	let values = unsafe { from_raw_parts(values, n_value_references) };
+	let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+	let values = unsafe {
+        from_raw_parts(values, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetClock(
+            fmi3_messages::Fmi3SetClock {
+                value_references,
+                values,
+            }
+        )),
+    };
 	
-	match instance
-        .dispatcher
-        .fmi3SetClock(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+	instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetClock failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1496,11 +2112,17 @@ pub extern "C" fn fmi3ExitConfigurationMode(
 
 #[no_mangle]
 pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
-    slave
-        .dispatcher
-        .fmi3Terminate()
-        .unwrap_or_else(|_| {
-            error!("Instance didn't terminate properly!");
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3Terminate(
+            fmi3_messages::Fmi3Terminate {}
+        )),
+    };
+
+    slave.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("Termination failed with error: {:?}.", error);
             Fmi3Status::Error
         })
 }
@@ -1509,20 +2131,40 @@ pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
 pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
     let mut slave = slave;
 
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3FreeInstance(
+            fmi3_messages::Fmi3FreeInstance {}
+        )),
+    };
+
     match slave.as_mut() {
         Some(s) => {
-            match s.dispatcher.fmi3FreeInstance() {
-                Ok(result) => (),
-                Err(e) => error!("An error ocurred when freeing slave"),
+            match s.dispatcher.send(&cmd) {
+                Ok(_) => (),
+                Err(error) => error!(
+                    "Freeing instance failed with error: {:?}.", error
+                ),
             };
 
             drop(slave)
         }
-        None => {warn!("No slave given.")}
+        None => {warn!("No instance given.")}
     }
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
-    slave.dispatcher.fmi3Reset().unwrap_or(Fmi3Status::Error)
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3Reset(
+            fmi3_messages::Fmi3Reset {}
+        )),
+    };
+
+    slave.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("Error while resetting instance: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
