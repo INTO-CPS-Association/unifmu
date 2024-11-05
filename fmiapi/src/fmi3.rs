@@ -140,7 +140,7 @@ pub extern "C" fn fmi3SetDebugLogging(
     n_categories: size_t,
     categories: *const *const c_char
 ) -> Fmi3Status {
-    error!("fmi3SetDebugLogging is not implemented.");
+    error!("fmi3SetDebugLogging is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -159,7 +159,7 @@ pub extern "C" fn fmi3InstantiateModelExchange(
         return None;
     }
 
-    error!("fmi3InstantiateModelExchange is not implemented.");
+    error!("fmi3InstantiateModelExchange is not implemented by UNIFMU.");
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 
@@ -314,7 +314,7 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
         return None;
     }
 
-    error!("fmi3InstantiateScheduledExecution is not implemented.");
+    error!("fmi3InstantiateScheduledExecution is not implemented by UNIFMU.");
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 
@@ -1027,7 +1027,7 @@ pub extern "C" fn fmi3GetBinary(
     values: *mut *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetBinary is not implemented.");
+    error!("fmi3GetBinary is not implemented by UNIFMU.");
     Fmi3Status::Error
 
     // Partially implemented: only the privious corresponding dispatcher
@@ -1178,7 +1178,7 @@ pub extern "C" fn fmi3GetIntervalFraction(
 	qualifier: *mut Fmi3IntervalQualifier,
     n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetIntervalFraction is not implemented.");
+    error!("fmi3GetIntervalFraction is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1189,7 +1189,7 @@ pub extern "C" fn fmi3GetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    error!("fmi3GetShiftDecimal is not implemented.");
+    error!("fmi3GetShiftDecimal is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1201,7 +1201,7 @@ pub extern "C" fn fmi3GetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    error!("fmi3GetShiftFraction is not implemented.");
+    error!("fmi3GetShiftFraction is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1212,7 +1212,7 @@ pub extern "C" fn fmi3SetIntervalDecimal(
     n_value_references: size_t,
     intervals: *mut f64,
 ) -> Fmi3Status {
-    error!("fmi3SetIntervalDecimal is not implemented.");
+    error!("fmi3SetIntervalDecimal is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1224,7 +1224,7 @@ pub extern "C" fn fmi3SetIntervalFraction(
     interval_counters: *const u64,
 	resolutions: *mut u64,
 ) -> Fmi3Status {
-    error!("fmi3SetIntervalFraction is not implemented.");
+    error!("fmi3SetIntervalFraction is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1235,7 +1235,7 @@ pub extern "C" fn fmi3SetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    error!("fmi3SetShiftDecimal is not implemented.");
+    error!("fmi3SetShiftDecimal is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1247,7 +1247,7 @@ pub extern "C" fn fmi3SetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    error!("fmi3SetShiftFraction is not implemented.");
+    error!("fmi3SetShiftFraction is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1255,7 +1255,7 @@ pub extern "C" fn fmi3SetShiftFraction(
 pub extern "C" fn fmi3EvaluateDiscreteStates(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3EvaluateDiscreteStates is not implemented.");
+    error!("fmi3EvaluateDiscreteStates is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1331,7 +1331,7 @@ pub extern "C" fn fmi3UpdateDiscreteStates(
 pub extern "C" fn fmi3EnterContinuousTimeMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3EnterContinuousTimeMode is not implemented.");
+    error!("fmi3EnterContinuousTimeMode is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1342,7 +1342,7 @@ pub extern "C" fn fmi3CompletedIntegratorStep(
 	enter_event_mode: *const i32,
 	terminate_simulation: *const i32,
 ) -> Fmi3Status {
-    error!("fmi3CompletedIntegratorStep is not implemented.");
+    error!("fmi3CompletedIntegratorStep is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1351,7 +1351,7 @@ pub extern "C" fn fmi3SetTime(
     instance: &mut Fmi3Slave,
 	time: f64,
 ) -> Fmi3Status {
-    error!("fmi3SetTime is not implemented.");
+    error!("fmi3SetTime is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1361,7 +1361,7 @@ pub extern "C" fn fmi3SetContinuousStates(
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3SetContinuousStates is not implemented.");
+    error!("fmi3SetContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1371,7 +1371,7 @@ pub extern "C" fn fmi3GetContinuousStateDerivatives(
 	derivatives: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetContinuousStateDerivatives is not implemented.");
+    error!("fmi3GetContinuousStateDerivatives is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1381,7 +1381,7 @@ pub extern "C" fn fmi3GetEventIndicators(
 	event_indicators: *const f64,
 	n_event_indicators: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetEventIndicators is not implemented.");
+    error!("fmi3GetEventIndicators is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1391,7 +1391,7 @@ pub extern "C" fn fmi3GetContinuousStates(
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetContinuousStates is not implemented.");
+    error!("fmi3GetContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1401,7 +1401,7 @@ pub extern "C" fn fmi3GetNominalsOfContinuousStates(
 	nominals: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNominalsOfContinuousStates is not implemented.");
+    error!("fmi3GetNominalsOfContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1410,7 +1410,7 @@ pub extern "C" fn fmi3GetNumberOfEventIndicators(
     instance: &mut Fmi3Slave,
 	n_event_indicators: *const size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNumberOfEventIndicators is not implemented.");
+    error!("fmi3GetNumberOfEventIndicators is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1419,7 +1419,7 @@ pub extern "C" fn fmi3GetNumberOfContinuousStates(
     instance: &mut Fmi3Slave,
 	n_continuous_states: *const size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNumberOfContinuousStates is not implemented.");
+    error!("fmi3GetNumberOfContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1432,7 +1432,7 @@ pub extern "C" fn fmi3GetOutputDerivatives(
 	values: *const f64,
 	n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetOutputDerivatives is not implemented.");
+    error!("fmi3GetOutputDerivatives is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1442,7 +1442,7 @@ pub extern "C" fn fmi3ActivateModelPartition(
 	value_reference: u32,
 	activation_time: f64,
 ) -> Fmi3Status {
-    error!("fmi3ActivateModelPartition is not implemented.");
+    error!("fmi3ActivateModelPartition is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1985,7 +1985,7 @@ pub extern "C" fn fmi3GetNumberOfVariableDependencies(
     value_reference: *const i32,
     n_dependencies: *const size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNumberOfVariableDependencies is not implemented.");
+    error!("fmi3GetNumberOfVariableDependencies is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -1999,7 +1999,7 @@ pub extern "C" fn fmi3GetVariableDependencies(
 	dependency_kinds: *const Fmi3DependencyKind,
 	n_dependencies: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetVariableDependencies is not implemented.");
+    error!("fmi3GetVariableDependencies is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2008,7 +2008,7 @@ pub extern "C" fn fmi3GetFMUState(
     instance: &mut Fmi3Slave,
     state: &mut Option<SlaveState>,
 ) -> Fmi3Status {
-    error!("fmi3GetFMUState is not implemented.");
+    error!("fmi3GetFMUState is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2017,7 +2017,7 @@ pub extern "C" fn fmi3SetFMUState(
 	instance: &mut Fmi3Slave,
 	state: &SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3SetFMUState is not implemented.");
+    error!("fmi3SetFMUState is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2026,7 +2026,7 @@ pub extern "C" fn fmi3FreeFMUState(
     instance: &mut Fmi3Slave,
     state: Option<Box<SlaveState>>,
 ) -> Fmi3Status {
-    error!("fmi3FreeFMUState is not implemented.");
+    error!("fmi3FreeFMUState is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2036,7 +2036,7 @@ pub extern "C" fn fmi3SerializedFMUStateSize(
     state: Option<Box<SlaveState>>,
 	size: *const size_t,
 ) -> Fmi3Status {
-    error!("fmi3SerializedFMUStateSize is not implemented.");
+    error!("fmi3SerializedFMUStateSize is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2047,7 +2047,7 @@ pub extern "C" fn fmi3SerializeFMUState(
 	serialized_state: *const u8,
 	size: size_t,
 ) -> Fmi3Status {
-    error!("fmi3SerializeFMUState is not implemented.");
+    error!("fmi3SerializeFMUState is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2058,7 +2058,7 @@ pub extern "C" fn fmi3DeserializeFMUState(
 	size: size_t,
 	state: &SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3DeserializeFMUState is not implemented.");
+    error!("fmi3DeserializeFMUState is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2074,7 +2074,7 @@ pub extern "C" fn fmi3GetDirectionalDerivative(
 	delta_unknowns: *const f64,
 	n_delta_unknowns: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetDirectionalDerivative is not implemented.");
+    error!("fmi3GetDirectionalDerivative is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2090,7 +2090,7 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 	delta_knowns: *const f64,
 	n_delta_knowns: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetAdjointDerivative is not implemented.");
+    error!("fmi3GetAdjointDerivative is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2098,7 +2098,7 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3EnterConfigurationMode is not implemented.");
+    error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2106,7 +2106,7 @@ pub extern "C" fn fmi3EnterConfigurationMode(
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3ExitConfigurationMode is not implemented.");
+    error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
     Fmi3Status::Error
 }
 
@@ -2131,14 +2131,14 @@ pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
 pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
     let mut slave = slave;
 
-    let cmd = Fmi3Command {
-        command: Some(Command::Fmi3FreeInstance(
-            fmi3_messages::Fmi3FreeInstance {}
-        )),
-    };
-
     match slave.as_mut() {
         Some(s) => {
+            let cmd = Fmi3Command {
+                command: Some(Command::Fmi3FreeInstance(
+                    fmi3_messages::Fmi3FreeInstance {}
+                )),
+            };
+
             match s.dispatcher.send(&cmd) {
                 Ok(_) => (),
                 Err(error) => error!(
