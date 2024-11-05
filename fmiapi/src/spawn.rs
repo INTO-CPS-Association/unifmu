@@ -1,18 +1,12 @@
 use std::{
-    ffi::OsString,
     fs::read_to_string,
     path::Path,
 };
 
 use crate::dispatcher::{Dispatch, Dispatcher};
-use crate::fmi2_dispatcher::Fmi2CommandDispatcher;
-
-
 
 use serde::Deserialize;
-use subprocess::{Popen, PopenConfig};
 use tracing::{error, info};
-
 
 #[derive(Deserialize)]
 pub struct LaunchConfig {
@@ -73,6 +67,7 @@ impl LaunchConfig {
     }
 }
 
+/* 
 pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, Popen), ()> {
 
     let launch_command = LaunchConfig::create(resource_path)?
@@ -124,6 +119,37 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
         Ok(_handshake) => Ok((dispatcher, popen)),
         Err(_e) => Err(()),
     }
+}
+*/
+
+pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
+    // grab launch command for host os
+    let launch_command = LaunchConfig::create(resource_path)?
+    .get_launch_command()?;
+
+    info!("Establishing command dispatcher.");
+    let mut dispatcher = match Dispatcher::local(
+        resource_path,
+        &launch_command
+    ) {
+        Ok(dispatcher) => dispatcher,
+        Err(_) => {
+            error!("Couldn't create new dispatcher.");
+            return Err(());
+        }
+    };
+
+    info!("Awaiting handshake.");
+    match dispatcher.await_handshake() {
+        Ok(_) => {
+            info!("Connection established!");
+            Ok(dispatcher)
+        },
+        Err(e) => {
+            error!{"Handshake failed with error {:#?}", e};
+            Err(())
+        }
+    } 
 }
 
 pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
