@@ -14,12 +14,18 @@ use tokio::select;
 use tracing::{debug, error, info, warn};
 use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend};
 
+/// Generic Dispatcher for dispatching FMI commands to arbitrary backend.
+/// Can send and recieve messages and await handshake from backend.
 pub enum Dispatcher {
     Local(LocalDispatcher),
     Remote(RemoteDispatcher)
 }
 
 impl Dispatcher {
+    /// Creates a Dispatcher to a local UNIFMU backend.
+    /// 
+    /// The backend is started as a subprocess with the launch_command using
+    /// the resources at resource_path as part of the Dispatchers creation.
     pub fn local(
         resource_path: &Path,
         launch_command: &Vec<String>,
@@ -27,6 +33,9 @@ impl Dispatcher {
         Ok(Self::Local(LocalDispatcher::create(resource_path, launch_command)?))
     }
 
+    /// Creates a Dispatcher to a remote UNIFMU backend.
+    /// 
+    /// The backend must be initialized seperately.
     pub fn remote() -> DispatcherResult<Self> {
         Ok(Self::Remote(RemoteDispatcher::create()?))
     }
@@ -58,6 +67,10 @@ impl Dispatch for Dispatcher {
     }
 }
 
+/// Dispatcher for dispatching FMI commands to a locally run backend.
+/// 
+/// Holds the handle for the subprocess as well as the handle for the socket
+/// to said subprocess.
 pub struct LocalDispatcher {
     runtime: Runtime,
     socket: BackendSocket,
@@ -131,6 +144,9 @@ impl Dispatch for LocalDispatcher {
     }
 }
 
+/// Dispatcher for dispatching FMI commands to a remote backend.
+/// 
+/// Holds the socket to the remote backend.
 pub struct RemoteDispatcher {
     runtime: Runtime,
     socket: BackendSocket,
@@ -178,6 +194,9 @@ impl Dispatch for RemoteDispatcher {
     }
 }
 
+/// Must be implemented by all Dispatchers.
+/// Ensures that FMI commands can be dispatched.
+/// Gives the await_handshake() function using implemented methods.
 pub trait Dispatch {
     fn await_handshake(&mut self) -> DispatcherResult<()> {
         match self.recv::<HandshakeReply>() {
