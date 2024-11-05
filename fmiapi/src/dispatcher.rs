@@ -168,6 +168,17 @@ impl RemoteDispatcher {
             BackendSocket::create("tcp://0.0.0.0:0")
         )?;
 
+        // Aleksander: As far as I understand, all that the backend_proxy code
+        // does is telling the user what endpoint to point their remote backend
+        // to. This can be done in rust methinks. This way we can avoid writing
+        // a script for each language and FMI version that just reads some 
+        // environement variables and prints them out.
+        // We also avoid starting a subprocess and parsing a launch file.
+        info!(
+            "Connect remote backend to dispatcher via endpoint {}",
+            socket.endpoint
+        );
+
         Ok(
             Self {
                 runtime,
