@@ -7,8 +7,6 @@ package fmi3_messages;
 option java_package = "";
 option java_outer_classname = "Fmi3Messages";
 
-import "unifmu_handshake.proto";
-
 
 // ----------------------- FMI3 ----------------------
 
@@ -434,6 +432,5 @@ message Fmi3Command {
 	  Fmi3EnterStepMode Fmi3EnterStepMode = 47;
 	  Fmi3EnterEventMode Fmi3EnterEventMode = 48;
 	  Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
-    unifmu_handshake.HandshakeRequest HandshakeRequest = 50;
   }
 }

@@ -4,7 +4,7 @@ import sys
 import time
 import zmq
 
-from fmi3_messages_pb2 import (
+from schemas.fmi3_messages_pb2 import (
     Fmi3Command,
     Fmi3DoStepReturn,
     Fmi3EmptyReturn,
@@ -28,9 +28,8 @@ from fmi3_messages_pb2 import (
     Fmi3GetIntervalDecimalReturn,
     Fmi3UpdateDiscreteStatesReturn,
 )
-from unifmu_handshake_pb2 import (
+from schemas.unifmu_handshake_pb2 import (
     HandshakeStatus,
-    HandshakeRequest,
     HandshakeReply,
 )
 

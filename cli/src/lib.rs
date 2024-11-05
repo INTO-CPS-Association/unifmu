@@ -63,11 +63,11 @@ lazy_static! {
             ("python/fmi3/model.py", "model.py"),
             (
                 "auto_generated/fmi3_messages_pb2.py",
-                "fmi3_messages_pb2.py"
+                "schemas/fmi3_messages_pb2.py"
             ),
             (
                 "auto_generated/unifmu_handshake_pb2.py",
-                "unifmu_handshake_pb2.py"
+                "schemas/unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),
