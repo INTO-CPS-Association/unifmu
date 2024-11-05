@@ -51,7 +51,7 @@ impl FmuBackendImplementationLanguage {
     pub fn fault_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "throw new Exception();",
-            FmuBackendImplementationLanguage::Java => "throw new Exception();",
+            FmuBackendImplementationLanguage::Java => "int doesNotCompute = 1/0;",
             FmuBackendImplementationLanguage::Python => "raise Exception()"
         }
     }
@@ -205,7 +205,7 @@ impl TestFmu {
             FmuBackendImplementationLanguage::Java => 47,
             FmuBackendImplementationLanguage::Python => {
                 match self.version {
-                    FmiVersion::Fmi2 => 34,
+                    FmiVersion::Fmi2 => 37,
                     FmiVersion::Fmi3 => 116
                 }
             },

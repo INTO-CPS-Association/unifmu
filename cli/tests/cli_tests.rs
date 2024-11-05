@@ -12,6 +12,8 @@ use fmi::{
 use predicates::str::contains;
 use std::thread;
 
+mod common;
+
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
     let generated_fmus = std::env::current_dir()
@@ -97,6 +99,56 @@ fn test_python_fmi2() {
 }
 
 #[test]
+#[should_panic(expected = "Expected panic!: Instantiation")]
+fn test_python_backend_subprocess_unexpected_exit_in_handshake() {
+    let fmu = common::TestFmu::get_clone(
+        &common::FmiVersion::Fmi2, 
+        &common::FmuBackendImplementationLanguage::Python
+    );
+
+    fmu.break_model();
+
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let _instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true
+    )
+        .expect("Expected panic!");
+}
+
+#[test]
+#[should_panic(expected = "Expected panic!: Error")]
+fn test_python_backend_subprocess_unexpected_exit_during_fmi3_command() {
+    let fmu = common::TestFmu::get_clone(
+        &common::FmiVersion::Fmi2, 
+        &common::FmuBackendImplementationLanguage::Python
+    );
+
+    fmu.break_do_step_function();
+
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true
+    )
+        .expect("Should be able to instantiate FMU.");
+
+    instance.do_step(
+        0.0,
+        1.0,
+        true
+    )
+        .ok()
+        .expect("Expected panic!");
+}
+
+#[test]
 fn test_java_fmi2() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
@@ -115,6 +167,56 @@ fn test_java_fmi2() {
 }
 
 #[test]
+#[should_panic(expected = "Expected panic!: Instantiation")]
+fn test_java_backend_subprocess_unexpected_exit_in_handshake() {
+    let fmu = common::TestFmu::get_clone(
+        &common::FmiVersion::Fmi2, 
+        &common::FmuBackendImplementationLanguage::Java
+    );
+
+    fmu.break_model();
+
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let _instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true
+    )
+        .expect("Expected panic!");
+}
+
+#[test]
+#[should_panic(expected = "Expected panic!: Error")]
+fn test_java_backend_subprocess_unexpected_exit_during_fmi3_command() {
+    let fmu = common::TestFmu::get_clone(
+        &common::FmiVersion::Fmi2, 
+        &common::FmuBackendImplementationLanguage::Java
+    );
+
+    fmu.break_do_step_function();
+
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true
+    )
+        .expect("Should be able to instantiate FMU.");
+
+    instance.do_step(
+        0.0,
+        1.0,
+        true
+    )
+        .ok()
+        .expect("Expected panic!");
+}
+
+#[test]
 fn test_csharp_fmi2() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
@@ -130,6 +232,56 @@ fn test_csharp_fmi2() {
     let fmu_file: PathBuf = generated_fmus_dir.join("csharpfmu_fmi2.fmu");
 
     test_fmu_fmi2(fmu_file);
+}
+
+#[test]
+#[should_panic(expected = "Expected panic!: Instantiation")]
+fn test_csharp_backend_subprocess_unexpected_exit_in_handshake() {
+    let fmu = common::TestFmu::get_clone(
+        &common::FmiVersion::Fmi2, 
+        &common::FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu.break_model();
+
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let _instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true
+    )
+        .expect("Expected panic!");
+}
+
+#[test]
+#[should_panic(expected = "Expected panic!: Error")]
+fn test_csharp_backend_subprocess_unexpected_exit_during_fmi3_command() {
+    let fmu = common::TestFmu::get_clone(
+        &common::FmiVersion::Fmi2, 
+        &common::FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu.break_do_step_function();
+
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+        .expect("Should be able to import FMU.");
+
+    let instance = import.instantiate_cs(
+        "instance", 
+        false,
+        true
+    )
+        .expect("Should be able to instantiate FMU.");
+
+    instance.do_step(
+        0.0,
+        1.0,
+        true
+    )
+        .ok()
+        .expect("Expected panic!");
 }
 
 fn test_fmu_fmi2(fmu_path: PathBuf){
