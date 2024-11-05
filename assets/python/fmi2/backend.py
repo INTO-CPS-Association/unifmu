@@ -14,6 +14,10 @@ from schemas.fmi2_messages_pb2 import (
     Fmi2GetBooleanReturn,
     Fmi2GetStringReturn,
 )
+from schemas.unifmu_handshake_pb2 import (
+    HandshakeStatus,
+    HandshakeReply,
+)
 from model import Model
 
 logging.basicConfig(level=logging.DEBUG)
@@ -34,8 +38,9 @@ if __name__ == "__main__":
     socket.connect(dispatcher_endpoint)
 
     # send handshake
-    state = Fmi2EmptyReturn().SerializeToString()
-    socket.send(state)
+    handshake = HandshakeReply()
+    handshake.status = HandshakeStatus.OK
+    socket.send(handshake.SerializeToString())
 
     # dispatch commands to model
     command = Fmi2Command()
