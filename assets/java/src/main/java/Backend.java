@@ -18,7 +18,14 @@ public class Backend {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(dispacher_endpoint);
 
-            socket.send(Fmi2Messages.Fmi2EmptyReturn.newBuilder().build().toByteArray(), 0);
+            socket.send(
+                UnifmuHandshake.HandshakeReply
+                    .newBuilder()
+                    .setStatus(UnifmuHandshake.HandshakeStatus.OK)
+                    .build()
+                    .toByteArray(),
+                0
+            );
 
             Message reply;
             // Java compiler does not know that reply is always initialized after switch
