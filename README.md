@@ -331,7 +331,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
 1. Make sure you have the following installed on your computer:
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
    - [rust](https://www.rust-lang.org/tools/install)
-   - [Protocol Buffers v27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3). **Note: If you download a different version, you will have to update the build scripts and the dependencies of all backends.**.  **For Linux users:** be sure to have the *bin* file of protobuf in your path, e.g., `export PATH=/path/to/protobuf/protoc-27.3-linux-x86_64/bin:$PATH`
+   - [Protocol Buffers v27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3). **Note: If you download a different version, you will have to update the build scripts and the dependencies of all backends.**.  **For Linux users:** be sure to have the *bin* folder of protobuf in your path, e.g., `export PATH=/path/to/protobuf/protoc-27.3-linux-x86_64/bin/:$PATH`
    
 .
    - For testing:
