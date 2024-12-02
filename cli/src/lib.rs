@@ -264,6 +264,11 @@ lazy_static! {
         ],
     };
 
+    static ref ASSETSPROXY: Vec<(&'static str, &'static str)> = vec![
+        ("proxy/launch.toml", "launch.toml"),
+        ("proxy/README.md", "README.md"),
+    ];
+
     static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("common/fmi2/backend_remote_FMU.py", "backend.py"),
@@ -619,11 +624,8 @@ pub fn generate_distributed(
 
     // copy language specific files to 'resources' directory
 
-    let copy_to_resources_proxy =|assets: &LanguageAssets| {
-        let assets_all = match fmu_version {
-            FmiFmuVersion::FMI2 => assets.fmi2_resources.to_owned(),
-            FmiFmuVersion::FMI3 => assets.fmi3_resources.to_owned(),
-        };
+    let copy_to_resources_proxy =|assets: &Vec<(&'static str, &'static str)>| {
+        let assets_all = assets.to_owned();
 
         match fmu_version {
             FmiFmuVersion::FMI2 => {
@@ -688,8 +690,7 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else {
                 copy_to_resources(&PYTHONASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&PYTHONASSETSPROXY);
+            }
         }
 
         Language::CSharp => {
@@ -697,8 +698,7 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else{
                 copy_to_resources(&CSHARPASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&CSHARPASSETSPROXY);
+            }
         }
 
         Language::Java => {
@@ -706,10 +706,11 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else {
                 copy_to_resources(&JAVAASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&JAVAASSETSPROXY);
+            }
         }
     };
+
+    copy_to_resources_proxy(&ASSETSPROXY);
 
     // Settings for the proxy connection
     fs::write(dst_endpoint_file, toml).expect("Could not write to endpoint.toml file!");

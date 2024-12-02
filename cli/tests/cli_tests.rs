@@ -433,6 +433,7 @@ fn test_python_fmi2_distributed() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
     let generated_fmus_dir = get_generated_fmus_dir();
+    println!("{:#?}", generated_fmus_dir);
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
@@ -442,7 +443,9 @@ fn test_python_fmi2_distributed() {
         .stderr(contains("the FMUs were generated successfully"));
 
     let python_fmu: PathBuf = generated_fmus_dir.join("pythonfmu_fmi2_distributed_proxy.fmu");
+    println!("{:#?}", python_fmu);
     let python_backend_directory: PathBuf = generated_fmus_dir.join("pythonfmu_fmi2_distributed_private/backend.py");
+    println!("{:#?}", python_backend_directory);
 
     test_fmu_fmi2_distributed_python(python_fmu,python_backend_directory);
 }
@@ -508,13 +511,17 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
         .stdout(contains("No errors found."));
 
     // Load FMU and interact with it
+    println!("Opening {:#?} as file", fmu_path);
     let fmu_file = File::open(fmu_path.clone()).unwrap();
+    println!("Importing {:#?} as FMI2 FMU", fmu_file);
     let import: Fmi2Import = import::new::<File, Fmi2Import>(fmu_file).unwrap();
     assert_eq!(import.model_description().fmi_version, "2.0");
 
     // Start the proxy
     let tests_dir = get_tests_dir();
+    println!("Test dir is {:#?}", tests_dir);
     let fmpy_test_fmi2: PathBuf = tests_dir.join("test_fmi2.py");
+    println!("Python based tests are located at {:#?}", fmpy_test_fmi2);
 
     let mut python_cmd_proxy = processCommand::new("python3")
         .args(&[fmpy_test_fmi2,fmu_path])
