@@ -115,7 +115,8 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┃ ┣ 📜backend.py
  ┃ ┣ 📜launch.toml
  ┃ ┣ 📜model.py
- ┃ ┗ 📜README.md
+ ┃ ┣ 📜README.md
+ ┃ ┗ 📜requirements.txt
  ┗ 📜modelDescription.xml
 ```
 
@@ -152,7 +153,8 @@ For example the trees below show the placeholder FMU and folder generated when u
  ┣ 📂resources
  ┃ ┣ 📜backend.py
  ┃ ┣ 📜launch.toml
- ┃ ┗ 📜README.md
+ ┃ ┣ 📜README.md
+ ┃ ┗ 📜requirements.txt
  ┗ 📜modelDescription.xml
 ```
 
@@ -165,7 +167,8 @@ whereas its fellow private folder contains the model file, the dependencies, and
  ┣ 📜model.py
  ┣ 📜launch.toml
  ┣ 📜endpoint.toml
- ┗ 📜README.md
+ ┣ 📜README.md
+ ┗ 📜requirements.txt
 ```
 
 In order for the distributed co-simulation to work, the proxy FMU shall be executed first with a co-simulation master algorithm, and then, the private model shall be executed externally, using the IP address provided in `endpoint.toml` and the port opened by the proxy FMU as an argument (or after executing as a console input), for example (**NOTE: The port number is logged by the proxy FMU after initializing it**).

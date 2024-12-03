@@ -45,6 +45,7 @@ struct LanguageAssets {
 lazy_static! {
     static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
             (
@@ -55,6 +56,7 @@ lazy_static! {
             ("python/fmi2/README.md", "README.md"),
         ],
         fmi3_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("python/fmi3/backend.py", "backend.py"),
             ("python/fmi3/model.py", "model.py"),
             (
@@ -117,6 +119,7 @@ lazy_static! {
     };
     static ref PYTHONASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("python/fmi2/backend_remote.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
             (
@@ -127,6 +130,7 @@ lazy_static! {
             ("python/fmi2/README.md", "README.md"),
         ],
         fmi3_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("python/fmi3/backend_remote.py", "backend.py"),
             ("python/fmi3/model.py", "model.py"),
             (
@@ -140,11 +144,13 @@ lazy_static! {
 
     static ref PYTHONASSETSPROXY: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("python/fmi2/backend_proxy.py", "backend.py"),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi2/README.md", "README.md"),
         ],
         fmi3_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("python/fmi3/backend_proxy.py", "backend.py"),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),
@@ -250,6 +256,7 @@ lazy_static! {
 
     static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("common/fmi2/backend_remote_FMU.py", "backend.py"),
             (
                 "auto_generated/fmi2_messages_pb2.py",
@@ -259,6 +266,7 @@ lazy_static! {
             ("python/fmi2/README.md", "README.md"),
         ],
         fmi3_resources: vec![
+            ("python/requirements.txt", "requirements.txt"),
             ("common/fmi3/backend_remote_FMU.py", "backend.py"),
             (
                 "auto_generated/fmi3_messages_pb2.py",
