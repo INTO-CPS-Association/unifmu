@@ -14,6 +14,8 @@ use std::thread;
 
 mod common;
 
+use common::{TestableFmu, ZippedTestableFmu};
+
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
     let generated_fmus = std::env::current_dir()
@@ -101,14 +103,14 @@ fn test_python_fmi2() {
 #[test]
 #[should_panic(expected = "Expected panic!: Instantiation")]
 fn test_python_backend_subprocess_unexpected_exit_in_handshake() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi2, 
         &common::FmuBackendImplementationLanguage::Python
     );
 
     fmu.break_model();
 
-    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let _instance = import.instantiate_cs(
@@ -122,14 +124,14 @@ fn test_python_backend_subprocess_unexpected_exit_in_handshake() {
 #[test]
 #[should_panic(expected = "Expected panic!: Error")]
 fn test_python_backend_subprocess_unexpected_exit_during_fmi3_command() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi2, 
         &common::FmuBackendImplementationLanguage::Python
     );
 
     fmu.break_do_step_function();
 
-    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let instance = import.instantiate_cs(
@@ -169,14 +171,14 @@ fn test_java_fmi2() {
 #[test]
 #[should_panic(expected = "Expected panic!: Instantiation")]
 fn test_java_backend_subprocess_unexpected_exit_in_handshake() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi2, 
         &common::FmuBackendImplementationLanguage::Java
     );
 
     fmu.break_model();
 
-    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let _instance = import.instantiate_cs(
@@ -190,14 +192,14 @@ fn test_java_backend_subprocess_unexpected_exit_in_handshake() {
 #[test]
 #[should_panic(expected = "Expected panic!: Error")]
 fn test_java_backend_subprocess_unexpected_exit_during_fmi3_command() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi2, 
         &common::FmuBackendImplementationLanguage::Java
     );
 
     fmu.break_do_step_function();
 
-    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let instance = import.instantiate_cs(
@@ -237,14 +239,14 @@ fn test_csharp_fmi2() {
 #[test]
 #[should_panic(expected = "Expected panic!: Instantiation")]
 fn test_csharp_backend_subprocess_unexpected_exit_in_handshake() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi2, 
         &common::FmuBackendImplementationLanguage::CSharp
     );
 
     fmu.break_model();
 
-    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let _instance = import.instantiate_cs(
@@ -258,14 +260,14 @@ fn test_csharp_backend_subprocess_unexpected_exit_in_handshake() {
 #[test]
 #[should_panic(expected = "Expected panic!: Error")]
 fn test_csharp_backend_subprocess_unexpected_exit_during_fmi3_command() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi2, 
         &common::FmuBackendImplementationLanguage::CSharp
     );
 
     fmu.break_do_step_function();
 
-    let import = import::new::<File, Fmi2Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let instance = import.instantiate_cs(
@@ -433,7 +435,6 @@ fn test_python_fmi2_distributed() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
     let generated_fmus_dir = get_generated_fmus_dir();
-    println!("{:#?}", generated_fmus_dir);
 
     unifmu_cmd
         .current_dir(generated_fmus_dir.as_path())
@@ -443,9 +444,7 @@ fn test_python_fmi2_distributed() {
         .stderr(contains("the FMUs were generated successfully"));
 
     let python_fmu: PathBuf = generated_fmus_dir.join("pythonfmu_fmi2_distributed_proxy.fmu");
-    println!("{:#?}", python_fmu);
     let python_backend_directory: PathBuf = generated_fmus_dir.join("pythonfmu_fmi2_distributed_private/backend.py");
-    println!("{:#?}", python_backend_directory);
 
     test_fmu_fmi2_distributed_python(python_fmu,python_backend_directory);
 }
@@ -511,17 +510,13 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
         .stdout(contains("No errors found."));
 
     // Load FMU and interact with it
-    println!("Opening {:#?} as file", fmu_path);
     let fmu_file = File::open(fmu_path.clone()).unwrap();
-    println!("Importing {:#?} as FMI2 FMU", fmu_file);
     let import: Fmi2Import = import::new::<File, Fmi2Import>(fmu_file).unwrap();
     assert_eq!(import.model_description().fmi_version, "2.0");
 
     // Start the proxy
     let tests_dir = get_tests_dir();
-    println!("Test dir is {:#?}", tests_dir);
     let fmpy_test_fmi2: PathBuf = tests_dir.join("test_fmi2.py");
-    println!("Python based tests are located at {:#?}", fmpy_test_fmi2);
 
     let mut python_cmd_proxy = processCommand::new("python3")
         .args(&[fmpy_test_fmi2,fmu_path])

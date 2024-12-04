@@ -19,6 +19,8 @@ use zip::read::ZipArchive;
 
 mod common;
 
+use common::{TestableFmu, ZippedTestableFmu};
+
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
     let generated_fmus = std::env::current_dir()
@@ -92,14 +94,14 @@ fn test_python_fmi3() {
 #[test]
 #[should_panic(expected = "Expected panic!: Instantiation")]
 fn test_backend_subprocess_unexpected_exit_in_handshake() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi3, 
         &common::FmuBackendImplementationLanguage::Python
     );
 
     fmu.break_model();
 
-    let import = import::new::<File, Fmi3Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi3Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let _instance = import.instantiate_cs(
@@ -116,14 +118,14 @@ fn test_backend_subprocess_unexpected_exit_in_handshake() {
 #[test]
 #[should_panic(expected = "Expected panic!: Error")]
 fn test_backend_subprocess_unexpected_exit_during_fmi3_command() {
-    let fmu = common::TestFmu::get_clone(
+    let fmu = common::LocalFmu::get_clone(
         &common::FmiVersion::Fmi3, 
         &common::FmuBackendImplementationLanguage::Python
     );
 
     fmu.break_do_step_function();
 
-    let import = import::new::<File, Fmi3Import>(fmu.zipped().file)
+    let import = import::new::<File, Fmi3Import>(fmu.zipped().file())
         .expect("Should be able to import FMU.");
 
     let mut instance = import.instantiate_cs(
