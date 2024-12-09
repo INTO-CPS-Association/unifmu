@@ -38,8 +38,8 @@ if __name__ == "__main__":
                     instanceName='instance1')
     
     # Checking platform and version
-    # assert fmu.getTypesPlatform() == "default"
-    # assert fmu.getVersion() == "2.0"  
+    assert fmu.getTypesPlatform() == "default"
+    assert fmu.getVersion() == "2.0"  
 
     # initialize
     fmu.instantiate()
