@@ -65,7 +65,7 @@ fn get_vdm_check_jar(version: &str) -> PathBuf {
     vdm_check_jar
 }
 
-#[test]
+//#[test]
 fn test_python_fmi2() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
@@ -83,7 +83,7 @@ fn test_python_fmi2() {
     test_fmu_fmi2(python_fmu);
 }
 
-#[test]
+//#[test]
 fn test_java_fmi2() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
@@ -101,7 +101,7 @@ fn test_java_fmi2() {
     test_fmu_fmi2(python_fmu);
 }
 
-#[test]
+//#[test]
 fn test_csharp_fmi2() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
