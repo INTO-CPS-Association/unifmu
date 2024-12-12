@@ -38,8 +38,8 @@ public class Model {
         this.references_to_attributes.add(this.getClass().getField("boolean_b"));
         this.references_to_attributes.add(this.getClass().getField("boolean_c"));
         this.references_to_attributes.add(this.getClass().getField("string_a"));
-        this.references_to_attributes.add(this.getClass().getField("string_a"));
-        this.references_to_attributes.add(this.getClass().getField("string_a"));
+        this.references_to_attributes.add(this.getClass().getField("string_b"));
+        this.references_to_attributes.add(this.getClass().getField("string_c"));
 
     }
 
