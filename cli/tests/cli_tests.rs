@@ -1,5 +1,10 @@
-use std::{fs::File, path::PathBuf, process::{Command as processCommand, Stdio}, io::{BufRead, BufReader}};
-use assert_cmd::{Command};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Read},
+    path::PathBuf,
+    process::{Command as processCommand, Stdio}
+};
+use assert_cmd::Command;
 use fmi::{
     fmi2::{
         import::Fmi2Import,
@@ -9,12 +14,13 @@ use fmi::{
     schema::fmi2::ScalarVariable,
     traits::{FmiImport, FmiStatus},
 };
+use gag::BufferRedirect;
 use predicates::str::contains;
 use std::thread;
 
 mod common;
 
-use common::{TestableFmu, ZippedTestableFmu};
+use common::{RemoteBackend, TestableFmu, ZippedTestableFmu};
 
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
@@ -528,8 +534,13 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
     let err_proxy = BufReader::new(python_cmd_proxy.stderr.take().unwrap());
 
     let proxy_fmu_thread_stdout = thread::spawn(move || {
+        let mut private_backend_spawned = false;
+        let mut line_number = 0;
+
         out_proxy.lines().for_each(|line_out|{
+            line_number += 1;
             let log_out = line_out.unwrap();
+            println!("line {}: {}", line_number, log_out);
             let idx_0 = log_out.find("'").unwrap_or(0);
             let idx_1 = log_out.rfind("'").unwrap_or(0);
             if (idx_0 != 0) && (idx_1 !=0){
@@ -545,6 +556,7 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
                             .spawn();
 
                         cmd_private.unwrap().wait().expect("Failed to start private backend.");
+                        private_backend_spawned = true;
 
                     },
                     Err(_e) => {},
@@ -552,6 +564,9 @@ fn test_fmu_fmi2_distributed_python(fmu_path: PathBuf, backend_directory: PathBu
             }
 
         });
+
+        assert!(line_number > 0);
+        assert!(private_backend_spawned);
 
     });
     let proxy_fmu_thread_stderr = thread::spawn(move || {
