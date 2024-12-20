@@ -60,7 +60,14 @@ public class Backend {
             socket.connect(dispatcher_endpoint);
             System.out.println(YELLOW + "Socket connected successfully." + RESET);
 
-            socket.send(Fmi2Messages.Fmi2EmptyReturn.newBuilder().build().toByteArray(), 0);
+            socket.send(
+                UnifmuHandshake.HandshakeReply
+                    .newBuilder()
+                    .setStatus(UnifmuHandshake.HandshakeStatus.OK)
+                    .build()
+                    .toByteArray(),
+                0
+            );
 
             Message reply;
             // Java compiler does not know that reply is always initialized after switch
