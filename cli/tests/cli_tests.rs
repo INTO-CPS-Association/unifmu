@@ -2,7 +2,9 @@ use std::{
     fs::File,
     io::{BufRead, BufReader, Read},
     path::PathBuf,
-    process::{Command as processCommand, Stdio}
+    process::{Command as processCommand, Stdio},
+    thread,
+    time
 };
 use assert_cmd::Command;
 use fmi::{
@@ -16,11 +18,60 @@ use fmi::{
 };
 use gag::BufferRedirect;
 use predicates::str::contains;
-use std::thread;
 
 mod common;
 
 use common::{RemoteBackend, TestableFmu, ZippedTestableFmu};
+
+#[test]
+fn test_bokr() {
+    let fmu = common::RemoteFmu::get_clone(
+        &common::FmiVersion::Fmi2, 
+        &common::FmuBackendImplementationLanguage::Python
+    );
+
+    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
+        .expect("Should be able to import FMU.");
+
+    let mut stdout_buffer = BufferRedirect::stdout()
+        .expect("Should be able to redirect stdout.");
+
+    let proxy_thread = thread::spawn(move || {
+        let _instance = import.instantiate_cs(
+            "instance", 
+            false,
+            true
+        )
+            .unwrap();
+    });
+
+    let mut port_string = String::new();
+    let mut full_string = String::new();
+
+    loop {
+        let mut caught_stdout = String::new();
+        stdout_buffer.read_to_string(&mut caught_stdout)
+            .expect("Should be able to read redirected stdout.");
+
+        if caught_stdout.contains("Connect remote backend to dispatcher via endpoint") {
+            let slize_index = caught_stdout.char_indices().nth_back(5).unwrap().0;
+            port_string = caught_stdout[slize_index..].to_string();
+            full_string = caught_stdout;
+            break;
+        }
+    }
+
+    drop(stdout_buffer);
+
+    println!("Full string: {}", full_string);
+    println!("Got port: {}", port_string);
+
+    assert_eq!(port_string, "DON'T KNOW WHAT IT CONTAINS, SHOULD FAIL!");
+    assert!(false);
+    
+
+    proxy_thread.join().unwrap();
+}
 
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
