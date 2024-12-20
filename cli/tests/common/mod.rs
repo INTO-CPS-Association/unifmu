@@ -1,13 +1,19 @@
 use std::{
-    fs::{copy, create_dir, File, read_dir},
-    io::{self, BufRead, Write},
+    fs::{copy, create_dir, read_dir, File},
+    io::{self, BufRead, BufReader, Write},
     path::{Path, PathBuf},
-    sync::LazyLock
+    process::Stdio,
+    sync::{mpsc::Sender, LazyLock}
 };
 
 use assert_cmd::Command;
 use predicates::str::contains;
 use tempfile::TempDir;
+use tokio::{
+    io::AsyncBufReadExt,
+    process,
+    select
+};
 use unifmu::utils::zip_dir;
 use walkdir::WalkDir;
 use zip::CompressionMethod;
@@ -259,6 +265,8 @@ impl BasicFmu for RemoteFmu {
 
 impl RemoteFileStructure for RemoteFmu {}
 
+impl RemoteBackend for RemoteFmu {}
+
 impl TestableFmu for RemoteFmu {
     /// Creates an entirely new FMU in a temporary directory.
     fn new(
@@ -410,6 +418,8 @@ impl BasicFmu for ZippedRemoteFmu {
 
 impl RemoteFileStructure for ZippedRemoteFmu {}
 
+impl RemoteBackend for ZippedRemoteFmu {}
+
 impl ZippedTestableFmu for ZippedRemoteFmu {
     fn file(self) -> File {
         self.file
@@ -458,7 +468,7 @@ pub trait TestableFmu: BasicFmu {
             .args(&self.cmd_args())
             .assert()
             .success()
-            .stderr(contains("the FMU was generated successfully"));
+            .stderr(contains("generated successfully"));
     }
 
     /// Breaks the model by adding an error/exception to the first line of
@@ -534,6 +544,109 @@ pub trait RemoteFileStructure: BasicFmu {
     }
 }
 
+pub trait RemoteBackend: RemoteFileStructure {
+    fn get_remote_command(&self, port: String) -> process::Command {
+        let mut backend_process_cmd = match self.language() {
+            FmuBackendImplementationLanguage::CSharp => process::Command::new("dotnet"),
+            FmuBackendImplementationLanguage::Java => process::Command::new("sh"),
+            FmuBackendImplementationLanguage::Python => process::Command::new("python3")
+        };
+
+        match self.language() {
+            FmuBackendImplementationLanguage::CSharp => {
+                backend_process_cmd
+                    .current_dir(self.backend_directory_path())
+                    .arg("run")
+                    .arg("backend.cs")
+                    .arg(port)
+            },
+            FmuBackendImplementationLanguage::Java => {
+                backend_process_cmd
+                    .current_dir(self.backend_directory_path())
+                    .arg("gradlew")
+                    .arg("run")
+                    .arg(format!("--args='{}'", port))
+            },
+            FmuBackendImplementationLanguage::Python => {
+                backend_process_cmd
+                    .arg(self.backend_directory_path().join("backend.py"))
+                    .arg(port)
+            }
+        };
+
+        return backend_process_cmd
+    }
+
+    fn start_remote_backend(
+        &self,
+        port: String,
+        stdout_channel_tx: Sender<String>,
+        stderr_channel_tx: Sender<String>,
+    ) {
+        let mut backend_process_cmd = self.get_remote_command(port);
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("Should be able to start tokio runtime.");
+
+        let mut backend_process = runtime.block_on( async {
+            backend_process_cmd
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .expect("Should be able to spawn the remote backend.")
+        });
+
+        let mut stdout_lines = tokio::io::BufReader::new(
+            backend_process.stdout
+                .take()
+                .unwrap()
+        )
+            .lines();
+
+        let mut stderr_lines = tokio::io::BufReader::new(
+            backend_process.stderr
+                .take()
+                .unwrap()
+        )
+            .lines();
+
+        let stdout_future = async {
+            while let Some(line) = stdout_lines.next_line()
+                .await
+                .expect("Should be able to get stdout from process.")
+            {
+                stdout_channel_tx.send(line)
+                    .expect("Should be able to send backend stdout through channel.");
+            }
+        };
+
+        let stderr_future = async {
+            while let Some(line) = stderr_lines.next_line()
+                .await
+                .expect("Should be able to get stderr from process.")
+            {
+                stderr_channel_tx.send(line)
+                    .expect("Should be able to send backend stderr through channel.");
+            }
+        };
+
+        runtime.block_on(async {
+            select! {
+                _ = async {
+                    tokio::join!(stdout_future, stderr_future)
+                } => {},
+                _ = async {
+                    backend_process.wait()
+                        .await
+                        .expect("Should be able to run the remote backend.")
+                } => {}
+            }
+        })
+    }
+}
+
 fn copy_directory_recursive(
     source: impl AsRef<Path>,
     destination: impl AsRef<Path>
@@ -571,7 +684,7 @@ fn inject_line(
 ) -> io::Result<()> {
     let file = File::open(file_path)?;
 
-    let lines = io::BufReader::new(&file).lines();
+    let lines = BufReader::new(&file).lines();
 
     let mut current_line_number: u64 = 1;
 
