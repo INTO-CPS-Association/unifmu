@@ -176,7 +176,7 @@ impl RemoteDispatcher {
         // a script for each language and FMI version that just reads some 
         // environement variables and prints them out.
         // We also avoid starting a subprocess and parsing a launch file.
-        info!(
+        println!(
             "Connect remote backend to dispatcher via endpoint {}",
             socket.endpoint
         );

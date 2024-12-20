@@ -48,8 +48,8 @@ impl LaunchConfig {
 
         let config: LaunchConfig = match toml::from_str(config.as_str()) {
             Ok(config) => config,
-            Err(_) => {
-                error!("configuration file was opened, but the contents does not appear to be valid");
+            Err(e) => {
+                error!("configuration file was opened, but the contents does not appear to be valid: {:?}", e);
                 return Err(());
             }
         };
