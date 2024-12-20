@@ -2,18 +2,13 @@ use std::{
     fs::{copy, create_dir, read_dir, File},
     io::{self, BufRead, BufReader, Write},
     path::{Path, PathBuf},
-    process::Stdio,
+    process,
     sync::{mpsc::Sender, LazyLock}
 };
 
 use assert_cmd::Command;
 use predicates::str::contains;
 use tempfile::TempDir;
-use tokio::{
-    io::AsyncBufReadExt,
-    process,
-    select
-};
 use unifmu::utils::zip_dir;
 use walkdir::WalkDir;
 use zip::CompressionMethod;
@@ -263,7 +258,11 @@ impl BasicFmu for RemoteFmu {
     }
 }
 
-impl RemoteFileStructure for RemoteFmu {}
+impl RemoteFileStructure for RemoteFmu {
+    fn proxy_directory_name(&self) -> String {
+        Self::fmu_name(&self.version(), &self.language()) + "_proxy"
+    }
+}
 
 impl RemoteBackend for RemoteFmu {}
 
@@ -323,17 +322,18 @@ impl TestableFmu for RemoteFmu {
 
     fn model_file_path(&self) -> PathBuf {
         self.backend_directory_path()
-            .join("resources")
             .join(self.language.model_str())
     }
 
+    #[allow(refining_impl_trait)]
     /// Copies the contents of this FMU and zips them in a new temporary
     /// directory, returning a ZippedTestFmu with the zipped file.
-    fn zipped(&self) -> impl ZippedTestableFmu {
+    fn zipped(&self) -> ZippedRemoteFmu {
         let new_directory = TempDir::new()
             .expect("Should be able to create new temporary FMU directory.");
 
-        let proxy_fmu_name = self.proxy_directory_name();
+        let mut proxy_fmu_name = self.proxy_directory_name();
+        proxy_fmu_name.push_str(".fmu");
 
         let zip_file_path = new_directory
             .path()
@@ -416,7 +416,11 @@ impl BasicFmu for ZippedRemoteFmu {
     }
 }
 
-impl RemoteFileStructure for ZippedRemoteFmu {}
+impl RemoteFileStructure for ZippedRemoteFmu {
+    fn proxy_directory_name(&self) -> String {
+        Self::fmu_name(&self.version(), &self.language()) + "_proxy.fmu"
+    }
+}
 
 impl RemoteBackend for ZippedRemoteFmu {}
 
@@ -523,9 +527,7 @@ pub trait ZippedTestableFmu {
 }
 
 pub trait RemoteFileStructure: BasicFmu {
-    fn proxy_directory_name(&self) -> String {
-        Self::fmu_name(&self.version(), &self.language()) + "_proxy"
-    }
+    fn proxy_directory_name(&self) -> String;
 
     fn proxy_directory_path(&self) -> PathBuf {
         self.directory()
@@ -577,73 +579,13 @@ pub trait RemoteBackend: RemoteFileStructure {
         return backend_process_cmd
     }
 
-    fn start_remote_backend(
-        &self,
-        port: String,
-        stdout_channel_tx: Sender<String>,
-        stderr_channel_tx: Sender<String>,
-    ) {
+    fn run_remote_backend(&self, port: String) {
         let mut backend_process_cmd = self.get_remote_command(port);
 
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .expect("Should be able to start tokio runtime.");
-
-        let mut backend_process = runtime.block_on( async {
-            backend_process_cmd
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .spawn()
-                .expect("Should be able to spawn the remote backend.")
-        });
-
-        let mut stdout_lines = tokio::io::BufReader::new(
-            backend_process.stdout
-                .take()
-                .unwrap()
-        )
-            .lines();
-
-        let mut stderr_lines = tokio::io::BufReader::new(
-            backend_process.stderr
-                .take()
-                .unwrap()
-        )
-            .lines();
-
-        let stdout_future = async {
-            while let Some(line) = stdout_lines.next_line()
-                .await
-                .expect("Should be able to get stdout from process.")
-            {
-                stdout_channel_tx.send(line)
-                    .expect("Should be able to send backend stdout through channel.");
-            }
-        };
-
-        let stderr_future = async {
-            while let Some(line) = stderr_lines.next_line()
-                .await
-                .expect("Should be able to get stderr from process.")
-            {
-                stderr_channel_tx.send(line)
-                    .expect("Should be able to send backend stderr through channel.");
-            }
-        };
-
-        runtime.block_on(async {
-            select! {
-                _ = async {
-                    tokio::join!(stdout_future, stderr_future)
-                } => {},
-                _ = async {
-                    backend_process.wait()
-                        .await
-                        .expect("Should be able to run the remote backend.")
-                } => {}
-            }
-        })
+        backend_process_cmd.spawn()
+            .expect("Should be able to spawn the remote backend.")
+            .wait()
+            .expect("Should be able to execute the remote backend.");
     }
 }
 
