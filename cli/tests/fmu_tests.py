@@ -15,7 +15,15 @@ def fmi2_instantiate(fmu_filename: str):
         fmu.instantiate()
 
     except Exception as e:
-        print(f"TEST FAILED - fmi2_instantiate: {e}")
+        print(f"TEST FAILED - fmi2_instantiate - instantiation: {e}")
+        return
+
+    try:
+        fmu.terminate()
+        fmu.freeInstance()
+
+    except Exception as e:
+        print(f"TEST FAILED - fmi2_instantiate - termination: {e}")
 
 def fmi2_full_functionality(fmu_filename: str):
     try:
@@ -29,6 +37,12 @@ def fmi2_full_functionality(fmu_filename: str):
         )
 
         fmu.instantiate()
+    
+    except Exception as e:
+        print(f"TEST FAILED - fmi2_full_functionality - instantiation: {e}")
+        return
+
+    try:
 
         end_simulation_time = 5.0
         start_simulation_time = 0.0
@@ -68,12 +82,25 @@ def fmi2_full_functionality(fmu_filename: str):
         integer_c = fmu.getInteger([vrs["integer_c"]])[0]
         assert integer_c == 3, f"After doStep, getInteger returned {real_c} which should have been 3"
         
-        # terminate
+    except Exception as e:
+        print(f"TEST FAILED - fmi2_full_functionality: {e}")
+
+        # Blindly try terminating to ensure distributed backend exits.
+        # Ignore exceptions as test already failed.
+        try:
+            fmu.terminate()
+            fmu.freeInstance()
+        except Exception:
+            {}
+
+        return
+
+    try:
         fmu.terminate()
         fmu.freeInstance()
 
     except Exception as e:
-        print(f"TEST FAILED - fmi2_full_functionality: {e}")
+        print(f"TEST FAILED - fmi2_full_functionality - termination: {e}")
 
 if __name__ == "__main__":
     import sys
