@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::Read,
+    io::{BufReader, BufRead},
     path::{Path, PathBuf},
     sync::Mutex,
     thread
@@ -16,7 +16,7 @@ use fmi::{
     schema::fmi2::ScalarVariable,
     traits::{FmiImport, FmiStatus},
 };
-use gag::BufferRedirect;
+use duct::cmd;
 use predicates::str::contains;
 
 mod common;
@@ -26,6 +26,7 @@ use common::{
 };
 
 static DISTRIBUTED_FMU: Mutex<Executor> = Mutex::new(Executor);
+const PYTHON_TEST_SCRIPT_NAME: &str = "fmu_tests.py";
 
 #[derive(Clone, Copy)]
 struct Executor;
@@ -543,7 +544,7 @@ fn test_instantiate_csharp_fmi2_distributed() {
         &common::FmuBackendImplementationLanguage::CSharp
     );
 
-    basic_remote_testing_procedure(fmu, just_instantiate);
+    remote_fmu_python_test(fmu, "fmi2_instantiate");
 }
 
 #[test]
@@ -553,7 +554,7 @@ fn test_instantiate_java_fmi2_distributed() {
         &common::FmuBackendImplementationLanguage::Java
     );
 
-    basic_remote_testing_procedure(fmu, just_instantiate);
+    remote_fmu_python_test(fmu, "fmi2_instantiate");
 }
 
 #[test]
@@ -563,62 +564,7 @@ fn test_instantiate_python_fmi2_distributed() {
         &common::FmuBackendImplementationLanguage::Python
     );
 
-    basic_remote_testing_procedure(fmu, just_instantiate);
-}
-
-fn basic_remote_testing_procedure(
-    fmu: (impl TestableFmu + RemoteBackend),
-    fmu_operations: fn(Fmi2Import)
-) {
-    let import = import::new::<File, Fmi2Import>(fmu.zipped().file())
-        .expect("Should be able to import FMU.");
-
-    DISTRIBUTED_FMU.lock().unwrap().run_test(move || {
-        // Redirects the contained codes stdout to a buffer, enabling us to catch
-        // the portnumber when the backend instantiates.
-        let mut stdout_buffer = BufferRedirect::stdout()
-            .expect("Should be able to redirect stdout.");
-
-        let proxy_thread = thread::spawn(move || {
-            fmu_operations(import);
-        });
-
-        let mut port_string = String::new();
-
-        // Wait for output and parse it if it has the right format.
-        // It should contain the portnumber.
-        loop {
-            let mut caught_stdout = String::new();
-            stdout_buffer.read_to_string(&mut caught_stdout)
-                .expect("Should be able to read redirected stdout.");
-
-            // Current humanreadable port message is:
-            //
-            // Connect remote backend to dispatcher via endpoint tcp://0.0.0.0:XXXXX
-            //
-            // Where XXXXX is the port number, and where the message is followed with a newline
-            // (type of newline might be platform dependent).
-            if caught_stdout.contains("Connect remote backend to dispatcher via endpoint") {
-                port_string = caught_stdout[64..69].to_string();
-                break;
-            }
-        }
-
-        drop(stdout_buffer);
-
-        fmu.run_remote_backend(port_string);
-
-        proxy_thread.join().unwrap();
-    });
-}
-
-fn just_instantiate(imported_fmu: Fmi2Import) {
-    let _instance = imported_fmu.instantiate_cs(
-        "instance", 
-        false,
-        true
-    )
-        .expect("should be able to instantiate FMU.");
+    remote_fmu_python_test(fmu, "fmi2_instantiate");
 }
 
 #[test]
@@ -628,7 +574,7 @@ fn test_fmu_functionality_csharp_fmi2_distributed() {
         &common::FmuBackendImplementationLanguage::CSharp
     );
 
-    basic_remote_testing_procedure(fmu, run_through_full_functionality);
+    remote_fmu_python_test(fmu, "fmi2_full_functionality");
 }
 
 #[test]
@@ -638,7 +584,7 @@ fn test_fmu_functionality_java_fmi2_distributed() {
         &common::FmuBackendImplementationLanguage::Java
     );
 
-    basic_remote_testing_procedure(fmu, run_through_full_functionality);
+    remote_fmu_python_test(fmu, "fmi2_full_functionality");
 }
 
 #[test]
@@ -648,62 +594,71 @@ fn test_fmu_functionality_python_fmi2_distributed() {
         &common::FmuBackendImplementationLanguage::Python
     );
 
-    basic_remote_testing_procedure(fmu, run_through_full_functionality);
+    remote_fmu_python_test(fmu, "fmi2_full_functionality");
 }
 
-fn run_through_full_functionality(imported_fmu: Fmi2Import) {
-    assert_eq!(imported_fmu.model_description().fmi_version, "2.0");
+fn remote_fmu_python_test(
+    fmu: (impl TestableFmu + RemoteBackend),
+    python_test_function_name: &str
+) {
+    let test_directory = std::env::current_dir()
+        .expect("Should be able to get current directory")
+        .join("tests");
 
-    let mut cs_instance = imported_fmu.instantiate_cs(
-        "instance", 
-        false,
-        true
-    )
-        .expect("should be able to instantiate FMU.");
-
-    assert_eq!(
-        fmi::fmi2::instance::Common::get_version(&cs_instance),
-        "2.0"
+    assert!(
+        test_directory.join(PYTHON_TEST_SCRIPT_NAME)
+            .exists(),
+        "Python test script '{PYTHON_TEST_SCRIPT_NAME}' wasn't found in test directory '{}'",
+        test_directory.display()
     );
+    
+    let python_test_process = cmd!(
+        "python3",
+        PYTHON_TEST_SCRIPT_NAME,
+        python_test_function_name,
+        fmu.proxy_directory_path()
+    )
+        .dir(test_directory)
+        .stderr_to_stdout()
+        .reader()
+        .expect("Should be able to start python test process");
 
-    cs_instance
-        .setup_experiment(Some(1.0e-6_f64), 0.0, None)
-        .ok()
-        .expect("setup_experiment");
+    let python_test_output_reader = BufReader::new(&python_test_process);
 
-    cs_instance
-        .enter_initialization_mode()
-        .ok()
-        .expect("enter_initialization_mode");
+    let mut remote_process: Option<duct::Handle> = None;
 
-    cs_instance
-        .exit_initialization_mode()
-        .ok()
-        .expect("exit_initialization_mode");
+    for read_result in python_test_output_reader.lines() {
+        match read_result {
+            Ok(line) => {
+                if line.contains("TEST FAILED") {
+                    if remote_process.is_some() {
+                        remote_process.unwrap().kill();
+                    }
 
-    // Check for initial outputs as they are calculated
+                    panic!("PYTHON {line}");
+                
+                } else if line.contains("Connect remote backend to dispatcher via endpoint") {
+                    let port_string =  line[50..].to_string();
 
-    let mut real_c = get_real(&imported_fmu, &mut cs_instance, "real_c");
-    assert_eq!(real_c, 0.0);
+                    remote_process = Some(fmu.start_remote_backend(port_string));
 
-    let mut integer_c = get_integer(&imported_fmu, &mut cs_instance, "integer_c");
-    assert_eq!(integer_c, 0);
+                } else {
+                    println!("{line}");
+                }
+            },
+            Err(e) => {
+                if remote_process.is_some() {
+                    remote_process.unwrap().kill();
+                }
 
-    cs_instance.do_step(0.0, 0.01, false).ok().expect("do_step");
+                panic!("Reading output from python test script returned error '{e}'");
+            }
+        }
+    }
 
-    set_real(&imported_fmu, &mut cs_instance, "real_a", 1.0);
-    set_real(&imported_fmu, &mut cs_instance, "real_b", 2.0);
-
-    set_integer(&imported_fmu, &mut cs_instance, "integer_a", 1);
-    set_integer(&imported_fmu, &mut cs_instance, "integer_b", 2);
-
-    cs_instance.do_step(0.0, 0.01, false).ok().expect("do_step");
-
-    real_c = get_real(&imported_fmu, &mut cs_instance, "real_c");
-    assert_eq!(real_c, 3.0);
-
-    integer_c = get_integer(&imported_fmu, &mut cs_instance, "integer_c");
-    assert_eq!(integer_c, 3);
-
-    cs_instance.terminate().ok().expect("terminate");
+    if remote_process.is_none() {
+        panic!("Remote backend wasn't started!");
+    } else {
+        remote_process.unwrap().wait();
+    }
 }

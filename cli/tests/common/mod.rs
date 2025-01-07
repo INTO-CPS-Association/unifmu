@@ -7,6 +7,7 @@ use std::{
 };
 
 use assert_cmd::Command;
+use duct;
 use predicates::str::contains;
 use tempfile::TempDir;
 use unifmu::utils::zip_dir;
@@ -547,7 +548,23 @@ pub trait RemoteFileStructure: BasicFmu {
 }
 
 pub trait RemoteBackend: RemoteFileStructure {
-    fn get_remote_command(&self, port: String) -> process::Command {
+    fn get_remote_command(&self, port: String) -> duct::Expression {
+        let backend_process_cmd = match self.language() {
+            FmuBackendImplementationLanguage::CSharp => duct::cmd!(
+                "dotnet", "run", "backend.cs", port
+            ),
+            FmuBackendImplementationLanguage::Java => duct::cmd!(
+                "sh", "gradlew", "run", "--args='{port}'"
+            ),
+            FmuBackendImplementationLanguage::Python => duct::cmd!(
+                "python3", "backend.py", port
+            )
+        };
+
+        backend_process_cmd.dir(self.backend_directory_path())
+
+        /* 
+
         let mut backend_process_cmd = match self.language() {
             FmuBackendImplementationLanguage::CSharp => process::Command::new("dotnet"),
             FmuBackendImplementationLanguage::Java => process::Command::new("sh"),
@@ -577,15 +594,14 @@ pub trait RemoteBackend: RemoteFileStructure {
         };
 
         return backend_process_cmd
+        */
     }
 
-    fn run_remote_backend(&self, port: String) {
-        let mut backend_process_cmd = self.get_remote_command(port);
+    fn start_remote_backend(&self, port: String) -> duct::Handle{
+        let backend_process_cmd = self.get_remote_command(port);
 
-        backend_process_cmd.spawn()
-            .expect("Should be able to spawn the remote backend.")
-            .wait()
-            .expect("Should be able to execute the remote backend.");
+        backend_process_cmd.start()
+            .expect("Should be able to start the remote backend.")
     }
 }
 
