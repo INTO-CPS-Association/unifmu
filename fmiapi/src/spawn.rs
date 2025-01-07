@@ -3,10 +3,10 @@ use std::{
     path::Path,
 };
 
-use crate::dispatcher::{self, Dispatch, Dispatcher};
+use crate::dispatcher::{Dispatch, Dispatcher};
 
 use serde::Deserialize;
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 #[derive(Debug, Default, Deserialize)]
 pub enum BackendLocation {
