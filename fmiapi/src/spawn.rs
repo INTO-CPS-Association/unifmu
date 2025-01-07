@@ -6,7 +6,7 @@ use std::{
 use crate::dispatcher::{Dispatch, Dispatcher};
 
 use serde::Deserialize;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 #[derive(Debug, Default, Deserialize)]
 pub enum BackendLocation {
