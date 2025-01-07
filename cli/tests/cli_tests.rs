@@ -1,9 +1,7 @@
 use std::{
     fs::File,
     io::{BufReader, BufRead},
-    path::{Path, PathBuf},
-    sync::Mutex,
-    thread
+    path::{Path, PathBuf}
 };
 
 use assert_cmd::Command;
@@ -25,17 +23,7 @@ use common::{
     RemoteBackend, RemoteFileStructure, TestableFmu, ZippedTestableFmu
 };
 
-static DISTRIBUTED_FMU: Mutex<Executor> = Mutex::new(Executor);
 const PYTHON_TEST_SCRIPT_NAME: &str = "fmu_tests.py";
-
-#[derive(Clone, Copy)]
-struct Executor;
-
-impl Executor {
-    fn run_test(self, f: impl FnOnce()) {
-        f();
-    }
-}
 
 fn get_generated_fmus_dir() -> PathBuf {
     // cwd starts at cli folder, so move to parent and get to generated_fmus
@@ -50,19 +38,6 @@ fn get_generated_fmus_dir() -> PathBuf {
         generated_fmus.display()
     );
     generated_fmus
-}
-
-fn get_tests_dir() -> PathBuf {
-    // cwd starts at cli folder, so move to parent and get to generated_fmus
-    let tests_dir = std::env::current_dir()
-        .unwrap()
-        .join("tests");
-    assert!(
-        tests_dir.exists(),
-        "The directory {} does not exist",
-        tests_dir.display()
-    );
-    tests_dir
 }
 
 fn get_vdm_check_jar(version: &str) -> PathBuf {

@@ -478,6 +478,8 @@ pub trait TestableFmu: BasicFmu {
 
     /// Breaks the model by adding an error/exception to the first line of
     /// the code.
+    /// 
+    /// CURRENTLY DOESN'T WORK FOR DISTRIBUTED FMUS
     fn break_model(&self) {
         inject_line(
             &self.model_file_path(),
@@ -488,6 +490,8 @@ pub trait TestableFmu: BasicFmu {
 
     /// Breaks the do_step function in the model by addind an error/exception
     /// after the function definition.
+    /// 
+    /// CURRENTLY DOESN'T WORK FOR DISTRIBUTED FMUS
     fn break_do_step_function(&self) {
         let injection = format!(
             "{}{}",
@@ -548,6 +552,7 @@ pub trait RemoteFileStructure: BasicFmu {
 }
 
 pub trait RemoteBackend: RemoteFileStructure {
+    /// Constructs the command for running the remote backend process.
     fn get_remote_command(&self, port: String) -> duct::Expression {
         let backend_process_cmd = match self.language() {
             FmuBackendImplementationLanguage::CSharp => duct::cmd!(
@@ -562,41 +567,13 @@ pub trait RemoteBackend: RemoteFileStructure {
         };
 
         backend_process_cmd.dir(self.backend_directory_path())
-
-        /* 
-
-        let mut backend_process_cmd = match self.language() {
-            FmuBackendImplementationLanguage::CSharp => process::Command::new("dotnet"),
-            FmuBackendImplementationLanguage::Java => process::Command::new("sh"),
-            FmuBackendImplementationLanguage::Python => process::Command::new("python3")
-        };
-
-        match self.language() {
-            FmuBackendImplementationLanguage::CSharp => {
-                backend_process_cmd
-                    .current_dir(self.backend_directory_path())
-                    .arg("run")
-                    .arg("backend.cs")
-                    .arg(port)
-            },
-            FmuBackendImplementationLanguage::Java => {
-                backend_process_cmd
-                    .current_dir(self.backend_directory_path())
-                    .arg("gradlew")
-                    .arg("run")
-                    .arg(format!("--args='{}'", port))
-            },
-            FmuBackendImplementationLanguage::Python => {
-                backend_process_cmd
-                    .arg(self.backend_directory_path().join("backend.py"))
-                    .arg(port)
-            }
-        };
-
-        return backend_process_cmd
-        */
     }
 
+    /// Starts the remote backend telling it to connect to the dispatcher
+    /// through the given port.
+    /// 
+    /// The subprocess containing the backend is started immediately and can be
+    /// interacted with through the returned duct::Handle.
     fn start_remote_backend(&self, port: String) -> duct::Handle{
         let backend_process_cmd = self.get_remote_command(port);
 
