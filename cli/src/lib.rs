@@ -139,6 +139,10 @@ lazy_static! {
                 "auto_generated/fmi2_messages_pb2.py",
                 "schemas/fmi2_messages_pb2.py"
             ),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
+            ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi2/README.md", "README.md"),
         ],
@@ -148,6 +152,10 @@ lazy_static! {
             (
                 "auto_generated/fmi3_messages_pb2.py",
                 "schemas/fmi3_messages_pb2.py"
+            ),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),
@@ -190,6 +198,10 @@ lazy_static! {
             (
                 "auto_generated/Fmi2Messages.java",
                 "src/main/java/Fmi2Messages.java"
+            ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
             ),
         ],
         fmi3_resources: vec![
@@ -235,6 +247,10 @@ lazy_static! {
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
@@ -263,6 +279,11 @@ lazy_static! {
             ("docker/README.md", "README_DOCKER.md"),
         ],
     };
+
+    static ref ASSETSPROXY: Vec<(&'static str, &'static str)> = vec![
+        ("proxy/launch.toml", "launch.toml"),
+        ("proxy/README.md", "README.md"),
+    ];
 
     static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
@@ -619,11 +640,8 @@ pub fn generate_distributed(
 
     // copy language specific files to 'resources' directory
 
-    let copy_to_resources_proxy =|assets: &LanguageAssets| {
-        let assets_all = match fmu_version {
-            FmiFmuVersion::FMI2 => assets.fmi2_resources.to_owned(),
-            FmiFmuVersion::FMI3 => assets.fmi3_resources.to_owned(),
-        };
+    let copy_to_resources_proxy =|assets: &Vec<(&'static str, &'static str)>| {
+        let assets_all = assets.to_owned();
 
         match fmu_version {
             FmiFmuVersion::FMI2 => {
@@ -688,8 +706,7 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else {
                 copy_to_resources(&PYTHONASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&PYTHONASSETSPROXY);
+            }
         }
 
         Language::CSharp => {
@@ -697,8 +714,7 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else{
                 copy_to_resources(&CSHARPASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&CSHARPASSETSPROXY);
+            }
         }
 
         Language::Java => {
@@ -706,10 +722,11 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else {
                 copy_to_resources(&JAVAASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&JAVAASSETSPROXY);
+            }
         }
     };
+
+    copy_to_resources_proxy(&ASSETSPROXY);
 
     // Settings for the proxy connection
     fs::write(dst_endpoint_file, toml).expect("Could not write to endpoint.toml file!");

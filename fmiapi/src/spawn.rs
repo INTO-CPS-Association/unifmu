@@ -3,13 +3,22 @@ use std::{
     path::Path,
 };
 
-use crate::dispatcher::{Dispatch, Dispatcher};
+use crate::dispatcher::{self, Dispatch, Dispatcher};
 
 use serde::Deserialize;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
-#[derive(Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+pub enum BackendLocation {
+    #[default]
+    Local,
+    Remote,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct LaunchConfig {
+    #[serde(default)]
+    pub location: BackendLocation,
     pub windows: Option<Vec<String>>,
     pub linux: Option<Vec<String>>,
     pub macos: Option<Vec<String>>,
@@ -39,8 +48,8 @@ impl LaunchConfig {
 
         let config: LaunchConfig = match toml::from_str(config.as_str()) {
             Ok(config) => config,
-            Err(_) => {
-                error!("configuration file was opened, but the contents does not appear to be valid");
+            Err(e) => {
+                error!("configuration file was opened, but the contents does not appear to be valid: {:?}", e);
                 return Err(());
             }
         };
@@ -123,15 +132,19 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<(Fmi2CommandDispatcher, 
 */
 
 pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
-    // grab launch command for host os
-    let launch_command = LaunchConfig::create(resource_path)?
-    .get_launch_command()?;
+    let config = LaunchConfig::create(resource_path)?;
 
-    info!("Establishing command dispatcher.");
-    let mut dispatcher = match Dispatcher::local(
-        resource_path,
-        &launch_command
-    ) {
+    debug!("{:?}", config);
+
+    let dispatcher_result = match config.location {
+        BackendLocation::Local => Dispatcher::local(
+            resource_path,
+            &config.get_launch_command()?
+        ),
+        BackendLocation::Remote => Dispatcher::remote()
+    };
+
+    let mut dispatcher = match dispatcher_result {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Couldn't create new dispatcher.");

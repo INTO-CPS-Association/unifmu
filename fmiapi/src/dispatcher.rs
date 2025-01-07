@@ -30,6 +30,7 @@ impl Dispatcher {
         resource_path: &Path,
         launch_command: &Vec<String>,
     ) -> DispatcherResult<Self> {
+        info!("Local dispatcher created.");
         Ok(Self::Local(LocalDispatcher::create(resource_path, launch_command)?))
     }
 
@@ -37,6 +38,7 @@ impl Dispatcher {
     /// 
     /// The backend must be initialized seperately.
     pub fn remote() -> DispatcherResult<Self> {
+        info!("Remote dispatcher created.");
         Ok(Self::Remote(RemoteDispatcher::create()?))
     }
 }
@@ -174,7 +176,7 @@ impl RemoteDispatcher {
         // a script for each language and FMI version that just reads some 
         // environement variables and prints them out.
         // We also avoid starting a subprocess and parsing a launch file.
-        info!(
+        println!(
             "Connect remote backend to dispatcher via endpoint {}",
             socket.endpoint
         );

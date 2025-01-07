@@ -2,6 +2,7 @@
 using System.IO;
 using System;
 using Fmi2Messages;
+using UnifmuHandshake;
 using System.Collections.Generic;
 using NetMQ.Sockets;
 using Google.Protobuf;
@@ -63,7 +64,9 @@ namespace Launch
             Console.WriteLine(YELLOW + "Socket connected successfully." + RESET);
 
 
-            IMessage message = new Fmi2EmptyReturn();
+            IMessage message = new HandshakeReply{
+                Status = HandshakeStatus.Ok
+            };
 
 
             socket.SendFrame(message.ToByteArray(), false);
