@@ -180,7 +180,7 @@ impl SlaveState {
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 
 pub static VERSION: &str = "2.0\0";
-pub static TYPES_PLATFORM: &str = "default";
+pub static TYPES_PLATFORM: &str = "default\0";
 #[no_mangle]
 pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
     TYPES_PLATFORM.as_ptr() as *const c_char
