@@ -170,11 +170,10 @@ impl RemoteDispatcher {
             BackendSocket::create("tcp://0.0.0.0:0")
         )?;
 
-        // Communicate portnumber that remote backend should connect to
-        println!(
-            "Connect remote backend to dispatcher via endpoint {}",
-            socket.endpoint
-        );
+        let port = &format!("{}", &socket.endpoint)[14..];
+
+        // Communicate the portnumber that remote backend should connect to
+        println!("Connect remote backend to dispatcher through port {port}");
 
         Ok(
             Self {

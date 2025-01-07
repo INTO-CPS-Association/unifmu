@@ -632,13 +632,15 @@ fn remote_fmu_python_test(
             Ok(line) => {
                 if line.contains("TEST FAILED") {
                     if remote_process.is_some() {
-                        remote_process.unwrap().kill();
+                        let _ = remote_process.unwrap().kill();
                     }
 
                     panic!("PYTHON {line}");
                 
-                } else if line.contains("Connect remote backend to dispatcher via endpoint") {
+                } else if line.contains("Connect remote backend to dispatcher through port") {
                     let port_string =  line[50..].to_string();
+
+                    println!("Connecting remote backend to fmu dispatcher through port {port_string}");
 
                     remote_process = Some(fmu.start_remote_backend(port_string));
 
@@ -648,7 +650,7 @@ fn remote_fmu_python_test(
             },
             Err(e) => {
                 if remote_process.is_some() {
-                    remote_process.unwrap().kill();
+                    let _ = remote_process.unwrap().kill();
                 }
 
                 panic!("Reading output from python test script returned error '{e}'");
@@ -659,6 +661,6 @@ fn remote_fmu_python_test(
     if remote_process.is_none() {
         panic!("Remote backend wasn't started!");
     } else {
-        remote_process.unwrap().wait();
+        let _ = remote_process.unwrap().wait();
     }
 }
