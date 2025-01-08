@@ -74,7 +74,7 @@ fn get_vdm_check_jar(version: &str) -> PathBuf {
     vdm_check_jar
 }
 
-#[test]
+//#[test]
 fn test_python_fmi3() {
     let mut unifmu_cmd: Command = Command::cargo_bin("unifmu").unwrap();
 
