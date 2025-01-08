@@ -33,7 +33,7 @@ def fmi2_version(fmu_filename: str):
 
         version = fmu.getVersion()
 
-        assert version == "default", f"FMU version was '{version}', should have been '2.0'"
+        assert version == "2.0", f"FMU version was '{version}', should have been '2.0'"
 
     except Exception as e:
         print(f"TEST FAILED - fmi2_version: {e}")
