@@ -1,5 +1,6 @@
 from fmpy import read_model_description
 from fmpy.fmi2 import FMU2Slave
+from fmpy.fmi3 import FMU3Slave
 
 def fmi2_instantiate(fmu_filename: str):
     try:
@@ -24,6 +25,30 @@ def fmi2_instantiate(fmu_filename: str):
 
     except Exception as e:
         print(f"TEST FAILED - fmi2_instantiate - termination: {e}")
+
+def fmi3_instantiate(fmu_filename: str):
+    try:
+        model_description = read_model_description(fmu_filename)
+
+        fmu = FMU3Slave(
+            guid = model_description.guid,
+            unzipDirectory = fmu_filename,
+            modelIdentifier = model_description.coSimulation.modelIdentifier,
+            instanceName='test_instance'
+        )
+
+        fmu.instantiate()
+
+    except Exception as e:
+        print(f"TEST FAILED - fmi3_instantiate - instantiation: {e}")
+        return
+
+    try:
+        fmu.terminate()
+        fmu.freeInstance()
+
+    except Exception as e:
+        print(f"TEST FAILED - fmi3_instantiate - termination: {e}")
 
 def fmi2_full_functionality(fmu_filename: str):
     try:
