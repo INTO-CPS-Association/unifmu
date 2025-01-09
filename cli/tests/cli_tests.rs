@@ -278,61 +278,61 @@ fn test_instantiate_python_fmi2_distributed() {
 }
 
 #[test]
-fn test_fmu_simulation_csharp_fmi2_local() {
+fn test_simulate_csharp_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::CSharp
     );
 
-    fmu_python_test(fmu, "fmi2_simulation");
+    fmu_python_test(fmu, "fmi2_simulate");
 }
 
 #[test]
-fn test_fmu_simulation_java_fmi2_local() {
+fn test_simulate_java_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::Java
     );
 
-    fmu_python_test(fmu, "fmi2_simulation");
+    fmu_python_test(fmu, "fmi2_simulate");
 }
 
 #[test]
-fn test_fmu_simulation_python_fmi2_local() {
+fn test_simulate_python_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::Python
     );
 
-    fmu_python_test(fmu, "fmi2_simulation");
+    fmu_python_test(fmu, "fmi2_simulate");
 }
 
 #[test]
-fn test_fmu_simulation_csharp_fmi2_distributed() {
+fn test_simulate_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::CSharp
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_simulation");
+    distributed_fmu_python_test(fmu, "fmi2_simulate");
 }
 
 #[test]
-fn test_fmu_simulation_java_fmi2_distributed() {
+fn test_simulate_java_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::Java
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_simulation");
+    distributed_fmu_python_test(fmu, "fmi2_simulate");
 }
 
 #[test]
-fn test_fmu_simulation_python_fmi2_distributed() {
+fn test_simulate_python_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::Python
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_simulation");
+    distributed_fmu_python_test(fmu, "fmi2_simulate");
 }

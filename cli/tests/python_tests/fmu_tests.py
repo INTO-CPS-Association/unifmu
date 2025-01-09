@@ -62,7 +62,7 @@ def fmi2_instantiate(fmu_filename: str):
     except Exception as e:
         print(f"TEST FAILED - fmi2_instantiate - termination: {e}")
 
-def fmi2_simulation(fmu_filename: str):
+def fmi2_simulate(fmu_filename: str):
     try:
         model_description = read_model_description(fmu_filename)
 
@@ -76,7 +76,7 @@ def fmi2_simulation(fmu_filename: str):
         fmu.instantiate()
     
     except Exception as e:
-        print(f"TEST FAILED - fmi2_simulation - instantiation: {e}")
+        print(f"TEST FAILED - fmi2_simulate - instantiation: {e}")
         return
 
     try:
@@ -193,7 +193,7 @@ def fmi2_simulation(fmu_filename: str):
             assert string_c == "", f"Rerolled value string_c was '{string_c}', should have been ''"
         
     except Exception as e:
-        print(f"TEST FAILED - fmi2_simulation: {e}")
+        print(f"TEST FAILED - fmi2_simulate: {e}")
 
         # Blindly try terminating to ensure distributed backend exits.
         # Ignore exceptions as test already failed.
@@ -210,7 +210,7 @@ def fmi2_simulation(fmu_filename: str):
         fmu.freeInstance()
 
     except Exception as e:
-        print(f"TEST FAILED - fmi2_simulation - termination: {e}")
+        print(f"TEST FAILED - fmi2_simulate - termination: {e}")
 
 def fmi3_version(fmu_filename: str):
     try:
