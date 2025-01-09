@@ -73,6 +73,39 @@ fn test_vdm_check_python_fmi2_distributed() {
 
 // Failing due to a bug in fmpy (?)
 //#[test]
+fn test_platform_csharp_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu_python_test(fmu, "fmi2_platform");
+}
+
+// Failing due to a bug in fmpy (?)
+//#[test]
+fn test_platform_java_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    fmu_python_test(fmu, "fmi2_platform");
+}
+
+// Failing due to a bug in fmpy (?)
+//#[test]
+fn test_platform_python_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_platform");
+}
+
+// Failing due to a bug in fmpy (?)
+//#[test]
 fn test_platform_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -102,6 +135,36 @@ fn test_platform_python_fmi2_distributed() {
     );
 
     fmu_python_test(fmu, "fmi2_platform");
+}
+
+#[test]
+fn test_version_csharp_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu_python_test(fmu, "fmi2_version");
+}
+
+#[test]
+fn test_version_java_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    fmu_python_test(fmu, "fmi2_version");
+}
+
+#[test]
+fn test_version_python_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_version");
 }
 
 #[test]
@@ -135,6 +198,36 @@ fn test_version_python_fmi2_distributed() {
 }
 
 #[test]
+fn test_instantiate_csharp_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate");
+}
+
+#[test]
+fn test_instantiate_java_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate");
+}
+
+#[test]
+fn test_instantiate_python_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate");
+}
+
+#[test]
 fn test_instantiate_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -162,6 +255,36 @@ fn test_instantiate_python_fmi2_distributed() {
     );
 
     distributed_fmu_python_test(fmu, "fmi2_instantiate");
+}
+
+#[test]
+fn test_fmu_simulation_csharp_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu_python_test(fmu, "fmi2_simulation");
+}
+
+#[test]
+fn test_fmu_simulation_java_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    fmu_python_test(fmu, "fmi2_simulation");
+}
+
+#[test]
+fn test_fmu_simulation_python_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_simulation");
 }
 
 #[test]
