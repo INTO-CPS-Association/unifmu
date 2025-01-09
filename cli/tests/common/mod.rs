@@ -279,6 +279,15 @@ impl BasicFmu for LocalFmu {
     ) -> String {
         format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
     }
+
+    fn importable_path(&self) -> PathBuf {
+        self.directory()
+            .path()
+            .join(Self::fmu_name(
+                self.version(),
+                self.language()
+            ))
+    }
 }
 
 impl TestableFmu for LocalFmu {
@@ -333,15 +342,6 @@ impl TestableFmu for LocalFmu {
         };
 
         args
-    }
-
-    fn importable_path(&self) -> PathBuf {
-        self.directory()
-            .path()
-            .join(Self::fmu_name(
-                self.version(),
-                self.language()
-            ))
     }
 
     fn model_file_path(&self) -> PathBuf {
@@ -433,12 +433,6 @@ impl BasicFmu for ZippedLocalFmu {
     ) -> String {
         format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
     }
-}
-
-impl ZippedTestableFmu for ZippedLocalFmu {
-    fn file(self) -> File {
-        self.file
-    }
 
     fn importable_path(&self) -> PathBuf {
         self.directory()
@@ -447,6 +441,12 @@ impl ZippedTestableFmu for ZippedLocalFmu {
                 self.version(),
                 self.language()
             ))
+    }
+}
+
+impl ZippedTestableFmu for ZippedLocalFmu {
+    fn file(self) -> File {
+        self.file
     }
 }
 
@@ -468,6 +468,10 @@ impl BasicFmu for DistributedFmu {
         language: &FmuBackendImplementationLanguage
     ) -> String {
         format!("distributed_{}fmu_{}", language.cmd_str(), version.as_str())
+    }
+    
+    fn importable_path(&self) -> PathBuf {
+        self.proxy_directory_path()
     }
 }
 
@@ -531,10 +535,6 @@ impl TestableFmu for DistributedFmu {
         };
 
         args
-    }
-    
-    fn importable_path(&self) -> PathBuf {
-        self.proxy_directory_path()
     }
 
     fn model_file_path(&self) -> PathBuf {
@@ -631,6 +631,10 @@ impl BasicFmu for ZippedDistributedFmu {
     ) -> String {
         format!("distributed_{}fmu_{}", language.cmd_str(), version.as_str())
     }
+
+    fn importable_path(&self) -> PathBuf {
+        self.proxy_directory_path()
+    }
 }
 
 impl DistributedFileStructure for ZippedDistributedFmu {
@@ -645,10 +649,6 @@ impl ZippedTestableFmu for ZippedDistributedFmu {
     fn file(self) -> File {
         self.file
     }
-
-    fn importable_path(&self) -> PathBuf {
-        self.proxy_directory_path()
-    }
 }
 
 pub trait BasicFmu {
@@ -662,6 +662,8 @@ pub trait BasicFmu {
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> String;
+
+    fn importable_path(&self) -> PathBuf;
 }
 
 pub trait TestableFmu: BasicFmu {
@@ -676,8 +678,6 @@ pub trait TestableFmu: BasicFmu {
     ) -> Self;
 
     fn cmd_args(&self) -> Vec<String>;
-
-    fn importable_path(&self) -> PathBuf;
 
     fn model_file_path(&self) -> PathBuf;
 
@@ -751,8 +751,6 @@ pub trait TestableFmu: BasicFmu {
 
 pub trait ZippedTestableFmu: BasicFmu {
     fn file(self) -> File;
-
-    fn importable_path(&self) -> PathBuf;
 }
 
 pub trait DistributedFileStructure: BasicFmu {
