@@ -123,6 +123,68 @@ fn start_python_test_process(
         .expect("Should be able to start python test process")
 }
 
+pub fn vdm_check(fmu: impl TestableFmu) {
+    let test_dependencies = std::env::current_dir()
+        .expect("Couldn't access current directory")
+        .parent()
+        .expect("Current directory does not have a parent")
+        .join("test_dependencies");
+
+    assert!(
+        test_dependencies.exists(),
+        "The directory {}, which should contain the vdm check dependency, does not exist",
+        test_dependencies.display()
+    );
+
+    let version_string = match fmu.version() {
+        FmiVersion::Fmi2 => "2",
+        FmiVersion::Fmi3 => "3"
+    };
+
+    let vdm_check_root_name = format!("vdmcheck{version_string}");
+    let vdm_check_jar_name = format!("{vdm_check_root_name}.jar");
+
+    let test_dependencies_unopenable = format!(
+        "Couldn't open test dependencies directory {}",
+        test_dependencies.display()
+    );
+
+    let vdm_check_directory_not_found = format!(
+        "No vdm_check directory found in {}",
+        test_dependencies.display()
+    );
+
+    let vdm_check_dir = test_dependencies.read_dir()
+        .expect(&test_dependencies_unopenable)
+        .filter_map(|entry| entry.ok())
+        .find(|entry| {
+            entry.file_name()
+                .to_string_lossy()
+                .starts_with(&vdm_check_root_name)
+        })
+        .expect(&vdm_check_directory_not_found)
+        .path();
+
+    let vdm_check_jar = vdm_check_dir.join(vdm_check_jar_name);
+
+    assert!(
+        vdm_check_jar.exists(),
+        "{} not found in {}",
+        vdm_check_jar.display(),
+        vdm_check_dir.display()
+    );
+
+    let mut vdm_check_cmd = Command::new("java");
+
+    vdm_check_cmd
+        .arg("-jar")
+        .arg(vdm_check_jar)
+        .arg(fmu.importable_path())
+        .assert()
+        .success()
+        .stdout(contains("No errors found"));
+}
+
 #[derive(Clone)]
 pub enum FmuBackendImplementationLanguage {
     CSharp,

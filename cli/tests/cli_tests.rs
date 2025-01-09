@@ -3,11 +3,42 @@ mod common;
 use common::{
     distributed_fmu_python_test,
     fmu_python_test,
+    vdm_check,
     TestableFmu,
     DistributedFmu,
     FmiVersion,
     FmuBackendImplementationLanguage
 };
+
+#[test]
+fn test_vdm_check_csharp_fmi2_distributed() {
+    let fmu = DistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    vdm_check(fmu);
+}
+
+#[test]
+fn test_vdm_check_java_fmi2_distributed() {
+    let fmu = DistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    vdm_check(fmu);
+}
+
+#[test]
+fn test_vdm_check_python_fmi2_distributed() {
+    let fmu = DistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    vdm_check(fmu);
+}
 
 // Failing due to a bug in fmpy (?)
 //#[test]
