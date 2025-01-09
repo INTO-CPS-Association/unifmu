@@ -308,6 +308,16 @@ fn test_simulate_python_fmi2_local() {
 }
 
 #[test]
+fn test_simulate_python_fmi3_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi3, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi3_simulate");
+}
+
+#[test]
 fn test_simulate_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
