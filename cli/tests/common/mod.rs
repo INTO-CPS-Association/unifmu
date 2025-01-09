@@ -15,7 +15,7 @@ use walkdir::WalkDir;
 use zip::CompressionMethod;
 
 pub fn fmu_python_test(
-    fmu: impl TestableFmu,
+    fmu: impl BasicFmu,
     python_test_function_name: &str
 ) {
     let python_test_process = start_python_test_process(
