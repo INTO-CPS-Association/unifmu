@@ -124,6 +124,8 @@ fn start_python_test_process(
 }
 
 pub fn vdm_check(fmu: impl TestableFmu) {
+    let fmu = fmu.zipped();
+
     let test_dependencies = std::env::current_dir()
         .expect("Couldn't access current directory")
         .parent()
@@ -412,9 +414,39 @@ impl Clone for LocalFmu {
     }
 }
 
+impl BasicFmu for ZippedLocalFmu {
+    fn directory(&self) -> &TempDir {
+        &self.directory
+    }
+
+    fn language(&self) -> &FmuBackendImplementationLanguage {
+        &self.language
+    }
+
+    fn version(&self) -> &FmiVersion {
+        &self.version
+    }
+
+    fn fmu_name(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> String {
+        format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
+    }
+}
+
 impl ZippedTestableFmu for ZippedLocalFmu {
     fn file(self) -> File {
         self.file
+    }
+
+    fn importable_path(&self) -> PathBuf {
+        self.directory()
+            .path()
+            .join(Self::fmu_name(
+                self.version(),
+                self.language()
+            ))
     }
 }
 
@@ -613,6 +645,10 @@ impl ZippedTestableFmu for ZippedDistributedFmu {
     fn file(self) -> File {
         self.file
     }
+
+    fn importable_path(&self) -> PathBuf {
+        self.proxy_directory_path()
+    }
 }
 
 pub trait BasicFmu {
@@ -713,8 +749,10 @@ pub trait TestableFmu: BasicFmu {
     }
 }
 
-pub trait ZippedTestableFmu {
+pub trait ZippedTestableFmu: BasicFmu {
     fn file(self) -> File;
+
+    fn importable_path(&self) -> PathBuf;
 }
 
 pub trait DistributedFileStructure: BasicFmu {
