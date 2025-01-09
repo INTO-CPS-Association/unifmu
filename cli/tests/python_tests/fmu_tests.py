@@ -212,6 +212,24 @@ def fmi2_simulation(fmu_filename: str):
     except Exception as e:
         print(f"TEST FAILED - fmi2_simulation - termination: {e}")
 
+def fmi3_version(fmu_filename: str):
+    try:
+        model_description = read_model_description(fmu_filename)
+
+        fmu = FMU3Slave(
+            guid = model_description.guid,
+            unzipDirectory = fmu_filename,
+            modelIdentifier = model_description.coSimulation.modelIdentifier,
+            instanceName='test_instance'
+        )
+
+        version = fmu.getVersion()
+
+        assert version == "3.0", f"FMU version was '{version}', should have been '3.0'"
+
+    except Exception as e:
+        print(f"TEST FAILED - fmi3_version: {e}")
+
 def fmi3_instantiate(fmu_filename: str):
     try:
         model_description = read_model_description(fmu_filename)

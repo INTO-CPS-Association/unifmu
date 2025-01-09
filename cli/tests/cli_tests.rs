@@ -42,6 +42,16 @@ fn test_vdm_check_python_fmi2_local() {
 }
 
 #[test]
+fn test_vdm_check_python_fmi3_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi3, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    vdm_check(fmu);
+}
+
+#[test]
 fn test_vdm_check_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -165,6 +175,16 @@ fn test_version_python_fmi2_local() {
     );
 
     fmu_python_test(fmu, "fmi2_version");
+}
+
+#[test]
+fn test_version_python_fmi3_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi3, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi3_version");
 }
 
 #[test]
