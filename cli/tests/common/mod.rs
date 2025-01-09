@@ -14,6 +14,15 @@ use unifmu::utils::zip_dir;
 use walkdir::WalkDir;
 use zip::CompressionMethod;
 
+/// Pass the FMU to the given test function in a python subprocess
+/// 
+/// Monitors the output of this subprocess, and if
+/// the subprocess returns a TEST FAILED message, this function panics with
+/// "PYTHON " + that message.
+/// 
+/// Should NOT be called with a Distributed FMU and a python function that
+/// instantiates that FMU as part of the test.
+/// Distributed FMUs that aren't instantiated during testing are ok.
 pub fn fmu_python_test(
     fmu: impl BasicFmu,
     python_test_function_name: &str
@@ -42,6 +51,17 @@ pub fn fmu_python_test(
     }
 }
 
+/// Pass the Distributed FMU to the given test function in a python subprocess,
+/// and start the private backend when the FMU is instantiated.
+/// 
+/// Monitors the output of this subprocess, and if
+/// the subprocess returns a TEST FAILED message, this function panics with
+/// "PYTHON " + that message.
+///
+/// If for whatever reason the private backend wasn't started, this function
+/// panics.
+/// As such this hould ONLY be called with Distributed FMUs that are
+/// instantiated as part of the test.
 pub fn distributed_fmu_python_test(
     fmu: DistributedFmu,
     python_test_function_name: &str
@@ -93,6 +113,9 @@ pub fn distributed_fmu_python_test(
     }
 }
 
+/// Starts the python test subprocess, returning a duct::ReaderHandle to it.
+/// 
+/// Panics if the test script isn't available or cannot be executed.
 fn start_python_test_process(
     python_test_function_name: &str,
     fmu_path: impl Into<OsString>
@@ -123,6 +146,10 @@ fn start_python_test_process(
         .expect("Should be able to start python test process")
 }
 
+/// Checks the validity of the FMU model description byt converting it to
+/// VDM-SL and comparing them to a prebuild model.
+/// 
+/// Panics if the vdmcheck tool isn't available or if it returns an error.
 pub fn vdm_check(fmu: impl TestableFmu) {
     let fmu = fmu.zipped();
 
@@ -663,6 +690,7 @@ pub trait BasicFmu {
         language: &FmuBackendImplementationLanguage
     ) -> String;
 
+    /// Path to the directory/zip-file that contains the FMU binary.
     fn importable_path(&self) -> PathBuf;
 }
 

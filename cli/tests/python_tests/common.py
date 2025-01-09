@@ -1,11 +1,30 @@
 from collections.abc import Callable
 from fmpy import read_model_description
+from fmpy.model_description import ModelDescription
+from fmpy.fmi2 import FMU2Slave
+from fmpy.fmi3 import FMU3Slave
 
+"""Test wrapper that only imports the FMU without instantiating it.
+
+Parameters
+----------
+caller : str
+    Name of the outer function. Used in failure messages to specify where the
+    failure was.
+inner_function : Callable[[FMU2Slave | FMU3Slave]]
+    Function containing the actual tests. Any exception in this function is
+    treated as test failure.
+fmu_filename : str
+    Full filename of the file containing the FMU. Currently the tests assume an
+    unzipped FMU, so this should be the full name of the unzipped FMU directory.
+fmu_class : FMU2Slave | FMU3Slave
+    Class name of the fmpy FMU object to create from the given fmu_filename.
+"""
 def uninstantiating_test(
     caller: str,
     inner_function: Callable,
     fmu_filename: str,
-    fmu_class
+    fmu_class: FMU2Slave | FMU3Slave
 ):
     try:
         model_description = read_model_description(fmu_filename)
@@ -22,9 +41,27 @@ def uninstantiating_test(
     except Exception as e:
         print(f"TEST FAILED - {caller}: {e}")
 
+"""Test wrapper that only imports and instantiates the FMU.
 
+Parameters
+----------
+caller : str
+    Name of the outer function. Used in failure messages to specify where the
+    failure was.
+inner_function :  Callable[[FMU2Slave | FMU3Slave, ModelDescription]]
+    Function containing the actual tests. Any exception in this function is
+    treated as test failure.
+fmu_filename : str
+    Full filename of the file containing the FMU. Currently the tests assume an
+    unzipped FMU, so this should be the full name of the unzipped FMU directory.
+fmu_class : FMU2Slave | FMU3Slave
+    Class name of the fmpy FMU object to create from the given fmu_filename.
+"""
 def instantiating_test(
-    caller: str, inner_function: Callable, fmu_filename: str, fmu_class
+    caller: str,
+    inner_function: Callable,
+    fmu_filename: str,
+    fmu_class: FMU2Slave | FMU3Slave
 ):
     try:
         model_description = read_model_description(fmu_filename)

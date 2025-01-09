@@ -1,9 +1,10 @@
 from common import uninstantiating_test, instantiating_test
+from fmpy.model_description import ModelDescription
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
 
 def fmi2_platform(fmu_filename: str):
-    def inner(fmu):
+    def inner(fmu: FMU2Slave):
         platform = fmu.getTypesPlatform()
 
         assert platform == "default", f"FMU platform was '{platform}', should have been 'default'"
@@ -16,7 +17,7 @@ def fmi2_platform(fmu_filename: str):
     )
 
 def fmi2_version(fmu_filename: str):
-    def inner(fmu):
+    def inner(fmu: FMU2Slave):
         version = fmu.getVersion()
 
         assert version == "2.0", f"FMU version was '{version}', should have been '2.0'"
@@ -29,7 +30,7 @@ def fmi2_version(fmu_filename: str):
     )
 
 def fmi2_instantiate(fmu_filename: str):
-    def inner(fmu, model_description):
+    def inner(fmu: FMU2Slave, model_description: ModelDescription):
         pass
 
     instantiating_test(
@@ -41,7 +42,7 @@ def fmi2_instantiate(fmu_filename: str):
     
 
 def fmi2_simulate(fmu_filename: str):
-    def inner(fmu, model_description):
+    def inner(fmu: FMU2Slave, model_description: ModelDescription):
         start_time = 0.0
         sim_time = start_time
         step_size = 1e-2
@@ -162,7 +163,7 @@ def fmi2_simulate(fmu_filename: str):
     )
 
 def fmi3_version(fmu_filename: str):
-    def inner(fmu):
+    def inner(fmu: FMU3Slave):
         version = fmu.getVersion()
 
         assert version == "3.0", f"FMU version was '{version}', should have been '3.0'"
@@ -175,7 +176,7 @@ def fmi3_version(fmu_filename: str):
     )
 
 def fmi3_instantiate(fmu_filename: str):
-    def inner(fmu, model_description):
+    def inner(fmu: FMU3Slave, model_description: ModelDescription):
         pass
 
     instantiating_test(
@@ -186,7 +187,7 @@ def fmi3_instantiate(fmu_filename: str):
     )
 
 def fmi3_simulate(fmu_filename: str):
-    def inner(fmu, model_description):
+    def inner(fmu: FMU3Slave, model_description: ModelDescription):
         can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
     
         if can_handle_state:
