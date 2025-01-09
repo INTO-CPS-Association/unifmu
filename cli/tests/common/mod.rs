@@ -14,13 +14,13 @@ use unifmu::utils::zip_dir;
 use walkdir::WalkDir;
 use zip::CompressionMethod;
 
-pub fn local_fmu_python_test(
-    fmu: LocalFmu,
+pub fn fmu_python_test(
+    fmu: impl TestableFmu,
     python_test_function_name: &str
 ) {
     let python_test_process = start_python_test_process(
         python_test_function_name,
-        fmu.pathname()
+        fmu.importable_path()
     );
 
     let python_test_output_reader = BufReader::new(&python_test_process);
@@ -48,7 +48,7 @@ pub fn distributed_fmu_python_test(
 ) {
     let python_test_process = start_python_test_process(
         python_test_function_name,
-        fmu.proxy_directory_path()
+        fmu.importable_path()
     );
 
     let python_test_output_reader = BufReader::new(&python_test_process);
@@ -196,17 +196,6 @@ pub struct ZippedDistributedFmu {
     version: FmiVersion,
 }
 
-impl LocalFmu {
-    fn pathname(&self) -> impl Into<OsString> {
-        self.directory()
-            .path()
-            .join(Self::fmu_name(
-                self.version(),
-                self.language()
-            ))
-    }
-}
-
 impl BasicFmu for LocalFmu {
     fn directory(&self) -> &TempDir {
         &self.directory
@@ -280,6 +269,15 @@ impl TestableFmu for LocalFmu {
         };
 
         args
+    }
+
+    fn importable_path(&self) -> PathBuf {
+        self.directory()
+            .path()
+            .join(Self::fmu_name(
+                self.version(),
+                self.language()
+            ))
     }
 
     fn model_file_path(&self) -> PathBuf {
@@ -440,6 +438,10 @@ impl TestableFmu for DistributedFmu {
 
         args
     }
+    
+    fn importable_path(&self) -> PathBuf {
+        self.proxy_directory_path()
+    }
 
     fn model_file_path(&self) -> PathBuf {
         self.backend_directory_path()
@@ -576,6 +578,8 @@ pub trait TestableFmu: BasicFmu {
     ) -> Self;
 
     fn cmd_args(&self) -> Vec<String>;
+
+    fn importable_path(&self) -> PathBuf;
 
     fn model_file_path(&self) -> PathBuf;
 

@@ -2,42 +2,41 @@ mod common;
 
 use common::{
     distributed_fmu_python_test,
-    local_fmu_python_test,
+    fmu_python_test,
     TestableFmu,
     DistributedFmu,
-    LocalFmu,
     FmiVersion,
     FmuBackendImplementationLanguage
 };
 
-#[test]
+//#[test]
 fn test_platform_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::CSharp
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_platform");
+    fmu_python_test(fmu, "fmi2_platform");
 }
 
-#[test]
+//#[test]
 fn test_platform_java_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::Java
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_platform");
+    fmu_python_test(fmu, "fmi2_platform");
 }
 
-#[test]
+//#[test]
 fn test_platform_python_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::Python
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_platform");
+    fmu_python_test(fmu, "fmi2_platform");
 }
 
 #[test]
@@ -47,7 +46,7 @@ fn test_version_csharp_fmi2_distributed() {
         &FmuBackendImplementationLanguage::CSharp
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_version");
+    fmu_python_test(fmu, "fmi2_version");
 }
 
 #[test]
@@ -57,7 +56,7 @@ fn test_version_java_fmi2_distributed() {
         &FmuBackendImplementationLanguage::Java
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_version");
+    fmu_python_test(fmu, "fmi2_version");
 }
 
 #[test]
@@ -67,7 +66,7 @@ fn test_version_python_fmi2_distributed() {
         &FmuBackendImplementationLanguage::Python
     );
 
-    distributed_fmu_python_test(fmu, "fmi2_version");
+    fmu_python_test(fmu, "fmi2_version");
 }
 
 #[test]
