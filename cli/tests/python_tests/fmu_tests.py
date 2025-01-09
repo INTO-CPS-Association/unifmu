@@ -1,85 +1,47 @@
-from fmpy import read_model_description
+from common import uninstantiating_test, instantiating_test
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
 
 def fmi2_platform(fmu_filename: str):
-    try:
-        model_description = read_model_description(fmu_filename)
-
-        fmu = FMU2Slave(
-            guid = model_description.guid,
-            unzipDirectory = fmu_filename,
-            modelIdentifier = model_description.coSimulation.modelIdentifier,
-            instanceName='test_instance'
-        )
-
+    def inner(fmu):
         platform = fmu.getTypesPlatform()
 
         assert platform == "default", f"FMU platform was '{platform}', should have been 'default'"
 
-    except Exception as e:
-        print(f"TEST FAILED - fmi2_platform: {e}")
+    uninstantiating_test(
+        caller = "fmi2_platform",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU2Slave
+    )
 
 def fmi2_version(fmu_filename: str):
-    try:
-        model_description = read_model_description(fmu_filename)
-
-        fmu = FMU2Slave(
-            guid = model_description.guid,
-            unzipDirectory = fmu_filename,
-            modelIdentifier = model_description.coSimulation.modelIdentifier,
-            instanceName='test_instance'
-        )
-
+    def inner(fmu):
         version = fmu.getVersion()
 
         assert version == "2.0", f"FMU version was '{version}', should have been '2.0'"
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi2_version: {e}")
+    
+    uninstantiating_test(
+        caller = "fmi2_version",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU2Slave
+    )
 
 def fmi2_instantiate(fmu_filename: str):
-    try:
-        model_description = read_model_description(fmu_filename)
+    def inner(fmu, model_description):
+        pass
 
-        fmu = FMU2Slave(
-            guid = model_description.guid,
-            unzipDirectory = fmu_filename,
-            modelIdentifier = model_description.coSimulation.modelIdentifier,
-            instanceName='test_instance'
-        )
-
-        fmu.instantiate()
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi2_instantiate - instantiation: {e}")
-        return
-
-    try:
-        fmu.terminate()
-        fmu.freeInstance()
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi2_instantiate - termination: {e}")
+    instantiating_test(
+        caller = "fmi2_instantiate",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU2Slave
+    )
+    
 
 def fmi2_simulate(fmu_filename: str):
-    try:
-        model_description = read_model_description(fmu_filename)
-
-        fmu = FMU2Slave(
-            guid = model_description.guid,
-            unzipDirectory = fmu_filename,
-            modelIdentifier = model_description.coSimulation.modelIdentifier,
-            instanceName='test_instance'
-        )
-
-        fmu.instantiate()
-    
-    except Exception as e:
-        print(f"TEST FAILED - fmi2_simulate - instantiation: {e}")
-        return
-
-    try:
+    def inner(fmu, model_description):
         start_time = 0.0
         sim_time = start_time
         step_size = 1e-2
@@ -192,86 +154,39 @@ def fmi2_simulate(fmu_filename: str):
             assert string_b == "", f"Rerolled value string_b was '{string_b}', should have been ''"
             assert string_c == "", f"Rerolled value string_c was '{string_c}', should have been ''"
         
-    except Exception as e:
-        print(f"TEST FAILED - fmi2_simulate: {e}")
-
-        # Blindly try terminating to ensure distributed backend exits.
-        # Ignore exceptions as test already failed.
-        try:
-            fmu.terminate()
-            fmu.freeInstance()
-        except Exception:
-            {}
-
-        return
-
-    try:
-        fmu.terminate()
-        fmu.freeInstance()
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi2_simulate - termination: {e}")
+    instantiating_test(
+        caller = "fmi2_simulate",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU2Slave
+    )
 
 def fmi3_version(fmu_filename: str):
-    try:
-        model_description = read_model_description(fmu_filename)
-
-        fmu = FMU3Slave(
-            guid = model_description.guid,
-            unzipDirectory = fmu_filename,
-            modelIdentifier = model_description.coSimulation.modelIdentifier,
-            instanceName='test_instance'
-        )
-
+    def inner(fmu):
         version = fmu.getVersion()
 
-        assert version == "3.0", f"FMU version was '{version}', should have been '3.0'"
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi3_version: {e}")
+        assert version == "3.0", f"FMU version was '{version}', should have been '2.0'"
+    
+    uninstantiating_test(
+        caller = "fmi3_version",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU3Slave
+    )
 
 def fmi3_instantiate(fmu_filename: str):
-    try:
-        model_description = read_model_description(fmu_filename)
+    def inner(fmu, model_description):
+        pass
 
-        fmu = FMU3Slave(
-            guid = model_description.guid,
-            unzipDirectory = fmu_filename,
-            modelIdentifier = model_description.coSimulation.modelIdentifier,
-            instanceName='test_instance'
-        )
-
-        fmu.instantiate()
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi3_instantiate - instantiation: {e}")
-        return
-
-    try:
-        fmu.terminate()
-        fmu.freeInstance()
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi3_instantiate - termination: {e}")
+    instantiating_test(
+        caller = "fmi3_instantiate",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU3Slave
+    )
 
 def fmi3_simulate(fmu_filename: str):
-    try:
-        model_description = read_model_description(fmu_filename)
-
-        fmu = FMU3Slave(
-            guid = model_description.guid,
-            unzipDirectory = fmu_filename,
-            modelIdentifier = model_description.coSimulation.modelIdentifier,
-            instanceName='test_instance'
-        )
-
-        fmu.instantiate()
-    
-    except Exception as e:
-        print(f"TEST FAILED - fmi3_simulate - instantiation: {e}")
-        return
-
-    try:
+    def inner(fmu, model_description):
         can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
     
         if can_handle_state:
@@ -437,25 +352,12 @@ def fmi3_simulate(fmu_filename: str):
         assert string_c == "Hello, World!"
     
         
-    except Exception as e:
-        print(f"TEST FAILED - fmi3_simulate: {e}")
-
-        # Blindly try terminating to ensure distributed backend exits.
-        # Ignore exceptions as test already failed.
-        try:
-            fmu.terminate()
-            fmu.freeInstance()
-        except Exception:
-            {}
-
-        return
-
-    try:
-        fmu.terminate()
-        fmu.freeInstance()
-
-    except Exception as e:
-        print(f"TEST FAILED - fmi3_simulate - termination: {e}")
+    instantiating_test(
+        caller = "fmi3_simulate",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU3Slave
+    )
 
 if __name__ == "__main__":
     import sys
