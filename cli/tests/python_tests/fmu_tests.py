@@ -115,7 +115,7 @@ def fmi2_simulation(fmu_filename: str):
         assert real_a == 0.0, f"Initially fetched value real_a was {real_a}, should have been 0.0"
         assert real_b == 0.0, f"Initially fetched value real_b was {real_b}, should have been 0.0"   
         assert real_c == 0.0, f"Initially fetched value real_c was {real_c}, should have been 0.0"
-        assert integer_a == 5, f"Initially fetched value integer_a was {integer_a}, should have been 0"
+        assert integer_a == 0, f"Initially fetched value integer_a was {integer_a}, should have been 0"
         assert integer_b == 0, f"Initially fetched value integer_b was {integer_b}, should have been 0"
         assert integer_c == 0, f"Initially fetched value integer_c was {integer_c}, should have been 0"
         assert boolean_a == False, f"Initially fetched value boolean_a was {boolean_a}, should have been False"
