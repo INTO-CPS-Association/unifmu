@@ -9,6 +9,7 @@ use common::{
     FmuBackendImplementationLanguage
 };
 
+// Failing due to a bug in fmpy (?)
 //#[test]
 fn test_platform_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
@@ -19,6 +20,7 @@ fn test_platform_csharp_fmi2_distributed() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
+// Failing due to a bug in fmpy (?)
 //#[test]
 fn test_platform_java_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
@@ -29,6 +31,7 @@ fn test_platform_java_fmi2_distributed() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
+// Failing due to a bug in fmpy (?)
 //#[test]
 fn test_platform_python_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
