@@ -165,7 +165,7 @@ def fmi3_version(fmu_filename: str):
     def inner(fmu):
         version = fmu.getVersion()
 
-        assert version == "3.0", f"FMU version was '{version}', should have been '2.0'"
+        assert version == "3.0", f"FMU version was '{version}', should have been '3.0'"
     
     uninstantiating_test(
         caller = "fmi3_version",
