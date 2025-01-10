@@ -329,7 +329,6 @@ impl BasicFmu for LocalFmu {
 }
 
 impl TestableFmu for LocalFmu {
-    /// Creates an entirely new FMU in a temporary directory.
     fn new(
         version: FmiVersion,
         language: FmuBackendImplementationLanguage
@@ -347,8 +346,6 @@ impl TestableFmu for LocalFmu {
         this
     }
 
-    /// Gets a clone of a lazily evaluated static FMU wit the
-    /// given FMI version and backend implementation language.
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -389,8 +386,6 @@ impl TestableFmu for LocalFmu {
             .join(self.language.model_str())
     }
 
-    /// Copies the contents of this FMU and zips them in a new temporary
-    /// directory, returning a ZippedTestFmu with the zipped file.
     fn zipped(&self) -> impl ZippedTestableFmu {
         let new_directory = TempDir::new()
             .expect("Should be able to create new temporary FMU directory.");
@@ -522,7 +517,6 @@ impl DistributedFileStructure for DistributedFmu {
 impl RemoteBackend for DistributedFmu {}
 
 impl TestableFmu for DistributedFmu {
-    /// Creates an entirely new FMU in a temporary directory.
     fn new(
         version: FmiVersion,
         language: FmuBackendImplementationLanguage
@@ -540,8 +534,6 @@ impl TestableFmu for DistributedFmu {
         this
     }
 
-    /// Gets a clone of a lazily evaluated static FMU wit the
-    /// given FMI version and backend implementation language.
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -581,8 +573,6 @@ impl TestableFmu for DistributedFmu {
     }
 
     #[allow(refining_impl_trait)]
-    /// Copies the contents of this FMU and zips them in a new temporary
-    /// directory, returning a ZippedTestFmu with the zipped file.
     fn zipped(&self) -> ZippedDistributedFmu {
         let new_directory = TempDir::new()
             .expect("Should be able to create new temporary FMU directory.");
@@ -751,6 +741,10 @@ pub trait TestableFmu: BasicFmu {
 
     fn model_file_path(&self) -> PathBuf;
 
+    /// Returns a clone of the FMU but with the importable folder zipped.
+    /// 
+    /// All modifications on the cloned FMU will also be present in the
+    /// zipped fmu.
     fn zipped(&self) -> impl ZippedTestableFmu;
 
     fn new_tmp_dir() -> TempDir {
