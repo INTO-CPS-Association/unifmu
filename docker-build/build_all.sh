@@ -21,12 +21,14 @@ cp target/x86_64-apple-darwin/release/lib${tgt}.dylib assets/auto_generated/unif
 echo "generating protobuf schemas for python, csharp, and java backends"
 mkdir -p assets/auto_generated/fmi2
 mkdir -p assets/auto_generated/fmi3
-protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
+protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto unifmu_handshake.proto
 # ------------------------------ cli ------------------------------
 tgt=unifmu
 echo "installing dependencies for testing cli in linux"
 apt install -qq -y python3-zmq python3-pip # Used by python backend
 pip3 install protobuf==5.27.3 --break-system-packages # Used by python backend
+pip3 install colorama coloredlogs toml --break-system-packages # Used by the private backend in distributed FMU
+pip3 install fmpy --break-system-packages
 echo "testing cli for linux"
 cargo test --target x86_64-unknown-linux-gnu --release
 echo "building cli for linux"
