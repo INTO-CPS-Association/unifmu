@@ -166,21 +166,6 @@ lazy_static! {
         ],
     };
 
-    static ref PYTHONASSETSPROXY: LanguageAssets = LanguageAssets {
-        fmi2_resources: vec![
-            ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi2/backend_proxy.py", "backend.py"),
-            ("python/launch.toml", "launch.toml"),
-            ("python/fmi2/README.md", "README.md"),
-        ],
-        fmi3_resources: vec![
-            ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi3/backend_proxy.py", "backend.py"),
-            ("python/launch.toml", "launch.toml"),
-            ("python/fmi3/README.md", "README.md"),
-        ],
-    };
-
     static ref JAVAASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
@@ -218,34 +203,6 @@ lazy_static! {
             ("docker/README.md", "README_DOCKER.md"),
         ],
     };
-    static ref JAVAASSETSPROXY: LanguageAssets = LanguageAssets {
-        fmi2_resources: vec![
-            (
-                "java/src/main/java/BackendProxy.java",
-                "src/main/java/Backend.java"
-            ),
-            ("java/build.gradle", "build.gradle"),
-            ("java/gradlew", "gradlew"),
-            (
-                "java/gradle/wrapper/gradle-wrapper.jar",
-                "gradle/wrapper/gradle-wrapper.jar"
-            ),
-            (
-                "java/gradle/wrapper/gradle-wrapper.properties",
-                "gradle/wrapper/gradle-wrapper.properties"
-            ),
-            ("java/gradlew.bat", "gradlew.bat"),
-            ("java/launch.toml", "launch.toml"),
-            ("java/README.md", "README.md"),
-        ],
-        fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
-        ],
-    };
 
     static ref CSHARPASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
@@ -257,23 +214,6 @@ lazy_static! {
                 "auto_generated/UnifmuHandshake.cs",
                 "schemas/UnifmuHandshake.cs"
             ),
-            ("csharp/launch.toml", "launch.toml"),
-            ("csharp/README.md", "README.md"),
-        ],
-        fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
-        ],
-    };
-
-    static ref CSHARPASSETSPROXY: LanguageAssets = LanguageAssets {
-        fmi2_resources: vec![
-            ("csharp/backend_proxy.cs", "backend.cs"),
-            ("csharp/model.csproj", "model.csproj"),
-            ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
