@@ -10,6 +10,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 bytes = "*"
+colored = "3.0.0"
 libc = "*"
 num_enum = "*"
 prost = "*"

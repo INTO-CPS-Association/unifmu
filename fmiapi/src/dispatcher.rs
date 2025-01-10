@@ -6,6 +6,7 @@ use std::{
 use crate::unifmu_handshake::{HandshakeStatus, HandshakeReply,};
 
 use bytes::Bytes;
+use colored::Colorize;
 use prost::Message;
 use subprocess::{ExitStatus, Popen, PopenConfig};
 use tokio::runtime::Runtime;
@@ -170,10 +171,15 @@ impl RemoteDispatcher {
             BackendSocket::create("tcp://0.0.0.0:0")
         )?;
 
-        let port = &format!("{}", &socket.endpoint)[14..];
+        let port = &format!("{}", &socket.endpoint)[14..]
+            .on_green()
+            .bold();
+        let decorated_communication = "Connect remote backend to dispatcher through port "
+            .bright_green()
+            .bold();
 
         // Communicate the portnumber that remote backend should connect to
-        println!("Connect remote backend to dispatcher through port {port}");
+        println!("{decorated_communication}{port}");
 
         Ok(
             Self {
