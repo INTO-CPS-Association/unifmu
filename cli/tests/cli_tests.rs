@@ -93,8 +93,7 @@ fn test_vdm_check_python_fmi2_distributed() {
     vdm_check(fmu);
 }
 
-// Failing due to a bug in fmpy (?)
-//#[test]
+#[test]
 fn test_platform_csharp_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -104,8 +103,7 @@ fn test_platform_csharp_fmi2_local() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
-// Failing due to a bug in fmpy (?)
-//#[test]
+#[test]
 fn test_platform_java_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -115,8 +113,7 @@ fn test_platform_java_fmi2_local() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
-// Failing due to a bug in fmpy (?)
-//#[test]
+#[test]
 fn test_platform_python_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -126,8 +123,7 @@ fn test_platform_python_fmi2_local() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
-// Failing due to a bug in fmpy (?)
-//#[test]
+#[test]
 fn test_platform_csharp_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -137,8 +133,7 @@ fn test_platform_csharp_fmi2_distributed() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
-// Failing due to a bug in fmpy (?)
-//#[test]
+#[test]
 fn test_platform_java_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -148,8 +143,7 @@ fn test_platform_java_fmi2_distributed() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
-// Failing due to a bug in fmpy (?)
-//#[test]
+#[test]
 fn test_platform_python_fmi2_distributed() {
     let fmu = DistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
