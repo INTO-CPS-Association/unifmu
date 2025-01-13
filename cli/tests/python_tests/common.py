@@ -1,0 +1,104 @@
+from collections.abc import Callable
+from fmpy import read_model_description
+from fmpy.model_description import ModelDescription
+from fmpy.fmi2 import FMU2Slave
+from fmpy.fmi3 import FMU3Slave
+
+"""Test wrapper that only imports the FMU without instantiating it.
+
+Parameters
+----------
+caller : str
+    Name of the outer function. Used in failure messages to specify where the
+    failure was.
+inner_function : Callable[[FMU2Slave | FMU3Slave]]
+    Function containing the actual tests. Any exception in this function is
+    treated as test failure.
+fmu_filename : str
+    Full filename of the file containing the FMU. Currently the tests assume an
+    unzipped FMU, so this should be the full name of the unzipped FMU directory.
+fmu_class : FMU2Slave | FMU3Slave
+    Class name of the fmpy FMU object to create from the given fmu_filename.
+"""
+def uninstantiating_test(
+    caller: str,
+    inner_function: Callable,
+    fmu_filename: str,
+    fmu_class: FMU2Slave | FMU3Slave
+):
+    try:
+        model_description = read_model_description(fmu_filename)
+
+        fmu = fmu_class(
+            guid = model_description.guid,
+            unzipDirectory = fmu_filename,
+            modelIdentifier = model_description.coSimulation.modelIdentifier,
+            instanceName='test_instance'
+        )
+
+        inner_function(fmu)
+
+    except Exception as e:
+        print(f"TEST FAILED - {caller}: {e}")
+
+"""Test wrapper that only imports and instantiates the FMU.
+
+Parameters
+----------
+caller : str
+    Name of the outer function. Used in failure messages to specify where the
+    failure was.
+inner_function :  Callable[[FMU2Slave | FMU3Slave, ModelDescription]]
+    Function containing the actual tests. Any exception in this function is
+    treated as test failure.
+fmu_filename : str
+    Full filename of the file containing the FMU. Currently the tests assume an
+    unzipped FMU, so this should be the full name of the unzipped FMU directory.
+fmu_class : FMU2Slave | FMU3Slave
+    Class name of the fmpy FMU object to create from the given fmu_filename.
+"""
+def instantiating_test(
+    caller: str,
+    inner_function: Callable,
+    fmu_filename: str,
+    fmu_class: FMU2Slave | FMU3Slave
+):
+    try:
+        model_description = read_model_description(fmu_filename)
+
+        fmu = fmu_class(
+            guid = model_description.guid,
+            unzipDirectory = fmu_filename,
+            modelIdentifier = model_description.coSimulation.modelIdentifier,
+            instanceName='test_instance'
+        )
+
+        fmu.instantiate()
+
+    except Exception as e:
+        print(f"TEST FAILED - {caller} - instantiation: {e}")
+        return
+    
+    try:
+        inner_function(fmu, model_description)
+
+    except Exception as e:
+        print(f"TEST FAILED - {caller}: {e}")
+
+        # Blindly try terminating to ensure distributed backend exits.
+        # Ignore exceptions as test already failed.
+        try:
+            fmu.terminate()
+            fmu.freeInstance()
+        except Exception:
+            pass
+
+        return
+
+    try:
+        fmu.terminate()
+        fmu.freeInstance()
+
+    except Exception as e:
+        print(f"TEST FAILED - {caller} - termination: {e}")
+    

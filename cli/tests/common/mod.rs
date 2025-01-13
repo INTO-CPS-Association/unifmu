@@ -1,9 +1,11 @@
+/// Contains common functions for the test suite.
+
 use std::{
+    ffi::OsString,
     fs::{copy, create_dir, read_dir, File},
     io::{self, BufRead, BufReader, Write},
     path::{Path, PathBuf},
-    process,
-    sync::{mpsc::Sender, LazyLock}
+    sync::LazyLock
 };
 
 use assert_cmd::Command;
@@ -14,6 +16,207 @@ use unifmu::utils::zip_dir;
 use walkdir::WalkDir;
 use zip::CompressionMethod;
 
+/// Pass the FMU to the given test function in a python subprocess
+/// 
+/// Monitors the output of this subprocess, and if
+/// the subprocess returns a TEST FAILED message, this function panics with
+/// "PYTHON " + that message.
+/// 
+/// Should NOT be called with a Distributed FMU and a python function that
+/// instantiates that FMU as part of the test.
+/// Distributed FMUs that aren't instantiated during testing are ok.
+pub fn fmu_python_test(
+    fmu: impl BasicFmu,
+    python_test_function_name: &str
+) {
+    let python_test_process = start_python_test_process(
+        python_test_function_name,
+        fmu.importable_path()
+    );
+
+    let python_test_output_reader = BufReader::new(&python_test_process);
+
+    for read_result in python_test_output_reader.lines() {
+        match read_result {
+            Ok(line) => {
+                if line.contains("TEST FAILED") {
+                    panic!("PYTHON {line}");
+                
+                } else {
+                    println!("{line}");
+                }
+            },
+            Err(e) => {
+                panic!("Reading output from python test script returned error '{e}'");
+            }
+        }
+    }
+}
+
+/// Pass the Distributed FMU to the given test function in a python subprocess,
+/// and start the private backend when the FMU is instantiated.
+/// 
+/// Monitors the output of this subprocess, and if
+/// the subprocess returns a TEST FAILED message, this function panics with
+/// "PYTHON " + that message.
+///
+/// If for whatever reason the private backend wasn't started, this function
+/// panics.
+/// As such this hould ONLY be called with Distributed FMUs that are
+/// instantiated as part of the test.
+pub fn distributed_fmu_python_test(
+    fmu: DistributedFmu,
+    python_test_function_name: &str
+) {
+    let python_test_process = start_python_test_process(
+        python_test_function_name,
+        fmu.importable_path()
+    );
+
+    let python_test_output_reader = BufReader::new(&python_test_process);
+
+    let mut remote_process: Option<duct::Handle> = None;
+
+    for read_result in python_test_output_reader.lines() {
+        match read_result {
+            Ok(line) => {
+                if line.contains("TEST FAILED") {
+                    if remote_process.is_some() {
+                        let _ = remote_process.unwrap().kill();
+                    }
+
+                    panic!("PYTHON {line}");
+                
+                } else if line.contains("Connect remote backend to dispatcher through port") {
+                    let port_string =  line[50..].to_string();
+
+                    println!("Connecting remote backend to fmu dispatcher through port {port_string}");
+
+                    remote_process = Some(fmu.start_remote_backend(port_string));
+
+                } else {
+                    println!("{line}");
+                }
+            },
+            Err(e) => {
+                if remote_process.is_some() {
+                    let _ = remote_process.unwrap().kill();
+                }
+
+                panic!("Reading output from python test script returned error '{e}'");
+            }
+        }
+    }
+
+    if remote_process.is_none() {
+        panic!("Remote backend wasn't started!");
+    } else {
+        let _ = remote_process.unwrap().wait();
+    }
+}
+
+/// Starts the python test subprocess, returning a duct::ReaderHandle to it.
+/// 
+/// Panics if the test script isn't available or cannot be executed.
+fn start_python_test_process(
+    python_test_function_name: &str,
+    fmu_path: impl Into<OsString>
+) -> duct::ReaderHandle {
+    let test_directory = std::env::current_dir()
+    .expect("Should be able to get current directory")
+    .join("tests")
+    .join("python_tests");
+
+    let python_test_script_name = "fmu_tests.py";
+
+    assert!(
+        test_directory.join(python_test_script_name)
+            .exists(),
+        "Python test script '{python_test_script_name}' wasn't found in test directory '{}'",
+        test_directory.display()
+    );
+
+    duct::cmd!(
+        "python3",
+        python_test_script_name,
+        python_test_function_name,
+        fmu_path
+    )
+        .dir(test_directory)
+        .stderr_to_stdout()
+        .reader()
+        .expect("Should be able to start python test process")
+}
+
+/// Checks the validity of the FMU model description byt converting it to
+/// VDM-SL and comparing them to a prebuild model.
+/// 
+/// Panics if the vdmcheck tool isn't available or if it returns an error.
+pub fn vdm_check(fmu: impl TestableFmu) {
+    let fmu = fmu.zipped();
+
+    let test_dependencies = std::env::current_dir()
+        .expect("Couldn't access current directory")
+        .parent()
+        .expect("Current directory does not have a parent")
+        .join("test_dependencies");
+
+    assert!(
+        test_dependencies.exists(),
+        "The directory {}, which should contain the vdm check dependency, does not exist",
+        test_dependencies.display()
+    );
+
+    let version_string = match fmu.version() {
+        FmiVersion::Fmi2 => "2",
+        FmiVersion::Fmi3 => "3"
+    };
+
+    let vdm_check_root_name = format!("vdmcheck{version_string}");
+    let vdm_check_jar_name = format!("{vdm_check_root_name}.jar");
+
+    let test_dependencies_unopenable = format!(
+        "Couldn't open test dependencies directory {}",
+        test_dependencies.display()
+    );
+
+    let vdm_check_directory_not_found = format!(
+        "No vdm_check directory found in {}",
+        test_dependencies.display()
+    );
+
+    let vdm_check_dir = test_dependencies.read_dir()
+        .expect(&test_dependencies_unopenable)
+        .filter_map(|entry| entry.ok())
+        .find(|entry| {
+            entry.file_name()
+                .to_string_lossy()
+                .starts_with(&vdm_check_root_name)
+        })
+        .expect(&vdm_check_directory_not_found)
+        .path();
+
+    let vdm_check_jar = vdm_check_dir.join(vdm_check_jar_name);
+
+    assert!(
+        vdm_check_jar.exists(),
+        "{} not found in {}",
+        vdm_check_jar.display(),
+        vdm_check_dir.display()
+    );
+
+    let mut vdm_check_cmd = Command::new("java");
+
+    vdm_check_cmd
+        .arg("-jar")
+        .arg(vdm_check_jar)
+        .arg(fmu.importable_path())
+        .assert()
+        .success()
+        .stdout(contains("No errors found"));
+}
+
+/// The UNIFMU backend languages supported by default by the project.
 #[derive(Clone)]
 pub enum FmuBackendImplementationLanguage {
     CSharp,
@@ -47,6 +250,7 @@ impl FmuBackendImplementationLanguage {
     }
 }
 
+/// The major versions of FMI supported by UNIFMU.
 #[derive(Clone)]
 pub enum FmiVersion {
     Fmi2,
@@ -61,12 +265,15 @@ impl FmiVersion {
         }
     }
 }
+
+/// A standard unzipped FMU generated by the UNIFMU CLI.
 pub struct LocalFmu {
     directory: TempDir,
     language: FmuBackendImplementationLanguage,
     version: FmiVersion,
 }
 
+/// A standard zipped FMU generated by the UNIFMU CLI.
 pub struct ZippedLocalFmu {
     file: File,
     directory: TempDir,
@@ -74,13 +281,17 @@ pub struct ZippedLocalFmu {
     version: FmiVersion,
 }
 
-pub struct RemoteFmu {
+/// A distributed unzipped FMU generated by the UNIFMU CLI.
+pub struct DistributedFmu {
     directory: TempDir,
     language: FmuBackendImplementationLanguage,
     version: FmiVersion,
 }
 
-pub struct ZippedRemoteFmu {
+/// A distributed zipped FMU generated by the UNIFMU CLI.
+/// Note that only the proxy part of the FMU is zipped - the private part is
+/// still accesible as a normal directory.
+pub struct ZippedDistributedFmu {
     file: File,
     directory: TempDir,
     language: FmuBackendImplementationLanguage,
@@ -106,10 +317,18 @@ impl BasicFmu for LocalFmu {
     ) -> String {
         format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
     }
+
+    fn importable_path(&self) -> PathBuf {
+        self.directory()
+            .path()
+            .join(Self::fmu_name(
+                self.version(),
+                self.language()
+            ))
+    }
 }
 
 impl TestableFmu for LocalFmu {
-    /// Creates an entirely new FMU in a temporary directory.
     fn new(
         version: FmiVersion,
         language: FmuBackendImplementationLanguage
@@ -127,8 +346,6 @@ impl TestableFmu for LocalFmu {
         this
     }
 
-    /// Gets a clone of a lazily evaluated static FMU wit the
-    /// given FMI version and backend implementation language.
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -169,8 +386,6 @@ impl TestableFmu for LocalFmu {
             .join(self.language.model_str())
     }
 
-    /// Copies the contents of this FMU and zips them in a new temporary
-    /// directory, returning a ZippedTestFmu with the zipped file.
     fn zipped(&self) -> impl ZippedTestableFmu {
         let new_directory = TempDir::new()
             .expect("Should be able to create new temporary FMU directory.");
@@ -232,13 +447,7 @@ impl Clone for LocalFmu {
     }
 }
 
-impl ZippedTestableFmu for ZippedLocalFmu {
-    fn file(self) -> File {
-        self.file
-    }
-}
-
-impl BasicFmu for RemoteFmu {
+impl BasicFmu for ZippedLocalFmu {
     fn directory(&self) -> &TempDir {
         &self.directory
     }
@@ -255,27 +464,66 @@ impl BasicFmu for RemoteFmu {
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> String {
-        format!("remote_{}fmu_{}", language.cmd_str(), version.as_str())
+        format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
+    }
+
+    fn importable_path(&self) -> PathBuf {
+        self.directory()
+            .path()
+            .join(Self::fmu_name(
+                self.version(),
+                self.language()
+            ))
     }
 }
 
-impl RemoteFileStructure for RemoteFmu {
+impl ZippedTestableFmu for ZippedLocalFmu {
+    fn file(self) -> File {
+        self.file
+    }
+}
+
+impl BasicFmu for DistributedFmu {
+    fn directory(&self) -> &TempDir {
+        &self.directory
+    }
+
+    fn language(&self) -> &FmuBackendImplementationLanguage {
+        &self.language
+    }
+
+    fn version(&self) -> &FmiVersion {
+        &self.version
+    }
+
+    fn fmu_name(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> String {
+        format!("distributed_{}fmu_{}", language.cmd_str(), version.as_str())
+    }
+    
+    fn importable_path(&self) -> PathBuf {
+        self.proxy_directory_path()
+    }
+}
+
+impl DistributedFileStructure for DistributedFmu {
     fn proxy_directory_name(&self) -> String {
         Self::fmu_name(&self.version(), &self.language()) + "_proxy"
     }
 }
 
-impl RemoteBackend for RemoteFmu {}
+impl RemoteBackend for DistributedFmu {}
 
-impl TestableFmu for RemoteFmu {
-    /// Creates an entirely new FMU in a temporary directory.
+impl TestableFmu for DistributedFmu {
     fn new(
         version: FmiVersion,
         language: FmuBackendImplementationLanguage
-    ) -> RemoteFmu {
+    ) -> DistributedFmu {
         let directory = Self::new_tmp_dir();
 
-        let this = RemoteFmu {
+        let this = DistributedFmu {
             directory,
             language,
             version
@@ -286,18 +534,16 @@ impl TestableFmu for RemoteFmu {
         this
     }
 
-    /// Gets a clone of a lazily evaluated static FMU wit the
-    /// given FMI version and backend implementation language.
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
-    ) -> RemoteFmu {
+    ) -> DistributedFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (&*REMOTE_CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (&*REMOTE_JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::CSharp => (&*DISTRIBUTED_CSHARP_FMI2).clone(),
+            FmuBackendImplementationLanguage::Java => (&*DISTRIBUTED_JAVA_FMI2).clone(),
             FmuBackendImplementationLanguage::Python => match version {
-                FmiVersion::Fmi2 => (&*REMOTE_PYTHON_FMI2).clone(),
-                FmiVersion::Fmi3 => (&*REMOTE_PYTHON_FMI3).clone()
+                FmiVersion::Fmi2 => (&*DISTRIBUTED_PYTHON_FMI2).clone(),
+                FmiVersion::Fmi3 => (&*DISTRIBUTED_PYTHON_FMI3).clone()
             }
         }
     }
@@ -327,9 +573,7 @@ impl TestableFmu for RemoteFmu {
     }
 
     #[allow(refining_impl_trait)]
-    /// Copies the contents of this FMU and zips them in a new temporary
-    /// directory, returning a ZippedTestFmu with the zipped file.
-    fn zipped(&self) -> ZippedRemoteFmu {
+    fn zipped(&self) -> ZippedDistributedFmu {
         let new_directory = TempDir::new()
             .expect("Should be able to create new temporary FMU directory.");
 
@@ -365,7 +609,7 @@ impl TestableFmu for RemoteFmu {
             new_directory.path().join(self.backend_directory_name())
         ).expect("Should be able to copy backend/private directory.");
 
-        ZippedRemoteFmu {
+        ZippedDistributedFmu {
             directory: new_directory,
             file: File::open(&zip_file_path).expect("Should be able to open newly created zipfile."),
             language: self.language.clone(),
@@ -374,7 +618,7 @@ impl TestableFmu for RemoteFmu {
     }
 }
 
-impl Clone for RemoteFmu {
+impl Clone for DistributedFmu {
     fn clone(&self) -> Self {
         let new_directory = Self::new_tmp_dir();
 
@@ -396,7 +640,7 @@ impl Clone for RemoteFmu {
     }
 }
 
-impl BasicFmu for ZippedRemoteFmu {
+impl BasicFmu for ZippedDistributedFmu {
     fn directory(&self) -> &TempDir {
         &self.directory
     }
@@ -413,24 +657,29 @@ impl BasicFmu for ZippedRemoteFmu {
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> String {
-        format!("remote_{}fmu_{}", language.cmd_str(), version.as_str())
+        format!("distributed_{}fmu_{}", language.cmd_str(), version.as_str())
+    }
+
+    fn importable_path(&self) -> PathBuf {
+        self.proxy_directory_path()
     }
 }
 
-impl RemoteFileStructure for ZippedRemoteFmu {
+impl DistributedFileStructure for ZippedDistributedFmu {
     fn proxy_directory_name(&self) -> String {
         Self::fmu_name(&self.version(), &self.language()) + "_proxy.fmu"
     }
 }
 
-impl RemoteBackend for ZippedRemoteFmu {}
+impl RemoteBackend for ZippedDistributedFmu {}
 
-impl ZippedTestableFmu for ZippedRemoteFmu {
+impl ZippedTestableFmu for ZippedDistributedFmu {
     fn file(self) -> File {
         self.file
     }
 }
 
+/// Behaviour shared by all FMUs.
 pub trait BasicFmu {
     fn directory(&self) -> &TempDir;
 
@@ -438,18 +687,51 @@ pub trait BasicFmu {
 
     fn version(&self) -> &FmiVersion;
 
+    /// Name of the importable part of the FMU (the directory/zip-file that
+    /// contains the FMU binary). Only the base file name, not the full
+    /// path name.
     fn fmu_name(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
     ) -> String;
+
+    /// Path to the directory/zip-file that contains the FMU binary.
+    fn importable_path(&self) -> PathBuf;
 }
 
+/// Behaviour for FMUs that can be generated by the UNIFMU CLI.
 pub trait TestableFmu: BasicFmu {
+    /// Generated a wholly new FMU using the UNIFMU CLI in a temporary
+    /// directory.
+    /// 
+    /// If a new FMU is needed `get_clone()` should be called instead unless
+    /// it is neccesarry to explicitly invoke the CLI for the test.
     fn new(
         version: FmiVersion,
         language: FmuBackendImplementationLanguage
     ) -> Self;
 
+    /// Returns a copy of one of the lazily pregenerated FMUs.
+    /// 
+    /// Significantly faster than calling `new()`, while still giving a clean
+    /// FMU instance.
+    /// 
+    /// This module has one FMU for each valid combination of FMI version,
+    /// backend language and FMU location, that is lazily generated once this
+    /// function is called. These FMUs are generated from the UNIFMU assets
+    /// without further modification, and are never modified after creation.
+    /// When cloned, all FMU assets are copied from the pregenerated one and
+    /// collected in a new temporary directory. As such, calling `get_clone()`
+    /// will return an effectively new FMU without invoking the UNIFMU CLI.
+    /// 
+    /// The first time this is called with any set of parameters it take as
+    /// long as `new()`, but the second time it called with the same parameter
+    /// variants it will be much faster as the cloned FMU has already been
+    /// generated. The difference is platform dependent, but two order of
+    /// magnitude differences have been observed.
+    /// 
+    /// If it is neccesarry to explicitly invoke the UNIFMU CLI as part of the
+    /// test `new()` should be used instead.
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -459,6 +741,10 @@ pub trait TestableFmu: BasicFmu {
 
     fn model_file_path(&self) -> PathBuf;
 
+    /// Returns a clone of the FMU but with the importable folder zipped.
+    /// 
+    /// All modifications on the cloned FMU will also be present in the
+    /// zipped fmu.
     fn zipped(&self) -> impl ZippedTestableFmu;
 
     fn new_tmp_dir() -> TempDir {
@@ -527,11 +813,15 @@ pub trait TestableFmu: BasicFmu {
     }
 }
 
-pub trait ZippedTestableFmu {
+/// Behaviour for zipped FMUs.
+pub trait ZippedTestableFmu: BasicFmu {
+    /// Returns the FMU zipfile.
     fn file(self) -> File;
 }
 
-pub trait RemoteFileStructure: BasicFmu {
+/// Functionality for accessing the underlying file structure of
+/// distributed FMUs
+pub trait DistributedFileStructure: BasicFmu {
     fn proxy_directory_name(&self) -> String;
 
     fn proxy_directory_path(&self) -> PathBuf {
@@ -551,7 +841,8 @@ pub trait RemoteFileStructure: BasicFmu {
     }
 }
 
-pub trait RemoteBackend: RemoteFileStructure {
+/// Functionality for starting the private backend of distributed FMUs.
+pub trait RemoteBackend: DistributedFileStructure {
     /// Constructs the command for running the remote backend process.
     fn get_remote_command(&self, port: String) -> duct::Expression {
         let backend_process_cmd = match self.language() {
@@ -661,22 +952,22 @@ static PYTHON_FMI3: LazyLock<LocalFmu> = LazyLock::new(|| {LocalFmu::new(
     FmuBackendImplementationLanguage::Python,
 )});
 
-static REMOTE_CSHARP_FMI2: LazyLock<RemoteFmu> = LazyLock::new(|| {RemoteFmu::new(
+static DISTRIBUTED_CSHARP_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
     FmiVersion::Fmi2,
     FmuBackendImplementationLanguage::CSharp,
 )});
 
-static REMOTE_JAVA_FMI2: LazyLock<RemoteFmu> = LazyLock::new(|| {RemoteFmu::new(
+static DISTRIBUTED_JAVA_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
     FmiVersion::Fmi2,
     FmuBackendImplementationLanguage::CSharp,
 )});
 
-static REMOTE_PYTHON_FMI2: LazyLock<RemoteFmu> = LazyLock::new(|| {RemoteFmu::new(
+static DISTRIBUTED_PYTHON_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
     FmiVersion::Fmi2,
     FmuBackendImplementationLanguage::Python,
 )});
 
-static REMOTE_PYTHON_FMI3: LazyLock<RemoteFmu> = LazyLock::new(|| {RemoteFmu::new(
+static DISTRIBUTED_PYTHON_FMI3: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
     FmiVersion::Fmi3,
     FmuBackendImplementationLanguage::Python,
 )});
