@@ -164,6 +164,24 @@ impl Fmi2Slave {
     }
 }
 
+/// Sends the fmi3FreeInstance message to the backend when the slave is dropped.
+impl Drop for Fmi2Slave {
+    fn drop(&mut self) {
+        let cmd = Fmi2Command {
+            command: Some(Command::Fmi2FreeInstance(
+                fmi2_messages::Fmi2FreeInstance {}
+            )),
+        };
+
+        match self.dispatcher.send(&cmd) {
+            Ok(_) => (),
+            Err(error) => error!(
+                "Freeing instance failed with error: {:?}.", error
+            ),
+        };
+    }
+}
+
 pub struct SlaveState {
     bytes: Vec<u8>,
 }
@@ -286,19 +304,7 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
 
     match slave.as_mut() {
         Some(s) => {
-            let cmd = Fmi2Command {
-                command: Some(Command::Fmi2FreeInstance(
-                    fmi2_messages::Fmi2FreeInstance {}
-                )),
-            };
-
-            match s.dispatcher.send(&cmd) {
-                Ok(_) => (),
-                Err(error) => error!(
-                    "Freeing instance failed with error: {:?}.", error
-                ),
-            };
-
+            // fmi2FreeInstance message is send to backend on drop
             drop(slave)
         }
         None => {warn!("No instance given.")}
