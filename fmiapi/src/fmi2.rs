@@ -4,7 +4,7 @@
 #![allow(dead_code)]
 use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi2_messages::{self, Fmi2Command, fmi2_command::Command};
-use crate::spawn::spawn_fmi2_slave;
+use crate::spawn::spawn_slave;
 use libc::c_double;
 use libc::size_t;
 
@@ -245,7 +245,7 @@ pub extern "C" fn fmi2Instantiate(
         }
     };
 
-    let dispatcher = match spawn_fmi2_slave(&Path::new(&resources_dir)) {
+    let dispatcher = match spawn_slave(&Path::new(&resources_dir)) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi2 slave failed.");

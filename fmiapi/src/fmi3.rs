@@ -16,7 +16,7 @@ use tracing_subscriber;
 
 use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi3_messages::{self, Fmi3Command, fmi3_command::Command};
-use crate::spawn::spawn_fmi3_slave;
+use crate::spawn::spawn_slave;
 
 /// One shot function that sets up logging.
 /// 
@@ -250,7 +250,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         PathBuf::from(resource_path_str)
     };
 
-    let dispatcher = match spawn_fmi3_slave(&Path::new(&resources_dir)) {
+    let dispatcher = match spawn_slave(&Path::new(&resources_dir)) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi3 slave failed.");

@@ -76,7 +76,7 @@ impl LaunchConfig {
     }
 }
 
-pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
+pub fn spawn_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
     let config = LaunchConfig::create(resource_path)?;
 
     debug!("{:?}", config);
@@ -90,36 +90,6 @@ pub fn spawn_fmi2_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
     };
 
     let mut dispatcher = match dispatcher_result {
-        Ok(dispatcher) => dispatcher,
-        Err(_) => {
-            error!("Couldn't create new dispatcher.");
-            return Err(());
-        }
-    };
-
-    info!("Awaiting handshake.");
-    match dispatcher.await_handshake() {
-        Ok(_) => {
-            info!("Connection established!");
-            Ok(dispatcher)
-        },
-        Err(e) => {
-            error!{"Handshake failed with error {:#?}", e};
-            Err(())
-        }
-    } 
-}
-
-pub fn spawn_fmi3_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
-    // grab launch command for host os
-    let launch_command = LaunchConfig::create(resource_path)?
-    .get_launch_command()?;
-
-    info!("Establishing command dispatcher.");
-    let mut dispatcher = match Dispatcher::local(
-        resource_path,
-        &launch_command
-    ) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Couldn't create new dispatcher.");
