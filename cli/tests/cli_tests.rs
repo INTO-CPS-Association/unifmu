@@ -456,3 +456,47 @@ fn test_unexpected_exit_during_command_python_fmi3_local() {
 
     fmu_python_test(fmu, "fmi3_simulate");
 }
+
+#[test]
+#[should_panic(expected = "Cannot find shared library")]
+fn test_instantiate_csharp_fmi2_as_fmi3_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu_python_test(fmu, "fmi3_instantiate");
+}
+
+#[test]
+#[should_panic(expected = "Cannot find shared library")]
+fn test_instantiate_java_fmi2_as_fmi3_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    fmu_python_test(fmu, "fmi3_instantiate");
+}
+
+#[test]
+#[should_panic(expected = "Cannot find shared library")]
+fn test_instantiate_python_fmi2_as_fmi3_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi3_instantiate");
+}
+
+#[test]
+#[should_panic(expected = "Cannot find shared library")]
+fn test_instantiate_python_fmi3_as_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi3, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate");
+}
