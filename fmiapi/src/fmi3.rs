@@ -2,9 +2,10 @@
 #![allow(unused_variables)]
 
 use std::{
-    ffi::{c_void, CStr, CString},
+    ffi::{c_void, CStr, CString, NulError},
     path::{Path, PathBuf},
     slice::{from_raw_parts, from_raw_parts_mut},
+    str::Utf8Error,
     sync::LazyLock
 };
 
@@ -133,12 +134,12 @@ impl SlaveState {
 
 type Fmi3SlaveType = Box<Fmi3Slave>;
 
-fn c2s(c: *const c_char) -> String {
+fn c2s(c: *const c_char) -> Result<String, Utf8Error> {
     unsafe {
         CStr::from_ptr(c)
             .to_str()
-            .expect("Should be able to convert CStr to String!") //Grave error, should abort!
-            .to_owned()
+            .map(|result| result.to_owned())
+            
     }
 }
 
@@ -201,8 +202,22 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         return None;
     }
 
-    let instance_name = c2s(instance_name);
-    let instantiation_token = c2s(instantiation_token);
+    let instance_name = match c2s(instance_name) {
+        Ok(string) => string,
+        Err(error) => {
+            error!("Could not convert instance_name to String: {:?}", error);
+            return None;
+        }
+    };
+
+    let instantiation_token = match c2s(instantiation_token) {
+        Ok(string) => string,
+        Err(error) => {
+            error!("Could not convert instantiation_token to String: {:?}", error);
+            return None;
+        }
+    };
+
     let required_intermediate_variables = unsafe {
         from_raw_parts(
             required_intermediate_variables,
@@ -1007,10 +1022,21 @@ pub extern "C" fn fmi3GetString(
     {
         Ok(result) => {
             if !result.values.is_empty() {
-                instance.string_buffer = result.values
+                let conversion_result: Result<Vec<CString>, NulError> = result
+                    .values
                     .iter()
-                    .map(|s| CString::new(s.as_bytes()).unwrap())
+                    .map(|string| CString::new(string.as_bytes()))
                     .collect();
+
+                match conversion_result {
+                    Ok(converted_values) => {
+                        instance.string_buffer = converted_values
+                    },
+                    Err(e) =>  {
+                        error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
+                        return Fmi3Status::Fatal;
+                    }
+                }
                 
                 unsafe {
                     for (idx, cstr)
@@ -1869,34 +1895,42 @@ pub extern "C" fn fmi3SetString(
     }
         .to_owned();
 
-    let values: Vec<String> = unsafe {
+    let conversion_result: Result<Vec<String>, Utf8Error> = unsafe {
         from_raw_parts(values, n_values)
             .iter()
-            .map(
-                |v| CStr::from_ptr(*v)
+            .map(|v| {
+                CStr::from_ptr(*v)
                     .to_str()
-                    .unwrap()
-                    .to_owned()
-            )
+                    .map(|str| str.to_owned())
+                })
             .collect()
     };
 
-    let cmd = Fmi3Command {
-        command: Some(Command::Fmi3SetString(
-            fmi3_messages::Fmi3SetString {
-                value_references,
-                values,
-            }
-        )),
-    };
+    match conversion_result {
+        Ok(values) => {
+            let cmd = Fmi3Command {
+                command: Some(Command::Fmi3SetString(
+                    fmi3_messages::Fmi3SetString {
+                        value_references,
+                        values,
+                    }
+                )),
+            };
+        
+            instance.dispatcher
+                .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+                .map(|status| status.into())
+                .unwrap_or_else(|error| {
+                    error!("fmi3SetString failed with error: {:?}.", error);
+                    Fmi3Status::Error
+                })
+        },
 
-    instance.dispatcher
-        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            error!("fmi3SetString failed with error: {:?}.", error);
+        Err(conversion_error) => {
+            error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
             Fmi3Status::Error
-        })
+        }
+    }
 }
 
 #[no_mangle]
