@@ -321,36 +321,6 @@ pub extern "C" fn fmi2SetDebugLogging(
 ) -> Fmi2Status {
     error!("fmi2SetDebugLogging is not implemented by UNIFMU.");
     Fmi2Status::Error
-
-    // While command and dispatch code existed for this function prior to
-    // refactoring, actual logging wasn't implemented. Thus no logging
-    // would occur despite the fact that this function would return a
-    // positive status.
-    /*
-    let categories: Vec<String> = unsafe {
-        core::slice::from_raw_parts(categories, n_categories)
-            .iter()
-            .map(|s| CStr::from_ptr(*s).to_str().unwrap().to_owned())
-            .collect()
-    };
-
-    let cmd = Fmi2Command {
-            command: Some(Command::Fmi2SetDebugLogging(
-                fmi2_messages::Fmi2SetDebugLogging {
-                    categories: categories.to_vec(),
-                    logging_on,
-                }
-            )),
-        };
-
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            error!("fmi2SetDebugLogging failed with error: {:?}.", error);
-            Fmi2Status::Error
-        })
-    */
 }
 
 #[no_mangle]
