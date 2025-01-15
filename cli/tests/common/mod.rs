@@ -9,7 +9,6 @@ use std::{
 };
 
 use assert_cmd::Command;
-use duct;
 use predicates::str::contains;
 use tempfile::TempDir;
 use unifmu::utils::zip_dir;
@@ -81,8 +80,8 @@ pub fn distributed_fmu_python_test(
         match read_result {
             Ok(line) => {
                 if line.contains("TEST FAILED") {
-                    if remote_process.is_some() {
-                        let _ = remote_process.unwrap().kill();
+                    if let Some(remote_process) = remote_process {
+                        let _ = remote_process.kill();
                     }
 
                     panic!("PYTHON {line}");
@@ -99,8 +98,8 @@ pub fn distributed_fmu_python_test(
                 }
             },
             Err(e) => {
-                if remote_process.is_some() {
-                    let _ = remote_process.unwrap().kill();
+                if let Some(remote_process) = remote_process {
+                    let _ = remote_process.kill();
                 }
 
                 panic!("Reading output from python test script returned error '{e}'");
@@ -108,10 +107,10 @@ pub fn distributed_fmu_python_test(
         }
     }
 
-    if remote_process.is_none() {
-        panic!("Remote backend wasn't started!");
+    if let Some(remote_process) = remote_process {
+        let _ = remote_process.wait();
     } else {
-        let _ = remote_process.unwrap().wait();
+        panic!("Remote backend wasn't started!");
     }
 }
 
@@ -351,11 +350,11 @@ impl TestableFmu for LocalFmu {
         language: &FmuBackendImplementationLanguage
     ) -> LocalFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (&*CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (&*JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::CSharp => (*CSHARP_FMI2).clone(),
+            FmuBackendImplementationLanguage::Java => (*JAVA_FMI2).clone(),
             FmuBackendImplementationLanguage::Python => match version {
-                FmiVersion::Fmi2 => (&*PYTHON_FMI2).clone(),
-                FmiVersion::Fmi3 => (&*PYTHON_FMI3).clone()
+                FmiVersion::Fmi2 => (*PYTHON_FMI2).clone(),
+                FmiVersion::Fmi3 => (*PYTHON_FMI3).clone()
             }
         }
     }
@@ -430,10 +429,10 @@ impl Clone for LocalFmu {
         let new_directory = Self::new_tmp_dir();
 
         copy_directory_recursive(
-            &self.directory
+            self.directory
                 .path()
                 .join(Self::fmu_name(&self.version, &self.language)), 
-            &new_directory
+            new_directory
                 .path()
                 .join(Self::fmu_name(&self.version, &self.language))
         )
@@ -510,7 +509,7 @@ impl BasicFmu for DistributedFmu {
 
 impl DistributedFileStructure for DistributedFmu {
     fn proxy_directory_name(&self) -> String {
-        Self::fmu_name(&self.version(), &self.language()) + "_proxy"
+        Self::fmu_name(self.version(), self.language()) + "_proxy"
     }
 }
 
@@ -539,11 +538,11 @@ impl TestableFmu for DistributedFmu {
         language: &FmuBackendImplementationLanguage
     ) -> DistributedFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (&*DISTRIBUTED_CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (&*DISTRIBUTED_JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::CSharp => (*DISTRIBUTED_CSHARP_FMI2).clone(),
+            FmuBackendImplementationLanguage::Java => (*DISTRIBUTED_JAVA_FMI2).clone(),
             FmuBackendImplementationLanguage::Python => match version {
-                FmiVersion::Fmi2 => (&*DISTRIBUTED_PYTHON_FMI2).clone(),
-                FmiVersion::Fmi3 => (&*DISTRIBUTED_PYTHON_FMI3).clone()
+                FmiVersion::Fmi2 => (*DISTRIBUTED_PYTHON_FMI2).clone(),
+                FmiVersion::Fmi3 => (*DISTRIBUTED_PYTHON_FMI3).clone()
             }
         }
     }
@@ -667,7 +666,7 @@ impl BasicFmu for ZippedDistributedFmu {
 
 impl DistributedFileStructure for ZippedDistributedFmu {
     fn proxy_directory_name(&self) -> String {
-        Self::fmu_name(&self.version(), &self.language()) + "_proxy.fmu"
+        Self::fmu_name(self.version(), self.language()) + "_proxy.fmu"
     }
 }
 
@@ -755,8 +754,8 @@ pub trait TestableFmu: BasicFmu {
     fn generate_fmu_files(&self) {
         Command::cargo_bin("unifmu")
             .expect("The unifmu binary should be present in this crate.")
-            .current_dir(&self.directory().path())
-            .args(&self.cmd_args())
+            .current_dir(self.directory().path())
+            .args(self.cmd_args())
             .assert()
             .success()
             .stderr(contains("generated successfully"));
@@ -831,7 +830,7 @@ pub trait DistributedFileStructure: BasicFmu {
     }
 
     fn backend_directory_name(&self) -> String {
-        Self::fmu_name(&self.version(), &self.language()) + "_private"
+        Self::fmu_name(self.version(), self.language()) + "_private"
     }
 
     fn backend_directory_path(&self) -> PathBuf {

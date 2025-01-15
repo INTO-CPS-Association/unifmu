@@ -8,6 +8,7 @@ use crate::spawn::spawn_slave;
 use libc::c_double;
 use libc::size_t;
 
+
 use url::Url;
 use tracing::{error, warn};
 use tracing_subscriber;
@@ -38,7 +39,6 @@ static ENABLE_LOGGING: LazyLock<Result<(), Fmi2Status>> = LazyLock::new(|| {
 
 ///
 /// Represents the function signature of the logging callback function passsed
-
 /// from the envrionment to the slave during instantiation.
 pub type Fmi2CallbackLogger = extern "C" fn(
     component_environment: *mut c_void,
@@ -60,7 +60,6 @@ pub type Fmi2StepFinished = extern "C" fn(component_environment: *const c_void, 
 ///
 /// Recommended way to represent opaque pointer, i.e the c type 'void*'
 /// https://doc.rust-lang.org/nomicon/ffi.html#representing-opaque-structs
-
 pub struct ComponentEnvironment {
     _private: [u8; 0],
 }
@@ -215,7 +214,6 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 /// Instantiates a slave instance by invoking a command in a new process
 /// the command is specified by the configuration file, launch.toml, that should be located in the resources directory
 /// fmi-commands are sent between the wrapper and slave(s) using a message queue library, specifically zmq.
-
 #[no_mangle]
 pub extern "C" fn fmi2Instantiate(
     instance_name: *const c_char, // neither allowed to be null or empty string
@@ -226,7 +224,7 @@ pub extern "C" fn fmi2Instantiate(
     visible: c_int,
     logging_on: c_int,
 ) -> Option<Box<Fmi2Slave>> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
@@ -264,7 +262,7 @@ pub extern "C" fn fmi2Instantiate(
         }
     };
 
-    let dispatcher = match spawn_slave(&Path::new(&resources_dir)) {
+    let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi2 slave failed.");
@@ -1147,7 +1145,7 @@ pub extern "C" fn fmi2GetIntegerStatus(
     value: *mut c_int,
 ) -> Fmi2Status {
     error!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
-    return Fmi2Status::Error;
+    Fmi2Status::Error
 }
 
 #[no_mangle]
@@ -1157,7 +1155,7 @@ pub extern "C" fn fmi2GetBooleanStatus(
     value: *mut c_int,
 ) -> Fmi2Status {
     error!("fmi2GetBooleanStatus is not implemented by UNIFMU.");
-    return Fmi2Status::Discard;
+    Fmi2Status::Discard
 }
 
 #[no_mangle]

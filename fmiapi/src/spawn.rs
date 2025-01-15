@@ -54,7 +54,7 @@ impl LaunchConfig {
             }
         };
 
-        return Ok(config);
+        Ok(config)
 
     }
 
@@ -62,15 +62,15 @@ impl LaunchConfig {
         match std::env::consts::OS {
             "windows" => match &self.windows {
                 Some(cmd) => Ok(cmd.to_vec()),
-                None => return Err(()),
+                None => Err(()),
             },
             "macos" => match &self.macos {
                 Some(cmd) => Ok(cmd.to_vec()),
-                None => return Err(()),
+                None => Err(()),
             },
             _other => match &self.linux {
                 Some(cmd) => Ok(cmd.to_vec()),
-                None => return Err(()),
+                None => Err(()),
             },
         }
     }

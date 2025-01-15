@@ -173,7 +173,7 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     instance_environment: *const c_void,
     log_message: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
@@ -197,7 +197,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     log_message: *const c_void,
     intermediate_update: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
@@ -283,7 +283,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         PathBuf::from(resource_path_str)
     };
 
-    let dispatcher = match spawn_slave(&Path::new(&resources_dir)) {
+    let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi3 slave failed.");
@@ -342,7 +342,7 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     lock_preemption: *const c_void,
     unlock_preemption: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }

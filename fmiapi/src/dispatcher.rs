@@ -394,7 +394,7 @@ impl BackendSubprocess {
         debug!("Launch command: {}", &launch_command[0]);
         debug!("Environment variables: {:#?}", env_vars);
         let subprocess = match Popen::create(
-            &launch_command,
+            launch_command,
             PopenConfig {
                 cwd: Some(resource_path.as_os_str().to_owned()),
                 env: Some(env_vars),

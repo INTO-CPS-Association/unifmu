@@ -9,7 +9,6 @@
 ///    of this repository.
 /// 
 /// See the `common` submodule for shared test functionality.
-
 mod common;
 
 use common::{
