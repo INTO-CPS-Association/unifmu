@@ -13,10 +13,11 @@ use tracing::{error, warn};
 use tracing_subscriber;
 
 use std::{
-    ffi::{CStr, CString},
+    ffi::{CStr, CString, NulError},
     os::raw::{c_char, c_int, c_uint, c_ulonglong, c_void},
     path::Path,
     slice::{from_raw_parts, from_raw_parts_mut},
+    str::Utf8Error,
     sync::LazyLock
 };
 
@@ -671,10 +672,21 @@ pub extern "C" fn fmi2GetString(
     {
         Ok(result) => {
             if !result.values.is_empty() {
-                slave.string_buffer = result.values
+                let conversion_result: Result<Vec<CString>, NulError> = result
+                    .values
                     .iter()
-                    .map(|s| CString::new(s.as_bytes()).unwrap())
+                    .map(|string| CString::new(string.as_bytes()))
                     .collect();
+
+                match conversion_result {
+                    Ok(converted_values) => {
+                        slave.string_buffer = converted_values
+                    },
+                    Err(e) =>  {
+                        error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
+                        return Fmi2Status::Fatal;
+                    }
+                }
 
                 unsafe {
                     for (idx, cstr)
@@ -801,34 +813,43 @@ pub extern "C" fn fmi2SetString(
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
 
-    let values: Vec<String> = unsafe {
+    let conversion_result: Result<Vec<String>, Utf8Error> = unsafe {
         from_raw_parts(values, nvr)
             .iter()
             .map(|v| {
                 CStr::from_ptr(*v)
                     .to_str()
-                    .unwrap()
-                    .to_owned()
+                    .map(|str| str.to_owned())
                 })
             .collect()
     };
 
-    let cmd = Fmi2Command {
-        command: Some(Command::Fmi2SetString(
-            fmi2_messages::Fmi2SetString {
-                references,
-                values,
-            }
-        )),
-    };
-
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            error!("fmi2SetString failed with error: {:?}.", error);
+    match conversion_result {
+        Ok(values) => {
+            let cmd = Fmi2Command {
+                command: Some(Command::Fmi2SetString(
+                    fmi2_messages::Fmi2SetString {
+                        references,
+                        values,
+                    }
+                )),
+            };
+        
+            slave.dispatcher
+                .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+                .map(|status| status.into())
+                .unwrap_or_else(|error| {
+                    error!("fmi2SetString failed with error: {:?}.", error);
+                    Fmi2Status::Error
+                })
+        },
+        Err(conversion_error) => {
+            error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
             Fmi2Status::Error
-        })
+        }
+    }
+
+    
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
