@@ -16,11 +16,11 @@ use common::{
     fmu_python_test,
     vdm_check,
     BasicFmu,
+    BreakableFmu,
     DistributedFmu,
     FmiVersion,
     FmuBackendImplementationLanguage,
     LocalFmu,
-    TestableFmu,
     ZippedDistributedFmu,
     ZippedLocalFmu
 };
@@ -195,6 +195,7 @@ fn test_platform_python_fmi2_local() {
     fmu_python_test(fmu, "fmi2_platform");
 }
 
+#[test]
 fn test_platform_csharp_fmi2_local_zipped() {
     let fmu = ZippedLocalFmu::get_clone(
         &FmiVersion::Fmi2, 
