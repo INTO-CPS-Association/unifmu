@@ -92,10 +92,8 @@ def instantiating_test(
     try:
         if is_zipped:
             fmu_filename = extract(fmu_filename)
-            print("EXTRACTED!!!")
 
         model_description = read_model_description(fmu_filename)
-        print("READ FILE DESCRIPTION!!!")
 
         fmu = fmu_class(
             guid = model_description.guid,
@@ -103,7 +101,6 @@ def instantiating_test(
             modelIdentifier = model_description.coSimulation.modelIdentifier,
             instanceName='test_instance'
         )
-        print("Made and fmu?")
 
         fmu.instantiate()
 
