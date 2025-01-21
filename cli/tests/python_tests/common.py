@@ -1,8 +1,29 @@
 from collections.abc import Callable
-from fmpy import read_model_description
+from fmpy import read_model_description, extract
 from fmpy.model_description import ModelDescription
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
+
+"""Test wrapper that does nothing except transforming exceptions into error
+messages understood by the rust test framework.
+
+Parameters
+----------
+caller : str
+    Name of the outer function. Used in failure messages to specify where the
+    failure was.
+inner_function : Callable
+    Function containing the actual tests. Any exception in this function is
+    treated as test failure.
+"""
+def barren_test(
+    caller: str,
+    inner_function: Callable
+):
+    try:
+        inner_function()
+    except Exception as e:
+        print(f"TEST FAILED - {caller}: {e}")
 
 """Test wrapper that only imports the FMU without instantiating it.
 
@@ -24,9 +45,13 @@ def uninstantiating_test(
     caller: str,
     inner_function: Callable,
     fmu_filename: str,
-    fmu_class: FMU2Slave | FMU3Slave
+    fmu_class: FMU2Slave | FMU3Slave,
+    is_zipped: bool = False
 ):
     try:
+        if is_zipped:
+            fmu_filename = extract(fmu_filename)
+
         model_description = read_model_description(fmu_filename)
 
         fmu = fmu_class(
@@ -41,7 +66,7 @@ def uninstantiating_test(
     except Exception as e:
         print(f"TEST FAILED - {caller}: {e}")
 
-"""Test wrapper that only imports and instantiates the FMU.
+"""Test wrapper that imports and instantiates the FMU.
 
 Parameters
 ----------
@@ -61,10 +86,16 @@ def instantiating_test(
     caller: str,
     inner_function: Callable,
     fmu_filename: str,
-    fmu_class: FMU2Slave | FMU3Slave
+    fmu_class: FMU2Slave | FMU3Slave,
+    is_zipped: bool = False
 ):
     try:
+        if is_zipped:
+            fmu_filename = extract(fmu_filename)
+            print("EXTRACTED!!!")
+
         model_description = read_model_description(fmu_filename)
+        print("READ FILE DESCRIPTION!!!")
 
         fmu = fmu_class(
             guid = model_description.guid,
@@ -72,6 +103,7 @@ def instantiating_test(
             modelIdentifier = model_description.coSimulation.modelIdentifier,
             instanceName='test_instance'
         )
+        print("Made and fmu?")
 
         fmu.instantiate()
 

@@ -1,9 +1,47 @@
-from common import uninstantiating_test, instantiating_test
+from common import barren_test, uninstantiating_test, instantiating_test
+from fmpy import extract
 from fmpy.model_description import ModelDescription
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
 
-def fmi2_platform(fmu_filename: str):
+"""Tries to extract (AKA unzip) the fmu using the fmpy extract function
+
+This will fail if the given FMU is not zipped or if the zipped structure is
+wrong.
+Can be called with both FMI2 and FMI3 FMUs.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def extract_fmu(fmu_filename: str, is_zipped: bool):
+    def inner():
+        if not is_zipped:
+            raise Exception("The given FMU isn't zipped!")
+        unzipped_dir = extract(fmu_filename)
+    
+    barren_test(
+        caller = "extract",
+        inner_function = inner
+    )
+
+"""Asserts that the given FMU was packaged with the correct platform information.
+
+The FMU should conform to FMI2.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi2_platform(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU2Slave):
         platform = fmu.getTypesPlatform()
 
@@ -13,10 +51,21 @@ def fmi2_platform(fmu_filename: str):
         caller = "fmi2_platform",
         inner_function = inner,
         fmu_filename = fmu_filename,
-        fmu_class = FMU2Slave
+        fmu_class = FMU2Slave,
+        is_zipped = is_zipped
     )
 
-def fmi2_version(fmu_filename: str):
+"""Asserts that the given FMU is version FMI2.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi2_version(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU2Slave):
         version = fmu.getVersion()
 
@@ -26,10 +75,23 @@ def fmi2_version(fmu_filename: str):
         caller = "fmi2_version",
         inner_function = inner,
         fmu_filename = fmu_filename,
-        fmu_class = FMU2Slave
+        fmu_class = FMU2Slave,
+        is_zipped = is_zipped
     )
 
-def fmi2_instantiate(fmu_filename: str):
+"""Tries to instantiate the FMU.
+
+The FMU should conform to FMI2.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi2_instantiate(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU2Slave, model_description: ModelDescription):
         pass
 
@@ -37,11 +99,23 @@ def fmi2_instantiate(fmu_filename: str):
         caller = "fmi2_instantiate",
         inner_function = inner,
         fmu_filename = fmu_filename,
-        fmu_class = FMU2Slave
+        fmu_class = FMU2Slave,
+        is_zipped = is_zipped
     )
     
+"""Tries to do a full simulation using the FMU.
 
-def fmi2_simulate(fmu_filename: str):
+The FMU should conform to FMI2.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi2_simulate(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU2Slave, model_description: ModelDescription):
         start_time = 0.0
         sim_time = start_time
@@ -159,10 +233,21 @@ def fmi2_simulate(fmu_filename: str):
         caller = "fmi2_simulate",
         inner_function = inner,
         fmu_filename = fmu_filename,
-        fmu_class = FMU2Slave
+        fmu_class = FMU2Slave,
+        is_zipped = is_zipped
     )
 
-def fmi3_version(fmu_filename: str):
+"""Asserts that the given FMU is version FMI3.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi3_version(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU3Slave):
         version = fmu.getVersion()
 
@@ -172,10 +257,23 @@ def fmi3_version(fmu_filename: str):
         caller = "fmi3_version",
         inner_function = inner,
         fmu_filename = fmu_filename,
-        fmu_class = FMU3Slave
+        fmu_class = FMU3Slave,
+        is_zipped = is_zipped
     )
 
-def fmi3_instantiate(fmu_filename: str):
+"""Tries to instantiate the FMU.
+
+The FMU should conform to FMI3.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi3_instantiate(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU3Slave, model_description: ModelDescription):
         pass
 
@@ -183,10 +281,23 @@ def fmi3_instantiate(fmu_filename: str):
         caller = "fmi3_instantiate",
         inner_function = inner,
         fmu_filename = fmu_filename,
-        fmu_class = FMU3Slave
+        fmu_class = FMU3Slave,
+        is_zipped = is_zipped
     )
 
-def fmi3_simulate(fmu_filename: str):
+"""Tries to do a full simulation using the FMU.
+
+The FMU should conform to FMI3.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi3_simulate(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU3Slave, model_description: ModelDescription):
         can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
     
@@ -357,7 +468,8 @@ def fmi3_simulate(fmu_filename: str):
         caller = "fmi3_simulate",
         inner_function = inner,
         fmu_filename = fmu_filename,
-        fmu_class = FMU3Slave
+        fmu_class = FMU3Slave,
+        is_zipped = is_zipped
     )
 
 if __name__ == "__main__":
@@ -365,5 +477,10 @@ if __name__ == "__main__":
 
     function_name = sys.argv[1]
     fmu_filepath = sys.argv[2]
+    is_zipped = sys.argv[3]
+    if is_zipped == "true" or is_zipped == "True":
+        is_zipped = True
+    else:
+        is_zipped = False
 
-    globals()[function_name](fmu_filepath)
+    globals()[function_name](fmu_filepath, is_zipped)

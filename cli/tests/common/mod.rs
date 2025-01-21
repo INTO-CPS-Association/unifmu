@@ -30,7 +30,8 @@ pub fn fmu_python_test(
 ) {
     let python_test_process = start_python_test_process(
         python_test_function_name,
-        fmu.importable_path()
+        fmu.importable_path(),
+        fmu.is_zipped()
     );
 
     let python_test_output_reader = BufReader::new(&python_test_process);
@@ -64,12 +65,13 @@ pub fn fmu_python_test(
 /// As such this hould ONLY be called with Distributed FMUs that are
 /// instantiated as part of the test.
 pub fn distributed_fmu_python_test(
-    fmu: DistributedFmu,
+    fmu: impl BasicFmu + RemoteBackend,
     python_test_function_name: &str
 ) {
     let python_test_process = start_python_test_process(
         python_test_function_name,
-        fmu.importable_path()
+        fmu.importable_path(),
+        fmu.is_zipped()
     );
 
     let python_test_output_reader = BufReader::new(&python_test_process);
@@ -119,7 +121,8 @@ pub fn distributed_fmu_python_test(
 /// Panics if the test script isn't available or cannot be executed.
 fn start_python_test_process(
     python_test_function_name: &str,
-    fmu_path: impl Into<OsString>
+    fmu_path: impl Into<OsString>,
+    is_zipped: bool
 ) -> duct::ReaderHandle {
     let test_directory = std::env::current_dir()
     .expect("Should be able to get current directory")
@@ -139,7 +142,8 @@ fn start_python_test_process(
         "python3",
         python_test_script_name,
         python_test_function_name,
-        fmu_path
+        fmu_path,
+        is_zipped.to_string()
     )
         .dir(test_directory)
         .stderr_to_stdout()
@@ -151,7 +155,7 @@ fn start_python_test_process(
 /// VDM-SL and comparing them to a prebuild model.
 /// 
 /// Panics if the vdmcheck tool isn't available or if it returns an error.
-pub fn vdm_check(fmu: impl TestableFmu) {
+pub fn vdm_check(fmu: impl BasicFmu) {
     let fmu = fmu.zipped();
 
     let test_dependencies = std::env::current_dir()
@@ -298,36 +302,6 @@ pub struct ZippedDistributedFmu {
 }
 
 impl BasicFmu for LocalFmu {
-    fn directory(&self) -> &TempDir {
-        &self.directory
-    }
-
-    fn language(&self) -> &FmuBackendImplementationLanguage {
-        &self.language
-    }
-
-    fn version(&self) -> &FmiVersion {
-        &self.version
-    }
-
-    fn fmu_name(
-        version: &FmiVersion,
-        language: &FmuBackendImplementationLanguage
-    ) -> String {
-        format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
-    }
-
-    fn importable_path(&self) -> PathBuf {
-        self.directory()
-            .path()
-            .join(Self::fmu_name(
-                self.version(),
-                self.language()
-            ))
-    }
-}
-
-impl TestableFmu for LocalFmu {
     fn new(
         version: FmiVersion,
         language: FmuBackendImplementationLanguage
@@ -378,11 +352,36 @@ impl TestableFmu for LocalFmu {
         args
     }
 
-    fn model_file_path(&self) -> PathBuf {
-        self.directory.path()
-            .join(Self::fmu_name(&self.version, &self.language))
-            .join("resources")
-            .join(self.language.model_str())
+    fn directory(&self) -> &TempDir {
+        &self.directory
+    }
+
+    fn language(&self) -> &FmuBackendImplementationLanguage {
+        &self.language
+    }
+
+    fn version(&self) -> &FmiVersion {
+        &self.version
+    }
+
+    fn fmu_name(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> String {
+        format!("{}fmu_{}.fmu", language.cmd_str(), version.as_str())
+    }
+
+    fn importable_path(&self) -> PathBuf {
+        self.directory()
+            .path()
+            .join(Self::fmu_name(
+                self.version(),
+                self.language()
+            ))
+    }
+
+    fn is_zipped(&self) -> bool {
+        false
     }
 
     fn zipped(&self) -> impl ZippedTestableFmu {
@@ -424,6 +423,15 @@ impl TestableFmu for LocalFmu {
     }
 }
 
+impl TestableFmu for LocalFmu {
+    fn model_file_path(&self) -> PathBuf {
+        self.directory.path()
+            .join(Self::fmu_name(&self.version, &self.language))
+            .join("resources")
+            .join(self.language.model_str())
+    }
+}
+
 impl Clone for LocalFmu {
     fn clone(&self) -> Self {
         let new_directory = Self::new_tmp_dir();
@@ -447,6 +455,63 @@ impl Clone for LocalFmu {
 }
 
 impl BasicFmu for ZippedLocalFmu {
+    fn new(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage
+    ) -> ZippedLocalFmu {
+        let directory = Self::new_tmp_dir();
+
+        let file = File::create(
+            directory.path().join(Self::fmu_name(&version, &language))
+        ).expect("Should be able to create FMU zip file.");
+
+        let this = ZippedLocalFmu {
+            file,
+            directory,
+            language,
+            version
+        };
+
+        this.generate_fmu_files();
+
+        this
+    }
+
+    fn get_clone(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> ZippedLocalFmu {
+        match language {
+            FmuBackendImplementationLanguage::CSharp => (*ZIPPED_CSHARP_FMI2).clone(),
+            FmuBackendImplementationLanguage::Java => (*ZIPPED_JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::Python => match version {
+                FmiVersion::Fmi2 => (*ZIPPED_PYTHON_FMI2).clone(),
+                FmiVersion::Fmi3 => (*ZIPPED_PYTHON_FMI3).clone()
+            }
+        }
+    }
+
+    fn cmd_args(&self) -> Vec<String> {
+        let mut args = vec![
+            String::from("generate"),
+            String::from(self.language().cmd_str()),
+            Self::fmu_name(self.version(), self.language()),
+        ];
+
+        match self.version() {
+            FmiVersion::Fmi2 => (),
+            FmiVersion::Fmi3 => args.push(
+                String::from(
+                    self.version().as_str()
+                )
+            ),
+        };
+
+        args.push(String::from("--zipped"));
+
+        args
+    }
+
     fn directory(&self) -> &TempDir {
         &self.directory
     }
@@ -474,6 +539,15 @@ impl BasicFmu for ZippedLocalFmu {
                 self.language()
             ))
     }
+
+    fn is_zipped(&self) -> bool {
+        true
+    }
+
+    #[allow(refining_impl_trait)]
+    fn zipped(&self) -> ZippedLocalFmu {
+        self.clone()
+    }
 }
 
 impl ZippedTestableFmu for ZippedLocalFmu {
@@ -482,40 +556,29 @@ impl ZippedTestableFmu for ZippedLocalFmu {
     }
 }
 
+impl Clone for ZippedLocalFmu {
+    fn clone(&self) -> Self {
+        let new_directory = Self::new_tmp_dir();
+
+        let file_name = Self::fmu_name(self.version(), self.language());
+
+        let new_file_path = new_directory.path().join(&file_name);
+
+        copy(
+            self.directory().path().join(&file_name),
+            &new_file_path
+        ).expect("Should be able to copy zip file.");
+
+        Self {
+            file: File::open(&new_file_path).expect("Should be able to open new cloned zip file."),
+            directory: new_directory,
+            language: self.language().clone(),
+            version: self.version().clone()
+        }
+    }
+}
+
 impl BasicFmu for DistributedFmu {
-    fn directory(&self) -> &TempDir {
-        &self.directory
-    }
-
-    fn language(&self) -> &FmuBackendImplementationLanguage {
-        &self.language
-    }
-
-    fn version(&self) -> &FmiVersion {
-        &self.version
-    }
-
-    fn fmu_name(
-        version: &FmiVersion,
-        language: &FmuBackendImplementationLanguage
-    ) -> String {
-        format!("distributed_{}fmu_{}", language.cmd_str(), version.as_str())
-    }
-    
-    fn importable_path(&self) -> PathBuf {
-        self.proxy_directory_path()
-    }
-}
-
-impl DistributedFileStructure for DistributedFmu {
-    fn proxy_directory_name(&self) -> String {
-        Self::fmu_name(self.version(), self.language()) + "_proxy"
-    }
-}
-
-impl RemoteBackend for DistributedFmu {}
-
-impl TestableFmu for DistributedFmu {
     fn new(
         version: FmiVersion,
         language: FmuBackendImplementationLanguage
@@ -566,9 +629,31 @@ impl TestableFmu for DistributedFmu {
         args
     }
 
-    fn model_file_path(&self) -> PathBuf {
-        self.backend_directory_path()
-            .join(self.language.model_str())
+    fn directory(&self) -> &TempDir {
+        &self.directory
+    }
+
+    fn language(&self) -> &FmuBackendImplementationLanguage {
+        &self.language
+    }
+
+    fn version(&self) -> &FmiVersion {
+        &self.version
+    }
+
+    fn fmu_name(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> String {
+        format!("distributed_{}fmu_{}", language.cmd_str(), version.as_str())
+    }
+    
+    fn importable_path(&self) -> PathBuf {
+        self.proxy_directory_path()
+    }
+
+    fn is_zipped(&self) -> bool {
+        false
     }
 
     #[allow(refining_impl_trait)]
@@ -617,6 +702,21 @@ impl TestableFmu for DistributedFmu {
     }
 }
 
+impl DistributedFileStructure for DistributedFmu {
+    fn proxy_directory_name(&self) -> String {
+        Self::fmu_name(self.version(), self.language()) + "_proxy"
+    }
+}
+
+impl RemoteBackend for DistributedFmu {}
+
+impl TestableFmu for DistributedFmu {
+    fn model_file_path(&self) -> PathBuf {
+        self.backend_directory_path()
+            .join(self.language.model_str())
+    }
+}
+
 impl Clone for DistributedFmu {
     fn clone(&self) -> Self {
         let new_directory = Self::new_tmp_dir();
@@ -640,6 +740,63 @@ impl Clone for DistributedFmu {
 }
 
 impl BasicFmu for ZippedDistributedFmu {
+    fn new(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage
+    ) -> ZippedDistributedFmu {
+        let directory = Self::new_tmp_dir();
+
+        let file = File::create(
+            directory.path().join(Self::fmu_name(&version, &language))
+        ).expect("Should be able to create FMU zip file.");
+
+        let this = ZippedDistributedFmu {
+            file,
+            directory,
+            language,
+            version
+        };
+
+        this.generate_fmu_files();
+
+        this
+    }
+
+    fn get_clone(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> ZippedDistributedFmu {
+        match language {
+            FmuBackendImplementationLanguage::CSharp => (*ZIPPED_DISTRIBUTED_CSHARP_FMI2).clone(),
+            FmuBackendImplementationLanguage::Java => (*ZIPPED_DISTRIBUTED_JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::Python => match version {
+                FmiVersion::Fmi2 => (*ZIPPED_DISTRIBUTED_PYTHON_FMI2).clone(),
+                FmiVersion::Fmi3 => (*ZIPPED_DISTRIBUTED_PYTHON_FMI3).clone()
+            }
+        }
+    }
+
+    fn cmd_args(&self) -> Vec<String> {
+        let mut args = vec![
+            String::from("generate-distributed"),
+            String::from(self.language().cmd_str()),
+            Self::fmu_name(self.version(), self.language()),
+        ];
+
+        match self.version() {
+            FmiVersion::Fmi2 => (),
+            FmiVersion::Fmi3 => args.push(
+                String::from(
+                    self.version().as_str()
+                )
+            ),
+        };
+
+        args.push(String::from("--zipped"));
+
+        args
+    }
+
     fn directory(&self) -> &TempDir {
         &self.directory
     }
@@ -662,6 +819,42 @@ impl BasicFmu for ZippedDistributedFmu {
     fn importable_path(&self) -> PathBuf {
         self.proxy_directory_path()
     }
+
+    fn is_zipped(&self) -> bool {
+        true
+    }
+
+    #[allow(refining_impl_trait)]
+    fn zipped(&self) -> ZippedDistributedFmu {
+        self.clone()
+    }
+}
+
+impl Clone for ZippedDistributedFmu {
+    fn clone(&self) -> Self {
+        let new_directory = Self::new_tmp_dir();
+
+        let proxy_file_name = self.proxy_directory_name();
+
+        let new_proxy_file_path = new_directory.path().join(&proxy_file_name);
+
+        copy(
+            self.proxy_directory_path(),
+            &new_proxy_file_path
+        ).expect("Should be able to copy zip file.");
+
+        copy_directory_recursive(
+            self.backend_directory_path(),
+            new_directory.path().join(self.backend_directory_name())
+        ).expect("Should be able to copy backend/private directory.");
+        
+        Self {
+            file: File::open(&new_proxy_file_path).expect("Should be able to open new cloned zip file."),
+            directory: new_directory,
+            language: self.language().clone(),
+            version: self.version().clone()
+        }
+    }
 }
 
 impl DistributedFileStructure for ZippedDistributedFmu {
@@ -680,26 +873,6 @@ impl ZippedTestableFmu for ZippedDistributedFmu {
 
 /// Behaviour shared by all FMUs.
 pub trait BasicFmu {
-    fn directory(&self) -> &TempDir;
-
-    fn language(&self) -> &FmuBackendImplementationLanguage;
-
-    fn version(&self) -> &FmiVersion;
-
-    /// Name of the importable part of the FMU (the directory/zip-file that
-    /// contains the FMU binary). Only the base file name, not the full
-    /// path name.
-    fn fmu_name(
-        version: &FmiVersion,
-        language: &FmuBackendImplementationLanguage
-    ) -> String;
-
-    /// Path to the directory/zip-file that contains the FMU binary.
-    fn importable_path(&self) -> PathBuf;
-}
-
-/// Behaviour for FMUs that can be generated by the UNIFMU CLI.
-pub trait TestableFmu: BasicFmu {
     /// Generated a wholly new FMU using the UNIFMU CLI in a temporary
     /// directory.
     /// 
@@ -738,18 +911,31 @@ pub trait TestableFmu: BasicFmu {
 
     fn cmd_args(&self) -> Vec<String>;
 
-    fn model_file_path(&self) -> PathBuf;
+    fn directory(&self) -> &TempDir;
+
+    fn language(&self) -> &FmuBackendImplementationLanguage;
+
+    fn version(&self) -> &FmiVersion;
+
+    /// Name of the importable part of the FMU (the directory/zip-file that
+    /// contains the FMU binary). Only the base file name, not the full
+    /// path name.
+    fn fmu_name(
+        version: &FmiVersion,
+        language: &FmuBackendImplementationLanguage
+    ) -> String;
+
+    /// Path to the directory/zip-file that contains the FMU binary.
+    fn importable_path(&self) -> PathBuf;
+
+    /// Whether or not the FMU is zipped or not.
+    fn is_zipped(&self) -> bool;
 
     /// Returns a clone of the FMU but with the importable folder zipped.
     /// 
     /// All modifications on the cloned FMU will also be present in the
     /// zipped fmu.
     fn zipped(&self) -> impl ZippedTestableFmu;
-
-    fn new_tmp_dir() -> TempDir {
-        TempDir::new()
-            .expect("Couldn't create temporary Fmu directory.")
-    }
 
     fn generate_fmu_files(&self) {
         Command::cargo_bin("unifmu")
@@ -760,6 +946,16 @@ pub trait TestableFmu: BasicFmu {
             .success()
             .stderr(contains("generated successfully"));
     }
+
+    fn new_tmp_dir() -> TempDir {
+        TempDir::new()
+            .expect("Couldn't create temporary Fmu directory.")
+    }
+}
+
+/// Behaviour for FMUs that can be generated by the UNIFMU CLI.
+pub trait TestableFmu: BasicFmu {
+    fn model_file_path(&self) -> PathBuf;
 
     /// Breaks the model by adding an error/exception to the first line of
     /// the code.
@@ -931,42 +1127,114 @@ fn inject_line(
     Ok(())
 }
 
-static CSHARP_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {LocalFmu::new(
-    FmiVersion::Fmi2,
-    FmuBackendImplementationLanguage::CSharp,
-)});
+static CSHARP_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
+    LocalFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
 
-static JAVA_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {LocalFmu::new(
-    FmiVersion::Fmi2,
-    FmuBackendImplementationLanguage::CSharp,
-)});
+static JAVA_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
+    LocalFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
 
-static PYTHON_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {LocalFmu::new(
-    FmiVersion::Fmi2,
-    FmuBackendImplementationLanguage::Python,
-)});
+static PYTHON_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
+    LocalFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
 
-static PYTHON_FMI3: LazyLock<LocalFmu> = LazyLock::new(|| {LocalFmu::new(
-    FmiVersion::Fmi3,
-    FmuBackendImplementationLanguage::Python,
-)});
+static PYTHON_FMI3: LazyLock<LocalFmu> = LazyLock::new(|| {
+    LocalFmu::new(
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
 
-static DISTRIBUTED_CSHARP_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
-    FmiVersion::Fmi2,
-    FmuBackendImplementationLanguage::CSharp,
-)});
+static ZIPPED_CSHARP_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
+    ZippedLocalFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
 
-static DISTRIBUTED_JAVA_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
-    FmiVersion::Fmi2,
-    FmuBackendImplementationLanguage::CSharp,
-)});
+static ZIPPED_JAVA_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
+    ZippedLocalFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
 
-static DISTRIBUTED_PYTHON_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
-    FmiVersion::Fmi2,
-    FmuBackendImplementationLanguage::Python,
-)});
+static ZIPPED_PYTHON_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
+    ZippedLocalFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
 
-static DISTRIBUTED_PYTHON_FMI3: LazyLock<DistributedFmu> = LazyLock::new(|| {DistributedFmu::new(
-    FmiVersion::Fmi3,
-    FmuBackendImplementationLanguage::Python,
-)});
+static ZIPPED_PYTHON_FMI3: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
+    ZippedLocalFmu::new(
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
+
+static DISTRIBUTED_CSHARP_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
+    DistributedFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
+
+static DISTRIBUTED_JAVA_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
+    DistributedFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
+
+static DISTRIBUTED_PYTHON_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
+    DistributedFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
+
+static DISTRIBUTED_PYTHON_FMI3: LazyLock<DistributedFmu> = LazyLock::new(|| {
+    DistributedFmu::new(
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
+
+static ZIPPED_DISTRIBUTED_CSHARP_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
+    ZippedDistributedFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
+
+static ZIPPED_DISTRIBUTED_JAVA_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
+    ZippedDistributedFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::CSharp,
+    )
+});
+
+static ZIPPED_DISTRIBUTED_PYTHON_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
+    ZippedDistributedFmu::new(
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
+
+static ZIPPED_DISTRIBUTED_PYTHON_FMI3: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
+    ZippedDistributedFmu::new(
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Python,
+    )
+});
