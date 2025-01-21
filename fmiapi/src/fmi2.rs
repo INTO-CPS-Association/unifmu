@@ -761,7 +761,7 @@ pub unsafe extern "C" fn fmi2GetString(
                     in slave.string_buffer.iter().enumerate()
                     {
                         std::ptr::write(
-                            values.offset(idx as isize), 
+                            values.add(idx), 
                             cstr.as_ptr()
                         );
                     }

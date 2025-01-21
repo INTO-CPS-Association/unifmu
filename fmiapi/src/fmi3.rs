@@ -1358,7 +1358,7 @@ pub unsafe extern "C" fn fmi3GetString(
                     for (idx, cstr)
                     in instance.string_buffer.iter().enumerate() {
                         std::ptr::write(
-                            values.offset(idx as isize),
+                            values.add(idx),
                             cstr.as_ptr()
                         );
                     }
