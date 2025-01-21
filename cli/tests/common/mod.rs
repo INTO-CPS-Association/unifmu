@@ -437,7 +437,7 @@ impl BreakableFmu for LocalFmu {
             FmuBackendImplementationLanguage::Java => 47,
             FmuBackendImplementationLanguage::Python => {
                 match self.version() {
-                    FmiVersion::Fmi2 => 37,
+                    FmiVersion::Fmi2 => 59,
                     FmiVersion::Fmi3 => 116
                 }
             },
