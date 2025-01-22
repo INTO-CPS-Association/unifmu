@@ -30,7 +30,6 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 BOLD = '\033[1m'
 
 if __name__ == "__main__":
-    model = Model()
     input_ok = False
     if len(sys.argv) == 2:
         try:
@@ -79,6 +78,7 @@ if __name__ == "__main__":
         # ================= FMI2 =================
 
         if group == "Fmi2Instantiate":
+            model = Model()
             result = Fmi2EmptyReturn()
         elif group == "Fmi2DoStep":
             result = Fmi2StatusReturn()
