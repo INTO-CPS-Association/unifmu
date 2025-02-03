@@ -166,12 +166,7 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         if can_handle_state:
             print("Fetching FMU state")
             state = fmu.getFMUstate()
-            import logging
-            logging.basicConfig(level=logging.DEBUG)
-            from ctypes import byref
-            logging.debug(f"State is: {byref(state)}")
             rerolled_time = sim_time
-            print("from test_fmi2.py: The state is: ", state)
 
         print(f"Updating inputs at time {sim_time}")
         fmu.setReal([vrs["real_a"],vrs["real_b"]],[1.0,2.0])
@@ -197,7 +192,6 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert string_c == "Hello, World!", f"Evolved value string_c was '{string_c}', should have been 'Hello, World!'"
 
         if can_handle_state: 
-            print(f"Reference of state just before rerolling: {byref(state)}")
             print("Rerolling FMU state")
             fmu.setFMUstate(state)
             print("Resetting time")
@@ -234,6 +228,8 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
             assert string_a == "", f"Rerolled value string_a was '{string_a}', should have been ''"
             assert string_b == "", f"Rerolled value string_b was '{string_b}', should have been ''"
             assert string_c == "", f"Rerolled value string_c was '{string_c}', should have been ''"
+            
+            print("fmi2_simulate: Test Complete")
         
     instantiating_test(
         caller = "fmi2_simulate",
