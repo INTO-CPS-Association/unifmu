@@ -184,6 +184,7 @@ impl Drop for Fmi2Slave {
     }
 }
 
+#[derive(Debug)]
 pub struct SlaveState {
     bytes: Vec<u8>,
 }
@@ -1225,51 +1226,70 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
 #[no_mangle]
-pub extern "C" fn fmi2SetFMUstate(slave: &mut Fmi2Slave, state: &SlaveState) -> Fmi2Status {
-    let state = state.bytes.to_owned();
+pub extern "C" fn fmi2SetFMUstate(slave: *mut Fmi2Slave, state: *const SlaveState) -> Fmi2Status {
+    if slave.is_null() || state.is_null() {
+        error!("fmi2SetFMUstate called with slave or state pointing to null!");
+        return Fmi2Status::Error;
+    }
+    println!("fmi2SetFMUstate called with slave and state pointing to non-null!");
+    println!("From Rust: Address of the pointer {:p} ", state);
+    let state_ref = unsafe { &*state };
+
+    // Printing for debugging. 
+    println!("State: {:?}", state_ref);
+    println!("State bytes: {:?}", state_ref.bytes);
+    
+    let state_bytes = state_ref.bytes.to_owned();
     
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2DeserializeFmuState(
             fmi2_messages::Fmi2DeserializeFmuState {
-                state,
+                state: state_bytes,
             }
         )),
     };
     
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    unsafe { (*slave).dispatcher.send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd) }
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi2SetRealInputDerivatives failed with error: {:?}.", error);
             Fmi2Status::Error
         })
 }
-
 //
 
 #[no_mangle]
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
 pub extern "C" fn fmi2GetFMUstate(
-    slave: &mut Fmi2Slave,
-    state: &mut Option<SlaveState>,
+    slave: *mut Fmi2Slave,
+    state: *mut *mut SlaveState,
 ) -> Fmi2Status {
+
+    if state.is_null() || slave.is_null() {
+        error!("fmi2GetFMUstate called with state pointing to null!");
+        return Fmi2Status::Error;
+    }
+    println!("From Rust: Get state address of the pointer is {:p}", state);
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2SerializeFmuState(
             fmi2_messages::Fmi2SerializeFmuState {}
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd)
-    {
+    match unsafe { (*slave).dispatcher.send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) } {
         Ok(result) => {
-            match state.as_mut() {
-                Some(state) => {
-                    state.bytes = result.state;
-                }
-                None => {
-                    *state = Some(SlaveState::new(&result.state));
-                }
+            unsafe {
+                let state_box = Box::new(SlaveState::new(&result.state));
+                *state = Box::into_raw(state_box); // This transfers ownership
+
+                // if let Some(state_ref) = (*state).as_mut() {
+                //     state_ref.bytes = result.state;
+                // } else {
+                //     // Dereferencing the raw pointer to assign a new value
+                //     *state = Some(SlaveState::new(&result.state));
+                // }
+
+                return Fmi2Status::Ok;
             }
 
             Fmi2Status::try_from(result.status)
@@ -1289,13 +1309,17 @@ pub extern "C" fn fmi2GetFMUstate(
 /// If state points to null the call is ignored as defined by the specification
 #[no_mangle]
 pub extern "C" fn fmi2FreeFMUstate(
-    slave: &mut Fmi2Slave,
-    state: Option<Box<SlaveState>>,
+    slave: *mut Fmi2Slave,
+    state: *mut SlaveState,
 ) -> Fmi2Status {
-    match state {
-        Some(state) => drop(state),
-        None => warn!("fmi2FreeFMUstate called with state pointing to null!")
+    if state.is_null() {
+        warn!("fmi2FreeFMUstate called with state pointing to null!");
+        return Fmi2Status::Ok;
+    } 
+    unsafe {
+        drop(Box::from_raw(state));
     }
+
     Fmi2Status::Ok
 }
 
