@@ -886,7 +886,7 @@ impl ZippedTestableFmu for ZippedDistributedFmu {
 
 /// Behaviour shared by all FMUs.
 pub trait BasicFmu {
-    /// Generated a wholly new FMU using the UNIFMU CLI in a temporary
+    /// Generate a wholly new FMU using the UNIFMU CLI in a temporary
     /// directory.
     /// 
     /// If a new FMU is needed `get_clone()` should be called instead unless
@@ -907,12 +907,13 @@ pub trait BasicFmu {
     /// without further modification, and are never modified after creation.
     /// When cloned, all FMU assets are copied from the pregenerated one and
     /// collected in a new temporary directory. As such, calling `get_clone()`
-    /// will return an effectively new FMU without invoking the UNIFMU CLI.
+    /// will return an effectively new FMU without invoking the UNIFMU CLI,
+    /// from the second call in prgram execution and onwards.
     /// 
-    /// The first time this is called with any set of parameters it take as
-    /// long as `new()`, but the second time it called with the same parameter
-    /// variants it will be much faster as the cloned FMU has already been
-    /// generated. The difference is platform dependent, but two order of
+    /// The first time this is called with any set of parameters it takes as
+    /// long as `new()`, but the second time it iscalled with the same
+    /// parameter variants it will be much faster as the cloned FMU has already
+    /// been generated. The difference is platform dependent, but two order of
     /// magnitude differences have been observed.
     /// 
     /// If it is neccesarry to explicitly invoke the UNIFMU CLI as part of the
