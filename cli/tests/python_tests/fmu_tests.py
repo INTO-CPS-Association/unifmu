@@ -121,7 +121,8 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         sim_time = start_time
         step_size = 1e-2
 
-        can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
+        # can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
+        can_handle_state = True
 
         fmu.setupExperiment(startTime=start_time)
         fmu.enterInitializationMode()
@@ -165,6 +166,10 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         if can_handle_state:
             print("Fetching FMU state")
             state = fmu.getFMUstate()
+            import logging
+            logging.basicConfig(level=logging.DEBUG)
+            from ctypes import byref
+            logging.debug(f"State is: {byref(state)}")
             rerolled_time = sim_time
             print("from test_fmi2.py: The state is: ", state)
 
@@ -192,6 +197,7 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert string_c == "Hello, World!", f"Evolved value string_c was '{string_c}', should have been 'Hello, World!'"
 
         if can_handle_state: 
+            print(f"Reference of state just before rerolling: {byref(state)}")
             print("Rerolling FMU state")
             fmu.setFMUstate(state)
             print("Resetting time")
@@ -300,6 +306,8 @@ is_zipped : bool
 def fmi3_simulate(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU3Slave, model_description: ModelDescription):
         can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
+        # can_handle_state = True
+
     
         if can_handle_state:
             print("FMU can get and set state")
