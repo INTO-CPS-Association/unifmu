@@ -1,4 +1,3 @@
-use clap;
 use clap::{Parser, Subcommand};
 use env_logger::Builder;
 use log::{error, info};
@@ -10,7 +9,7 @@ use unifmu::{
     Language,
 };
 
-static ABOUT: &'static str = "
+static ABOUT: &str = "
 Implement Functional Mock-up units (FMUs) in various source languages.
 
 * Source:   https://github.com/INTO-CPS-Association/unifmu

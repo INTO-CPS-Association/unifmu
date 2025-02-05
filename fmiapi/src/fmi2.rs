@@ -2,21 +2,25 @@
 #![allow(unreachable_code)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
+#![deny(unsafe_op_in_unsafe_fn)]
+
 use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi2_messages::{self, Fmi2Command, fmi2_command::Command};
-use crate::spawn::spawn_fmi2_slave;
+use crate::spawn::spawn_slave;
 use libc::c_double;
 use libc::size_t;
+
 
 use url::Url;
 use tracing::{error, warn};
 use tracing_subscriber;
 
 use std::{
-    ffi::{CStr, CString},
+    ffi::{CStr, CString, NulError},
     os::raw::{c_char, c_int, c_uint, c_ulonglong, c_void},
     path::Path,
     slice::{from_raw_parts, from_raw_parts_mut},
+    str::Utf8Error,
     sync::LazyLock
 };
 
@@ -37,7 +41,6 @@ static ENABLE_LOGGING: LazyLock<Result<(), Fmi2Status>> = LazyLock::new(|| {
 
 ///
 /// Represents the function signature of the logging callback function passsed
-
 /// from the envrionment to the slave during instantiation.
 pub type Fmi2CallbackLogger = extern "C" fn(
     component_environment: *mut c_void,
@@ -59,7 +62,6 @@ pub type Fmi2StepFinished = extern "C" fn(component_environment: *const c_void, 
 ///
 /// Recommended way to represent opaque pointer, i.e the c type 'void*'
 /// https://doc.rust-lang.org/nomicon/ffi.html#representing-opaque-structs
-
 pub struct ComponentEnvironment {
     _private: [u8; 0],
 }
@@ -164,6 +166,24 @@ impl Fmi2Slave {
     }
 }
 
+/// Sends the fmi3FreeInstance message to the backend when the slave is dropped.
+impl Drop for Fmi2Slave {
+    fn drop(&mut self) {
+        let cmd = Fmi2Command {
+            command: Some(Command::Fmi2FreeInstance(
+                fmi2_messages::Fmi2FreeInstance {}
+            )),
+        };
+
+        match self.dispatcher.send(&cmd) {
+            Ok(_) => (),
+            Err(error) => error!(
+                "Freeing instance failed with error: {:?}.", error
+            ),
+        };
+    }
+}
+
 pub struct SlaveState {
     bytes: Vec<u8>,
 }
@@ -196,9 +216,16 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 /// Instantiates a slave instance by invoking a command in a new process
 /// the command is specified by the configuration file, launch.toml, that should be located in the resources directory
 /// fmi-commands are sent between the wrapper and slave(s) using a message queue library, specifically zmq.
-
+/// 
+/// # Safety
+/// When calling this function, you have to ensure that either the pointer is null or the pointer is convertible to a reference to a string.
+/// 
+/// Furthermore if the pointer is not null:
+/// * The memory pointed to must contain a valid nul terminator at the end of the string.
+/// * The pointer must be [valid] for reads of bytes up to and including the nul terminator.
+/// * The nul terminator must be within isize::MAX from the pointer.
 #[no_mangle]
-pub extern "C" fn fmi2Instantiate(
+pub unsafe extern "C" fn fmi2Instantiate(
     instance_name: *const c_char, // neither allowed to be null or empty string
     fmu_type: Fmi2Type,
     fmu_guid: *const c_char, // not allowed to be null,
@@ -207,7 +234,7 @@ pub extern "C" fn fmi2Instantiate(
     visible: c_int,
     logging_on: c_int,
 ) -> Option<Box<Fmi2Slave>> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
@@ -245,7 +272,7 @@ pub extern "C" fn fmi2Instantiate(
         }
     };
 
-    let dispatcher = match spawn_fmi2_slave(&Path::new(&resources_dir)) {
+    let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi2 slave failed.");
@@ -286,19 +313,7 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
 
     match slave.as_mut() {
         Some(s) => {
-            let cmd = Fmi2Command {
-                command: Some(Command::Fmi2FreeInstance(
-                    fmi2_messages::Fmi2FreeInstance {}
-                )),
-            };
-
-            match s.dispatcher.send(&cmd) {
-                Ok(_) => (),
-                Err(error) => error!(
-                    "Freeing instance failed with error: {:?}.", error
-                ),
-            };
-
+            // fmi2FreeInstance message is send to backend on drop
             drop(slave)
         }
         None => {warn!("No instance given.")}
@@ -314,36 +329,6 @@ pub extern "C" fn fmi2SetDebugLogging(
 ) -> Fmi2Status {
     error!("fmi2SetDebugLogging is not implemented by UNIFMU.");
     Fmi2Status::Error
-
-    // While command and dispatch code existed for this function prior to
-    // refactoring, actual logging wasn't implemented. Thus no logging
-    // would occur despite the fact that this function would return a
-    // positive status.
-    /*
-    let categories: Vec<String> = unsafe {
-        core::slice::from_raw_parts(categories, n_categories)
-            .iter()
-            .map(|s| CStr::from_ptr(*s).to_str().unwrap().to_owned())
-            .collect()
-    };
-
-    let cmd = Fmi2Command {
-            command: Some(Command::Fmi2SetDebugLogging(
-                fmi2_messages::Fmi2SetDebugLogging {
-                    categories: categories.to_vec(),
-                    logging_on,
-                }
-            )),
-        };
-
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            error!("fmi2SetDebugLogging failed with error: {:?}.", error);
-            Fmi2Status::Error
-        })
-    */
 }
 
 #[no_mangle]
@@ -513,8 +498,31 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `references` and `values` must be non-null, \[valid\] for reads for 
+///   `nvr * mem::size_of::<c_uint>()` and `nvr * mem::size_of::<c_double>()`
+///   many bytes respectively, and they must be properly aligned. This means
+///   in particular:
+///     * For each of `references` and `values` the entire memory range of that
+///       slice must be contained within a single allocated object! Slices can
+///       never span across multiple allocated objects.
+///     * `references` and `values` must each be non-null and aligned even for
+///       zero-length slices or slices of ZSTs. One reason for this is that
+///       enum layout optimizations may rely on references (including slices of
+///       any length) being aligned and non-null to distinguish them from other
+///       data. You can obtain a pointer that is usable as `references` or
+///       `values` for zero-length slices using \[`NonNull::dangling`\].
+/// * `references` and `values` must each point to `nvr` consecutive properly
+///   initialized values of type `c_uint` and `c_double` respectively.
+/// * The total size `nvr * mem::size_of::<c_uint>()` or 
+///   `nvr * mem::size_of::<c_double>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2GetReal(
+pub unsafe extern "C" fn fmi2GetReal(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
@@ -551,8 +559,31 @@ pub extern "C" fn fmi2GetReal(
         }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `references` and `values` must be non-null, \[valid\] for reads for 
+///   `nvr * mem::size_of::<c_uint>()` and `nvr * mem::size_of::<c_int>()`
+///   many bytes respectively, and they must be properly aligned. This means
+///   in particular:
+///     * For each of `references` and `values` the entire memory range of that
+///       slice must be contained within a single allocated object! Slices can
+///       never span across multiple allocated objects.
+///     * `references` and `values` must each be non-null and aligned even for
+///       zero-length slices or slices of ZSTs. One reason for this is that
+///       enum layout optimizations may rely on references (including slices of
+///       any length) being aligned and non-null to distinguish them from other
+///       data. You can obtain a pointer that is usable as `references` or
+///       `values` for zero-length slices using \[`NonNull::dangling`\].
+/// * `references` and `values` must each point to `nvr` consecutive properly
+///   initialized values of type `c_uint` and `c_int` respectively.
+/// * The total size `nvr * mem::size_of::<c_uint>()` or 
+///   `nvr * mem::size_of::<c_int>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2GetInteger(
+pub unsafe extern "C" fn fmi2GetInteger(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
@@ -590,8 +621,30 @@ pub extern "C" fn fmi2GetInteger(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `references` and `values` must be non-null, \[valid\] for reads for 
+///   `nvr * mem::size_of::<c_uint>()` and `nvr * mem::size_of::<c_int>()`
+///   many bytes respectively, and they must be properly aligned. This means
+///   in particular:
+///     * For each of `references` and `values` the entire memory range of that
+///       slice must be contained within a single allocated object! Slices can
+///       never span across multiple allocated objects.
+///     * `references` and `values` must each be non-null and aligned even for
+///       zero-length slices or slices of ZSTs. One reason for this is that
+///       enum layout optimizations may rely on references (including slices of
+///       any length) being aligned and non-null to distinguish them from other
+///       data. You can obtain a pointer that is usable as `references` or
+///       `values` for zero-length slices using \[`NonNull::dangling`\].
+/// * `references` and `values` must each point to `nvr` consecutive properly
+///   initialized values of type `c_uint` and `c_int` respectively.
+/// * The total size `nvr * mem::size_of::<c_uint>()` or 
+///   `nvr * mem::size_of::<c_int>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2GetBoolean(
+pub unsafe extern "C" fn fmi2GetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
@@ -643,8 +696,30 @@ pub extern "C" fn fmi2GetBoolean(
 /// To ensure that c-strings returned by fmi2GetString can be used by the envrionment,
 /// they must remain valid until another FMI function is invoked. see 2.1.7 p.23.
 /// We choose to do it on an instance basis, i.e. each instance has its own string buffer.
+/// 
+/// # Safety
+/// Behavior is undefined if any of the following are violated:
+/// * `values` must be non-null, \[valid\] for writes, and properly aligned.
+/// * `references` must be non-null, \[valid\] for reads for
+///   `nvr * mem::size_of::<c_uint>()` many bytes, and it must be properly
+///   aligned. This means in particular:
+///     * The entire memory range of this slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `refernces` must be non-null and aligned even for zero-length slices
+///       or slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as `references` for zero-length
+///       slices using \[`NonNull::dangling`\].
+/// * `references` must point to `nvr` consecutive properly initialized values
+///   of type `c_uint`.
+/// * The total size `nvr * mem::size_of::<c_uint>()` of the slice must be no
+///   larger than `isize::MAX`, and adding that size to `references` must not
+///   "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2GetString(
+pub unsafe extern "C" fn fmi2GetString(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
@@ -665,17 +740,28 @@ pub extern "C" fn fmi2GetString(
     {
         Ok(result) => {
             if !result.values.is_empty() {
-                slave.string_buffer = result.values
+                let conversion_result: Result<Vec<CString>, NulError> = result
+                    .values
                     .iter()
-                    .map(|s| CString::new(s.as_bytes()).unwrap())
+                    .map(|string| CString::new(string.as_bytes()))
                     .collect();
+
+                match conversion_result {
+                    Ok(converted_values) => {
+                        slave.string_buffer = converted_values
+                    },
+                    Err(e) =>  {
+                        error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
+                        return Fmi2Status::Fatal;
+                    }
+                }
 
                 unsafe {
                     for (idx, cstr)
                     in slave.string_buffer.iter().enumerate()
                     {
                         std::ptr::write(
-                            values.offset(idx as isize), 
+                            values.add(idx), 
                             cstr.as_ptr()
                         );
                     }
@@ -695,8 +781,30 @@ pub extern "C" fn fmi2GetString(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `vr` and `values` must be non-null, \[valid\] for reads for 
+///   `nvr * mem::size_of::<c_uint>()` and `nvr * mem::size_of::<c_double>()`
+///   many bytes respectively, and they must be properly aligned. This means
+///   in particular:
+///     * For each of `vr` and `values` the entire memory range of that slice
+///       must be contained within a single allocated object! Slices can never
+///       span across multiple allocated objects.
+///     * `vr` and `values` must each be non-null and aligned even for
+///       zero-length slices or slices of ZSTs. One reason for this is that
+///       enum layout optimizations may rely on references (including slices of
+///       any length) being aligned and non-null to distinguish them from other
+///       data. You can obtain a pointer that is usable as `vr` or `values` for
+///       zero-length slices using \[`NonNull::dangling`\].
+/// * `vr` and `values` must each point to `nvr` consecutive properly
+///   initialized values of type `c_uint` and `c_double` respectively.
+/// * The total size `nvr * mem::size_of::<c_uint>()` or 
+///   `nvr * mem::size_of::<c_double>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `vr` and `values` respectively
+///   must not "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2SetReal(
+pub unsafe extern "C" fn fmi2SetReal(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
@@ -723,8 +831,30 @@ pub extern "C" fn fmi2SetReal(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `vr` and `values` must be non-null, \[valid\] for reads for 
+///   `nvr * mem::size_of::<c_uint>()` and `nvr * mem::size_of::<c_int>()`
+///   many bytes respectively, and they must be properly aligned. This means
+///   in particular:
+///     * For each of `vr` and `values` the entire memory range of that slice
+///       must be contained within a single allocated object! Slices can never
+///       span across multiple allocated objects.
+///     * `vr` and `values` must each be non-null and aligned even for
+///       zero-length slices or slices of ZSTs. One reason for this is that
+///       enum layout optimizations may rely on references (including slices of
+///       any length) being aligned and non-null to distinguish them from other
+///       data. You can obtain a pointer that is usable as `vr` or `values` for
+///       zero-length slices using \[`NonNull::dangling`\].
+/// * `vr` and `values` must each point to `nvr` consecutive properly
+///   initialized values of type `c_uint` and `c_int` respectively.
+/// * The total size `nvr * mem::size_of::<c_uint>()` or 
+///   `nvr * mem::size_of::<c_int>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `vr` and `values` respectively
+///   must not "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2SetInteger(
+pub unsafe extern "C" fn fmi2SetInteger(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
@@ -755,8 +885,31 @@ pub extern "C" fn fmi2SetInteger(
 ///
 /// Note: fmi2 uses C-int to represent booleans and NOT the boolean type defined by C99 in stdbool.h, _Bool.
 /// Rust's bool type is defined to have the same size as _Bool, as the values passed through the C-API must be converted.
+/// 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `references` and `values` must be non-null, \[valid\] for reads for 
+///   `nvr * mem::size_of::<c_uint>()` and `nvr * mem::size_of::<c_int>()`
+///   many bytes respectively, and they must be properly aligned. This means
+///   in particular:
+///     * For each of `references` and `values` the entire memory range of that
+///       slice must be contained within a single allocated object! Slices can
+///       never span across multiple allocated objects.
+///     * `references` and `values` must each be non-null and aligned even for
+///       zero-length slices or slices of ZSTs. One reason for this is that
+///       enum layout optimizations may rely on references (including slices of
+///       any length) being aligned and non-null to distinguish them from other
+///       data. You can obtain a pointer that is usable as `references` or
+///       `values` for zero-length slices using \[`NonNull::dangling`\].
+/// * `references` and `values` must each point to `nvr` consecutive properly
+///   initialized values of type `c_uint` and `c_int` respectively.
+/// * The total size `nvr * mem::size_of::<c_uint>()` or 
+///   `nvr * mem::size_of::<c_int>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2SetBoolean(
+pub unsafe extern "C" fn fmi2SetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
@@ -786,8 +939,30 @@ pub extern "C" fn fmi2SetBoolean(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `vr` and `values` must be non-null, \[valid\] for reads for 
+///   `nvr * mem::size_of::<c_uint>()` and `nvr * mem::size_of::<c_char>()`
+///   many bytes respectively, and they must be properly aligned. This means
+///   in particular:
+///     * For each of `vr` and `values` the entire memory range of that slice
+///       must be contained within a single allocated object! Slices can never
+///       span across multiple allocated objects.
+///     * `vr` and `values` must each be non-null and aligned even for
+///       zero-length slices or slices of ZSTs. One reason for this is that
+///       enum layout optimizations may rely on references (including slices of
+///       any length) being aligned and non-null to distinguish them from other
+///       data. You can obtain a pointer that is usable as `vr` or `values` for
+///       zero-length slices using \[`NonNull::dangling`\].
+/// * `vr` and `values` must each point to `nvr` consecutive properly
+///   initialized values of type `c_uint` and `c_char` respectively.
+/// * The total size `nvr * mem::size_of::<c_uint>()` or 
+///   `nvr * mem::size_of::<c_char>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `vr` and `values` respectively
+///   must not "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2SetString(
+pub unsafe extern "C" fn fmi2SetString(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
@@ -795,39 +970,76 @@ pub extern "C" fn fmi2SetString(
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
 
-    let values: Vec<String> = unsafe {
+    let conversion_result: Result<Vec<String>, Utf8Error> = unsafe {
         from_raw_parts(values, nvr)
             .iter()
             .map(|v| {
                 CStr::from_ptr(*v)
                     .to_str()
-                    .unwrap()
-                    .to_owned()
+                    .map(|str| str.to_owned())
                 })
             .collect()
     };
 
-    let cmd = Fmi2Command {
-        command: Some(Command::Fmi2SetString(
-            fmi2_messages::Fmi2SetString {
-                references,
-                values,
-            }
-        )),
-    };
-
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            error!("fmi2SetString failed with error: {:?}.", error);
+    match conversion_result {
+        Ok(values) => {
+            let cmd = Fmi2Command {
+                command: Some(Command::Fmi2SetString(
+                    fmi2_messages::Fmi2SetString {
+                        references,
+                        values,
+                    }
+                )),
+            };
+        
+            slave.dispatcher
+                .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+                .map(|status| status.into())
+                .unwrap_or_else(|error| {
+                    error!("fmi2SetString failed with error: {:?}.", error);
+                    Fmi2Status::Error
+                })
+        },
+        Err(conversion_error) => {
+            error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
             Fmi2Status::Error
-        })
+        }
+    }
+
+    
 }
 
 // ------------------------------------- FMI FUNCTIONS (Derivatives) --------------------------------
+
+/// # Safety
+/// Behavior is undefined if any of the following are violated for each of the
+/// 
+/// `PARAMETERS` \[`unknown_refs`, `known_refs`, `direction_known`, `direction_unknown`\]
+/// 
+/// with the `TYPES` \[`c_uint`, `c_uint`, `c_double`, `c_double`\]
+/// 
+/// and `SIZE_PARAMETERS` \[`nvr_unknown`, `nvr_known`, `nvr_known`, `nvr_unknown`\]:
+/// 
+/// * `PARAMETER` must be non-null, \[valid\] for reads for
+///   `SIZE_PARAMETER * mem::size_of::<TYPE>()` many bytes, and it must be properly
+///   aligned. This means in particular:
+///     * The entire memory range of this slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `PARAMETER` must be non-null and aligned even for zero-length slices
+///       or slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as `PARAMETER` for zero-length
+///       slices using \[`NonNull::dangling`\].
+/// * `PARAMETER` must point to `SIZE_PARAMETER` consecutive properly initialized values
+///   of type `TYPE`.
+/// * The total size `SIZE_PARAMETER * mem::size_of::<TYPE>()` of the slice must be no
+///   larger than `isize::MAX`, and adding that size to `PARAMETER` must not
+///   "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2GetDirectionalDerivative(
+pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
     slave: &mut Fmi2Slave,
     unknown_refs: *const c_uint,
     nvr_unknown: size_t,
@@ -888,8 +1100,33 @@ pub extern "C" fn fmi2GetDirectionalDerivative(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following are violated for each of the
+/// 
+/// `PARAMETERS` \[`references`, `orders`, `values`\]
+/// 
+/// with the `TYPES` \[`c_uint`, `c_int`, `c_double`\]:
+/// 
+/// * `PARAMETER` must be non-null, \[valid\] for reads for
+///   `nvr * mem::size_of::<TYPE>()` many bytes, and it must be properly
+///   aligned. This means in particular:
+///     * The entire memory range of this slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `PARAMETER` must be non-null and aligned even for zero-length slices
+///       or slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as `PARAMETER` for zero-length
+///       slices using \[`NonNull::dangling`\].
+/// * `PARAMETER` must point to `nvr` consecutive properly initialized values
+///   of type `TYPE`.
+/// * The total size `nvr * mem::size_of::<TYPE>()` of the slice must be no
+///   larger than `isize::MAX`, and adding that size to `PARAMETER` must not
+///   "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2SetRealInputDerivatives(
+pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
@@ -919,8 +1156,33 @@ pub extern "C" fn fmi2SetRealInputDerivatives(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following are violated for each of the
+/// 
+/// `PARAMETERS` \[`references`, `orders`, `values`\]
+/// 
+/// with the `TYPES` \[`c_uint`, `c_int`, `c_double`\]:
+/// 
+/// * `PARAMETER` must be non-null, \[valid\] for reads for
+///   `nvr * mem::size_of::<TYPE>()` many bytes, and it must be properly
+///   aligned. This means in particular:
+///     * The entire memory range of this slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `PARAMETER` must be non-null and aligned even for zero-length slices
+///       or slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as `PARAMETER` for zero-length
+///       slices using \[`NonNull::dangling`\].
+/// * `PARAMETER` must point to `nvr` consecutive properly initialized values
+///   of type `TYPE`.
+/// * The total size `nvr * mem::size_of::<TYPE>()` of the slice must be no
+///   larger than `isize::MAX`, and adding that size to `PARAMETER` must not
+///   "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2GetRealOutputDerivatives(
+pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
@@ -1065,10 +1327,28 @@ pub extern "C" fn fmi2SerializeFMUstate(
     Fmi2Status::Ok
 }
 
-//
-// #[repr(C)]
+/// # Safety
+/// Behavior is undefined if any of the following are violated:
+/// * `serialized_state` must be non-null, \[valid\] for reads for
+///   `size * mem::size_of::<u8>()` many bytes, and it must be properly
+///   aligned. This means in particular:
+///     * The entire memory range of this slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `refernces` must be non-null and aligned even for zero-length slices
+///       or slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as `serialized_state` for zero-length
+///       slices using \[`NonNull::dangling`\].
+/// * `serialized_state` must point to `size` consecutive properly initialized values
+///   of type `u8`.
+/// * The total size `size * mem::size_of::<u8>()` of the slice must be no
+///   larger than `isize::MAX`, and adding that size to `serialized_state` must not
+///   "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi2DeSerializeFMUstate(
+pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
     slave: &mut Fmi2Slave,
     serialized_state: *const u8,
     size: size_t,
@@ -1114,8 +1394,12 @@ pub extern "C" fn fmi2GetStatus(
         }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if `value` points outside of address space and if it
+/// is dereferenced after function call.
 #[no_mangle]
-pub extern "C" fn fmi2GetRealStatus(
+pub unsafe extern "C" fn fmi2GetRealStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
     value: *mut c_double,
@@ -1150,7 +1434,7 @@ pub extern "C" fn fmi2GetIntegerStatus(
     value: *mut c_int,
 ) -> Fmi2Status {
     error!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
-    return Fmi2Status::Error;
+    Fmi2Status::Error
 }
 
 #[no_mangle]
@@ -1160,7 +1444,7 @@ pub extern "C" fn fmi2GetBooleanStatus(
     value: *mut c_int,
 ) -> Fmi2Status {
     error!("fmi2GetBooleanStatus is not implemented by UNIFMU.");
-    return Fmi2Status::Discard;
+    Fmi2Status::Discard
 }
 
 #[no_mangle]

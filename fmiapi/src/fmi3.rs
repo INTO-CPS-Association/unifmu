@@ -2,9 +2,10 @@
 #![allow(unused_variables)]
 
 use std::{
-    ffi::{c_void, CStr, CString},
+    ffi::{c_void, CStr, CString, NulError},
     path::{Path, PathBuf},
     slice::{from_raw_parts, from_raw_parts_mut},
+    str::Utf8Error,
     sync::LazyLock
 };
 
@@ -16,7 +17,7 @@ use tracing_subscriber;
 
 use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi3_messages::{self, Fmi3Command, fmi3_command::Command};
-use crate::spawn::spawn_fmi3_slave;
+use crate::spawn::spawn_slave;
 
 /// One shot function that sets up logging.
 /// 
@@ -102,6 +103,24 @@ impl Fmi3Slave {
     }
 }
 
+/// Sends the fmi3FreeInstance message to the backend when the slave is dropped.
+impl Drop for Fmi3Slave {
+    fn drop(&mut self) {
+        let cmd = Fmi3Command {
+            command: Some(Command::Fmi3FreeInstance(
+                fmi3_messages::Fmi3FreeInstance {}
+            )),
+        };
+
+        match self.dispatcher.send(&cmd) {
+            Ok(_) => (),
+            Err(error) => error!(
+                "Freeing instance failed with error: {:?}.", error
+            ),
+        };
+    }
+}
+
 pub struct SlaveState {
     bytes: Vec<u8>,
 }
@@ -115,12 +134,12 @@ impl SlaveState {
 
 type Fmi3SlaveType = Box<Fmi3Slave>;
 
-fn c2s(c: *const c_char) -> String {
+fn c2s(c: *const c_char) -> Result<String, Utf8Error> {
     unsafe {
         CStr::from_ptr(c)
             .to_str()
-            .expect("Should be able to convert CStr to String!") //Grave error, should abort!
-            .to_owned()
+            .map(|result| result.to_owned())
+            
     }
 }
 
@@ -154,7 +173,7 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     instance_environment: *const c_void,
     log_message: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
@@ -163,8 +182,32 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following are violated:
+/// * `resource_path` must be either null or convertable to a reference.
+/// * `required_intermediate_variables` must be non-null, \[valid\] for reads
+///   for `n_required_intermediate_variables * mem::size_of::<u32>()` many
+///   bytes, and it must be properly aligned. This means in particular:
+///     * The entire memory range of this slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `refernces` must be non-null and aligned even for zero-length slices
+///       or slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as
+///       `required_intermediate_variables` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `required_intermediate_variables` must point to
+///   `n_required_intermediate_variables` consecutive properly initialized
+///   values of type `u32`.
+/// * The total size
+///   `n_required_intermediate_variables * mem::size_of::<u32>()` of the slice
+///   must be no larger than `isize::MAX`, and adding that size to
+///   `required_intermediate_variables` must not "wrap around" the address
+///   space. See the safety documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3InstantiateCoSimulation(
+pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     instance_name: *const c_char,
     instantiation_token: *const c_char,
     resource_path: *const c_char,
@@ -178,13 +221,27 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     log_message: *const c_void,
     intermediate_update: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
 
-    let instance_name = c2s(instance_name);
-    let instantiation_token = c2s(instantiation_token);
+    let instance_name = match c2s(instance_name) {
+        Ok(string) => string,
+        Err(error) => {
+            error!("Could not convert instance_name to String: {:?}", error);
+            return None;
+        }
+    };
+
+    let instantiation_token = match c2s(instantiation_token) {
+        Ok(string) => string,
+        Err(error) => {
+            error!("Could not convert instantiation_token to String: {:?}", error);
+            return None;
+        }
+    };
+
     let required_intermediate_variables = unsafe {
         from_raw_parts(
             required_intermediate_variables,
@@ -250,7 +307,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         PathBuf::from(resource_path_str)
     };
 
-    let dispatcher = match spawn_fmi3_slave(&Path::new(&resources_dir)) {
+    let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi3 slave failed.");
@@ -309,7 +366,7 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     lock_preemption: *const c_void,
     unlock_preemption: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    if (&*ENABLE_LOGGING).is_err() {
+    if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
@@ -318,8 +375,12 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 
+/// # Safety
+/// Behavior is undefined if any of `last_successful_time`,
+/// `event_handling_needed`, `terminate_simulation` and `early_return` points
+/// outside of address space and if they are dereferenced after function call.
 #[no_mangle]
-pub extern "C" fn fmi3DoStep(
+pub unsafe extern "C" fn fmi3DoStep(
     instance: &mut Fmi3Slave,
     current_communication_point: f64,
     communication_step_size: f64,
@@ -473,8 +534,32 @@ pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetFloat32(
+pub unsafe extern "C" fn fmi3GetFloat32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -516,8 +601,32 @@ pub extern "C" fn fmi3GetFloat32(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetFloat64(
+pub unsafe extern "C" fn fmi3GetFloat64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -559,8 +668,32 @@ pub extern "C" fn fmi3GetFloat64(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt8(
+pub unsafe extern "C" fn fmi3GetInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -607,8 +740,32 @@ pub extern "C" fn fmi3GetInt8(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt8(
+pub unsafe extern "C" fn fmi3GetUInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -655,8 +812,32 @@ pub extern "C" fn fmi3GetUInt8(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt16(
+pub unsafe extern "C" fn fmi3GetInt16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -703,8 +884,32 @@ pub extern "C" fn fmi3GetInt16(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt16(
+pub unsafe extern "C" fn fmi3GetUInt16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -751,8 +956,32 @@ pub extern "C" fn fmi3GetUInt16(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt32(
+pub unsafe extern "C" fn fmi3GetInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -794,8 +1023,32 @@ pub extern "C" fn fmi3GetInt32(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt32(
+pub unsafe extern "C" fn fmi3GetUInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -837,8 +1090,32 @@ pub extern "C" fn fmi3GetUInt32(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt64(
+pub unsafe extern "C" fn fmi3GetInt64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -880,8 +1157,32 @@ pub extern "C" fn fmi3GetInt64(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt64(
+pub unsafe extern "C" fn fmi3GetUInt64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -923,8 +1224,32 @@ pub extern "C" fn fmi3GetUInt64(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<bool>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<bool>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetBoolean(
+pub unsafe extern "C" fn fmi3GetBoolean(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -966,8 +1291,32 @@ pub extern "C" fn fmi3GetBoolean(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<c_char>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `c_char` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<c_char>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetString(
+pub unsafe extern "C" fn fmi3GetString(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -989,16 +1338,27 @@ pub extern "C" fn fmi3GetString(
     {
         Ok(result) => {
             if !result.values.is_empty() {
-                instance.string_buffer = result.values
+                let conversion_result: Result<Vec<CString>, NulError> = result
+                    .values
                     .iter()
-                    .map(|s| CString::new(s.as_bytes()).unwrap())
+                    .map(|string| CString::new(string.as_bytes()))
                     .collect();
+
+                match conversion_result {
+                    Ok(converted_values) => {
+                        instance.string_buffer = converted_values
+                    },
+                    Err(e) =>  {
+                        error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
+                        return Fmi3Status::Fatal;
+                    }
+                }
                 
                 unsafe {
                     for (idx, cstr)
                     in instance.string_buffer.iter().enumerate() {
                         std::ptr::write(
-                            values.offset(idx as isize),
+                            values.add(idx),
                             cstr.as_ptr()
                         );
                     }
@@ -1074,8 +1434,32 @@ pub extern "C" fn fmi3GetBinary(
     */
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_value_references * mem::size_of::<bool>()` many bytes respectively,
+///   and they must be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_value_references * mem::size_of::<bool>()` of the slices must be no
+///   larger than `isize::MAX`, and adding those sizes to `value_references`
+///   and `values` respectively must not "wrap around" the address space. See
+///   the safety documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetClock(
+pub unsafe extern "C" fn fmi3GetClock(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1117,8 +1501,35 @@ pub extern "C" fn fmi3GetClock(
     }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references`, `intervals` and `qualifiers` must be non-null,
+///   \[valid\] for reads for `n_value_references * mem::size_of::<u32>()`,
+///   `n_value_references * mem::size_of::<f64>()` and
+///   `n_value_references * mem::size_of::<i32>()` many bytes respectively,
+///   and they must be properly aligned. This means in particular:
+///     * For each of `value_references`, `intervals` and `qualifiers` the
+///       entire memory range of that slice must be contained within a single
+///       allocated object! Slices can never span across multiple allocated
+///       objects.
+///     * `value_references`, `intervals` and `qualifiers` must each be
+///       non-null and aligned even for zero-length slices or slices of ZSTs.
+///       One reason for this is that enum layout optimizations may rely on
+///       references (including slices of any length) being aligned and
+///       non-null to distinguish them from other data. You can obtain a
+///       pointer that is usable as `value_references`, `intervals` or
+///       `qualifiers` for zero-length slices using \[`NonNull::dangling`\].
+/// * `value_references`, `intervals` and `qualifiers` must each point to
+///   `n_value_references` consecutive properly initialized values of type
+///   `u32`, `f64` and `i32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()`,
+///   `n_value_references * mem::size_of::<f64>()` or 
+///   `n_value_references * mem::size_of::<booi32l>()` of the slices must be no
+///   larger than `isize::MAX`, and adding those sizes to `value_references`,
+///   `intervals` and `qualifiers` respectively must not "wrap around" the
+///   address space. See the safety documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetIntervalDecimal(
+pub unsafe extern "C" fn fmi3GetIntervalDecimal(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1259,8 +1670,14 @@ pub extern "C" fn fmi3EvaluateDiscreteStates(
     Fmi3Status::Error
 }
 
+/// # Safety
+/// Behavior is undefined if any of `discrete_states_need_update`,
+/// `terminate_simulation`, `nominals_continuous_states_changed`,
+/// `values_continuous_states_changed`, `next_event_time_defined` and
+/// `next_event_time` points outside of address space and if they are
+/// dereferenced after function call.
 #[no_mangle]
-pub extern "C" fn fmi3UpdateDiscreteStates(
+pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
     instance: &mut Fmi3Slave,
 	discrete_states_need_update: *mut bool,
 	terminate_simulation: *mut bool,
@@ -1446,8 +1863,32 @@ pub extern "C" fn fmi3ActivateModelPartition(
     Fmi3Status::Error
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetFloat32(
+pub unsafe extern "C" fn fmi3SetFloat32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1480,8 +1921,32 @@ pub extern "C" fn fmi3SetFloat32(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetFloat64(
+pub unsafe extern "C" fn fmi3SetFloat64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1516,8 +1981,32 @@ pub extern "C" fn fmi3SetFloat64(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetInt8(
+pub unsafe extern "C" fn fmi3SetInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1554,8 +2043,32 @@ pub extern "C" fn fmi3SetInt8(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetUInt8(
+pub unsafe extern "C" fn fmi3SetUInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1592,8 +2105,32 @@ pub extern "C" fn fmi3SetUInt8(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetInt16(
+pub unsafe extern "C" fn fmi3SetInt16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1630,8 +2167,32 @@ pub extern "C" fn fmi3SetInt16(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetUInt16(
+pub unsafe extern "C" fn fmi3SetUInt16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1668,8 +2229,32 @@ pub extern "C" fn fmi3SetUInt16(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetInt32(
+pub unsafe extern "C" fn fmi3SetInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1702,8 +2287,32 @@ pub extern "C" fn fmi3SetInt32(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetUInt32(
+pub unsafe extern "C" fn fmi3SetUInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1736,8 +2345,32 @@ pub extern "C" fn fmi3SetUInt32(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetInt64(
+pub unsafe extern "C" fn fmi3SetInt64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1770,8 +2403,32 @@ pub extern "C" fn fmi3SetInt64(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetUInt64(
+pub unsafe extern "C" fn fmi3SetUInt64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1804,8 +2461,32 @@ pub extern "C" fn fmi3SetUInt64(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<bool>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<bool>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetBoolean(
+pub unsafe extern "C" fn fmi3SetBoolean(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1838,8 +2519,32 @@ pub extern "C" fn fmi3SetBoolean(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<*const c_char>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `*const c_char` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<*const c_char>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetString(
+pub unsafe extern "C" fn fmi3SetString(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1851,38 +2556,92 @@ pub extern "C" fn fmi3SetString(
     }
         .to_owned();
 
-    let values: Vec<String> = unsafe {
+    let conversion_result: Result<Vec<String>, Utf8Error> = unsafe {
         from_raw_parts(values, n_values)
             .iter()
-            .map(
-                |v| CStr::from_ptr(*v)
+            .map(|v| {
+                CStr::from_ptr(*v)
                     .to_str()
-                    .unwrap()
-                    .to_owned()
-            )
+                    .map(|str| str.to_owned())
+                })
             .collect()
     };
 
-    let cmd = Fmi3Command {
-        command: Some(Command::Fmi3SetString(
-            fmi3_messages::Fmi3SetString {
-                value_references,
-                values,
-            }
-        )),
-    };
+    match conversion_result {
+        Ok(values) => {
+            let cmd = Fmi3Command {
+                command: Some(Command::Fmi3SetString(
+                    fmi3_messages::Fmi3SetString {
+                        value_references,
+                        values,
+                    }
+                )),
+            };
+        
+            instance.dispatcher
+                .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+                .map(|status| status.into())
+                .unwrap_or_else(|error| {
+                    error!("fmi3SetString failed with error: {:?}.", error);
+                    Fmi3Status::Error
+                })
+        },
 
-    instance.dispatcher
-        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            error!("fmi3SetString failed with error: {:?}.", error);
+        Err(conversion_error) => {
+            error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
             Fmi3Status::Error
-        })
+        }
+    }
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `value_sizes` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<size_t>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `value_sizes` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `value_sizes` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `value_sizes` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `value_sizes` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `size_t` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<size_t>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `value_sizes`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+/// 
+/// Furthermore, for each `VALUE` pointed to in `values` and its expected size `SIZE`
+/// pointed to in `value_sizes`, behavior will be undefined if any of the
+/// following conditions are violated:
+/// * `VALUE` must be non-null, \[valid\] for reads for
+///   `SIZE * mem::size_of::<u8>()` many bytes, and it must be properly
+///   aligned. This means in particular:
+///     * The entire memory range of that slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `VALUE` must be non-null and aligned even for zero-length slices or
+///       slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as `VALUE` for zero-length slices
+///       using \[`NonNull::dangling`\].
+/// * `VALUE` must point to `SIZE` consecutive properly initialized values of
+///   type `u8`.
+/// * The total size `SIZE * mem::size_of::<u8>()` of the slice must be no
+///   larger than`isize::MAX`, and adding that size to `VALUE` must not
+///   "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetBinary(
+pub unsafe extern "C" fn fmi3SetBinary(
     instance: *mut c_void,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1946,8 +2705,32 @@ pub extern "C" fn fmi3SetBinary(
         })
 }
 
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<bool>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<bool>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetClock(
+pub unsafe extern "C" fn fmi3SetClock(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -2133,19 +2916,7 @@ pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
 
     match slave.as_mut() {
         Some(s) => {
-            let cmd = Fmi3Command {
-                command: Some(Command::Fmi3FreeInstance(
-                    fmi3_messages::Fmi3FreeInstance {}
-                )),
-            };
-
-            match s.dispatcher.send(&cmd) {
-                Ok(_) => (),
-                Err(error) => error!(
-                    "Freeing instance failed with error: {:?}.", error
-                ),
-            };
-
+            // fmi3FreeInstance message is send to backend on drop
             drop(slave)
         }
         None => {warn!("No instance given.")}

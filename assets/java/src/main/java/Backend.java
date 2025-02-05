@@ -10,7 +10,7 @@ public class Backend {
     public static void main(String[] args) throws Exception {
         System.out.println("starting FMU");
 
-        Model model = new Model();
+        Model model = null;
 
         String dispacher_endpoint = System.getenv("UNIFMU_DISPATCHER_ENDPOINT");
 
@@ -36,8 +36,15 @@ public class Backend {
                 byte[] message = socket.recv();
 
                 var command = Fmi2Messages.Fmi2Command.parseFrom(message);
-
-                switch (command.getCommandCase()) {
+                switch (command.getCommandCase()) {        
+                    
+                    case FMI2INSTANTIATE: {
+                        model = new Model();
+                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
+                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(0))
+                                .build();                        
+                    }
+                        break;
 
                     case FMI2SETREAL: {
                         var c = command.getFmi2SetReal();

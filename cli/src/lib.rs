@@ -326,7 +326,7 @@ pub fn generate(
         }
     };
 
-    for p in vec![&bin_macos, &bin_win, &bin_linux] {
+    for p in [&bin_macos, &bin_win, &bin_linux] {
         std::fs::create_dir_all(p.parent().unwrap()).unwrap();
     }
 
@@ -455,10 +455,10 @@ pub fn generate(
                 tmpdir.path(),
                 outpath,
             );
-            let mut options = CopyOptions::default();
-            options.copy_inside = true;
-            options.content_only = true;
-            options.overwrite = true;
+            let options = CopyOptions::new()
+                .copy_inside(true)
+                .content_only(true)
+                .overwrite(true);
             fs_extra::dir::move_dir(tmpdir, outpath, &options).unwrap();
             Ok(())
         }
@@ -482,8 +482,8 @@ pub fn generate_distributed(
     let output_string = outpath.to_str();
     let proxy_string : &str = "_proxy";
     let private_string : &str = "_private";
-    let output_proxy_string = output_string.clone().unwrap();
-    let output_private_string = output_string.clone().unwrap();
+    let output_proxy_string = output_string.unwrap();
+    let output_private_string = output_string.unwrap();
 
     let output_proxy_string = format!("{}{}",output_proxy_string,proxy_string);
     let output_private_string = format!("{}{}",output_private_string,private_string);
@@ -547,7 +547,7 @@ pub fn generate_distributed(
         }
     };
 
-    for p in vec![&bin_macos, &bin_win, &bin_linux] {
+    for p in [&bin_macos, &bin_win, &bin_linux] {
         std::fs::create_dir_all(p.parent().unwrap()).unwrap();
     }
 
@@ -685,10 +685,12 @@ pub fn generate_distributed(
         tmpdir_private.path(),
         outpath_private,
     );
-    let mut options = CopyOptions::default();
-    options.copy_inside = true;
-    options.content_only = true;
-    options.overwrite = true;
+    
+    let options = CopyOptions::new()
+        .copy_inside(true)
+        .content_only(true)
+        .overwrite(true);
+
     fs_extra::dir::move_dir(tmpdir_private, outpath_private, &options).unwrap();
 
     match zipped {

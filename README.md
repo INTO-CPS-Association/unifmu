@@ -147,18 +147,16 @@ unifmu generate-distributed python model_distributed
 The command generates a _placeholder FMU_ suffixed with _\_proxy_ and a _placeholder folder_ suffixed with _\_private_ in the specific language.
 The proxy FMU differs from the FMU created with the `generate` command as it does not contain the model file and its dependencies.
 For example the trees below show the placeholder FMU and folder generated when using the `generate-distributed` command with python as the language:
-```python
+```
 📦model_distributed_proxy
  ┣ 📂binaries
  ┣ 📂resources
- ┃ ┣ 📜backend.py
  ┃ ┣ 📜launch.toml
  ┃ ┣ 📜README.md
- ┃ ┗ 📜requirements.txt
  ┗ 📜modelDescription.xml
 ```
 
-whereas its fellow private folder contains the model file, the dependencies, and a toml file for the connection with the proxy FMU, as follows (**NOTE: This is not an FMU**):
+whereas its fellow private folder contains the model file, the dependencies, and the `endpoint.toml` file for the connection with the proxy FMU, as follows (**NOTE: This is not an FMU**):
 ```python
 📦model_distributed_private
  ┣ 📂schemas

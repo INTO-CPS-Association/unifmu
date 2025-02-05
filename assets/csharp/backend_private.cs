@@ -19,13 +19,11 @@ namespace Launch
         {
             string RESET = "\x1b[0m";
             string RED = "\u001B[31m";
-            string GREEN = "\u001B[32m";
             string YELLOW = "\u001B[33m";
             string BOLD = "\x1b[0;1m";
             string BACKGROUNDGREEN = "\u001B[42m";
-            string BACKGROUNDYELLOW = "\u001B[43m";
             var references_to_attr = new Dictionary<uint, string>();
-            var model = new Model();
+            Model model = null;
 
             bool inputOk = false;
             var port_str = "";
@@ -81,6 +79,7 @@ namespace Launch
 
                     case Fmi2Command.CommandOneofCase.Fmi2Instantiate:
                         {
+                            model = new Model();
                             var result = new Fmi2EmptyReturn();
                             message = result;
                         }

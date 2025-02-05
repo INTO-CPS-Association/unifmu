@@ -25,9 +25,7 @@ logger = logging.getLogger(__file__)
 
 
 if __name__ == "__main__":
-
-    model = Model()
-
+    
     # initializing message queue
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
@@ -55,6 +53,7 @@ if __name__ == "__main__":
         # ================= FMI2 =================
 
         if group == "Fmi2Instantiate":
+            model = Model()
             result = Fmi2EmptyReturn()
         elif group == "Fmi2DoStep":
             result = Fmi2StatusReturn()

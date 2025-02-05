@@ -147,6 +147,15 @@ impl Dispatch for LocalDispatcher {
     }
 }
 
+impl Drop for LocalDispatcher {
+    fn drop(&mut self) {
+        match self.subprocess.terminate() {
+            Ok(_) => {},
+            Err(_) => error!("Terminating subprocess returned an error.")
+        };
+    }
+}
+
 /// Dispatcher for dispatching FMI commands to a remote backend.
 /// 
 /// Holds the socket to the remote backend.
@@ -385,7 +394,7 @@ impl BackendSubprocess {
         debug!("Launch command: {}", &launch_command[0]);
         debug!("Environment variables: {:#?}", env_vars);
         let subprocess = match Popen::create(
-            &launch_command,
+            launch_command,
             PopenConfig {
                 cwd: Some(resource_path.as_os_str().to_owned()),
                 env: Some(env_vars),
@@ -433,5 +442,18 @@ impl BackendSubprocess {
                 }
             }
         }
+    }
+
+    /// Terminates the subprocess
+    /// 
+    /// On Unix-like systems, this sends the `SIGTERM` signal to the
+    /// subprocess, which can be caught by the subprocess in order to perform
+    /// cleanup befoure exiting.
+    /// 
+    /// On Windows, it invokes `TerminateProcess` on the process handle, which
+    /// cannot be caught.
+    fn terminate(&mut self) -> DispatcherResult<()> {
+        self.subprocess.terminate()
+            .map_err(|_| DispatcherError::SubprocessError)
     }
 }
