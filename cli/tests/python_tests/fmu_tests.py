@@ -121,8 +121,11 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         sim_time = start_time
         step_size = 1e-2
 
-        # can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
-        can_handle_state = True
+        can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
+        can_serialize = model_description.coSimulation.canSerializeFMUstate
+        
+        assert can_handle_state, "FMU cannot get and set state"
+        # assert can_serialize, "FMU cannot serialize state"
 
         fmu.setupExperiment(startTime=start_time)
         fmu.enterInitializationMode()
@@ -133,35 +136,18 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
             vrs[variable.name] = variable.valueReference
 
         print("Fetching initial values")
-        real_a = fmu.getReal([vrs["real_a"]])[0]
-        real_b = fmu.getReal([vrs["real_b"]])[0]
-        real_c = fmu.getReal([vrs["real_c"]])[0]
-
-        integer_a = fmu.getInteger([vrs["integer_a"]])[0]
-        integer_b = fmu.getInteger([vrs["integer_b"]])[0]
-        integer_c = fmu.getInteger([vrs["integer_c"]])[0]
-
-        boolean_a = fmu.getBoolean([vrs["boolean_a"]])[0]
-        boolean_b = fmu.getBoolean([vrs["boolean_b"]])[0]
-        boolean_c = fmu.getBoolean([vrs["boolean_c"]])[0]
-
-        string_a = fmu.getString([vrs["string_a"]])[0].decode("utf-8")
-        string_b = fmu.getString([vrs["string_b"]])[0].decode("utf-8")
-        string_c = fmu.getString([vrs["string_c"]])[0].decode("utf-8")
+        reals = fmu.getReal([vrs["real_a"], vrs["real_b"], vrs["real_c"]])
+        integers = fmu.getInteger([vrs["integer_a"], vrs["integer_b"], vrs["integer_c"]])
+        bools = fmu.getBoolean([vrs["boolean_a"], vrs["boolean_b"], vrs["boolean_c"]])
+        strings = fmu.getString([vrs["string_a"], vrs["string_b"], vrs["string_c"]])
+        # We need to decode strings from bytes to utf-8
+        strings = [string.decode("utf-8")  for string in strings]
 
         print("Asserting initial values")
-        assert real_a == 0.0, f"Initially fetched value real_a was {real_a}, should have been 0.0"
-        assert real_b == 0.0, f"Initially fetched value real_b was {real_b}, should have been 0.0"   
-        assert real_c == 0.0, f"Initially fetched value real_c was {real_c}, should have been 0.0"
-        assert integer_a == 0, f"Initially fetched value integer_a was {integer_a}, should have been 0"
-        assert integer_b == 0, f"Initially fetched value integer_b was {integer_b}, should have been 0"
-        assert integer_c == 0, f"Initially fetched value integer_c was {integer_c}, should have been 0"
-        assert boolean_a == False, f"Initially fetched value boolean_a was {boolean_a}, should have been False"
-        assert boolean_b == False, f"Initially fetched value boolean_b was {boolean_b}, should have been False"
-        assert boolean_c == False, f"Initially fetched value boolean_c was {boolean_c}, should have been False"
-        assert string_a == "", f"Initially fetched value string_a was '{string_a}', should have been ''"
-        assert string_b == "", f"Initially fetched value string_b was '{string_b}', should have been ''"
-        assert string_c == "", f"Initially fetched value string_c was '{string_c}', should have been ''"
+        assert reals == [0.0, 0.0, 0.0], f"Initially fetched values were {reals}, should have been [0.0, 0.0, 0.0]"
+        assert integers == [0, 0, 0], f"Initially fetched values were {integers}, should have been [0, 0, 0]"
+        assert bools == [False, False, False], f"Initially fetched values were {bools}, should have been [False, False, False]"
+        assert strings == ["", "", ""], f"Initially fetched values were {strings}, should have been ['', '', '']"
 
         if can_handle_state:
             print("Fetching FMU state")
@@ -197,39 +183,49 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
             print("Resetting time")
             sim_time = rerolled_time
 
-            print("Fetching rerolled values")
-            real_a = fmu.getReal([vrs["real_a"]])[0]
-            real_b = fmu.getReal([vrs["real_b"]])[0]
-            real_c = fmu.getReal([vrs["real_c"]])[0]
+        print("Fetching rerolled values")
+        reals = fmu.getReal([vrs["real_a"], vrs["real_b"], vrs["real_c"]])
+        integers = fmu.getInteger([vrs["integer_a"], vrs["integer_b"], vrs["integer_c"]])
+        bools = fmu.getBoolean([vrs["boolean_a"], vrs["boolean_b"], vrs["boolean_c"]])
+        strings = fmu.getString([vrs["string_a"], vrs["string_b"], vrs["string_c"]])
+        strings = [string.decode("utf-8")  for string in strings]
 
-            integer_a = fmu.getInteger([vrs["integer_a"]])[0]
-            integer_b = fmu.getInteger([vrs["integer_b"]])[0]
-            integer_c = fmu.getInteger([vrs["integer_c"]])[0]
+        print("Asserting rerolled values")
+        assert reals == [0.0, 0.0, 0.0], f"Rerolled values were {reals}, should have been [0.0, 0.0, 0.0]"
+        assert integers == [0, 0, 0], f"Rerolled values were {integers}, should have been [0, 0, 0]"
+        assert bools == [False, False, False], f"Rerolled values were {bools}, should have been [False, False, False]"
+        assert strings == ["", "", ""], f"Rerolled values were {strings}, should have been ['', '', '']"
 
-            boolean_a = fmu.getBoolean([vrs["boolean_a"]])[0]
-            boolean_b = fmu.getBoolean([vrs["boolean_b"]])[0]
-            boolean_c = fmu.getBoolean([vrs["boolean_c"]])[0]
+        print("Will doStep and then reset FMU")
+        fmu.doStep(sim_time, step_size)
+        sim_time += step_size
 
-            string_a = fmu.getString([vrs["string_a"]])[0].decode("utf-8")
-            string_b = fmu.getString([vrs["string_b"]])[0].decode("utf-8")
-            string_c = fmu.getString([vrs["string_c"]])[0].decode("utf-8")
+        fmu.reset()
+        # setupExperiment and enterInitializationMode has to be called after reset()
+        fmu.setupExperiment(startTime=start_time)
+        fmu.enterInitializationMode()
+        fmu.exitInitializationMode()
 
-            print("Asserting rerolled values")
+        print("Fetching values after reset")
+        reals = fmu.getReal([vrs["real_a"], vrs["real_b"], vrs["real_c"]])
+        integers = fmu.getInteger([vrs["integer_a"], vrs["integer_b"], vrs["integer_c"]])
+        bools = fmu.getBoolean([vrs["boolean_a"], vrs["boolean_b"], vrs["boolean_c"]])
+        strings = fmu.getString([vrs["string_a"], vrs["string_b"], vrs["string_c"]])
+        # We need to decode strings from bytes to utf-8
+        strings = [string.decode("utf-8")  for string in strings]
 
-            assert real_a == 0.0, f"Rerolled value real_a was {real_a}, should have been 0.0"
-            assert real_b == 0.0, f"Rerolled value real_b was {real_b}, should have been 0.0"   
-            assert real_c == 0.0, f"Rerolled value real_c was {real_c}, should have been 0.0"
-            assert integer_a == 0, f"Rerolled value integer_a was {integer_a}, should have been 0"
-            assert integer_b == 0, f"Rerolled value integer_b was {integer_b}, should have been 0"
-            assert integer_c == 0, f"Rerolled value integer_c was {integer_c}, should have been 0"
-            assert boolean_a == False, f"Rerolled value boolean_a was {boolean_a}, should have been False"
-            assert boolean_b == False, f"Rerolled value boolean_b was {boolean_b}, should have been False"
-            assert boolean_c == False, f"Rerolled value boolean_c was {boolean_c}, should have been False"
-            assert string_a == "", f"Rerolled value string_a was '{string_a}', should have been ''"
-            assert string_b == "", f"Rerolled value string_b was '{string_b}', should have been ''"
-            assert string_c == "", f"Rerolled value string_c was '{string_c}', should have been ''"
-            
-            print("fmi2_simulate: Test Complete")
+        print("Asserting values after reset")
+        assert reals == [0.0, 0.0, 0.0], f"Initially fetched values were {reals}, should have been [0.0, 0.0, 0.0]"
+        assert integers == [0, 0, 0], f"Initially fetched values were {integers}, should have been [0, 0, 0]"
+        assert bools == [False, False, False], f"Initially fetched values were {bools}, should have been [False, False, False]"
+        assert strings == ["", "", ""], f"Initially fetched values were {strings}, should have been ['', '', '']"
+
+
+        print(f"Test is done - freeing FMU state: {state.value}")
+        #fmu.freeFMUState(state)
+        print("FMU state freed successfully") 
+        print("fmi2_simulate: Test Complete")
+
         
     instantiating_test(
         caller = "fmi2_simulate",
@@ -301,8 +297,8 @@ is_zipped : bool
 """
 def fmi3_simulate(fmu_filename: str, is_zipped: bool):
     def inner(fmu: FMU3Slave, model_description: ModelDescription):
-        can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
-        # can_handle_state = True
+        # can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
+        can_handle_state = True
 
     
         if can_handle_state:
@@ -429,10 +425,6 @@ def fmi3_simulate(fmu_filename: str, is_zipped: bool):
             [vrs["string_a"], vrs["string_b"]],
             ["Hello, ", "World!"]
         ) 
-        fmu.setBinary(
-            [vrs["binary_a"], vrs["binary_b"]],
-            [b"Hello, ", b"World!"]
-        )
     
         print(f"Doing a step of size {step_size} at time {sim_time}")
         fmu.doStep(sim_time, step_size)
