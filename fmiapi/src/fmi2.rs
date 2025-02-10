@@ -1328,14 +1328,20 @@ pub extern "C" fn fmi2FreeFMUstate(
     state: *mut SlaveState,
 ) -> Fmi2Status {
 
-    if state.is_null() {
+    if state.is_null() || slave.is_null() {
         warn!("fmi2FreeFMUstate called with state pointing to null!");
         return Fmi2Status::Ok;
     }
 
     unsafe {
+        warn!("From fmi2.rs: Dropping the state {:?}", state); // should be deleted once the bug is fixed. 
+        warn!("From fmi2.rs: This is the state {:?}", slave);
         drop(Box::from_raw(state));
+        warn!("From fmi2.rs: State dropped successfully {:?}", state);
     }
+
+    warn!("fmi2.rs: Out of unsafe block, will now return");
+
     Fmi2Status::Ok
 }
 
