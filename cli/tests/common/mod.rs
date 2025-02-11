@@ -138,8 +138,15 @@ fn start_python_test_process(
         test_directory.display()
     );
 
+    // Unix systems differentiates version 2 and 3 of python in their binary names
+    // Windows doesn't
+    let python_interpreter_binary_name = match std::env::consts::OS {
+        "windows" => "python",
+        _other => "python3"
+    };
+
     duct::cmd!(
-        "python3",
+        python_interpreter_binary_name,
         python_test_script_name,
         python_test_function_name,
         fmu_path,
