@@ -1048,9 +1048,17 @@ pub trait RemoteBackend: DistributedFileStructure {
             FmuBackendImplementationLanguage::Java => duct::cmd!(
                 "sh", "gradlew", "run", "--args='{port}'"
             ),
-            FmuBackendImplementationLanguage::Python => duct::cmd!(
-                "python3", "backend.py", port
-            )
+            FmuBackendImplementationLanguage::Python => {
+                // Unix systems differentiates version 2 and 3 of python in their binary names
+                // Windows doesn't
+                let python_interpreter_binary_name = match std::env::consts::OS {
+                    "windows" => "python",
+                    _other => "python3"
+                };
+                duct::cmd!(
+                    python_interpreter_binary_name, "backend.py", port
+                )
+            }
         };
 
         backend_process_cmd.dir(self.backend_directory_path())
