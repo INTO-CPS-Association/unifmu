@@ -359,7 +359,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
       ```
    2. Generate the protobuf schemas for python, csharp, and java backends:
       ```powershell
-      protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto unifmu_handshake.proto
+      protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out=assets/auto_generated fmi2_messages.proto fmi3_messages.proto unifmu_handshake.proto
       ```
 7. Run the integration tests: `cargo test`
    1. If the tests fail, it may be because you do not have the runtime dependencies for each backend, as they are all tested. Install any runtime dependencies needed for each backend. Check the readme files in each backend. See the  [Language specific documentation and backend development](#language-specific-documentation-and-backend-development) section for more information.
