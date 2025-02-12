@@ -2,7 +2,7 @@
 
 use std::{
     ffi::OsString,
-    fs::{copy, create_dir, read_dir, File},
+    fs::{copy, create_dir, create_dir_all, read_dir, remove_dir_all, File},
     io::{self, BufRead, BufReader, Write},
     path::{Path, PathBuf},
     sync::LazyLock
@@ -18,6 +18,13 @@ use zip::CompressionMethod;
 /// When set true all FMUs that fail during the python tests are persisted
 /// instead of being cleaned up at the end of the test.
 static DEBUG_PERSIST_FAILING_TEST_FMUS: bool = false;
+
+/// Realtive path from the cli directory to the directory to store test FMUs
+/// created with the new_persistent() method.
+/// 
+/// This is NOT where initially temporary FMUs that are persistet are saved.
+/// They are located where they were initially created for debugging reasons.
+static PERSITENTLY_CREATED_UNIFMUS_DIRECTORY: &str = "../generated_fmus/cli_tests";
 
 /// Pass the FMU to the given test function in a python subprocess
 /// 
@@ -146,9 +153,9 @@ fn start_python_test_process(
     is_zipped: bool
 ) -> duct::ReaderHandle {
     let test_directory = std::env::current_dir()
-    .expect("Should be able to get current directory")
-    .join("tests")
-    .join("python_tests");
+        .expect("Should be able to get current directory")
+        .join("tests")
+        .join("python_tests");
 
     let python_test_script_name = "fmu_tests.py";
 
@@ -368,6 +375,37 @@ impl BasicFmu for LocalFmu {
         this
     }
 
+    fn new_persistent(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage,
+        container_directory_name: &str
+    ) -> LocalFmu {
+        let container_directory_path = std::env::current_dir()
+            .expect("Should be able to get current directory")
+            .join(PERSITENTLY_CREATED_UNIFMUS_DIRECTORY)
+            .join(container_directory_name);
+
+        if container_directory_path.exists() {
+            remove_dir_all(&container_directory_path)
+                .expect("Should be able to remove old persisted FMU.");
+        }
+
+        create_dir_all(&container_directory_path)
+            .expect("Should be able to create container directory for new persistent FMU.");
+
+        let directory = FmuDirectory::Persistent(container_directory_path);
+
+        let this = LocalFmu {
+            directory,
+            language,
+            version
+        };
+
+        this.generate_fmu_files();
+
+        this
+    }
+
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -550,6 +588,42 @@ impl BasicFmu for ZippedLocalFmu {
         this
     }
 
+    fn new_persistent(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage,
+        container_directory_name: &str
+    ) -> ZippedLocalFmu {
+        let container_directory_path = std::env::current_dir()
+            .expect("Should be able to get current directory")
+            .join(PERSITENTLY_CREATED_UNIFMUS_DIRECTORY)
+            .join(container_directory_name);
+
+        if container_directory_path.exists() {
+            remove_dir_all(&container_directory_path)
+                .expect("Should be able to remove old persisted FMU.");
+        }
+
+        create_dir_all(&container_directory_path)
+            .expect("Should be able to create container directory for new persistent FMU.");
+
+        let directory = FmuDirectory::Persistent(container_directory_path);
+
+        let file = File::create(
+            directory.path().join(Self::fmu_name(&version, &language))
+        ).expect("Should be able to create FMU zip file.");
+
+        let this = ZippedLocalFmu {
+            file,
+            directory,
+            language,
+            version
+        };
+
+        this.generate_fmu_files();
+
+        this
+    }
+
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -661,6 +735,37 @@ impl BasicFmu for DistributedFmu {
         language: FmuBackendImplementationLanguage
     ) -> DistributedFmu {
         let directory = FmuDirectory::Temporary(Self::new_tmp_dir());
+
+        let this = DistributedFmu {
+            directory,
+            language,
+            version
+        };
+
+        this.generate_fmu_files();
+
+        this
+    }
+
+    fn new_persistent(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage,
+        container_directory_name: &str
+    ) -> DistributedFmu {
+        let container_directory_path = std::env::current_dir()
+            .expect("Should be able to get current directory")
+            .join(PERSITENTLY_CREATED_UNIFMUS_DIRECTORY)
+            .join(container_directory_name);
+
+        if container_directory_path.exists() {
+            remove_dir_all(&container_directory_path)
+                .expect("Should be able to remove old persisted FMU.");
+        }
+
+        create_dir_all(&container_directory_path)
+            .expect("Should be able to create container directory for new persistent FMU.");
+
+        let directory = FmuDirectory::Persistent(container_directory_path);
 
         let this = DistributedFmu {
             directory,
@@ -837,6 +942,42 @@ impl BasicFmu for ZippedDistributedFmu {
         this
     }
 
+    fn new_persistent(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage,
+        container_directory_name: &str
+    ) -> ZippedDistributedFmu {
+        let container_directory_path = std::env::current_dir()
+            .expect("Should be able to get current directory")
+            .join(PERSITENTLY_CREATED_UNIFMUS_DIRECTORY)
+            .join(container_directory_name);
+
+        if container_directory_path.exists() {
+            remove_dir_all(&container_directory_path)
+                .expect("Should be able to remove old persisted FMU.");
+        }
+
+        create_dir_all(&container_directory_path)
+            .expect("Should be able to create container directory for new persistent FMU.");
+
+        let directory = FmuDirectory::Persistent(container_directory_path);
+
+        let file = File::create(
+            directory.path().join(Self::fmu_name(&version, &language))
+        ).expect("Should be able to create FMU zip file.");
+
+        let this = ZippedDistributedFmu {
+            file,
+            directory,
+            language,
+            version
+        };
+
+        this.generate_fmu_files();
+
+        this
+    }
+
     fn get_clone(
         version: &FmiVersion,
         language: &FmuBackendImplementationLanguage
@@ -963,7 +1104,19 @@ pub trait BasicFmu {
         language: FmuBackendImplementationLanguage
     ) -> Self;
 
-    /// Returns a copy of one of the lazily pregenerated FMUs.
+    /// Generate a wholly new FMU using the UNIFMU CLI in the a persistent
+    /// directory.
+    /// 
+    /// If a new FMU is needed `get_clone()` should be called instead unless
+    /// it is neccesarry to explicitly invoke the CLI for the test.
+    fn new_persistent(
+        version: FmiVersion,
+        language: FmuBackendImplementationLanguage,
+        container_directory_name: &str
+    ) -> Self;
+
+    /// Returns a copy of one of the lazily pregenerated FMUs. The copy is
+    /// saved in a temporary directory.
     /// 
     /// Significantly faster than calling `new()`, while still giving a clean
     /// FMU instance.
@@ -1202,113 +1355,129 @@ fn inject_line(
 }
 
 static CSHARP_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
-    LocalFmu::new(
+    LocalFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_csharp_fmi2",
     )
 });
 
 static JAVA_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
-    LocalFmu::new(
+    LocalFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_java_fmi2",
     )
 });
 
 static PYTHON_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
-    LocalFmu::new(
+    LocalFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_python_fmi2",
     )
 });
 
 static PYTHON_FMI3: LazyLock<LocalFmu> = LazyLock::new(|| {
-    LocalFmu::new(
+    LocalFmu::new_persistent(
         FmiVersion::Fmi3,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_python_fmi3",
     )
 });
 
 static ZIPPED_CSHARP_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
-    ZippedLocalFmu::new(
+    ZippedLocalFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_zipped_csharp_fmi2",
     )
 });
 
 static ZIPPED_JAVA_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
-    ZippedLocalFmu::new(
+    ZippedLocalFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_zipped_java_fmi2",
     )
 });
 
 static ZIPPED_PYTHON_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
-    ZippedLocalFmu::new(
+    ZippedLocalFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_zipped_python_fmi2",
     )
 });
 
 static ZIPPED_PYTHON_FMI3: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
-    ZippedLocalFmu::new(
+    ZippedLocalFmu::new_persistent(
         FmiVersion::Fmi3,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_zipped_python_fmi3",
     )
 });
 
 static DISTRIBUTED_CSHARP_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
-    DistributedFmu::new(
+    DistributedFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_distributed_csharp_fmi2",
     )
 });
 
 static DISTRIBUTED_JAVA_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
-    DistributedFmu::new(
+    DistributedFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_distributed_java_fmi2",
     )
 });
 
 static DISTRIBUTED_PYTHON_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
-    DistributedFmu::new(
+    DistributedFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_distributed_python_fmi2",
     )
 });
 
 static DISTRIBUTED_PYTHON_FMI3: LazyLock<DistributedFmu> = LazyLock::new(|| {
-    DistributedFmu::new(
+    DistributedFmu::new_persistent(
         FmiVersion::Fmi3,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_distributed_python_fmi3",
     )
 });
 
 static ZIPPED_DISTRIBUTED_CSHARP_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
-    ZippedDistributedFmu::new(
+    ZippedDistributedFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_zipped_distributed_csharp_fmi2",
     )
 });
 
 static ZIPPED_DISTRIBUTED_JAVA_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
-    ZippedDistributedFmu::new(
+    ZippedDistributedFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_zipped_distributed_java_fmi2",
     )
 });
 
 static ZIPPED_DISTRIBUTED_PYTHON_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
-    ZippedDistributedFmu::new(
+    ZippedDistributedFmu::new_persistent(
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_zipped_distributed_python_fmi2",
     )
 });
 
 static ZIPPED_DISTRIBUTED_PYTHON_FMI3: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
-    ZippedDistributedFmu::new(
+    ZippedDistributedFmu::new_persistent(
         FmiVersion::Fmi3,
         FmuBackendImplementationLanguage::Python,
+        "PROMETHEAN_zipped_distributed_python_fmi3",
     )
 });
