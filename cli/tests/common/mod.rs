@@ -1051,7 +1051,7 @@ pub trait BreakableFmu: BasicFmu {
 
     /// Breaks the model by adding an error/exception to the first line of
     /// the code.
-    fn break_model(&self) {
+    fn inject_fault_into_backend_model_file(&self) {
         inject_line(
             &self.model_file_path(),
             self.language().fault_str(),
@@ -1061,7 +1061,7 @@ pub trait BreakableFmu: BasicFmu {
 
     /// Breaks the do_step function in the model by addind an error/exception
     /// after the function definition.
-    fn break_do_step_function(&self) {
+    fn inject_fault_into_backend_do_step_function(&self) {
         let injection = format!(
             "{}{}",
             self.do_step_function_injection_prefix(),
