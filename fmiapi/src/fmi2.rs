@@ -1242,7 +1242,7 @@ pub extern "C" fn fmi2SetFMUstate(slave: *mut Fmi2Slave, state: *const SlaveStat
         error!("fmi2SetFMUstate called with slave or state pointing to null!");
         return Fmi2Status::Error;
     }
-    // Due to above null-check it is safe to dereference
+
     let state_ref = unsafe { &*state };
 
     let state_bytes = state_ref.bytes.to_owned();
@@ -1277,7 +1277,7 @@ pub extern "C" fn fmi2SetFMUstate(slave: *mut Fmi2Slave, state: *const SlaveStat
 #[no_mangle]
 pub extern "C" fn fmi2GetFMUstate(
     slave: *mut Fmi2Slave,
-    state: *mut *mut SlaveState,
+    state: *mut *mut SlaveState, // Instead of pointer to pointer maybe we could use void*?
 ) -> Fmi2Status {
 
     // Null-pointer check
@@ -1295,7 +1295,8 @@ pub extern "C" fn fmi2GetFMUstate(
     match unsafe { (*slave).dispatcher.send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) } {
         Ok(result) => {
             unsafe {
-                let state_box = Box::new(SlaveState::new(&result.state));
+                let state_box = Box::new(SlaveState::new(&result.state));   // Box allocates on the heap, so ownership can be returned to the caller
+                                                                            // Possible memory leak?                                                            
                 *state = Box::into_raw(state_box); // Transfers ownership of state
             }
 
@@ -1329,14 +1330,14 @@ pub extern "C" fn fmi2FreeFMUstate(
 ) -> Fmi2Status {
 
     if state.is_null() || slave.is_null() {
-        warn!("fmi2FreeFMUstate called with state pointing to null!");
+        warn!("fmi2FreeFMUstate called with state or slave pointing to null!");
         return Fmi2Status::Ok;
     }
 
     unsafe {
         warn!("From fmi2.rs: Dropping the state {:?}", state); // should be deleted once the bug is fixed. 
         warn!("From fmi2.rs: This is the state {:?}", slave);
-        drop(Box::from_raw(state));
+        drop(Box::from_raw(state)); // Reclaims ownership of the data.  
         warn!("From fmi2.rs: State dropped successfully {:?}", state);
     }
 
