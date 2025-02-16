@@ -753,7 +753,7 @@ fn test_unexpected_exit_in_handshake_csharp_fmi2_local() {
         &FmuBackendImplementationLanguage::CSharp
     );
 
-    fmu.break_model();
+    fmu.inject_fault_into_backend_model_file();
 
     fmu_python_test(fmu, "fmi2_instantiate");
 }
@@ -766,7 +766,7 @@ fn test_unexpected_exit_in_handshake_java_fmi2_local() {
         &FmuBackendImplementationLanguage::Java
     );
 
-    fmu.break_model();
+    fmu.inject_fault_into_backend_model_file();
 
     fmu_python_test(fmu, "fmi2_instantiate");
 }
@@ -779,7 +779,7 @@ fn test_unexpected_exit_in_handshake_python_fmi2_local() {
         &FmuBackendImplementationLanguage::Python
     );
 
-    fmu.break_model();
+    fmu.inject_fault_into_backend_model_file();
 
     fmu_python_test(fmu, "fmi2_instantiate");
 }
@@ -792,7 +792,7 @@ fn test_unexpected_exit_in_handshake_python_fmi3_local() {
         &FmuBackendImplementationLanguage::Python
     );
 
-    fmu.break_model();
+    fmu.inject_fault_into_backend_model_file();
 
     fmu_python_test(fmu, "fmi3_instantiate");
 }
@@ -805,7 +805,7 @@ fn test_unexpected_exit_during_command_csharp_fmi2_local() {
         &FmuBackendImplementationLanguage::CSharp
     );
 
-    fmu.break_do_step_function();
+    fmu.inject_fault_into_backend_do_step_function();
 
     fmu_python_test(fmu, "fmi2_simulate");
 }
@@ -818,7 +818,7 @@ fn test_unexpected_exit_during_command_java_fmi2_local() {
         &FmuBackendImplementationLanguage::Java
     );
 
-    fmu.break_do_step_function();
+    fmu.inject_fault_into_backend_do_step_function();
 
     fmu_python_test(fmu, "fmi2_simulate");
 }
@@ -831,7 +831,7 @@ fn test_unexpected_exit_during_command_python_fmi2_local() {
         &FmuBackendImplementationLanguage::Python
     );
 
-    fmu.break_do_step_function();
+    fmu.inject_fault_into_backend_do_step_function();
 
     fmu_python_test(fmu, "fmi2_simulate");
 }
@@ -844,7 +844,7 @@ fn test_unexpected_exit_during_command_python_fmi3_local() {
         &FmuBackendImplementationLanguage::Python
     );
 
-    fmu.break_do_step_function();
+    fmu.inject_fault_into_backend_do_step_function();
 
     fmu_python_test(fmu, "fmi3_simulate");
 }
