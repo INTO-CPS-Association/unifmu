@@ -125,7 +125,7 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         can_serialize = model_description.coSimulation.canSerializeFMUstate
         
         assert can_handle_state, "FMU cannot get and set state"
-        # assert can_serialize, "FMU cannot serialize state"
+        assert can_serialize, "FMU cannot serialize state"
 
         fmu.setupExperiment(startTime=start_time)
         fmu.enterInitializationMode()
@@ -200,7 +200,7 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         fmu.doStep(sim_time, step_size)
         sim_time += step_size
 
-        fmu.reset()
+        fmu.reset() # TODO: Check for error
         # setupExperiment and enterInitializationMode has to be called after reset()
         fmu.setupExperiment(startTime=start_time)
         fmu.enterInitializationMode()
@@ -221,8 +221,8 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert strings == ["", "", ""], f"Initially fetched values were {strings}, should have been ['', '', '']"
 
 
-        print(f"Test is done - freeing FMU state: {state.value}")
-        #fmu.freeFMUState(state)
+        print(f"Test is done - freeing FMU state")
+        fmu.freeFMUState(state)
         print("FMU state freed successfully") 
         print("fmi2_simulate: Test Complete")
 
