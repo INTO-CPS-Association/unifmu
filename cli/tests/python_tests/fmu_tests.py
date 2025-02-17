@@ -3,6 +3,7 @@ from fmpy import extract
 from fmpy.model_description import ModelDescription
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
+from fmpy.fmi2 import fmi2OK
 
 """Tries to extract (AKA unzip) the fmu using the fmpy extract function
 
@@ -104,6 +105,7 @@ def fmi2_instantiate(fmu_filename: str, is_zipped: bool):
     )
     
 """Tries to do a full simulation using the FMU.
+Will do a simple simulation where the FMU is set up, evolved, rerolled and reset.
 
 The FMU should conform to FMI2.
 
@@ -127,9 +129,9 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert can_handle_state, "FMU cannot get and set state"
         assert can_serialize, "FMU cannot serialize state"
 
-        fmu.setupExperiment(startTime=start_time)
-        fmu.enterInitializationMode()
-        fmu.exitInitializationMode()
+        assert fmu.setupExperiment(startTime=start_time) == fmi2OK, f"setupExperiment returned with error, should have been return value: {fmi2OK}"
+        assert fmu.enterInitializationMode() == fmi2OK, f"enterInitializationMode returned with error, should have been return value: {fmi2OK}"
+        assert fmu.exitInitializationMode() == fmi2OK, f"exitInitializationMode returned with error, should have been return value: {fmi2OK}"
 
         vrs = {}
         for variable in model_description.modelVariables:
@@ -149,10 +151,9 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert bools == [False, False, False], f"Initially fetched values were {bools}, should have been [False, False, False]"
         assert strings == ["", "", ""], f"Initially fetched values were {strings}, should have been ['', '', '']"
 
-        if can_handle_state:
-            print("Fetching FMU state")
-            state = fmu.getFMUstate()
-            rerolled_time = sim_time
+        print("Fetching FMU state")
+        state = fmu.getFMUstate()
+        rerolled_time = sim_time
 
         print(f"Updating inputs at time {sim_time}")
         fmu.setReal([vrs["real_a"],vrs["real_b"]],[1.0,2.0])
@@ -161,7 +162,7 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         fmu.setString([vrs["string_a"],vrs["string_b"]],["Hello, ","World!"])
 
         print(f"Doing a step of size {step_size} at time {sim_time}")
-        fmu.doStep(sim_time, step_size) 
+        fmu.doStep(sim_time, step_size) == fmi2OK, f"doStep returned with error , should have been return value: {fmi2OK}"
         sim_time += step_size
 
 
@@ -177,11 +178,10 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert boolean_c == True, f"Evolved value boolean_c was {boolean_c}, should have been True"
         assert string_c == "Hello, World!", f"Evolved value string_c was '{string_c}', should have been 'Hello, World!'"
 
-        if can_handle_state: 
-            print("Rerolling FMU state")
-            fmu.setFMUstate(state)
-            print("Resetting time")
-            sim_time = rerolled_time
+        print("Rerolling FMU state")
+        fmu.setFMUstate(state)
+        print("Resetting time")
+        sim_time = rerolled_time
 
         print("Fetching rerolled values")
         reals = fmu.getReal([vrs["real_a"], vrs["real_b"], vrs["real_c"]])
@@ -197,14 +197,14 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert strings == ["", "", ""], f"Rerolled values were {strings}, should have been ['', '', '']"
 
         print("Will doStep and then reset FMU")
-        fmu.doStep(sim_time, step_size)
+        fmu.doStep(sim_time, step_size) == fmi2OK, f"doStep returned with error, should have been return value: {fmi2OK}"
         sim_time += step_size
 
-        fmu.reset() # TODO: Check for error
+        assert fmu.reset() == fmi2OK, f"reset returned with error, should have been return value: {fmi2OK}" 
         # setupExperiment and enterInitializationMode has to be called after reset()
-        fmu.setupExperiment(startTime=start_time)
-        fmu.enterInitializationMode()
-        fmu.exitInitializationMode()
+        assert fmu.setupExperiment(startTime=start_time) == fmi2OK, f"setupExperiment returned with error, should have been return value: {fmi2OK}"
+        assert fmu.enterInitializationMode() == fmi2OK, f"enterInitializationMode returned with error, should have been return value: {fmi2OK}"
+        assert fmu.exitInitializationMode() == fmi2OK, f"exitInitializationMode returned with error, should have been return value: {fmi2OK}"
 
         print("Fetching values after reset")
         reals = fmu.getReal([vrs["real_a"], vrs["real_b"], vrs["real_c"]])
@@ -219,7 +219,6 @@ def fmi2_simulate(fmu_filename: str, is_zipped: bool):
         assert integers == [0, 0, 0], f"Initially fetched values were {integers}, should have been [0, 0, 0]"
         assert bools == [False, False, False], f"Initially fetched values were {bools}, should have been [False, False, False]"
         assert strings == ["", "", ""], f"Initially fetched values were {strings}, should have been ['', '', '']"
-
 
         print(f"Test is done - freeing FMU state")
         fmu.freeFMUState(state)
