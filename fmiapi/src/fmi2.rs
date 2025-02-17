@@ -1236,10 +1236,17 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
 /// - `Fmi2Status::Error`: If an error occurs during the process (e.g., invalid pointers or failed serialization).
 ///
 #[no_mangle]
-pub extern "C" fn fmi2SetFMUstate(slave: *mut Fmi2Slave, state: *const SlaveState) -> Fmi2Status {
+pub extern "C" fn fmi2SetFMUstate(
+    slave: *mut Fmi2Slave, 
+    state: *const SlaveState
+) -> Fmi2Status {
 
-    if slave.is_null() || state.is_null() {
-        error!("fmi2SetFMUstate called with slave or state pointing to null!");
+    if slave.is_null() {
+        error!("fmi2SetFMUstate called with slave pointing to null!");
+        return Fmi2Status::Error;
+    }
+    if state.is_null() {
+        error!("fmi2SetFMUstate called with state pointing to null!");
         return Fmi2Status::Error;
     }
 
@@ -1277,12 +1284,16 @@ pub extern "C" fn fmi2SetFMUstate(slave: *mut Fmi2Slave, state: *const SlaveStat
 #[no_mangle]
 pub extern "C" fn fmi2GetFMUstate(
     slave: *mut Fmi2Slave,
-    state: *mut *mut SlaveState, // Instead of pointer to pointer maybe we could use void*?
+    state: *mut *mut SlaveState, 
 ) -> Fmi2Status {
 
-    // Null-pointer check
-    if state.is_null() || slave.is_null() {
-        error!("fmi2GetFMUstate called with slave or state pointing to null!");
+    if state.is_null() {
+        error!("fmi2GetFMUstate called with state pointing to null!");
+        return Fmi2Status::Error;
+    }
+
+    if slave.is_null() {
+        error!("fmi2GetFMUstate called with slave pointing to null!");
         return Fmi2Status::Error;
     }
 
@@ -1292,12 +1303,21 @@ pub extern "C" fn fmi2GetFMUstate(
         )),
     };
 
-    match unsafe { (*slave).dispatcher.send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) } {
+    let slave = unsafe { &mut *slave };
+
+    match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) {
         Ok(result) => {
             unsafe {
-                let state_box = Box::new(SlaveState::new(&result.state));   // Box allocates on the heap, so ownership can be returned to the caller
-                                                                            // Possible memory leak?                                                            
-                *state = Box::into_raw(state_box); // Transfers ownership of state
+                match (*state).as_mut() {
+                    Some(state_ptr) => {
+                        let state = &mut *state_ptr;
+                        state.bytes = result.state;
+                    }
+                    None => {
+                        let new_state = Box::new(SlaveState::new(&result.state));
+                        *state = Box::into_raw(new_state);
+                    }
+                }
             }
 
             Fmi2Status::try_from(result.status)
@@ -1326,22 +1346,31 @@ pub extern "C" fn fmi2GetFMUstate(
 #[no_mangle]
 pub extern "C" fn fmi2FreeFMUstate(
     slave: *mut Fmi2Slave,
-    state: *mut SlaveState,
+    state: *mut *mut SlaveState,
 ) -> Fmi2Status {
 
-    if state.is_null() || slave.is_null() {
-        warn!("fmi2FreeFMUstate called with state or slave pointing to null!");
+    if state.is_null(){
+        warn!("fmi2FreeFMUstate called with state pointing to null!");
+        return Fmi2Status::Ok;
+    }
+
+    if slave.is_null(){
+        warn!("fmi2FreeFMUstate called with slave pointing to null!");
         return Fmi2Status::Ok;
     }
 
     unsafe {
-        warn!("From fmi2.rs: Dropping the state {:?}", state); // should be deleted once the bug is fixed. 
-        warn!("From fmi2.rs: This is the state {:?}", slave);
-        drop(Box::from_raw(state)); // Reclaims ownership of the data.  
-        warn!("From fmi2.rs: State dropped successfully {:?}", state);
-    }
+        let state_ptr = *state;
 
-    warn!("fmi2.rs: Out of unsafe block, will now return");
+        if state_ptr.is_null() {
+            warn!("fmi2FreeFMUstate called with state pointing to null!");
+            return Fmi2Status::Ok;
+        }
+
+        Box::from_raw(state_ptr); 
+        *state = std::ptr::null_mut(); // Setting the state to null
+
+    }
 
     Fmi2Status::Ok
 }
@@ -1399,11 +1428,27 @@ pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
     slave: &mut Fmi2Slave,
     serialized_state: *const u8,
     size: size_t,
-    state: &mut Box<Option<SlaveState>>,
+    state: *mut *mut SlaveState,
 ) -> Fmi2Status {
     let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
 
-    *state = Box::new(Some(SlaveState::new(serialized_state)));
+    if state.is_null() {
+        error!("fmi2DeSerializeFMUstate called with state pointing to null!");
+        return Fmi2Status::Error;
+    }
+
+    unsafe {
+        if (*state).is_null() {
+            // If null allocate the new state and set the pointer to it
+            let new_state = Box::new(SlaveState::new(serialized_state));
+            *state = Box::into_raw(new_state);
+        } else {
+            // If not null overwrite the state
+            let state_ptr = *state;
+            let state = unsafe {&mut *state_ptr};
+            state.bytes = serialized_state.to_owned();
+        }
+    }
     Fmi2Status::Ok
 }
 
