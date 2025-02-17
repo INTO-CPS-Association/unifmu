@@ -1,0 +1,28 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} LogCategories Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validLogCategories
+[[validLogCategories]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#definition-of-log-categories")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validLogCategories: LogCategories +> bool
+validLogCategories(cats) ==
+	-- @OnFail("%NAME: LogCategory names are not unique: %s",
+	-- { cats(a).name | a, b in set inds cats &
+	--   a <> b and cats(a).name = cats(b).name })
+	( card { c.name | c in seq cats } = len cats );
+----
+// {vdm}
+- See <<definition-of-log-categories>>.

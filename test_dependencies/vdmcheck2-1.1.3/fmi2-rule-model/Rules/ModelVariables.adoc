@@ -1,0 +1,255 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} ModelVariables Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validAliasNames
+[[validAliasNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validAliasNames: ModelVariables +> bool
+validAliasNames(mvs) ==
+	let refmap = getAliasRefMap(mvs) in
+	card dom refmap < len mvs => -- Must be some aliases
+	{
+		let aliases = refmap(ref) in allOf
+		([
+			-- @OnFail("%NAME: Multiple aliases of reference %s are settable: %s", ref,
+			--		{ a.name | a in set aliases & isSettable(a) })
+			( card { a | a in set aliases & isSettable(a) } <= 1 ),
+
+			-- @OnFail("%NAME: Aliases of reference %s are settable and independent: %s", ref,
+			--		{ {a.name, b.name} | a, b in set aliases &
+			--			a <> b and isSettable(a) and b.causality = <independent> } )
+			( not exists a, b in set aliases & a <> b and isSettable(a) and b.causality = <independent> ),
+
+			-- @OnFail("%NAME: Too many aliases of reference %s have start set", ref)
+			( card { a.fmi2ScalarVariable.start | a in set aliases &
+				a.variability <> <constant> and a.fmi2ScalarVariable.start <> nil } <= 1 ),
+
+			-- @OnFail("%NAME: Constant aliases of reference %s have different start values", ref)
+			( card { a.fmi2ScalarVariable.start | a in set aliases &
+				a.variability = <constant> and a.fmi2ScalarVariable.start <> nil } <= 1 ),
+
+			-- @OnFail("%NAME: Aliases of reference %s must all be constant or variable", ref)
+			( card { a | a in set aliases & a.variability = <constant> } in set {0, card aliases} ),
+
+			-- @OnFail("%NAME: Aliases of reference %s must all have same unit/baseUnits", ref)
+			( card { a.fmi2ScalarVariable.unit | a in set aliases & is_Real(a.fmi2ScalarVariable) } <= 1 ),
+
+			/*
+			* In case of different variability among the set of alias variables, and if that set of aliases
+			* does not contain an input or parameter, the variability should be the highest of the variables
+			* in the set, e.g. continuous > discrete > tunable > fixed. If the set includes a parameter or
+			* input the aliases will have the stated variability of that parameter or input.
+			*/
+			let vars = { a.variability | a in set aliases } in
+				if exists a in set aliases & a.causality in set {<input>, <parameter>}
+				then
+					let a in set aliases be st a.causality in set {<input>, <parameter>} in
+						-- @OnFail("%NAME: Warning: aliases of reference %s must all be %s, because of %s",
+						--		ref, a.variability, a.name)
+						( vars = { a.variability } ) or true
+				else
+					let highest in set vars be st not exists v in set vars & varValue(v) > varValue(highest) in
+						-- @OnFail("%NAME: Warning: aliases of reference %s must all be %s", ref, highest)
+						( vars = { highest } ) or true
+		])
+
+		| ref in set dom refmap & card refmap(ref) > 1
+	} = {true};
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validIndependentVariable
+[[validIndependentVariable]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validIndependentVariable: ModelVariables +> bool
+validIndependentVariable(mvs) ==
+	-- @OnFail("%NAME: Variables define more than one independent variable: %s",
+	-- { mv.name | mv in seq mvs & mv.causality = <independent> })
+	( card { mv | mv in seq mvs & mv.causality = <independent> } <= 1 );
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validModelVariables
+[[validModelVariables]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validModelVariables: ModelVariables +> bool
+validModelVariables(svs) == allOf
+([
+	-- @OnFail("%NAME: Variables define more than one independent variable: %s",
+	--	{ sv.name | sv in seq svs & sv.causality = <independent> })
+	( card { sv | sv in seq svs & sv.causality = <independent> } <= 1 ),
+
+	-- @OnFail("%NAME: Variable names are not unique: %s",
+	--	{ svs(a).name | a, b in set inds svs &
+	--		a <> b and svs(a).name = svs(b).name } )
+	( card { sv.name | sv in seq svs } = len svs ),
+
+	[
+		-- Individual tests are OnFailed in this function
+		validVariableAttributes(sv) | sv in seq svs
+	]
+]);
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validVariableAttributes
+[[validVariableAttributes]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_model_variables_modelvariables")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validVariableAttributes: ScalarVariable +> bool
+validVariableAttributes(sv) ==
+	let variable	 = sv.fmi2ScalarVariable,
+		eCausality   = effectiveCausality(sv.causality, kindOf(variable)),
+		eVariability = effectiveVariability(sv.variability, kindOf(variable)),
+		eInitial     = effectiveInitial(sv.causality, sv.variability, sv.initial, kindOf(variable))
+	in
+	allOf
+	([
+		-- @OnFail("%NAME: Variable %s causality/variability/initial/start %s/%s/%s/%s invalid at %#s",
+		-- sv.name, eCausality, eVariability, eInitial, sv.fmi2ScalarVariable.start, loc2str(sv.location))
+		(
+			-- Table on p46 defining causality, and p48/49 defining combinations
+			cases eCausality:
+				<parameter> ->
+					eVariability in set {<fixed>, <tunable>}
+					and eInitial = <exact>,		-- (A)
+
+				<calculatedParameter> ->
+					eVariability in set {<fixed>, <tunable>}
+					and eInitial in set {<approx>, <calculated>},	-- (B)
+
+				<input> ->
+					eVariability in set {<discrete>, <continuous>}
+					and eInitial = nil
+					and sv.fmi2ScalarVariable.start <> nil,		-- (D)
+
+				<independent> ->
+					eVariability = <continuous>
+					and eInitial = nil		-- (D)
+					and sv.fmi2ScalarVariable.start = nil,
+
+				<output> ->
+					cases eVariability:
+						<constant> ->
+							eInitial in set {<exact>},	-- (A)
+
+						<discrete>,
+						<continuous> ->
+							eInitial in set { <exact>, <approx>, <calculated> }, -- (C)
+
+						others -> false
+					end,
+
+				<local> ->
+					cases eVariability:
+						<constant> ->
+							eInitial = <exact>,	-- (A)
+
+						<fixed>,
+						<tunable> ->
+							eInitial in set { <calculated>, <approx> },	-- (B)
+
+						<discrete>,
+						<continuous> ->
+							eInitial in set { <exact>, <approx>, <calculated> } -- (C)
+					end
+			end
+		),
+
+		-- @OnFail("%NAME: Independent variable must be Real at %#s", loc2str(sv.location))
+		(
+			eCausality = <independent> => is_Real(sv.fmi2ScalarVariable)
+		),
+
+		-- @OnFail("%NAME: Variable %s variability/causality %s/%s invalid at %#s",
+		-- sv.name, eVariability, eCausality, loc2str(sv.location))
+		(
+			-- Table on p46 defining variability, and p49 defining combinations
+			cases eVariability:
+				<constant> ->
+					eCausality in set {<output>, <local>},
+
+				<fixed>, <tunable> ->
+					eCausality in set {<parameter>, <calculatedParameter>, <local>},
+
+				<discrete> ->
+					eCausality in set {<input>, <output>, <local>},
+
+				<continuous> ->
+					eCausality in set {<input>, <output>, <local>, <independent>}
+			end
+		),
+
+		-- @OnFail("%NAME: Continuous variable must be Real at %#s", loc2str(sv.location))
+		(
+			eVariability = <continuous> => is_Real(sv.fmi2ScalarVariable)
+		),
+
+		-- @OnFail("%NAME: Variable %s initial/causality %s/%s invalid at %#s",
+		-- sv.name, sv.initial, eCausality, sv.location)
+		(
+			-- Table on p47 defining initial
+			sv.initial <> nil =>
+				(eCausality not in set {<input>, <independent>})
+		),
+
+		-- @OnFail("%NAME: Variable %s initial/variability/start %s/%s/%s invalid at %#s",
+		-- sv.name, eInitial, eVariability, sv.fmi2ScalarVariable.start, loc2str(sv.location))
+		(
+			-- Table on p47 defining initial
+			cases eInitial:
+				<exact> ->
+					sv.fmi2ScalarVariable.start <> nil,
+
+				<approx> ->
+					sv.fmi2ScalarVariable.start <> nil
+					and eVariability <> <constant>,
+
+				<calculated> ->
+					sv.fmi2ScalarVariable.start = nil
+					and eVariability <> <constant>,
+
+				nil ->		-- Note that eInitial can be nil (undefined in table on p48)
+					true	-- Tests on eInitial above are sufficient
+			end
+		)
+	]);
+----
+// {vdm}
+See <<_definition_of_model_variables_modelvariables>>

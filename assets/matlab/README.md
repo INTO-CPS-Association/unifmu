@@ -1,5 +1,8 @@
 # Matlab FMU
 
+**Note: this backend is no longer actively supported by unifmu, due to difficulties in testing it automatically. 
+The files and instructions presented here are left for those brave enough to hack unifmu with it. At some point, the matlab backend was working.**
+
 ## Installation Instructions
 
 To use this FMU, you need:

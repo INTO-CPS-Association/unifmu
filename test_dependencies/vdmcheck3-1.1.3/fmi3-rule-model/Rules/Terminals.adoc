@@ -1,0 +1,148 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} Terminals Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validCoordinateSystem
+[[validCoordinateSystem]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#_coordinatesystem")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validCoordinateSystem: CoordinateSystem +> bool
+validCoordinateSystem(cs) == allOf
+	([
+		-- @OnFail("%NAME: Coordinate system has zero area at %#s", loc2str(cs.location))
+		( cs.x1 <> cs.x2 and cs.y1 <> cs.y2 ),
+
+		-- @OnFail("%NAME: Coordinate system is not bottom left to top right at %#s",
+		-- loc2str(cs.location))
+		( isBLtoTR(cs.x1, cs.y1, cs.x2, cs.y2) )
+	]);
+----
+// {vdm}
+See <<_coordinatesystem>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validIcon
+[[validIcon]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#_icon")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validIcon: Icon +> bool
+validIcon(icon) ==
+	-- @OnFail("%NAME: Icon has zero area at %#s", loc2str(icon.location))
+	( icon.x1 <> icon.x2 and icon.y1 <> icon.y2 );
+----
+// {vdm}
+See <<_icon>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTerminalMemberVariables
+[[validTerminalMemberVariables]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#section-terminalvars")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTerminalMemberVariables: Terminal * [FmiModelDescription] +> bool
+validTerminalMemberVariables(terminal, fmd) ==
+	let tmvs = terminal.terminalMemberVariable in
+	tmvs <> nil and fmd <> nil => allOf
+	([
+		let var = lookupVariableName(tmv.variableName, fmd.modelVariables) in
+			-- @OnFail("%NAME: Terminal member variable %s not declared at %#s",
+			-- tmv.variableName, loc2str(tmv.location))
+			( var <> nil )
+
+		| tmv in seq tmvs
+	]);
+----
+// {vdm}
+See <<section-terminalvars>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTerminalStreamMemberVariables
+[[validTerminalStreamMemberVariables]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#_terminal_stream_member_variable")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTerminalStreamMemberVariables: Terminal * [FmiModelDescription] +> bool
+validTerminalStreamMemberVariables(terminal, fmd) ==
+	let tsmvs = terminal.terminalStreamMemberVariable in
+	tsmvs <> nil and fmd <> nil =>allOf
+	([
+		let ivar = lookupVariableName(tsmv.inStreamVariableName, fmd.modelVariables),
+			ovar = lookupVariableName(tsmv.outStreamVariableName, fmd.modelVariables)
+		in
+		[
+			-- @OnFail("%NAME: Terminal inStreamVariableName %s not declared at %#s",
+			-- tsmv.inStreamVariableName, loc2str(tsmv.location))
+			( ivar <> nil ),
+
+			-- @OnFail("%NAME: Terminal outStreamVariableName %s not declared at %#s",
+			-- tsmv.outStreamVariableName, loc2str(tsmv.location))
+			( ovar <> nil )
+		]
+
+		| tsmv in seq tsmvs
+	]);
+----
+// {vdm}
+See <<_terminal_stream_member_variable>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTerminalGraphicalRepresentation
+[[validTerminalGraphicalRepresentation]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#_terminal_graphical_representation")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTerminalGraphicalRepresentation: Terminal +> bool
+validTerminalGraphicalRepresentation(terminal) ==
+	let tgr = terminal.terminalGraphicalRepresentation in
+	tgr <> nil => allOf
+	([
+		-- @OnFail("%NAME: Terminal area is zero at %#s", loc2str(tgr.location))
+		( tgr.x1 <> tgr.x2 and tgr.y1 <> tgr.y2 ),
+
+		-- @OnFail("%NAME: Colour attributes must be octets (<=255) at %#s",
+		-- loc2str(tgr.location))
+		( tgr.defaultConnectionColor <> nil =>
+			forall c in seq tgr.defaultConnectionColor & c <= 255 ),
+
+		-- @OnFail("%NAME: defaultConnectionStrokeSize must be >0 at %#s",
+		-- loc2str(tgr.location))
+		( tgr.defaultConnectionStrokeSize <> nil =>
+			tgr.defaultConnectionStrokeSize > 0 )
+	]);
+----
+// {vdm}
+See <<_terminal_graphical_representation>>.
+
+
+
+
+
+

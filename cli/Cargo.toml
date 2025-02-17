@@ -5,7 +5,6 @@ name = "unifmu"
 version = "0.0.8"
 
 [dependencies]
-
 clap = { version = "4.5.3", features = ["derive"] }
 dlopen = "*"
 dlopen_derive = "*"
@@ -20,5 +19,11 @@ tempfile = "*"
 url = "*"
 walkdir = "*"
 zip = { version = "*", default-features = false, features = ["deflate"] }
+serde = {version = "1.0.127", features = ["derive"]}
+toml = "*"
 
-common = { path = "../common" }
+[dev-dependencies]
+assert_cmd = "*"
+duct = "0.13.7"
+predicates = "*"
+tokio = {version = "*", features = ["full"]}

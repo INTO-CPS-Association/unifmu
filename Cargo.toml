@@ -1,3 +1,4 @@
 [workspace]
+resolver = "2"
 
-members = ["common", "fmiapi", "cli"]
+members = ["fmiapi", "cli"]

@@ -1,0 +1,68 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} UnitDefinition Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validUnitNames
+[[validUnitNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#_physical_units", "<FMI3_STANDARD>#uniqueNameAttribute")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validUnitNames: UnitDefinitions +> bool
+validUnitNames(units) ==
+	-- @OnFail("%NAME: Unit names must be unique")
+	( let names = [ u.name | u in seq units ] in
+		len names = card elems names );
+----
+// {vdm}
+- See <<_physical_units>>.
+- See <<uniqueNameAttribute>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validDisplayUnitNames
+[[validDisplayUnitNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#figure-schema-DisplayUnit", "<FMI3_STANDARD>#uniqueNameAttribute")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validDisplayUnitNames: Unit +> bool
+validDisplayUnitNames(unit) ==
+	unit.displayUnit <> nil =>
+		-- @OnFail("%NAME: DisplayUnit names must be unique within %s at %#s",
+		-- unit.name, loc2str(unit.location))
+		( let names = [ u.name | u in seq unit.displayUnit ] in
+			len names = card elems names );
+----
+// {vdm}
+- See <<figure-schema-DisplayUnit>>.
+- See <<uniqueNameAttribute>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validInverseAndOffset
+[[validInverseAndOffset]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#figure-schema-DisplayUnit")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validInverseAndOffset: DisplayUnit +> bool
+validInverseAndOffset(dunit) ==
+	-- @OnFail("%NAME: inverse is only allowed if offset = 0 at %#s", loc2str(dunit.location))
+	( dunit.$inverse = true => dunit.offset = 0 )
+----
+// {vdm}
+See <<figure-schema-DisplayUnit>>.

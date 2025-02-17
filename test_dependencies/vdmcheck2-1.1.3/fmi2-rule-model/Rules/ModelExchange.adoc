@@ -1,0 +1,48 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} ModelExchange Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validMEModelIdentifier
+[[validMEModelIdentifier]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_model_exchange_fmu_modelexchange")
+// {vdm}
+endif::[]
+// {vdm}
+----
+
+validMEModelIdentifier: ModelExchange +> bool
+validMEModelIdentifier(me) ==
+	-- @OnFail("%NAME: %s not valid C variable name at %#s", me.modelIdentifier, loc2str(me.location))
+	( validIdentifier(me.modelIdentifier) );
+----
+// {vdm}
+See <<_model_exchange_fmu_modelexchange>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validMESourceFiles
+[[validMESourceFiles]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_header_files_and_naming_of_functions")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validMESourceFiles: ModelExchange +> bool
+validMESourceFiles(me) ==
+	me.sourceFiles <> nil =>
+		-- @OnFail("%NAME: ModelExchange source file names are not unique: %s",
+		-- { me.sourceFiles(a)  | a, b in set inds me.sourceFiles &
+		--		a <> b and me.sourceFiles(a) = me.sourceFiles(b) } )
+		( card { file | file in seq me.sourceFiles } = len me.sourceFiles );
+----
+// {vdm}
+See <<_header_files_and_naming_of_functions>>

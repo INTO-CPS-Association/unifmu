@@ -1,7 +1,7 @@
-# Building the project
+# UniFMU Java backend
 
-By default `gradle` is used as the build system for the Java code.
+This is unifmu's java backend.
 
-```
-gradle shadowJar
-```
+You do not need to compile the code as it is run directly by the `gradlew run` command. Just ensure that you have the command installed. 
+
+**Note:** Java version should be smaller or equal to java 17.

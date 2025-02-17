@@ -1,0 +1,227 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2024, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+types
+	/**
+	 * Kind is a convenient tag for variables and typedefs of a particular type.
+	 */
+	IntegerKind = <Integer> | <Enumeration>;
+	NumericKind = <Real> | IntegerKind;
+	Kind = NumericKind | <Boolean> | <String>;
+
+types
+	MinMaxType  = RealType | IntegerType;		-- Have min/max/start
+
+	-- Value references
+	fmi2ValueReference = nat;
+
+	-- A tag used to uniquely identify aliased variables (since refs are only unique per type),
+	-- made of the SV valueReference and the type's kind.
+	AliasTag ::
+		vref	: fmi2ValueReference
+		kind	: Kind;
+
+functions
+	/**
+	 * An identifier is a valid "C" variable name. Currently defined as any non-empty string that
+	 * does not start with a digit and consists of alphanumerics plus underscore. We do not check
+	 * for the absence of C keywords, or non-ASCII encodings, for simplicity.
+	 */
+	validIdentifier: NormalizedString +> bool
+	validIdentifier(s) ==
+		s <> ""
+		and hd s in set elems NONDIGITS
+		and forall c in seq tl s & c in set elems (NONDIGITS ^ DIGITS);
+
+	/**
+	 * Check whether a date/time string is "YYYY-MM-DDThh:mm:ssZ" format.
+	 * The individual field values are not validated, for simplicity.
+	 */
+	iso8601: NormalizedString +> bool
+	iso8601(dt) ==
+		let digits = elems DIGITS in
+			len dt = 20
+			and elems dt(1,...,4) subset digits
+			and dt(5) = '-'
+			and elems dt(6,...,7) subset digits
+			and dt(8) = '-'
+			and elems dt(9,...,10) subset digits
+			and dt(11) = 'T'
+			and elems dt(12,...,13) subset digits
+			and dt(14) = ':'
+			and elems dt(15,...,16) subset digits
+			and dt(17) = ':'
+			and elems dt(18,...,19) subset digits
+			and dt(20) = 'Z';
+
+	/**
+	 * The min/max limits (inclusive) for each numeric type.
+	 */
+	minMaxOfKind: Kind -> real * real
+	minMaxOfKind(kind) ==
+		cases kind:
+			<Real>			-> mk_(-1.797693134862315708e+308, 1.797693134862315708e+308),
+			<Integer>		-> mk_(-9.223372036854775808e+18, 9.223372036854775807e+18),
+			<Enumeration>	-> mk_(-9.223372036854775808e+18, 9.223372036854775807e+18), -- xs:long = Int64
+			others			-> undefined
+		end;
+
+	/**
+	 * Turn a Variable or Type into a Kind.
+	 */
+	kindOf: Real | Integer | Boolean | String | Enumeration |
+			RealType | IntegerType | BooleanType | StringType | EnumerationType +> Kind
+	kindOf(v) ==
+		if     is_(v, Real)    or is_(v, RealType)    then <Real>
+		elseif is_(v, Integer) or is_(v, IntegerType) then <Integer>
+		elseif is_(v, Boolean) or is_(v, BooleanType) then <Boolean>
+		elseif is_(v, String)  or is_(v, StringType)  then <String>
+		elseif is_(v, Enumeration) or is_(v, EnumerationType) then <Enumeration>
+		else undefined;
+
+	/**
+	 * Lookup a type by name from the list of TypeDefinitions passed.
+	 * Return nil if not found.
+	 */
+	lookupType: [NormalizedString] * [TypeDefinitions] +> [SimpleType]
+	lookupType(name, tdefs) ==
+		if tdefs = nil or name = nil
+		then nil
+		elseif exists tdef in seq tdefs & tdef.name = name
+		then let tdef in seq tdefs be st tdef.name = name in tdef	-- Pick any type
+		else nil
+	post RESULT <> nil => RESULT.name = name;
+
+	/**
+	 * Lookup a variable by valueReference in the list passed.
+	 * Return nil if not found.
+	 */
+	lookupVariable: ModelVariables * fmi2ValueReference * Kind +> [ScalarVariable]
+	lookupVariable(svs, vr, kind) ==
+		let found = { v | v in seq svs & v.valueReference = vr and kindOf(v.fmi2ScalarVariable) = kind } in
+			if found = {}
+			then nil
+			else let v in set found in v
+	post RESULT <> nil => RESULT.valueReference = vr;
+
+	/**
+	 * Lookup a variable by variable name in the list passed.
+	 * Return nil if not found.
+	 */
+	lookupVariableName: NormalizedString * ModelVariables +> [ScalarVariable]
+	lookupVariableName(name, svs) ==
+		let found = { v | v in seq svs & v.name = name } in
+			if found = {}
+			then nil
+			else let v in set found in v
+	post RESULT <> nil => RESULT.name = name;
+
+	/**
+	 * Return the ScalarVariables from a list which are continuous-time states, defined to be
+	 * Real variables which are continuous and have a derivative.
+	 */
+	continuousTimeStates: seq of ScalarVariable -> set of ScalarVariable
+	continuousTimeStates(svs) ==
+		{ svs(i) | i in set inds svs & isContinuousTimeState(i, svs) };
+
+	/**
+	 * Test ith index variable as a continuous time state.
+	 */
+	isContinuousTimeState: nat1 * seq of ScalarVariable +> bool
+	isContinuousTimeState(i, svs) ==
+		is_Real(svs(i).fmi2ScalarVariable)
+		and svs(i).variability = <continuous>
+		and svs(i).causality in set { <local>, <output> }	-- See defn. causality
+		and exists j in seq svs &
+			is_Real(j.fmi2ScalarVariable) and j.fmi2ScalarVariable.derivative = i
+	pre i in set inds svs;
+
+	/**
+	 * Return the ScalarVariables from a list which are state derivatives, defined to be
+	 * variables which are the derivative of some other variable.
+	 */
+	stateDerivatives: seq of ScalarVariable -> set of ScalarVariable
+	stateDerivatives(svs) ==
+		{ sv | sv in seq svs & isStateDerivative(sv) };
+
+	/**
+	 * Test ScalarVariable as a state derivative.
+	 */
+	isStateDerivative: ScalarVariable +> bool
+	isStateDerivative(sv) ==
+		is_Real(sv.fmi2ScalarVariable) and sv.fmi2ScalarVariable.derivative <> nil;
+
+	/**
+	 * Test coordinates are bottom left to top right
+	 */
+	 isBLtoTR: real * real * real * real +> bool
+	 isBLtoTR(x1, y1, x2, y2) ==
+	 	x1 < x2 and y1 < y2;
+
+	/**
+	 * Get the alias refmap, from alias tags to sets of SVs
+	 */
+	getAliasRefMap: seq1 of ScalarVariable -> map AliasTag to set of ScalarVariable
+	getAliasRefMap(svs) ==
+		let tags = { svi |-> aliasTag(svs(svi)) | svi in set inds svs } in
+		{
+			tags(svi) |-> { svs(v) | v in set inds svs & tags(v) = tags(svi) }
+			| svi in set inds svs
+		};
+
+	/**
+	 * Generate an alias "tag" for a ScalarVariable, made of the valueReference and
+	 * the type of the variable. All aliases of a variable have the same tag.
+	 */
+	aliasTag: ScalarVariable +> AliasTag
+	aliasTag(sv) ==
+		mk_AliasTag(sv.valueReference, kindOf(sv.fmi2ScalarVariable));
+
+	/**
+	 * Test whether a ScalarVariable is settable with fmi2SetXXX. See sections 3.2.3 and 4.2.4.
+	 */
+	isSettable: ScalarVariable +> bool
+	isSettable(sv) ==
+		sv.variability <> <constant> and sv.initial in set { <exact>, <approx> }
+		or
+		sv.causality = <input>
+		or
+		sv.causality = <parameter> and sv.variability = <tunable>;
+
+	/**
+	 * Ordering to allow ordered comparison of variabilities.
+	 */
+	varValue: Variability +> nat
+	varValue(a) ==
+		cases a:
+			<constant>   -> 1,
+			<fixed>      -> 2,
+			<tunable>    -> 3,
+			<discrete>   -> 4,
+			<continuous> -> 5
+		end;

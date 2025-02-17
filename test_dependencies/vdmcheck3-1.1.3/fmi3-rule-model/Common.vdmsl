@@ -1,0 +1,205 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+types
+	/**
+	 * Kind is a convenient tag for variables and typedefs of a particular type.
+	 */
+	FloatKind = <Float64> | <Float32>;
+	IntegerKind = <Int64> | <Int32> | <Int16> | <Int8> | <UInt64> | <UInt32> | <UInt16> | <UInt8>;
+	NumericKind = FloatKind | IntegerKind | <Enumeration>;	-- have min/max
+	Kind = NumericKind | <Boolean> | <String> | <Binary> | <Clock>;
+
+functions
+	/**
+	 * An identifier is a valid "C" variable name. Currently defined as any non-empty string that
+	 * does not start with a digit and consists of alphanumerics plus underscore. We do not check
+	 * for the absence of C keywords, or non-ASCII encodings, for simplicity.
+	 */
+	validIdentifier: NormalizedString +> bool
+	validIdentifier(s) ==
+		s <> ""
+		and hd s in set elems NONDIGITS
+		and forall c in seq tl s & c in set elems (NONDIGITS ^ DIGITS);
+
+	/**
+	 * Check whether a date/time string is "YYYY-MM-DDThh:mm:ssZ" format.
+	 * The individual field values are not validated, for simplicity.
+	 */
+	iso8601: NormalizedString +> bool
+	iso8601(dt) ==
+		let digits = elems DIGITS in
+			len dt = 20
+			and elems dt(1,...,4) subset digits
+			and dt(5) = '-'
+			and elems dt(6,...,7) subset digits
+			and dt(8) = '-'
+			and elems dt(9,...,10) subset digits
+			and dt(11) = 'T'
+			and elems dt(12,...,13) subset digits
+			and dt(14) = ':'
+			and elems dt(15,...,16) subset digits
+			and dt(17) = ':'
+			and elems dt(18,...,19) subset digits
+			and dt(20) = 'Z';
+
+	/**
+	 * The definition of a periodic clock.
+	 */
+	clockIsPeriodic: ClockType +> bool
+	clockIsPeriodic(tdef) ==
+		tdef.intervalVariability in set {<constant>, <fixed>, <tunable>};
+
+	/**
+	 * The min/max limits (inclusive) for each numeric type.
+	 */
+	minMaxOfKind: Kind -> real * real
+	minMaxOfKind(kind) ==
+		cases kind:
+			<Float32> 		-> mk_(-3.402823466385288598e+38, 3.402823466385288598e+38),
+			<Float64>		-> mk_(-1.797693134862315708e+308, 1.797693134862315708e+308),
+			<Int8>			-> mk_(-128, 127),
+			<UInt8>			-> mk_(0, 255),
+			<Int16>			-> mk_(-32768, 32767),
+			<UInt16>		-> mk_(0, 65535),
+			<Int32>			-> mk_(-2147483648, 2147483647),
+			<UInt32>		-> mk_(0, 4294967295),
+			<Int64>			-> mk_(-9.223372036854775808e+18, 9.223372036854775807e+18),
+			<UInt64>		-> mk_(0, 1.8446744073709551615e+19),
+			<Enumeration>	-> mk_(-9.223372036854775808e+18, 9.223372036854775807e+18), -- xs:long = Int64
+
+			others			-> undefined
+		end;
+
+	/**
+	 * Turn a Variable or Type into a Kind.
+	 */
+	kindOf: fmi3Variable | fmi3TypeDefinition +> Kind
+	kindOf(v) ==
+		if     is_(v, Float32) or is_(v, Float32Type) then <Float32>
+		elseif is_(v, Float64) or is_(v, Float64Type) then <Float64>
+		elseif is_(v, Int8)    or is_(v, Int8Type)    then <Int8>
+		elseif is_(v, UInt8)   or is_(v, UInt8Type)   then <UInt8>
+		elseif is_(v, Int16)   or is_(v, Int16Type)   then <Int16>
+		elseif is_(v, UInt16)  or is_(v, UInt16Type)  then <UInt16>
+		elseif is_(v, Int32)   or is_(v, Int32Type)   then <Int32>
+		elseif is_(v, UInt32)  or is_(v, UInt32Type)  then <UInt32>
+		elseif is_(v, Int64)   or is_(v, Int64Type)   then <Int64>
+		elseif is_(v, UInt64)  or is_(v, UInt64Type)  then <UInt64>
+		elseif is_(v, Boolean) or is_(v, BooleanType) then <Boolean>
+		elseif is_(v, String)  or is_(v, StringType)  then <String>
+		elseif is_(v, Binary)  or is_(v, BinaryType)  then <Binary>
+		elseif is_(v, Enumeration) or is_(v, EnumerationType) then <Enumeration>
+		elseif is_(v, Clock)   or is_(v, ClockType)   then <Clock>
+
+		else undefined;
+
+	/**
+	 * Test whether a variable or type is a floating point kind.
+	 */
+	isFloat: fmi3Variable | fmi3TypeDefinition +> bool
+	isFloat(v) ==
+		is_FloatKind(kindOf(v));
+
+	/**
+	 * Lookup a type by name from the list of TypeDefinitions passed.
+	 * Return nil if not found.
+	 */
+	lookupType: [NormalizedString] * [TypeDefinitions] +> [fmi3TypeDefinition]
+	lookupType(name, tdefs) ==
+		if tdefs = nil or name = nil
+		then nil
+		elseif exists tdef in seq tdefs & tdef.name = name
+		then let tdef in seq tdefs be st tdef.name = name in tdef	-- Pick any type
+		else nil
+	post RESULT <> nil => RESULT.name = name;
+
+	/**
+	 * Lookup a variable by valueReference in the list passed.
+	 * Return nil if not found.
+	 */
+	lookupVariable: nat * ModelVariables +> [fmi3Variable]
+	lookupVariable(vref, evs) ==
+		if exists ev in seq evs & ev.valueReference = vref
+		then let ev in seq evs be st ev.valueReference = vref in ev
+		else nil
+	post RESULT <> nil => RESULT.valueReference = vref;
+
+	/**
+	 * Lookup a variable by variable name in the list passed.
+	 * Return nil if not found.
+	 */
+	lookupVariableName: NormalizedString * ModelVariables +> [fmi3Variable]
+	lookupVariableName(name, evs) ==
+		if exists ev in seq evs & ev.name = name
+		then let ev in seq evs be st ev.name = name in ev
+		else nil
+	post RESULT <> nil => RESULT.name = name;
+
+	/**
+	 * Return a set of continuous time states from the list passed.
+	 */
+	continuousTimeStates: seq of fmi3Variable -> set of fmi3Variable
+	continuousTimeStates(mvs) ==
+		{ mv | mv in seq mvs & isContinuousTimeState(mv, mvs) }
+	post RESULT subset elems mvs;
+
+	/**
+	 * Test whether a raw variable is a continuous time state, defined to be
+	 * continuous Floats that have other Floats that are their derivative.
+	 */
+	isContinuousTimeState: fmi3Variable * seq of fmi3Variable +> bool
+	isContinuousTimeState(mv, mvs) ==
+		isFloat(mv)
+		and ( mv.variability = <continuous> or mv.variability = nil )
+		and exists dv in seq mvs &
+			isFloat(dv) and dv.derivative = mv.valueReference;
+
+	/**
+	 * Return the Variables from a list which are state derivatives, defined to be
+	 * variables which are the derivative of some other variable.
+	 */
+	stateDerivatives: seq of fmi3Variable -> set of fmi3Variable
+	stateDerivatives(mvs) ==
+		{ mv | mv in seq mvs & isStateDerivative(mv) }
+	post RESULT subset elems mvs;
+
+	/**
+	 * Test whether a variable is a state derivative, defined to be a
+	 * float that is a derivative of another variable.
+	 */
+	isStateDerivative: fmi3Variable +> bool
+	isStateDerivative(mv) ==
+		isFloat(mv) and mv.derivative <> nil;
+
+	/**
+	 * Test coordinates are bottom left to top right
+	 */
+	 isBLtoTR: real * real * real * real +> bool
+	 isBLtoTR(x1, y1, x2, y2) ==
+	 	x1 < x2 and y1 < y2;

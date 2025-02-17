@@ -1,0 +1,139 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} TypeDefinitions Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeDefinitionNames
+[[validTypeDefinitionNames]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#definition-of-types", "<FMI3_STANDARD>#table-type-details")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeDefinitionNames: [TypeDefinitions] +> bool
+validTypeDefinitionNames(tdefs) ==
+	tdefs <> nil =>
+		-- @OnFail("%NAME: TypeDefinition names must be unique")
+		( let names = [ td.name | td in seq tdefs ] in
+			len names = card elems names );
+----
+// {vdm}
+- See <<definition-of-types>>.
+- See <<table-type-details>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeMinMax
+[[validTypeMinMax]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#table-type-details")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeMinMax: fmi3TypeDefinition +> bool
+validTypeMinMax(tdef) ==
+	let mk_(kmin, kmax) = minMaxOfKind(kindOf(tdef)) in allOf
+	([
+		-- @OnFail("%NAME: max %s is not a valid value of this type", tdef.max)
+		( tdef.max <> nil => tdef.max <= kmax and tdef.max >= kmin ),
+
+		-- @OnFail("%NAME: min %s is not a valid value of this type", tdef.min)
+		( tdef.min <> nil => tdef.min <= kmax and tdef.min >= kmin ),
+
+		-- @OnFail("%NAME: max %s not >= min %s", tdef.max, tdef.min)
+		( tdef.min <> nil and tdef.max <> nil => tdef.max >= tdef.min )
+	])
+	pre is_(kindOf(tdef), NumericKind);
+----
+// {vdm}
+See <<table-type-details>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTypeDisplayUnit
+[[validTypeDisplayUnit]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#table-type-details")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTypeDisplayUnit: fmi3TypeDefinition +> bool
+validTypeDisplayUnit(tdef) ==
+	-- @OnFail("%NAME: Type %s, unit must be defined for displayUnit %s",
+	-- tdef.name, tdef.displayUnit)
+	( tdef.displayUnit <> nil => tdef.unit <> nil )
+pre is_(kindOf(tdef), FloatKind);
+----
+// {vdm}
+See <<table-type-details>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validEnumerationTypeBijection
+[[validEnumerationTypeBijection]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#figure-schema-EnumerationType")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validEnumerationTypeBijection: EnumerationType +> bool
+validEnumerationTypeBijection(tdef) ==
+	-- @OnFail("%NAME: Type %s, Enumeration item name/values do not form a bijection", tdef.name)
+	(
+		card { i.name | i in seq tdef.item } = len tdef.item
+		and	card { i.value | i in seq tdef.item } = len tdef.item
+	);
+----
+// {vdm}
+See <<figure-schema-EnumerationType>>.
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validClockType
+[[validClockType]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI3_STANDARD>#figure-schema-ClockType")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validClockType: ClockType +> bool
+validClockType(tdef) ==
+	let periodic = clockIsPeriodic(tdef) in allOf
+	([
+		--@OnFail("%NAME: resolution can only be used with periodic clocks")
+		( tdef.resolution <> nil => periodic ),
+
+		--@OnFail("%NAME: Periodic supportsFraction and intervalCounter must define resolution")
+		( periodic and tdef.supportsFraction = true and tdef.intervalCounter <> nil =>
+			tdef.resolution <> nil  ),
+
+		--@OnFail("%NAME: intervalCounter must be >0")
+		( tdef.intervalCounter <> nil => tdef.intervalCounter > 0 ),
+
+		--@OnFail("%NAME: Cannot use intervalCounter unless periodic and supportsFraction")
+		( tdef.intervalCounter <> nil => tdef.supportsFraction = true and periodic ),
+
+		--@OnFail("%NAME: shiftCounter requires an intervalCounter")
+		( tdef.shiftCounter <> nil => tdef.intervalCounter <> nil )
+	]);
+----
+// {vdm}
+See <<figure-schema-ClockType>>.
+
+
+
+
+
+
+

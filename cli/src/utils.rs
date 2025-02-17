@@ -5,7 +5,6 @@ use std::io::{Seek, Write};
 use std::iter::Iterator;
 use std::path::Path;
 use walkdir::DirEntry;
-use zip::result::ZipError;
 use zip::write::FileOptions;
 
 pub fn zip_dir<T>(
@@ -36,16 +35,17 @@ where
             let mut f = File::open(path)?;
 
             f.read_to_end(&mut buffer)?;
-            zip.write_all(&*buffer)?;
+            zip.write_all(&buffer)?;
             buffer.clear();
-        } else if name.as_os_str().len() != 0 {
+        }  /*else if name.as_os_str().is_empty() {
             // Only if not root! Avoids path spec / warning
             // and mapname conversion failed error on unzip
             info!("adding dir {:?} as {:?} ...", path, name);
             #[allow(deprecated)]
             zip.add_directory_from_path(name, options)?;
-        }
+        } */
     }
     zip.finish()?;
     Result::Ok(())
 }
+

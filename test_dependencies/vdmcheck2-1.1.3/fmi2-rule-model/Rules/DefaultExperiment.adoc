@@ -1,0 +1,63 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} DefaultExperiment Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validTolerance
+[[validTolerance]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_a_default_experiment_defaultexperiment")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validTolerance: DefaultExperiment +> bool
+validTolerance(de) ==
+	-- @OnFail("%NAME: tolerance must be >= 0 at %#s", loc2str(de.location))
+	( de.tolerance <> nil => de.tolerance >= 0 );
+----
+// {vdm}
+See <<_definition_of_a_default_experiment_defaultexperiment>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validStartStopTime
+[[validStartStopTime]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_a_default_experiment_defaultexperiment")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validStartStopTime: DefaultExperiment +> bool
+validStartStopTime(e) ==
+	-- @OnFail("%NAME: stop time must be later than start time at %#s", loc2str(e.location))
+	( e.startTime <> nil and e.stopTime <> nil => e.stopTime > e.startTime );
+----
+// {vdm}
+See <<_definition_of_a_default_experiment_defaultexperiment>>
+
+===== A.{section}.{subsection}.{counter:typerule} Rule: validStepSize
+[[validStepSize]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_a_default_experiment_defaultexperiment")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validStepSize: DefaultExperiment +> bool
+validStepSize(e) ==
+	-- @OnFail("%NAME: stepSize must be less than start-stop interval at %#s", loc2str(e.location))
+	( e.startTime <> nil and e.stopTime <> nil and e.stepSize <> nil =>
+		e.stopTime - e.startTime > e.stepSize );
+----
+// {vdm}
+See <<_definition_of_a_default_experiment_defaultexperiment>>

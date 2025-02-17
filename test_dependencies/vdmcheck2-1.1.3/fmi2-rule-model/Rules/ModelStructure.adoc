@@ -1,0 +1,27 @@
+// This adds the "functions" section header for VDM only
+ifdef::hidden[]
+// {vdm}
+functions
+// {vdm}
+endif::[]
+
+==== A.{section}.{counter:subsection} Unknown Rules
+:!typerule:
+===== A.{section}.{subsection}.{counter:typerule} Rule: validDependencyKinds
+[[validDependencyKinds]]
+ifdef::hidden[]
+// {vdm}
+
+-- @DocLink("<FMI2_STANDARD>#_definition_of_the_model_structure_modelstructure")
+// {vdm}
+endif::[]
+// {vdm}
+----
+validDependencyKinds: Unknown +> bool
+validDependencyKinds(entry) ==
+	entry.dependenciesKind <> nil =>
+		-- @OnFail("%NAME: dependencies do not match dependenciesKind at %#s", loc2str(entry.location))
+		( entry.dependencies <> nil and len entry.dependenciesKind = len entry.dependencies );
+----
+// {vdm}
+See <<_definition_of_the_model_structure_modelstructure>>

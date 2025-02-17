@@ -1,0 +1,84 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2024, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+types
+	TypeDefinitions' = [TypeDefinitions]
+	inv tdefs == allOf
+	([
+		invs_SimpleTypes'(tdefs),
+
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeDefinitionNames(tdefs)
+	]);
+
+	SimpleType' = SimpleType
+	inv stype == allOf
+	([
+		cases kindOf(stype.fmi2SimpleType):
+			<Real>	        -> inv_RealType'(stype.fmi2SimpleType),
+			<Integer>	    -> inv_IntegerType'(stype.fmi2SimpleType),
+			<Boolean>	    -> inv_BooleanType'(stype.fmi2SimpleType),
+			<String>	    -> inv_StringType'(stype.fmi2SimpleType),
+			<Enumeration>	-> inv_EnumerationType'(stype.fmi2SimpleType)
+		end,
+
+		validTypeDisplayUnit(stype)
+	]);
+
+	RealType' = RealType
+	inv tdef == allOf
+	([
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	IntegerType' = IntegerType
+	inv tdef == allOf
+	([
+		-- Rules are defined in TypeDefinitions.adoc
+		validTypeMinMax(tdef)
+	]);
+
+	BooleanType' = BooleanType
+	inv - == allOf
+	([
+		true
+	]);
+
+	StringType' = StringType
+	inv - == allOf
+	([
+		true
+	]);
+
+	EnumerationType' = EnumerationType
+	inv tdef == allOf
+	([
+		-- Rules are defined in TypeDefinitions.adoc
+		validEnumerationTypeBijection(tdef)
+	]);

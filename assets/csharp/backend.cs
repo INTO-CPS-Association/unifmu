@@ -2,6 +2,7 @@
 using System.IO;
 using System;
 using Fmi2Messages;
+using UnifmuHandshake;
 using System.Collections.Generic;
 using NetMQ.Sockets;
 using Google.Protobuf;
@@ -17,7 +18,7 @@ namespace Launch
         public static void Main(string[] args)
         {
             var references_to_attr = new Dictionary<uint, string>();
-            var model = new Model();
+            Model model = null;
 
             string dispatcher_endpoint = System.Environment.GetEnvironmentVariable("UNIFMU_DISPATCHER_ENDPOINT");
             if (dispatcher_endpoint == null)
@@ -31,7 +32,9 @@ namespace Launch
             socket.Connect(dispatcher_endpoint);
 
 
-            IMessage message = new Fmi2EmptyReturn();
+            IMessage message = new HandshakeReply{
+                Status = HandshakeStatus.Ok
+            };
 
 
             socket.SendFrame(message.ToByteArray(), false);
@@ -46,6 +49,7 @@ namespace Launch
 
                     case Fmi2Command.CommandOneofCase.Fmi2Instantiate:
                         {
+                            model = new Model();
                             var result = new Fmi2EmptyReturn();
                             message = result;
                         }

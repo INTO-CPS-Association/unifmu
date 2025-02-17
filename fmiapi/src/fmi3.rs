@@ -1,19 +1,38 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
+use std::{
+    ffi::{c_void, CStr, CString, NulError},
+    path::{Path, PathBuf},
+    slice::{from_raw_parts, from_raw_parts_mut},
+    str::Utf8Error,
+    sync::LazyLock
+};
+
 use libc::{c_char, size_t};
-use std::ffi::c_void;
-use std::ffi::CStr;
-use std::ffi::CString;
-use std::path::Path;
-use std::slice::from_raw_parts;
-use std::slice::from_raw_parts_mut;
-use subprocess::Popen;
-
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use url::Url;
+use tracing::{error, warn};
+use tracing_subscriber;
 
-use crate::fmi3_dispatcher::Fmi3CommandDispatcher;
-use crate::spawn::spawn_fmi3_slave;
+use crate::dispatcher::{Dispatch, Dispatcher};
+use crate::fmi3_messages::{self, Fmi3Command, fmi3_command::Command};
+use crate::spawn::spawn_slave;
+
+/// One shot function that sets up logging.
+/// 
+/// Checking the result runs the contained function once if it hasn't been run
+/// or returns the stored result.
+/// 
+/// Result should be checked at entrance to instantiation functions, and an
+/// error should be considered a grave error signifying something seriously
+/// wrong (most probably that the global logger was already set somewhere else).
+static ENABLE_LOGGING: LazyLock<Result<(), Fmi3Status>> = LazyLock::new(|| {
+    if tracing_subscriber::fmt::try_init().is_err() {
+        return Err(Fmi3Status::Fatal);
+    }
+    Ok(())
+});
 
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
@@ -23,6 +42,30 @@ pub enum Fmi3Status {
     Discard = 2,
     Error = 3,
     Fatal = 4,
+}
+
+impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
+    fn from(src: fmi3_messages::Fmi3StatusReturn) -> Self {
+        match src.status() {
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fatal,
+        }
+    }
+}
+
+impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
+    fn from(s: fmi3_messages::Fmi3Status) -> Self {
+        match s {
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fatal,
+        }
+    }
 }
 
 #[repr(i32)]
@@ -45,20 +88,36 @@ pub enum Fmi3IntervalQualifier {
 }
 
 pub struct Fmi3Slave {
-    dispatcher: Fmi3CommandDispatcher,
+    dispatcher: Dispatcher,
     last_successful_time: Option<f64>,
     string_buffer: Vec<CString>,
-    popen: Popen,
 }
 
 impl Fmi3Slave {
-    pub fn new(dispatcher: Fmi3CommandDispatcher, popen: Popen) -> Self {
+    pub fn new(dispatcher: Dispatcher) -> Self {
         Self {
             dispatcher,
-            popen,
             last_successful_time: None,
             string_buffer: Vec::new(),
         }
+    }
+}
+
+/// Sends the fmi3FreeInstance message to the backend when the slave is dropped.
+impl Drop for Fmi3Slave {
+    fn drop(&mut self) {
+        let cmd = Fmi3Command {
+            command: Some(Command::Fmi3FreeInstance(
+                fmi3_messages::Fmi3FreeInstance {}
+            )),
+        };
+
+        match self.dispatcher.send(&cmd) {
+            Ok(_) => (),
+            Err(error) => error!(
+                "Freeing instance failed with error: {:?}.", error
+            ),
+        };
     }
 }
 
@@ -73,8 +132,15 @@ impl SlaveState {
     }
 }
 
-fn c2s(c: *const c_char) -> String {
-    unsafe { CStr::from_ptr(c).to_str().unwrap().to_owned() }
+type Fmi3SlaveType = Box<Fmi3Slave>;
+
+fn c2s(c: *const c_char) -> Result<String, Utf8Error> {
+    unsafe {
+        CStr::from_ptr(c)
+            .to_str()
+            .map(|result| result.to_owned())
+            
+    }
 }
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
@@ -93,7 +159,8 @@ pub extern "C" fn fmi3SetDebugLogging(
     n_categories: size_t,
     categories: *const *const c_char
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetDebugLogging is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
 
 #[no_mangle]
@@ -106,42 +173,75 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     instance_environment: *const c_void,
     log_message: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-    let instantiation_token = c2s(instantiation_token);
-    let resource_path = c2s(resource_path);
-
-    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
-
-    match dispatcher.fmi3InstantiateModelExchange(
-        instance_name,
-        instantiation_token,
-        resource_path,
-        visible != 0,
-        logging_on != 0,
-    ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
-        Err(_) => None,
+    if (*ENABLE_LOGGING).is_err() {
+        error!("Tried to set already set global tracing subscriber.");
+        return None;
     }
+
+    error!("fmi3InstantiateModelExchange is not implemented by UNIFMU.");
+    None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
-type Fmi3SlaveType = Box<Fmi3Slave>;
+
+/// # Safety
+/// Behavior is undefined if any of the following are violated:
+/// * `resource_path` must be either null or convertable to a reference.
+/// * `required_intermediate_variables` must be non-null, \[valid\] for reads
+///   for `n_required_intermediate_variables * mem::size_of::<u32>()` many
+///   bytes, and it must be properly aligned. This means in particular:
+///     * The entire memory range of this slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `refernces` must be non-null and aligned even for zero-length slices
+///       or slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as
+///       `required_intermediate_variables` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `required_intermediate_variables` must point to
+///   `n_required_intermediate_variables` consecutive properly initialized
+///   values of type `u32`.
+/// * The total size
+///   `n_required_intermediate_variables * mem::size_of::<u32>()` of the slice
+///   must be no larger than `isize::MAX`, and adding that size to
+///   `required_intermediate_variables` must not "wrap around" the address
+///   space. See the safety documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3InstantiateCoSimulation(
+pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     instance_name: *const c_char,
     instantiation_token: *const c_char,
     resource_path: *const c_char,
-    visible: i32,
-    logging_on: i32,
-    event_mode_used: i32,
-    early_return_allowed: i32,
+    visible: bool,
+    logging_on: bool,
+    event_mode_used: bool,
+    early_return_allowed: bool,
     required_intermediate_variables: *const u32,
     n_required_intermediate_variables: size_t,
     instance_environment: *const c_void,
     log_message: *const c_void,
     intermediate_update: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-    let instantiation_token = c2s(instantiation_token);
-    let resource_path = c2s(resource_path);
+    if (*ENABLE_LOGGING).is_err() {
+        error!("Tried to set already set global tracing subscriber.");
+        return None;
+    }
+
+    let instance_name = match c2s(instance_name) {
+        Ok(string) => string,
+        Err(error) => {
+            error!("Could not convert instance_name to String: {:?}", error);
+            return None;
+        }
+    };
+
+    let instantiation_token = match c2s(instantiation_token) {
+        Ok(string) => string,
+        Err(error) => {
+            error!("Could not convert instantiation_token to String: {:?}", error);
+            return None;
+        }
+    };
+
     let required_intermediate_variables = unsafe {
         from_raw_parts(
             required_intermediate_variables,
@@ -150,22 +250,109 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     }
     .to_owned();
 
-    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
+    let resource_path_str = unsafe {
+        match resource_path.as_ref() {
+            Some(b) => match CStr::from_ptr(b).to_str() {
+                Ok(s) => s.to_string(),
+                Err(e) => {
+                    error!("resource path was not valid utf-8");
+                    return None;
+                },
+            },
+            None => {
+                error!("resourcePath was null");
+                return None
+            },
+        }
+    };
 
-    match dispatcher.fmi3InstantiateCoSimulation(
-        instance_name,
-        instantiation_token,
-        resource_path,
-        visible != 0,
-        logging_on != 0,
-        event_mode_used != 0,
-        early_return_allowed != 0,
-        required_intermediate_variables,
-    ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
-        Err(_) => None,
+    // NOTE: In version 3 of the FMI standard, resourcePath should be a path, e.g., "C:\...". At
+    // least one tool seems to still follow version 2 in that it passes a URI, e.g., starting with
+    // "file:///C://..." instead. The current implementation maintains this "backwards
+    // compatibility" with this incorrect implementation of version 3 of the standard.
+
+    // Check for supported URI schemes or treat as a direct file path
+    let resources_dir = if resource_path_str.starts_with("file:")
+        || resource_path_str.starts_with("http:")
+        || resource_path_str.starts_with("https:")
+        || resource_path_str.starts_with("ftp:")
+        || resource_path_str.starts_with("fmi2:")
+    {
+        // Parse as a URI
+        let resource_uri = match Url::parse(&resource_path_str) {
+            Ok(uri) => uri,
+            Err(e) => {
+                error!("Unable to parse uri: {:#?}", e);
+                return None;
+            }
+        };
+
+        if resource_uri.scheme() == "file" {
+            match resource_uri.to_file_path() {
+                Ok(path) => path,
+                Err(_) => {
+                    error!(
+                        "URI was parsed but could not be converted into a file path, got: '{:?}'.",
+                        resource_uri
+                    );
+                    return None;
+                }
+            }
+        } else {
+            error!("Unsupported URI scheme: '{}'", resource_uri.scheme());
+            return None;
+        }
+    } else {
+        // Treat it as a direct file path
+        PathBuf::from(resource_path_str)
+    };
+
+    let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
+        Ok(dispatcher) => dispatcher,
+        Err(_) => {
+            error!("Spawning fmi3 slave failed.");
+            return None;
+        }
+    };
+
+    let resource_path = match resources_dir.into_os_string().into_string() {
+        Ok(string_path) => string_path,
+        Err(e) => {
+            error!("Couldn't convert resource directory path into String.");
+            return None;
+        }
+    };
+
+    let mut slave = Fmi3Slave::new(dispatcher);
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3InstantiateCoSimulation(
+            fmi3_messages::Fmi3InstantiateCoSimulation {
+                instance_name: instance_name.clone(),
+                instantiation_token,
+                resource_path,
+                visible,
+                logging_on,
+                event_mode_used,
+                early_return_allowed,
+                required_intermediate_variables,
+            },
+        )),
+    };
+
+    match slave.dispatcher.send_and_recv::<_, fmi3_messages::Fmi3EmptyReturn>(&cmd) {
+        Ok(_) => Some(Box::new(slave)),
+        Err(error) => {
+            error!(
+                "Instantiation of fmi3 slave '{}' failed with error {:?}.",
+                instance_name,
+                error
+            );
+            None
+        },
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3InstantiateScheduledExecution(
     instance_name: *const c_char,
@@ -179,419 +366,1018 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     lock_preemption: *const c_void,
     unlock_preemption: *const c_void,
 ) -> Option<Fmi3SlaveType> {
-    let instance_name = c2s(instance_name);
-    let instantiation_token = c2s(instantiation_token);
-    let resource_path = c2s(resource_path);
-
-    let (mut dispatcher, popen) = spawn_fmi3_slave(&Path::new(&resource_path)).unwrap();
-
-    match dispatcher.fmi3InstantiateScheduledExecution(
-        instance_name,
-        instantiation_token,
-        resource_path,
-        visible != 0,
-        logging_on != 0
-    ) {
-        Ok(_) => Some(Box::new(Fmi3Slave::new(dispatcher, popen))),
-        Err(_) => None,
+    if (*ENABLE_LOGGING).is_err() {
+        error!("Tried to set already set global tracing subscriber.");
+        return None;
     }
+
+    error!("fmi3InstantiateScheduledExecution is not implemented by UNIFMU.");
+    None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
+
+/// # Safety
+/// Behavior is undefined if any of `last_successful_time`,
+/// `event_handling_needed`, `terminate_simulation` and `early_return` points
+/// outside of address space and if they are dereferenced after function call.
 #[no_mangle]
-pub extern "C" fn fmi3DoStep(
+pub unsafe extern "C" fn fmi3DoStep(
     instance: &mut Fmi3Slave,
     current_communication_point: f64,
     communication_step_size: f64,
-    no_set_fmu_state_prior_to_current_point: i32,
-    event_handling_needed: *const i32,
-    terminate_simulation: *const i32,
-    early_return: *const i32,
-    last_successful_time: f64,
+    no_set_fmu_state_prior_to_current_point: bool,
+    event_handling_needed: *mut bool,
+    terminate_simulation: *mut bool,
+    early_return: *mut bool,
+    last_successful_time: *mut f64,
 ) -> Fmi3Status {
-    match instance.dispatcher.fmi3DoStep(
-        current_communication_point,
-        communication_step_size,
-        no_set_fmu_state_prior_to_current_point != 0,
-    ) {
-        Ok(s) => match s {
-            Fmi3Status::OK | Fmi3Status::Warning => {
-                instance.last_successful_time =
-                    Some(current_communication_point + communication_step_size);
-                s
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3DoStep(
+            fmi3_messages::Fmi3DoStep {
+                current_communication_point,
+                communication_step_size,
+                no_set_fmu_state_prior_to_current_point,
             }
-            s => s,
-        },
-        Err(e) => Fmi3Status::Error,
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3DoStepReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !last_successful_time.is_null() {
+                unsafe {
+                    *last_successful_time = result.last_successful_time;
+                }
+            }
+            if !event_handling_needed.is_null() {
+                unsafe {
+                    *event_handling_needed = result.event_handling_needed;
+                }
+            }
+            if !terminate_simulation.is_null() {
+                unsafe {
+                    *terminate_simulation = result.terminate_simulation;
+                }
+            }
+            if !early_return.is_null() {
+                unsafe {
+                    *early_return = result.early_return;
+                }
+            }
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3DoStep failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterInitializationMode(
     instance: &mut Fmi3Slave,
-    tolerance_defined: i32,
+    tolerance_defined: bool,
     tolerance: f64,
     start_time: f64,
-    stop_time_defined: i32,
+    stop_time_defined: bool,
     stop_time: f64,
 ) -> Fmi3Status {
     let tolerance = {
-        if tolerance_defined != 0 {
+        if tolerance_defined {
             Some(tolerance)
         } else {
             None
         }
     };
     let stop_time = {
-        if stop_time_defined != 0 {
+        if stop_time_defined {
             Some(stop_time)
         } else {
             None
         }
     };
 
-    match instance
-        .dispatcher
-        .fmi3EnterInitializationMode(tolerance, start_time, stop_time)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterInitializationMode(
+            fmi3_messages::Fmi3EnterInitializationMode {
+                tolerance_defined,
+                tolerance,
+                start_time,
+                stop_time_defined,
+                stop_time,
+            },
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterInitializationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3Status {
-    match instance.dispatcher.fmi3ExitInitializationMode() {
-        Ok(s) => s,
-        Err(_) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3ExitInitializationMode(
+            fmi3_messages::Fmi3ExitInitializationMode {},
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3ExitInitializationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
-    match instance.dispatcher.fmi3EnterEventMode() {
-        Ok(s) => s,
-        Err(_) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterEventMode(
+            fmi3_messages::Fmi3EnterEventMode {},
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterEventMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
-    match instance.dispatcher.fmi3EnterStepMode() {
-        Ok(s) => s,
-        Err(_) => Fmi3Status::Error,
-    }
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterStepMode(
+            fmi3_messages::Fmi3EnterStepMode {},
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterStepMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetFloat32(
+pub unsafe extern "C" fn fmi3GetFloat32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut f32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetFloat32(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetFloat32(
+            fmi3_messages::Fmi3GetFloat32 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetFloat32Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetFloat32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetFloat64(
+pub unsafe extern "C" fn fmi3GetFloat64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut f64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetFloat64(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetFloat64(
+            fmi3_messages::Fmi3GetFloat64 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetFloat64Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetFloat64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt8(
+pub unsafe extern "C" fn fmi3GetInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut i8,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance.dispatcher.fmi3GetInt8(value_references.to_owned()) {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt8(
+            fmi3_messages::Fmi3GetInt8 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt8Return>(&cmd)
+    {
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<i8> = result.values
+                    .iter()
+                    .map(|v| *v as i8)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt8(
+pub unsafe extern "C" fn fmi3GetUInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt8(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt8(
+            fmi3_messages::Fmi3GetUInt8 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt8Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<u8> = result.values
+                    .iter()
+                    .map(|v| *v as u8)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt16(
+pub unsafe extern "C" fn fmi3GetInt16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut i16,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetInt16(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt16(
+            fmi3_messages::Fmi3GetInt16 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt16Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<i16> = result.values
+                    .iter()
+                    .map(|v| *v as i16)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt16(
+pub unsafe extern "C" fn fmi3GetUInt16(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut u16,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt16(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt16(
+            fmi3_messages::Fmi3GetUInt16 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt16Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let values: Vec<u16> = result.values
+                    .iter()
+                    .map(|v| *v as u16)
+                    .collect();
+
+                values_out.copy_from_slice(&values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt32(
+pub unsafe extern "C" fn fmi3GetInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut i32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetInt32(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt32(
+            fmi3_messages::Fmi3GetInt32 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt32Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt32(
+pub unsafe extern "C" fn fmi3GetUInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut u32,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt32(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt32(
+            fmi3_messages::Fmi3GetUInt32 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt32Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetInt64(
+pub unsafe extern "C" fn fmi3GetInt64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut i64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetInt64(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetInt64(
+            fmi3_messages::Fmi3GetInt64 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetInt64Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetUInt64(
+pub unsafe extern "C" fn fmi3GetUInt64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut u64,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetUInt64(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetUInt64(
+            fmi3_messages::Fmi3GetUInt64 { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetUInt64Return>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(&values),
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetUInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<bool>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<bool>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetBoolean(
+pub unsafe extern "C" fn fmi3GetBoolean(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    values: *mut i32,
+    values: *mut bool,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetBoolean(value_references.to_owned())
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_values)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetBoolean(
+            fmi3_messages::Fmi3GetBoolean { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetBooleanReturn>(&cmd)
     {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(
-                    &values
-                        .iter()
-                        .map(|v| match v {
-                            true => 0,
-                            false => 1,
-                        })
-                        .collect::<Vec<i32>>(),
-                ),
-
-                None => (),
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetBoolean failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<c_char>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `c_char` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<c_char>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetString(
+pub unsafe extern "C" fn fmi3GetString(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *mut *const c_char,
     n_values: size_t,
 ) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_values) };
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
 
-    match instance
-        .dispatcher
-        .fmi3GetString(value_references.to_owned())
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetString(
+            fmi3_messages::Fmi3GetString { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetStringReturn>(&cmd)
     {
-        Ok((status, vals)) => {
-            match vals {
-                Some(vals) => {
-                    instance.string_buffer = vals
-                        .iter()
-                        .map(|s| CString::new(s.as_bytes()).unwrap())
-                        .collect();
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let conversion_result: Result<Vec<CString>, NulError> = result
+                    .values
+                    .iter()
+                    .map(|string| CString::new(string.as_bytes()))
+                    .collect();
 
-                    unsafe {
-                        for (idx, cstr) in instance.string_buffer.iter().enumerate() {
-                            std::ptr::write(values.offset(idx as isize), cstr.as_ptr());
-                        }
+                match conversion_result {
+                    Ok(converted_values) => {
+                        instance.string_buffer = converted_values
+                    },
+                    Err(e) =>  {
+                        error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
+                        return Fmi3Status::Fatal;
                     }
                 }
-                None => (),
+                
+                unsafe {
+                    for (idx, cstr)
+                    in instance.string_buffer.iter().enumerate() {
+                        std::ptr::write(
+                            values.add(idx),
+                            cstr.as_ptr()
+                        );
+                    }
+                }
             };
-            status
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
         }
-        Err(e) => Fmi3Status::Error,
+        Err(error) => {
+            error!("fmi3GetString failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetBinary(
     instance: &mut Fmi3Slave,
@@ -601,6 +1387,13 @@ pub extern "C" fn fmi3GetBinary(
     values: *mut *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
+    error!("fmi3GetBinary is not implemented by UNIFMU.");
+    Fmi3Status::Error
+
+    // Partially implemented: only the privious corresponding dispatcher
+    // function wasn't implemented.
+
+    /*
     let value_references =
         unsafe { from_raw_parts(value_references, n_value_references) }.to_owned();
     let values_v = unsafe { from_raw_parts(values, n_values) };
@@ -612,7 +1405,18 @@ pub extern "C" fn fmi3GetBinary(
         .map(|(v, s)| unsafe { from_raw_parts(*v, *s).to_vec() })
         .collect();
 
-    match instance.dispatcher.fmi3GetBinary(value_references) {
+    let cmd = Fmi3Command {
+        command: Some(Command::??(
+            fmi3_messages::?? { ?? }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, ??>(&cmd)
+        .map(|result| {
+            todo!()
+        })
+    {
         Ok((s, v)) => match v {
             Some(vs) => unsafe {
                 for (idx, v) in vs.iter().enumerate() {
@@ -622,74 +1426,159 @@ pub extern "C" fn fmi3GetBinary(
             },
             None => s,
         },
-        Err(e) => Fmi3Status::Error,
-    }
-}
-#[no_mangle]
-pub extern "C" fn fmi3GetClock(
-    instance: &mut Fmi3Slave,
-    value_references: *const u32,
-    n_value_references: size_t,
-    values: *mut i32,
-    n_values: size_t,
-) -> Fmi3Status {
-    let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-    let values_out = unsafe { from_raw_parts_mut(values, n_values) };
-
-    match instance
-        .dispatcher
-        .fmi3GetClock(value_references.to_owned())
-    {
-        Ok((status, values)) => {
-            match values {
-                Some(values) => values_out.copy_from_slice(
-                    &values
-                        .iter()
-                        .map(|v| match v {
-                            true => 1,
-                            false => 0,
-                        })
-                        .collect::<Vec<i32>>(),
-                ),
-
-                None => (),
-            };
-            status
+        Err(error) => {
+            error!("fmi3GetBinary failed with error: {:?}.", error);
+            Fmi3Status::Error
         }
-        Err(e) => Fmi3Status::Error,
     }
+    */
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_value_references * mem::size_of::<bool>()` many bytes respectively,
+///   and they must be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_value_references * mem::size_of::<bool>()` of the slices must be no
+///   larger than `isize::MAX`, and adding those sizes to `value_references`
+///   and `values` respectively must not "wrap around" the address space. See
+///   the safety documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3GetIntervalDecimal(
+pub unsafe extern "C" fn fmi3GetClock(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    interval: *mut f64,
-	qualifier: *mut i32,
-    n_values: size_t,
+    values: *mut bool,
 ) -> Fmi3Status {
-	let value_references = unsafe { from_raw_parts(value_references, n_value_references) };
-	let interval_out = unsafe { from_raw_parts_mut(interval, n_values) };
-	let qualifier_out = unsafe { from_raw_parts_mut(qualifier, n_values) };
-	
-	match instance
-		.dispatcher
-		.fmi3GetIntervalDecimal(value_references.to_owned())
-	{
-		Ok((status, interval, qualifier)) => {
-			match interval {
-				Some(interval) => interval_out.copy_from_slice(&interval),
-				None => (),
-			};
-			match qualifier {
-				Some(qualifier) => qualifier_out.copy_from_slice(&qualifier),
-				None => (),
-			};
-			status
-		}
-		Err(e) => Fmi3Status::Error,
-	}
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values_out = unsafe {
+        from_raw_parts_mut(values, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetClock(
+            fmi3_messages::Fmi3GetClock { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetClockReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetClock failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references`, `intervals` and `qualifiers` must be non-null,
+///   \[valid\] for reads for `n_value_references * mem::size_of::<u32>()`,
+///   `n_value_references * mem::size_of::<f64>()` and
+///   `n_value_references * mem::size_of::<i32>()` many bytes respectively,
+///   and they must be properly aligned. This means in particular:
+///     * For each of `value_references`, `intervals` and `qualifiers` the
+///       entire memory range of that slice must be contained within a single
+///       allocated object! Slices can never span across multiple allocated
+///       objects.
+///     * `value_references`, `intervals` and `qualifiers` must each be
+///       non-null and aligned even for zero-length slices or slices of ZSTs.
+///       One reason for this is that enum layout optimizations may rely on
+///       references (including slices of any length) being aligned and
+///       non-null to distinguish them from other data. You can obtain a
+///       pointer that is usable as `value_references`, `intervals` or
+///       `qualifiers` for zero-length slices using \[`NonNull::dangling`\].
+/// * `value_references`, `intervals` and `qualifiers` must each point to
+///   `n_value_references` consecutive properly initialized values of type
+///   `u32`, `f64` and `i32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()`,
+///   `n_value_references * mem::size_of::<f64>()` or 
+///   `n_value_references * mem::size_of::<booi32l>()` of the slices must be no
+///   larger than `isize::MAX`, and adding those sizes to `value_references`,
+///   `intervals` and `qualifiers` respectively must not "wrap around" the
+///   address space. See the safety documentation of [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3GetIntervalDecimal(
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    intervals: *mut f64,
+	qualifiers: *mut i32,
+) -> Fmi3Status {
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let intervals_out = unsafe {
+        from_raw_parts_mut(intervals, n_value_references)
+    };
+
+    let qualifiers_out = unsafe {
+        from_raw_parts_mut(qualifiers, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetIntervalDecimal(
+            fmi3_messages::Fmi3GetIntervalDecimal { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetIntervalDecimalReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.intervals.is_empty() {
+                intervals_out.copy_from_slice(&result.intervals);
+            };
+
+            if !result.qualifiers.is_empty() {
+                qualifiers_out.copy_from_slice(&result.qualifiers);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetIntervalDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn fmi3GetIntervalFraction(
     instance: &mut Fmi3Slave,
@@ -700,8 +1589,10 @@ pub extern "C" fn fmi3GetIntervalFraction(
 	qualifier: *mut Fmi3IntervalQualifier,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetIntervalFraction is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetShiftDecimal(
     instance: &mut Fmi3Slave,
@@ -709,8 +1600,10 @@ pub extern "C" fn fmi3GetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetShiftDecimal is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetShiftFraction(
     instance: &mut Fmi3Slave,
@@ -719,8 +1612,10 @@ pub extern "C" fn fmi3GetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetShiftFraction is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetIntervalDecimal(
     instance: &mut Fmi3Slave,
@@ -728,8 +1623,10 @@ pub extern "C" fn fmi3SetIntervalDecimal(
     n_value_references: size_t,
     intervals: *mut f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetIntervalDecimal is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetIntervalFraction(
     instance: &mut Fmi3Slave,
@@ -738,8 +1635,10 @@ pub extern "C" fn fmi3SetIntervalFraction(
     interval_counters: *const u64,
 	resolutions: *mut u64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetIntervalFraction is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetShiftDecimal(
     instance: &mut Fmi3Slave,
@@ -747,8 +1646,10 @@ pub extern "C" fn fmi3SetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetShiftDecimal is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetShiftFraction(
     instance: &mut Fmi3Slave,
@@ -757,32 +1658,100 @@ pub extern "C" fn fmi3SetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetShiftFraction is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EvaluateDiscreteStates(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3EvaluateDiscreteStates is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
+/// # Safety
+/// Behavior is undefined if any of `discrete_states_need_update`,
+/// `terminate_simulation`, `nominals_continuous_states_changed`,
+/// `values_continuous_states_changed`, `next_event_time_defined` and
+/// `next_event_time` points outside of address space and if they are
+/// dereferenced after function call.
 #[no_mangle]
-pub extern "C" fn fmi3UpdateDiscreteStates(
+pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
     instance: &mut Fmi3Slave,
-	discrete_states_need_update: *const i32,
-	terminate_simulation: *const i32,
-	nominals_continuous_states_changed: *const i32,
-	values_continuous_states_changed: *const i32,
-	next_event_time_defined: *const i32,
-	next_event_time: *const f64,
+	discrete_states_need_update: *mut bool,
+	terminate_simulation: *mut bool,
+	nominals_continuous_states_changed: *mut bool,
+	values_continuous_states_changed: *mut bool,
+	next_event_time_defined: *mut bool,
+	next_event_time: *mut f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3UpdateDiscreteStates(
+            fmi3_messages::Fmi3UpdateDiscreteStates {}
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3UpdateDiscreteStatesReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !discrete_states_need_update.is_null() {
+                unsafe {
+                    *discrete_states_need_update = result
+                        .discrete_states_need_update;
+                }
+            }
+            if !terminate_simulation.is_null() {
+                unsafe {
+                    *terminate_simulation = result.terminate_simulation;
+                }
+            }
+            if !nominals_continuous_states_changed.is_null() {
+                unsafe {
+                    *nominals_continuous_states_changed = result
+                        .nominals_continuous_states_changed;
+                }
+            }
+            if !values_continuous_states_changed.is_null() {
+                unsafe {
+                    *values_continuous_states_changed = result
+                        .values_continuous_states_changed;
+                }
+            }
+            if !next_event_time_defined.is_null() {
+                unsafe {
+                    *next_event_time_defined = result
+                        .next_event_time_defined;
+                }
+            }
+            if !next_event_time.is_null() {
+                unsafe {
+                    *next_event_time = result.next_event_time;
+                }
+            }
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+                })
+        }
+        Err(error) => {
+            error!("fmi3UpdateDiscreteStates failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterContinuousTimeMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3EnterContinuousTimeMode is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3CompletedIntegratorStep(
     instance: &mut Fmi3Slave,
@@ -790,69 +1759,87 @@ pub extern "C" fn fmi3CompletedIntegratorStep(
 	enter_event_mode: *const i32,
 	terminate_simulation: *const i32,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3CompletedIntegratorStep is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetTime(
     instance: &mut Fmi3Slave,
 	time: f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetTime is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetContinuousStates(
     instance: &mut Fmi3Slave,
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetContinuousStates is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetContinuousStateDerivatives(
     instance: &mut Fmi3Slave,
 	derivatives: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetContinuousStateDerivatives is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetEventIndicators(
     instance: &mut Fmi3Slave,
 	event_indicators: *const f64,
 	n_event_indicators: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetEventIndicators is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetContinuousStates(
     instance: &mut Fmi3Slave,
 	continuous_states: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetContinuousStates is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNominalsOfContinuousStates(
     instance: &mut Fmi3Slave,
 	nominals: *const f64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetNominalsOfContinuousStates is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNumberOfEventIndicators(
     instance: &mut Fmi3Slave,
 	n_event_indicators: *const size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetNumberOfEventIndicators is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNumberOfContinuousStates(
     instance: &mut Fmi3Slave,
 	n_continuous_states: *const size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetNumberOfContinuousStates is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetOutputDerivatives(
     instance: &mut Fmi3Slave,
@@ -862,180 +1849,932 @@ pub extern "C" fn fmi3GetOutputDerivatives(
 	values: *const f64,
 	n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetOutputDerivatives is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3ActivateModelPartition(
     instance: &mut Fmi3Slave,
 	value_reference: u32,
 	activation_time: f64,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3ActivateModelPartition is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetFloat32(
+pub unsafe extern "C" fn fmi3SetFloat32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *const f32,
     n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
+) -> Fmi3Status{
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetFloat32(
+            fmi3_messages::Fmi3SetFloat32 {
+                value_references,
+                values,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetFloat32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<f64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `f64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<f64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetFloat64(
+pub unsafe extern "C" fn fmi3SetFloat64(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *const f64,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }
+        .to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetFloat64(
+            fmi3_messages::Fmi3SetFloat64 {
+                value_references,
+                values
+            }
+        )),
+    };
+    
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetFloat64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetInt8(
+pub unsafe extern "C" fn fmi3SetInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *const i8,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<i32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
+        .iter()
+        .map(|&v| v as i32)
+        .collect();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt8(
+            fmi3_messages::Fmi3SetInt8 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u8>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u8` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u8>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetUInt8(
+pub unsafe extern "C" fn fmi3SetUInt8(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<u32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
+        .iter()
+        .map(|&v| v as u32)
+        .collect();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt8(
+            fmi3_messages::Fmi3SetUInt8 {
+                value_references,
+                values
+            }
+        )),
+    };
+    
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt8 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetInt16(
-    instance: *mut c_void,
+pub unsafe extern "C" fn fmi3SetInt16(
+    instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *const i16,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<i32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
+        .iter()
+        .map(|&v| v as i32)
+        .collect();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt16(
+            fmi3_messages::Fmi3SetInt16 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u16>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u16` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u16>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetUInt16(
-    instance: *mut c_void,
+pub unsafe extern "C" fn fmi3SetUInt16(
+    instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *const u16,
     n_values: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let values: Vec<u32> = unsafe {
+        from_raw_parts(values, n_values)
+    }
+        .iter()
+        .map(|&v| v as u32)
+        .collect();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt16(
+            fmi3_messages::Fmi3SetUInt16 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt16 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
 #[no_mangle]
-pub extern "C" fn fmi3SetInt32(
-    instance: *mut c_void,
-    value_references: *const u32,
-    n_value_references: size_t,
-    values: *const i32,
-    n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
-}
-#[no_mangle]
-pub extern "C" fn fmi3SetUInt32(
-    instance: *mut c_void,
-    value_references: *const u32,
-    n_value_references: size_t,
-    values: *const u32,
-    n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
-}
-#[no_mangle]
-pub extern "C" fn fmi3SetInt64(
-    instance: *mut c_void,
-    value_references: *const u32,
-    n_value_references: size_t,
-    values: *const i64,
-    n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
-}
-#[no_mangle]
-pub extern "C" fn fmi3SetUInt64(
-    instance: *mut c_void,
-    value_references: *const u32,
-    n_value_references: size_t,
-    values: *const u64,
-    n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
-}
-#[no_mangle]
-pub extern "C" fn fmi3SetBoolean(
-    instance: *mut c_void,
-    value_references: *const u32,
-    n_value_references: size_t,
-    values: *const i32,
-    n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
-}
-#[no_mangle]
-pub extern "C" fn fmi3SetString(
-    instance: *mut c_void,
-    value_references: *const i32,
-    n_value_references: size_t,
-    values: *const *const c_char,
-    n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
-}
-#[no_mangle]
-pub extern "C" fn fmi3SetBinary(
-    instance: *mut c_void,
-    value_references: *const i32,
-    n_value_references: size_t,
-    valueSizes: *const size_t,
-    values: *const i32,
-    n_values: size_t,
-) -> Fmi3Status {
-    Fmi3Status::OK
-}
-#[no_mangle]
-pub extern "C" fn fmi3SetClock(
+pub unsafe extern "C" fn fmi3SetInt32(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
     values: *const i32,
     n_values: size_t,
 ) -> Fmi3Status {
-	let references = unsafe { from_raw_parts(value_references, n_value_references) };
-	let values: Vec<bool> = unsafe { from_raw_parts(values, n_values) }
-        .iter()
-        .map(|v| *v != 0)
-        .collect();
-	
-	match instance
-        .dispatcher
-        .fmi3SetClock(references, &values)
-    {
-        Ok(s) => s,
-        Err(_e) => Fmi3Status::Error,
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt32(
+            fmi3_messages::Fmi3SetInt32 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+}
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u32>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u32` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u32>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3SetUInt32(
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *const u32,
+    n_values: size_t,
+) -> Fmi3Status {
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt32(
+            fmi3_messages::Fmi3SetUInt32 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt32 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+}
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<i64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `i64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<i64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3SetInt64(
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *const i64,
+    n_values: size_t,
+) -> Fmi3Status {
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetInt64(
+            fmi3_messages::Fmi3SetInt64 {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+}
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<u64>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `u64` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<u64>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3SetUInt64(
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *const u64,
+    n_values: size_t,
+) -> Fmi3Status {
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetUInt64(
+            fmi3_messages::Fmi3SetUInt64 {
+                value_references,
+                values,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetUInt64 failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+}
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<bool>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<bool>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3SetBoolean(
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *const bool,
+    n_values: size_t,
+) -> Fmi3Status {
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let values = unsafe {
+        from_raw_parts(values, n_values)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetBoolean(
+            fmi3_messages::Fmi3SetBoolean {
+                value_references,
+                values
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetBoolean failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+}
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<*const c_char>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `*const c_char` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<*const c_char>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3SetString(
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *const *const c_char,
+    n_values: size_t,
+) -> Fmi3Status {
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let conversion_result: Result<Vec<String>, Utf8Error> = unsafe {
+        from_raw_parts(values, n_values)
+            .iter()
+            .map(|v| {
+                CStr::from_ptr(*v)
+                    .to_str()
+                    .map(|str| str.to_owned())
+                })
+            .collect()
+    };
+
+    match conversion_result {
+        Ok(values) => {
+            let cmd = Fmi3Command {
+                command: Some(Command::Fmi3SetString(
+                    fmi3_messages::Fmi3SetString {
+                        value_references,
+                        values,
+                    }
+                )),
+            };
+        
+            instance.dispatcher
+                .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+                .map(|status| status.into())
+                .unwrap_or_else(|error| {
+                    error!("fmi3SetString failed with error: {:?}.", error);
+                    Fmi3Status::Error
+                })
+        },
+
+        Err(conversion_error) => {
+            error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
+            Fmi3Status::Error
+        }
     }
 }
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `value_sizes` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<size_t>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `value_sizes` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `value_sizes` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `value_sizes` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `value_sizes` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `size_t` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<size_t>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `value_sizes`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+/// 
+/// Furthermore, for each `VALUE` pointed to in `values` and its expected size `SIZE`
+/// pointed to in `value_sizes`, behavior will be undefined if any of the
+/// following conditions are violated:
+/// * `VALUE` must be non-null, \[valid\] for reads for
+///   `SIZE * mem::size_of::<u8>()` many bytes, and it must be properly
+///   aligned. This means in particular:
+///     * The entire memory range of that slice must be contained within a
+///       single allocated object! Slices can never span across multiple
+///       allocated objects.
+///     * `VALUE` must be non-null and aligned even for zero-length slices or
+///       slices of ZSTs. One reason for this is that enum layout
+///       optimizations may rely on references (including slices of any length)
+///       being aligned and non-null to distinguish them from other data. You
+///       can obtain a pointer that is usable as `VALUE` for zero-length slices
+///       using \[`NonNull::dangling`\].
+/// * `VALUE` must point to `SIZE` consecutive properly initialized values of
+///   type `u8`.
+/// * The total size `SIZE * mem::size_of::<u8>()` of the slice must be no
+///   larger than`isize::MAX`, and adding that size to `VALUE` must not
+///   "wrap around" the address space. See the safety documentation of
+///   [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3SetBinary(
+    instance: *mut c_void,
+    value_references: *const u32,
+    n_value_references: size_t,
+    value_sizes: *const size_t,
+    values: *const u8,
+    n_values: size_t,
+) -> Fmi3Status {
+    // Convert raw pointers to Rust slices
+    let value_references = unsafe {
+        std::slice::from_raw_parts(value_references, n_value_references)
+    }
+        .to_owned();
+
+    let sizes = unsafe {
+        std::slice::from_raw_parts(value_sizes, n_values)
+    };
+
+    // Create a vector of slices for the binary values
+    let mut binary_values: Vec<&[u8]> = Vec::with_capacity(n_value_references);
+
+    // Use an offset to correctly slice the values based on sizes
+    let mut offset = 0;
+    for &size in sizes {
+        let value_slice = unsafe {
+            std::slice::from_raw_parts(values.add(offset), size)
+        };
+        binary_values.push(value_slice);
+        offset += size;
+    }
+
+    let value_sizes = sizes
+        .iter()
+        .map(|&size| size as u64)
+        .collect();
+
+    let values = binary_values
+        .iter()
+        .map(|&v| v.to_vec())
+        .collect();
+
+    // Ensure the instance pointer is valid
+    let instance = unsafe { &mut *(instance as *mut Fmi3Slave) };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetBinary(
+            fmi3_messages::Fmi3SetBinary {
+                value_references,
+                value_sizes,
+                values,
+            }
+        )),
+    };
+
+    // Call the dispatcher with references, binary values, and their sizes
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetBinary failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+}
+
+/// # Safety
+/// Behavior is undefined if any of the following conditions are violated:
+/// * `value_references` and `values` must be non-null, \[valid\] for reads for
+///   `n_value_references * mem::size_of::<u32>()` and
+///   `n_values * mem::size_of::<bool>()` many bytes respectively, and they must
+///   be properly aligned. This means in particular:
+///     * For each of `value_references` and `values` the entire memory range
+///       of that slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `value_references` and `values` must each be non-null and aligned
+///       even for zero-length slices or slices of ZSTs. One reason for this is
+///       that enum layout optimizations may rely on references (including
+///       slices of any length) being aligned and non-null to distinguish them
+///       from other data. You can obtain a pointer that is usable as
+///       `value_references` or `values` for zero-length slices using
+///       \[`NonNull::dangling`\].
+/// * `value_references` and `values` must each point to `n_value_references`
+///   and `n_values` consecutive properly initialized values of type `u32` and
+///   `bool` respectively.
+/// * The total size `n_value_references * mem::size_of::<u32>()` or 
+///   `n_values * mem::size_of::<bool>()` of the slices must be no larger than
+///   `isize::MAX`, and adding those sizes to `value_references` and `values`
+///   respectively must not "wrap around" the address space. See the safety
+///   documentation of [`pointer::offset`].
+#[no_mangle]
+pub unsafe extern "C" fn fmi3SetClock(
+    instance: &mut Fmi3Slave,
+    value_references: *const u32,
+    n_value_references: size_t,
+    values: *const bool,
+) -> Fmi3Status {
+	let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+	let values = unsafe {
+        from_raw_parts(values, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetClock(
+            fmi3_messages::Fmi3SetClock {
+                value_references,
+                values,
+            }
+        )),
+    };
+	
+	instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetClock failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+}
+
 #[no_mangle]
 pub extern "C" fn fmi3GetNumberOfVariableDependencies(
-    instance: *mut c_void,
+    instance: &mut Fmi3Slave,
     value_reference: *const i32,
     n_dependencies: *const size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetNumberOfVariableDependencies is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetVariableDependencies(
-    instance: *mut c_void,
+    instance: &mut Fmi3Slave,
     dependent: *const i32,
     element_indices_of_dependent: *const size_t,
 	independents: *const i32,
@@ -1043,37 +2782,47 @@ pub extern "C" fn fmi3GetVariableDependencies(
 	dependency_kinds: *const Fmi3DependencyKind,
 	n_dependencies: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetVariableDependencies is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetFMUState(
     instance: &mut Fmi3Slave,
     state: &mut Option<SlaveState>,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetFMUState is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SetFMUState(
 	instance: &mut Fmi3Slave,
 	state: &SlaveState,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SetFMUState is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3FreeFMUState(
     instance: &mut Fmi3Slave,
     state: Option<Box<SlaveState>>,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3FreeFMUState is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SerializedFMUStateSize(
     instance: &mut Fmi3Slave,
     state: Option<Box<SlaveState>>,
 	size: *const size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SerializedFMUStateSize is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3SerializeFMUState(
     instance: &mut Fmi3Slave,
@@ -1081,8 +2830,10 @@ pub extern "C" fn fmi3SerializeFMUState(
 	serialized_state: *const u8,
 	size: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3SerializeFMUState is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3DeserializeFMUState(
     instance: &mut Fmi3Slave,
@@ -1090,8 +2841,10 @@ pub extern "C" fn fmi3DeserializeFMUState(
 	size: size_t,
 	state: &SlaveState,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3DeserializeFMUState is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetDirectionalDerivative(
     instance: &mut Fmi3Slave,
@@ -1104,8 +2857,10 @@ pub extern "C" fn fmi3GetDirectionalDerivative(
 	delta_unknowns: *const f64,
 	n_delta_unknowns: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetDirectionalDerivative is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3GetAdjointDerivative(
     instance: &mut Fmi3Slave,
@@ -1118,26 +2873,41 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 	delta_knowns: *const f64,
 	n_delta_knowns: size_t,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3GetAdjointDerivative is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    Fmi3Status::OK
+    error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
+    Fmi3Status::Error
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
-    slave
-        .dispatcher
-        .fmi3Terminate()
-        .unwrap_or(Fmi3Status::Error)
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3Terminate(
+            fmi3_messages::Fmi3Terminate {}
+        )),
+    };
+
+    slave.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("Termination failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1146,17 +2916,26 @@ pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
 
     match slave.as_mut() {
         Some(s) => {
-            match s.dispatcher.fmi3FreeInstance() {
-                Ok(result) => (),
-                Err(e) => eprintln!("An error ocurred when freeing slave"),
-            };
-
+            // fmi3FreeInstance message is send to backend on drop
             drop(slave)
         }
-        None => {}
+        None => {warn!("No instance given.")}
     }
 }
+
 #[no_mangle]
 pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
-    slave.dispatcher.fmi3Reset().unwrap_or(Fmi3Status::Error)
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3Reset(
+            fmi3_messages::Fmi3Reset {}
+        )),
+    };
+
+    slave.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("Error while resetting instance: {:?}.", error);
+            Fmi3Status::Error
+        })
 }

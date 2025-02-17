@@ -59,9 +59,11 @@ message Fmi3SetDebugLogging {
 }
 
 message Fmi3EnterInitializationMode {
-  optional double tolerance = 1;
-  double start_time = 2;
-  optional double stop_time = 3;
+  bool tolerance_defined = 1;
+  optional double tolerance = 2;
+  double start_time = 3;
+  bool stop_time_defined = 4;
+  optional double stop_time = 5;
 }
 
 message Fmi3ExitInitializationMode {}
@@ -81,6 +83,8 @@ message Fmi3SerializeFmuState {}
 message Fmi3DeserializeFmuState {
     bytes state = 1;
 }
+
+message Fmi3UpdateDiscreteStates {}
 
 // ----------------------- FMI3 Getters ----------------------
 
@@ -223,9 +227,10 @@ message Fmi3SetString {
   repeated string values = 2;
 }
 
-message FmiSetBinary {
+message Fmi3SetBinary {
   repeated uint32 value_references = 1;
-  repeated bytes values = 2;
+  repeated uint64 value_sizes = 2;
+  repeated bytes values = 3;
 }
 
 message Fmi3SetClock {
@@ -343,6 +348,16 @@ message Fmi3GetClockReturn {
   repeated bool values = 2;
 }
 
+message Fmi3UpdateDiscreteStatesReturn {
+  Fmi3Status status = 1;
+  bool discrete_states_need_update = 2;
+  bool terminate_simulation = 3;
+  bool nominals_continuous_states_changed = 4;
+  bool values_continuous_states_changed = 5;
+  bool next_event_time_defined = 6;
+  double next_event_time = 7;
+}
+
 // ----------------------- FMI3 Clock Related Functions -----------------------
 
 enum Fmi3IntervalQualifier {
@@ -357,8 +372,8 @@ message Fmi3GetIntervalDecimal {
 
 message Fmi3GetIntervalDecimalReturn {
   Fmi3Status status = 1;
-  repeated double interval = 2;
-  repeated int32 qualifier = 3; 
+  repeated double intervals = 2;
+  repeated int32 qualifiers = 3;
 }
 
 
@@ -408,13 +423,14 @@ message Fmi3Command {
     Fmi3SetUInt64 Fmi3SetUInt64 = 38;
     Fmi3SetBoolean Fmi3SetBoolean = 39;
     Fmi3SetString Fmi3SetString = 40;
-    FmiSetBinary FmiSetBinary = 41;
+    Fmi3SetBinary Fmi3SetBinary = 41;
     Fmi3SerializeFmuState Fmi3SerializeFmuState = 42;
     Fmi3DeserializeFmuState Fmi3DeserializeFmuState = 43;
-	Fmi3GetClock Fmi3GetClock = 44;
-	Fmi3SetClock Fmi3SetClock = 45;
-	Fmi3GetIntervalDecimal Fmi3GetIntervalDecimal = 46;
-	Fmi3EnterStepMode Fmi3EnterStepMode = 47;
-	Fmi3EnterEventMode Fmi3EnterEventMode = 48;
+	  Fmi3GetClock Fmi3GetClock = 44;
+	  Fmi3SetClock Fmi3SetClock = 45;
+	  Fmi3GetIntervalDecimal Fmi3GetIntervalDecimal = 46;
+	  Fmi3EnterStepMode Fmi3EnterStepMode = 47;
+	  Fmi3EnterEventMode Fmi3EnterEventMode = 48;
+	  Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
   }
 }
