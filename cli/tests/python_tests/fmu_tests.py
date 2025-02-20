@@ -3,6 +3,7 @@ from fmpy import extract
 from fmpy.model_description import ModelDescription
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
+from shutil import rmtree
 
 """Tries to extract (AKA unzip) the fmu using the fmpy extract function
 
@@ -23,6 +24,7 @@ def extract_fmu(fmu_filename: str, is_zipped: bool):
         if not is_zipped:
             raise Exception("The given FMU isn't zipped!")
         unzipped_dir = extract(fmu_filename)
+        rmtree(unzipped_dir, ignore_errors=True)
     
     barren_test(
         caller = "extract",
