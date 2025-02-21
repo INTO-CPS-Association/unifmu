@@ -1,6 +1,5 @@
 from common import barren_test, uninstantiating_test, instantiating_test
 from fmpy import extract
-from fmpy.model_description import ModelDescription
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
 from shutil import rmtree
@@ -19,7 +18,7 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def extract_fmu(fmu_filename: str, is_zipped: bool):
+def extract_fmu(fmu_filename, is_zipped):
     def inner():
         if not is_zipped:
             raise Exception("The given FMU isn't zipped!")
@@ -43,8 +42,8 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def fmi2_platform(fmu_filename: str, is_zipped: bool):
-    def inner(fmu: FMU2Slave):
+def fmi2_platform(fmu_filename, is_zipped):
+    def inner(fmu):
         platform = fmu.getTypesPlatform()
 
         assert platform == "default", f"FMU platform was '{platform}', should have been 'default'"
@@ -67,8 +66,8 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def fmi2_version(fmu_filename: str, is_zipped: bool):
-    def inner(fmu: FMU2Slave):
+def fmi2_version(fmu_filename, is_zipped):
+    def inner(fmu):
         version = fmu.getVersion()
 
         assert version == "2.0", f"FMU version was '{version}', should have been '2.0'"
@@ -93,8 +92,8 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def fmi2_instantiate(fmu_filename: str, is_zipped: bool):
-    def inner(fmu: FMU2Slave, model_description: ModelDescription):
+def fmi2_instantiate(fmu_filename, is_zipped):
+    def inner(fmu, model_description):
         pass
 
     instantiating_test(
@@ -117,8 +116,8 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def fmi2_simulate(fmu_filename: str, is_zipped: bool):
-    def inner(fmu: FMU2Slave, model_description: ModelDescription):
+def fmi2_simulate(fmu_filename, is_zipped):
+    def inner(fmu, model_description):
         start_time = 0.0
         sim_time = start_time
         step_size = 1e-2
@@ -249,8 +248,8 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def fmi3_version(fmu_filename: str, is_zipped: bool):
-    def inner(fmu: FMU3Slave):
+def fmi3_version(fmu_filename, is_zipped):
+    def inner(fmu):
         version = fmu.getVersion()
 
         assert version == "3.0", f"FMU version was '{version}', should have been '3.0'"
@@ -275,8 +274,8 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def fmi3_instantiate(fmu_filename: str, is_zipped: bool):
-    def inner(fmu: FMU3Slave, model_description: ModelDescription):
+def fmi3_instantiate(fmu_filename, is_zipped):
+    def inner(fmu, model_description):
         pass
 
     instantiating_test(
@@ -299,8 +298,8 @@ is_zipped : bool
     If true, fmu_filename points to a zip directory. If false, fmu_filename
     points to a normal directory.
 """
-def fmi3_simulate(fmu_filename: str, is_zipped: bool):
-    def inner(fmu: FMU3Slave, model_description: ModelDescription):
+def fmi3_simulate(fmu_filename, is_zipped):
+    def inner(fmu, model_description):
         can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
     
         if can_handle_state:
