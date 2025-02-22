@@ -6,6 +6,14 @@
 
 use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi2_messages::{self, Fmi2Command, fmi2_command::Command};
+use crate::fmi2_types::{
+    Fmi2Real,
+    Fmi2Integer,
+    Fmi2Boolean,
+    Fmi2Char,
+    Fmi2String,
+    Fmi2Byte
+};
 use crate::spawn::spawn_slave;
 use libc::c_double;
 use libc::size_t;
@@ -201,6 +209,7 @@ impl SlaveState {
 
 pub static VERSION: &str = "2.0\0";
 pub static TYPES_PLATFORM: &str = "default\0";
+
 #[no_mangle]
 pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
     TYPES_PLATFORM.as_ptr() as *const c_char
@@ -226,13 +235,13 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 /// * The nul terminator must be within isize::MAX from the pointer.
 #[no_mangle]
 pub unsafe extern "C" fn fmi2Instantiate(
-    instance_name: *const c_char, // neither allowed to be null or empty string
+    instance_name: Fmi2String, // neither allowed to be null or empty string
     fmu_type: Fmi2Type,
-    fmu_guid: *const c_char, // not allowed to be null,
-    fmu_resource_location: *const c_char,
+    fmu_guid: Fmi2String, // not allowed to be null,
+    fmu_resource_location: Fmi2String,
     functions: &Fmi2CallbackFunctions,
-    visible: c_int,
-    logging_on: c_int,
+    visible: Fmi2Boolean,
+    logging_on: Fmi2Boolean,
 ) -> Option<Box<Fmi2Slave>> {
     if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
@@ -323,9 +332,9 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
 #[no_mangle]
 pub extern "C" fn fmi2SetDebugLogging(
     slave: &mut Fmi2Slave,
-    logging_on: c_int,
+    logging_on: Fmi2Boolean,
     n_categories: size_t,
-    categories: *const *const c_char,
+    categories: *const Fmi2String,
 ) -> Fmi2Status {
     error!("fmi2SetDebugLogging is not implemented by UNIFMU.");
     Fmi2Status::Error
@@ -334,11 +343,11 @@ pub extern "C" fn fmi2SetDebugLogging(
 #[no_mangle]
 pub extern "C" fn fmi2SetupExperiment(
     slave: &mut Fmi2Slave,
-    tolerance_defined: c_int,
-    tolerance: c_double,
-    start_time: c_double,
-    stop_time_defined: c_int,
-    stop_time: c_double,
+    tolerance_defined: Fmi2Boolean,
+    tolerance: Fmi2Real,
+    start_time: Fmi2Real,
+    stop_time_defined: Fmi2Boolean,
+    stop_time: Fmi2Real,
 ) -> Fmi2Status {
     let tolerance = {
         if tolerance_defined != 0 {
@@ -448,9 +457,9 @@ pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
 #[no_mangle]
 pub extern "C" fn fmi2DoStep(
     slave: &mut Fmi2Slave,
-    current_time: c_double,
-    step_size: c_double,
-    no_step_prior: c_int,
+    current_time: Fmi2Real,
+    step_size: Fmi2Real,
+    no_step_prior: Fmi2Boolean,
 ) -> Fmi2Status {
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2DoStep(
@@ -526,7 +535,7 @@ pub unsafe extern "C" fn fmi2GetReal(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut c_double,
+    values: *mut Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -587,7 +596,7 @@ pub unsafe extern "C" fn fmi2GetInteger(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut c_int,
+    values: *mut Fmi2Integer,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -648,7 +657,7 @@ pub unsafe extern "C" fn fmi2GetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut c_int,
+    values: *mut Fmi2Boolean,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -723,7 +732,7 @@ pub unsafe extern "C" fn fmi2GetString(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut *const c_char,
+    values: *mut Fmi2String,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
 
@@ -808,7 +817,7 @@ pub unsafe extern "C" fn fmi2SetReal(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
-    values: *const c_double,
+    values: *const Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
@@ -858,7 +867,7 @@ pub unsafe extern "C" fn fmi2SetInteger(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
-    values: *const c_int,
+    values: *const Fmi2Integer,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
@@ -913,7 +922,7 @@ pub unsafe extern "C" fn fmi2SetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *const c_int,
+    values: *const Fmi2Boolean,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values: Vec<bool> = unsafe { from_raw_parts(values, nvr) }
@@ -966,7 +975,7 @@ pub unsafe extern "C" fn fmi2SetString(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
-    values: *const *const c_char,
+    values: *const Fmi2String,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
 
@@ -1045,8 +1054,8 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
     nvr_unknown: size_t,
     known_refs: *const c_uint,
     nvr_known: size_t,
-    direction_known: *const c_double,
-    direction_unknown: *mut c_double,
+    direction_known: *const Fmi2Real,
+    direction_unknown: *mut Fmi2Real,
 ) -> Fmi2Status {
     let references_unknown = unsafe {
         from_raw_parts(unknown_refs, nvr_known)
@@ -1130,8 +1139,8 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    orders: *const c_int,
-    values: *const c_double,
+    orders: *const Fmi2Integer,
+    values: *const Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
@@ -1186,8 +1195,8 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    orders: *const c_int,
-    values: *mut c_double,
+    orders: *const Fmi2Integer,
+    values: *mut Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
@@ -1402,7 +1411,7 @@ pub extern "C" fn fmi2GetStatus(
 pub unsafe extern "C" fn fmi2GetRealStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
-    value: *mut c_double,
+    value: *mut Fmi2Real,
 ) -> Fmi2Status {
     match status_kind {
         Fmi2StatusKind::Fmi2LastSuccessfulTime => match slave.last_successful_time {
@@ -1431,7 +1440,7 @@ pub unsafe extern "C" fn fmi2GetRealStatus(
 pub extern "C" fn fmi2GetIntegerStatus(
     c: *const c_int,
     status_kind: c_int,
-    value: *mut c_int,
+    value: *mut Fmi2Integer,
 ) -> Fmi2Status {
     error!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
     Fmi2Status::Error
@@ -1441,7 +1450,7 @@ pub extern "C" fn fmi2GetIntegerStatus(
 pub extern "C" fn fmi2GetBooleanStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
-    value: *mut c_int,
+    value: *mut Fmi2Boolean,
 ) -> Fmi2Status {
     error!("fmi2GetBooleanStatus is not implemented by UNIFMU.");
     Fmi2Status::Discard
@@ -1451,7 +1460,7 @@ pub extern "C" fn fmi2GetBooleanStatus(
 pub extern "C" fn fmi2GetStringStatus(
     c: *const c_int,
     status_kind: c_int,
-    value: *mut c_char,
+    value: *mut Fmi2String,
 ) -> Fmi2Status {
     error!("fmi2GetStringStatus is not implemented by UNIFMU.");
     Fmi2Status::Error
