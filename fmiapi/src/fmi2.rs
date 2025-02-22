@@ -1438,11 +1438,11 @@ pub unsafe extern "C" fn fmi2GetRealStatus(
 
 #[no_mangle]
 pub extern "C" fn fmi2GetIntegerStatus(
-    c: *const c_int,
-    status_kind: c_int,
+    slave: &mut Fmi2Slave,
+    status_kind: Fmi2StatusKind,
     value: *mut Fmi2Integer,
 ) -> Fmi2Status {
-    error!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
+    error!("fmi2GetIntegerStatus is not implemented by UNIFMU.");
     Fmi2Status::Error
 }
 
@@ -1458,8 +1458,8 @@ pub extern "C" fn fmi2GetBooleanStatus(
 
 #[no_mangle]
 pub extern "C" fn fmi2GetStringStatus(
-    c: *const c_int,
-    status_kind: c_int,
+    slave: &mut Fmi2Slave,
+    status_kind: Fmi2StatusKind,
     value: *mut Fmi2String,
 ) -> Fmi2Status {
     error!("fmi2GetStringStatus is not implemented by UNIFMU.");
