@@ -235,9 +235,9 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 /// * The nul terminator must be within isize::MAX from the pointer.
 #[no_mangle]
 pub unsafe extern "C" fn fmi2Instantiate(
-    instance_name: Fmi2String, // neither allowed to be null or empty string
+    instance_name: Fmi2String,
     fmu_type: Fmi2Type,
-    fmu_guid: Fmi2String, // not allowed to be null,
+    fmu_guid: Fmi2String,
     fmu_resource_location: Fmi2String,
     functions: &Fmi2CallbackFunctions,
     visible: Fmi2Boolean,
@@ -248,30 +248,85 @@ pub unsafe extern "C" fn fmi2Instantiate(
         return None;
     }
 
-    let resource_uri = unsafe {
-        match fmu_resource_location.as_ref() {
-            Some(b) => match CStr::from_ptr(b).to_str() {
-                Ok(s) => match Url::parse(s) {
-                    Ok(url) => url,
-                    Err(error) => {
-                        error!("unable to parse resource url");
-                        return None;
-                    },
-                },
-                Err(e) => {
-                    error!("resource url was not valid utf-8");
-                    return None;
-                },
-            },
-            None => {
-                error!("fmuResourcesLocation was null");
+    // Erroring out in case the importer tries to instantiate the FMU for
+    // Model Exchange as that is not yet implemented.
+    if let Fmi2Type::Fmi2ModelExchange = fmu_type {
+        error!("Model Exchange is not implemented for UNIFMU.");
+        return None;
+    }
+
+    let instance_name = match unsafe { instance_name.as_ref() } {
+        None => {
+            error!("Argument 'instance_name' was null.");
+            return None;
+        }
+        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
+            Err(_) => {
+                error!("Argument 'instance_name' could not be parsed as a utf-8 formatted string.");
                 return None;
-            },
+            }
+            Ok(name_str) => match name_str.len() {
+                0 => {
+                    error!("Argument 'instance_name' must not be an empty string.");
+                    return None;
+                }
+                _ => name_str
+            }
         }
     };
 
+    let fmu_guid = match unsafe { fmu_guid.as_ref() } {
+        None => {
+            error!("Argument 'fmu_guid' was null.");
+            return None;
+        }
+        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
+            Err(_) => {
+                error!("Argument 'fmu_guid' could not be parsed as a utf-8 formatted string.");
+                return None;
+            }
+            Ok(guid_str) => guid_str
+        }
+    };
+
+    let fmu_resource_location = match unsafe { fmu_resource_location.as_ref() } {
+        None => {
+            error!("Argument 'fmu_resource_location' was null.");
+            return None;
+        }
+        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
+            Err(_) => {
+                error!("Argument 'fmu_resource_location' could not be parsed as a utf-8 formatted string.");
+                return None;
+            }
+            Ok(resources_str) => match resources_str.len() {
+                0 => {
+                    error!("Argument 'fmu_resource_location' must not be an empty string.");
+                    return None;
+                }
+                _ => resources_str
+            }
+        }
+    };
+
+    let logging_on = match logging_on {
+        0 => false,
+        1 => true,
+        _ => {
+            error!("Invalid value passed to 'logging_on'.");
+            return None;
+        }
+    };
+
+    let resource_uri = match Url::parse(fmu_resource_location) {
+        Err(error) => {
+            error!("Unable to parse argument 'fmu_resource_location' as url.");
+            return None;
+        }
+        Ok(url) => url
+    };
+
     let resources_dir = match resource_uri.to_file_path() {
-        Ok(resources_dir) => resources_dir,
         Err(_) => {
             error!(
                 "URI was parsed but could not be converted into a file path, got: '{:?}'.",
@@ -279,14 +334,15 @@ pub unsafe extern "C" fn fmi2Instantiate(
             );
             return None;
         }
+        Ok(resources_dir) => resources_dir
     };
 
     let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
-        Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi2 slave failed.");
             return None;
         }
+        Ok(dispatcher) => dispatcher
     };
 
     let mut slave = Fmi2Slave::new(dispatcher);
@@ -294,18 +350,17 @@ pub unsafe extern "C" fn fmi2Instantiate(
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Instantiate(
             fmi2_messages::Fmi2Instantiate {
-                instance_name: String::from("instance_name"),
+                instance_name: String::from(instance_name),
                 fmu_type: 0,
-                fmu_guid: String::from("fmu_guid"),
-                fmu_resource_location: String::from("fmu_resources_location"),
+                fmu_guid: String::from(fmu_guid),
+                fmu_resource_location: String::from(fmu_resource_location),
                 visible: false,
-                logging_on: false,
+                logging_on,
             }
         )),
     };
 
     match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2EmptyReturn>(&cmd) {
-        Ok(_) => Some(Box::new(slave)),
         Err(error) => {
             error!(
                 "Instantiation of fmi2 slave failed with error {:?}.",
@@ -313,6 +368,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
             );
             None
         },
+        Ok(_) => Some(Box::new(slave))
     }
 }
 
