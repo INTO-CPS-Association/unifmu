@@ -12,13 +12,18 @@ use crate::fmi2_types::{
     Fmi2Boolean,
     Fmi2Char,
     Fmi2String,
-    Fmi2Byte
+    Fmi2Byte,
+    Fmi2Status,
+    ComponentEnvironment,
+    Fmi2CallbackLogger,
+    Fmi2StepFinished,
+    Fmi2CallbackFunctions
 };
 use crate::spawn::spawn_slave;
 use libc::c_double;
 use libc::size_t;
 
-
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 use url::Url;
 use tracing::{error, warn};
 use tracing_subscriber;
@@ -46,61 +51,6 @@ static ENABLE_LOGGING: LazyLock<Result<(), Fmi2Status>> = LazyLock::new(|| {
     }
     Ok(())
 });
-
-///
-/// Represents the function signature of the logging callback function passsed
-/// from the envrionment to the slave during instantiation.
-pub type Fmi2CallbackLogger = extern "C" fn(
-    component_environment: *mut c_void,
-    instance_name: *const c_char,
-    status: Fmi2Status,
-    category: *const c_char,
-    message: *const c_char, // ... variadic functions support in rust seems to be unstable
-);
-
-pub type Fmi2CallbackAllocateMemory = extern "C" fn(nobj: c_ulonglong, size: c_ulonglong);
-pub type Fmi2CallbackFreeMemory = extern "C" fn(obj: *const c_void);
-pub type Fmi2StepFinished = extern "C" fn(component_environment: *const c_void, status: i32);
-
-/// From specification:
-///
-/// `This is a pointer to a data structure in the simulation environment that calls the FMU.
-/// Using this pointer, data from the modelDescription.xml file [(for example, mapping of valueReferences to variable names)]
-/// can be transferred between the simulation environment and the logger function.`
-///
-/// Recommended way to represent opaque pointer, i.e the c type 'void*'
-/// https://doc.rust-lang.org/nomicon/ffi.html#representing-opaque-structs
-pub struct ComponentEnvironment {
-    _private: [u8; 0],
-}
-
-/// A set of callback functions provided by the environment
-/// Note that all but the 'logger' function are optional and may only be used if the appropriate
-/// flags are set in the 'modelDescription.xml' file
-#[repr(C)]
-pub struct Fmi2CallbackFunctions {
-    pub logger: Fmi2CallbackLogger,
-
-    pub allocate_memory: Option<Fmi2CallbackAllocateMemory>,
-
-    pub free_memory: Option<Fmi2CallbackFreeMemory>,
-
-    pub step_finished: Option<Fmi2StepFinished>,
-    pub component_environment: &'static Option<Box<ComponentEnvironment>>,
-}
-
-use num_enum::{IntoPrimitive, TryFromPrimitive};
-
-#[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
-pub enum Fmi2Status {
-    Ok = 0,
-    Warning = 1,
-    Discard = 2,
-    Error = 3,
-    Fatal = 4,
-    Pending = 5,
-}
 
 impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
     fn from(src: fmi2_messages::Fmi2StatusReturn) -> Self {
