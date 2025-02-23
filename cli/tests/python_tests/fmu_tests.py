@@ -1,5 +1,5 @@
 from common import barren_test, uninstantiating_test, instantiating_test
-from fmpy import extract
+from fmpy import read_model_description, extract
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
 from shutil import rmtree
@@ -237,6 +237,76 @@ def fmi2_simulate(fmu_filename, is_zipped):
         fmu_class = FMU2Slave,
         is_zipped = is_zipped
     )
+
+"""Tries to instantiate multiple FMUs at once
+
+The FMU should conform to FMI2.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi2_instantiate_multiple(fmu_filename, is_zipped):
+    if is_zipped:
+        try:
+            fmu_filename = extract(fmu_filename)
+        except Exception as e:
+            print(f"TEST FAILED - fmi2_instantiate_multiple - zip extraction: {e}")
+            return
+
+    try:
+        model_description = read_model_description(fmu_filename)
+
+        fmu_1 = FMU2Slave(
+            guid = model_description.guid,
+            unzipDirectory = fmu_filename,
+            modelIdentifier = model_description.coSimulation.modelIdentifier,
+            instanceName='test_instance'
+        )
+
+        fmu_2 = FMU2Slave(
+            guid = model_description.guid,
+            unzipDirectory = fmu_filename,
+            modelIdentifier = model_description.coSimulation.modelIdentifier,
+            instanceName='test_instance'
+        )
+
+        fmu_3 = FMU2Slave(
+            guid = model_description.guid,
+            unzipDirectory = fmu_filename,
+            modelIdentifier = model_description.coSimulation.modelIdentifier,
+            instanceName='test_instance'
+        )
+
+        fmu_1.instantiate()
+        fmu_2.instantiate()
+        fmu_3.instantiate()
+
+    except Exception as e:
+        print(f"TEST FAILED - fmi2_instantiate_multiple - instantiation: {e}")
+
+        if is_zipped:
+            rmtree(fmu_filename, ignore_errors=True)
+
+        return
+
+    try:
+        fmu_1.terminate()
+        fmu_1.freeInstance()
+        fmu_2.terminate()
+        fmu_2.freeInstance()
+        fmu_3.terminate()
+        fmu_3.freeInstance()
+
+    except Exception as e:
+        print(f"TEST FAILED - fmi2_instantiate_multiple - termination: {e}")
+
+    if is_zipped:
+        rmtree(fmu_filename, ignore_errors=True)
 
 """Asserts that the given FMU is version FMI3.
 

@@ -892,3 +892,13 @@ fn test_instantiate_python_fmi3_as_fmi2_local() {
 
     fmu_python_test(fmu, "fmi2_instantiate");
 }
+
+#[test]
+fn test_instantiate_multiple_fmus_python_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2,
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
