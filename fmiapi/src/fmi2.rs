@@ -1367,7 +1367,7 @@ pub extern "C" fn fmi2FreeFMUstate(
             return Fmi2Status::Ok;
         }
 
-        Box::from_raw(state_ptr); 
+        drop(Box::from_raw(state_ptr)); 
         *state = std::ptr::null_mut(); // Setting the state to null
 
     }
@@ -1445,7 +1445,7 @@ pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
         } else {
             // If not null overwrite the state
             let state_ptr = *state;
-            let state = unsafe {&mut *state_ptr};
+            let state = &mut *state_ptr;
             state.bytes = serialized_state.to_owned();
         }
     }
