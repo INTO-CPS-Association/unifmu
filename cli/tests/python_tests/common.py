@@ -1,8 +1,5 @@
-from collections.abc import Callable
 from fmpy import read_model_description, extract
-from fmpy.model_description import ModelDescription
-from fmpy.fmi2 import FMU2Slave
-from fmpy.fmi3 import FMU3Slave
+from shutil import rmtree
 
 """Test wrapper that does nothing except transforming exceptions into error
 messages understood by the rust test framework.
@@ -16,10 +13,7 @@ inner_function : Callable
     Function containing the actual tests. Any exception in this function is
     treated as test failure.
 """
-def barren_test(
-    caller: str,
-    inner_function: Callable
-):
+def barren_test(caller, inner_function):
     try:
         inner_function()
     except Exception as e:
@@ -42,16 +36,20 @@ fmu_class : FMU2Slave | FMU3Slave
     Class name of the fmpy FMU object to create from the given fmu_filename.
 """
 def uninstantiating_test(
-    caller: str,
-    inner_function: Callable,
-    fmu_filename: str,
-    fmu_class: FMU2Slave | FMU3Slave,
-    is_zipped: bool = False
+    caller,
+    inner_function,
+    fmu_filename,
+    fmu_class,
+    is_zipped = False
 ):
-    try:
-        if is_zipped:
+    if is_zipped:
+        try:
             fmu_filename = extract(fmu_filename)
+        except Exception as e:
+            print(f"TEST FAILED - {caller} - zip extraction: {e}")
+            return
 
+    try:
         model_description = read_model_description(fmu_filename)
 
         fmu = fmu_class(
@@ -65,6 +63,9 @@ def uninstantiating_test(
 
     except Exception as e:
         print(f"TEST FAILED - {caller}: {e}")
+
+    if is_zipped:
+        rmtree(fmu_filename, ignore_errors=True)
 
 """Test wrapper that imports and instantiates the FMU.
 
@@ -83,16 +84,20 @@ fmu_class : FMU2Slave | FMU3Slave
     Class name of the fmpy FMU object to create from the given fmu_filename.
 """
 def instantiating_test(
-    caller: str,
-    inner_function: Callable,
-    fmu_filename: str,
-    fmu_class: FMU2Slave | FMU3Slave,
-    is_zipped: bool = False
+    caller,
+    inner_function,
+    fmu_filename,
+    fmu_class,
+    is_zipped = False
 ):
-    try:
-        if is_zipped:
+    if is_zipped:
+        try:
             fmu_filename = extract(fmu_filename)
+        except Exception as e:
+            print(f"TEST FAILED - {caller} - zip extraction: {e}")
+            return
 
+    try:
         model_description = read_model_description(fmu_filename)
 
         fmu = fmu_class(
@@ -106,6 +111,10 @@ def instantiating_test(
 
     except Exception as e:
         print(f"TEST FAILED - {caller} - instantiation: {e}")
+
+        if is_zipped:
+            rmtree(fmu_filename, ignore_errors=True)
+
         return
     
     try:
@@ -119,8 +128,12 @@ def instantiating_test(
         try:
             fmu.terminate()
             fmu.freeInstance()
+
         except Exception:
             pass
+
+        if is_zipped:
+            rmtree(fmu_filename, ignore_errors=True)
 
         return
 
@@ -130,4 +143,7 @@ def instantiating_test(
 
     except Exception as e:
         print(f"TEST FAILED - {caller} - termination: {e}")
+
+    if is_zipped:
+        rmtree(fmu_filename, ignore_errors=True)
     
