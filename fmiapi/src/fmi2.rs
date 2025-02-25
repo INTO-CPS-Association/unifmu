@@ -189,7 +189,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
     fmu_type: Fmi2Type,
     fmu_guid: Fmi2String,
     fmu_resource_location: Fmi2String,
-    functions: &Fmi2CallbackFunctions,
+    functions: *const Fmi2CallbackFunctions,
     visible: Fmi2Boolean,
     logging_on: Fmi2Boolean,
 ) -> Option<Box<Fmi2Slave>> {
@@ -197,6 +197,26 @@ pub unsafe extern "C" fn fmi2Instantiate(
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
+
+    let functions = match unsafe { functions.as_ref() } {
+        None => {
+            error!("Pointer to callback functions was null.");
+            return None;
+        }
+        Some(functions_reference) => functions_reference
+    };
+
+    let test_environment: *const ComponentEnvironment = &functions.component_environment;
+    let test_name = CStr::from_bytes_until_nul("TEST\0".as_bytes()).unwrap().as_ptr();
+    let test_category = CStr::from_bytes_until_nul("logAll\0".as_bytes()).unwrap().as_ptr();
+    let test_message = CStr::from_bytes_until_nul("This is a test\0".as_bytes()).unwrap().as_ptr();
+    unsafe { (functions.logger)(
+        test_environment,
+        test_name,
+        Fmi2Status::Error,
+        test_category,
+        test_message
+    ) }
 
     // Erroring out in case the importer tries to instantiate the FMU for
     // Model Exchange as that is not yet implemented.
