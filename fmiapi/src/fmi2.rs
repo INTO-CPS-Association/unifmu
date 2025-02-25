@@ -6,11 +6,24 @@
 
 use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi2_messages::{self, Fmi2Command, fmi2_command::Command};
+use crate::fmi2_types::{
+    Fmi2Real,
+    Fmi2Integer,
+    Fmi2Boolean,
+    Fmi2Char,
+    Fmi2String,
+    Fmi2Byte,
+    Fmi2Status,
+    ComponentEnvironment,
+    Fmi2CallbackLogger,
+    Fmi2StepFinished,
+    Fmi2CallbackFunctions
+};
 use crate::spawn::spawn_slave;
 use libc::c_double;
 use libc::size_t;
 
-
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 use url::Url;
 use tracing::{error, warn};
 use tracing_subscriber;
@@ -38,61 +51,6 @@ static ENABLE_LOGGING: LazyLock<Result<(), Fmi2Status>> = LazyLock::new(|| {
     }
     Ok(())
 });
-
-///
-/// Represents the function signature of the logging callback function passsed
-/// from the envrionment to the slave during instantiation.
-pub type Fmi2CallbackLogger = extern "C" fn(
-    component_environment: *mut c_void,
-    instance_name: *const c_char,
-    status: Fmi2Status,
-    category: *const c_char,
-    message: *const c_char, // ... variadic functions support in rust seems to be unstable
-);
-
-pub type Fmi2CallbackAllocateMemory = extern "C" fn(nobj: c_ulonglong, size: c_ulonglong);
-pub type Fmi2CallbackFreeMemory = extern "C" fn(obj: *const c_void);
-pub type Fmi2StepFinished = extern "C" fn(component_environment: *const c_void, status: i32);
-
-/// From specification:
-///
-/// `This is a pointer to a data structure in the simulation environment that calls the FMU.
-/// Using this pointer, data from the modelDescription.xml file [(for example, mapping of valueReferences to variable names)]
-/// can be transferred between the simulation environment and the logger function.`
-///
-/// Recommended way to represent opaque pointer, i.e the c type 'void*'
-/// https://doc.rust-lang.org/nomicon/ffi.html#representing-opaque-structs
-pub struct ComponentEnvironment {
-    _private: [u8; 0],
-}
-
-/// A set of callback functions provided by the environment
-/// Note that all but the 'logger' function are optional and may only be used if the appropriate
-/// flags are set in the 'modelDescription.xml' file
-#[repr(C)]
-pub struct Fmi2CallbackFunctions {
-    pub logger: Fmi2CallbackLogger,
-
-    pub allocate_memory: Option<Fmi2CallbackAllocateMemory>,
-
-    pub free_memory: Option<Fmi2CallbackFreeMemory>,
-
-    pub step_finished: Option<Fmi2StepFinished>,
-    pub component_environment: &'static Option<Box<ComponentEnvironment>>,
-}
-
-use num_enum::{IntoPrimitive, TryFromPrimitive};
-
-#[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
-pub enum Fmi2Status {
-    Ok = 0,
-    Warning = 1,
-    Discard = 2,
-    Error = 3,
-    Fatal = 4,
-    Pending = 5,
-}
 
 impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
     fn from(src: fmi2_messages::Fmi2StatusReturn) -> Self {
@@ -201,6 +159,7 @@ impl SlaveState {
 
 pub static VERSION: &str = "2.0\0";
 pub static TYPES_PLATFORM: &str = "default\0";
+
 #[no_mangle]
 pub extern "C" fn fmi2GetTypesPlatform() -> *const c_char {
     TYPES_PLATFORM.as_ptr() as *const c_char
@@ -226,43 +185,118 @@ pub extern "C" fn fmi2GetVersion() -> *const c_char {
 /// * The nul terminator must be within isize::MAX from the pointer.
 #[no_mangle]
 pub unsafe extern "C" fn fmi2Instantiate(
-    instance_name: *const c_char, // neither allowed to be null or empty string
+    instance_name: Fmi2String,
     fmu_type: Fmi2Type,
-    fmu_guid: *const c_char, // not allowed to be null,
-    fmu_resource_location: *const c_char,
-    functions: &Fmi2CallbackFunctions,
-    visible: c_int,
-    logging_on: c_int,
+    fmu_guid: Fmi2String,
+    fmu_resource_location: Fmi2String,
+    functions: *const Fmi2CallbackFunctions,
+    visible: Fmi2Boolean,
+    logging_on: Fmi2Boolean,
 ) -> Option<Box<Fmi2Slave>> {
     if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
         return None;
     }
 
-    let resource_uri = unsafe {
-        match fmu_resource_location.as_ref() {
-            Some(b) => match CStr::from_ptr(b).to_str() {
-                Ok(s) => match Url::parse(s) {
-                    Ok(url) => url,
-                    Err(error) => {
-                        error!("unable to parse resource url");
-                        return None;
-                    },
-                },
-                Err(e) => {
-                    error!("resource url was not valid utf-8");
-                    return None;
-                },
-            },
-            None => {
-                error!("fmuResourcesLocation was null");
+    let functions = match unsafe { functions.as_ref() } {
+        None => {
+            error!("Pointer to callback functions was null.");
+            return None;
+        }
+        Some(functions_reference) => functions_reference
+    };
+
+    let test_environment: *const ComponentEnvironment = &functions.component_environment;
+    let test_name = CStr::from_bytes_until_nul("TEST\0".as_bytes()).unwrap().as_ptr();
+    let test_category = CStr::from_bytes_until_nul("logAll\0".as_bytes()).unwrap().as_ptr();
+    let test_message = CStr::from_bytes_until_nul("This is a test\0".as_bytes()).unwrap().as_ptr();
+    unsafe { (functions.logger)(
+        test_environment,
+        test_name,
+        Fmi2Status::Error,
+        test_category,
+        test_message
+    ) }
+
+    // Erroring out in case the importer tries to instantiate the FMU for
+    // Model Exchange as that is not yet implemented.
+    if let Fmi2Type::Fmi2ModelExchange = fmu_type {
+        error!("Model Exchange is not implemented for UNIFMU.");
+        return None;
+    }
+
+    let instance_name = match unsafe { instance_name.as_ref() } {
+        None => {
+            error!("Argument 'instance_name' was null.");
+            return None;
+        }
+        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
+            Err(_) => {
+                error!("Argument 'instance_name' could not be parsed as a utf-8 formatted string.");
                 return None;
-            },
+            }
+            Ok(name_str) => match name_str.len() {
+                0 => {
+                    error!("Argument 'instance_name' must not be an empty string.");
+                    return None;
+                }
+                _ => name_str
+            }
         }
     };
 
+    let fmu_guid = match unsafe { fmu_guid.as_ref() } {
+        None => {
+            error!("Argument 'fmu_guid' was null.");
+            return None;
+        }
+        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
+            Err(_) => {
+                error!("Argument 'fmu_guid' could not be parsed as a utf-8 formatted string.");
+                return None;
+            }
+            Ok(guid_str) => guid_str
+        }
+    };
+
+    let fmu_resource_location = match unsafe { fmu_resource_location.as_ref() } {
+        None => {
+            error!("Argument 'fmu_resource_location' was null.");
+            return None;
+        }
+        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
+            Err(_) => {
+                error!("Argument 'fmu_resource_location' could not be parsed as a utf-8 formatted string.");
+                return None;
+            }
+            Ok(resources_str) => match resources_str.len() {
+                0 => {
+                    error!("Argument 'fmu_resource_location' must not be an empty string.");
+                    return None;
+                }
+                _ => resources_str
+            }
+        }
+    };
+
+    let logging_on = match logging_on {
+        0 => false,
+        1 => true,
+        _ => {
+            error!("Invalid value passed to 'logging_on'.");
+            return None;
+        }
+    };
+
+    let resource_uri = match Url::parse(fmu_resource_location) {
+        Err(error) => {
+            error!("Unable to parse argument 'fmu_resource_location' as url.");
+            return None;
+        }
+        Ok(url) => url
+    };
+
     let resources_dir = match resource_uri.to_file_path() {
-        Ok(resources_dir) => resources_dir,
         Err(_) => {
             error!(
                 "URI was parsed but could not be converted into a file path, got: '{:?}'.",
@@ -270,14 +304,15 @@ pub unsafe extern "C" fn fmi2Instantiate(
             );
             return None;
         }
+        Ok(resources_dir) => resources_dir
     };
 
     let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
-        Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi2 slave failed.");
             return None;
         }
+        Ok(dispatcher) => dispatcher
     };
 
     let mut slave = Fmi2Slave::new(dispatcher);
@@ -285,18 +320,17 @@ pub unsafe extern "C" fn fmi2Instantiate(
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Instantiate(
             fmi2_messages::Fmi2Instantiate {
-                instance_name: String::from("instance_name"),
+                instance_name: String::from(instance_name),
                 fmu_type: 0,
-                fmu_guid: String::from("fmu_guid"),
-                fmu_resource_location: String::from("fmu_resources_location"),
+                fmu_guid: String::from(fmu_guid),
+                fmu_resource_location: String::from(fmu_resource_location),
                 visible: false,
-                logging_on: false,
+                logging_on,
             }
         )),
     };
 
     match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2EmptyReturn>(&cmd) {
-        Ok(_) => Some(Box::new(slave)),
         Err(error) => {
             error!(
                 "Instantiation of fmi2 slave failed with error {:?}.",
@@ -304,6 +338,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
             );
             None
         },
+        Ok(_) => Some(Box::new(slave))
     }
 }
 
@@ -323,9 +358,9 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
 #[no_mangle]
 pub extern "C" fn fmi2SetDebugLogging(
     slave: &mut Fmi2Slave,
-    logging_on: c_int,
+    logging_on: Fmi2Boolean,
     n_categories: size_t,
-    categories: *const *const c_char,
+    categories: *const Fmi2String,
 ) -> Fmi2Status {
     error!("fmi2SetDebugLogging is not implemented by UNIFMU.");
     Fmi2Status::Error
@@ -334,11 +369,11 @@ pub extern "C" fn fmi2SetDebugLogging(
 #[no_mangle]
 pub extern "C" fn fmi2SetupExperiment(
     slave: &mut Fmi2Slave,
-    tolerance_defined: c_int,
-    tolerance: c_double,
-    start_time: c_double,
-    stop_time_defined: c_int,
-    stop_time: c_double,
+    tolerance_defined: Fmi2Boolean,
+    tolerance: Fmi2Real,
+    start_time: Fmi2Real,
+    stop_time_defined: Fmi2Boolean,
+    stop_time: Fmi2Real,
 ) -> Fmi2Status {
     let tolerance = {
         if tolerance_defined != 0 {
@@ -448,9 +483,9 @@ pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
 #[no_mangle]
 pub extern "C" fn fmi2DoStep(
     slave: &mut Fmi2Slave,
-    current_time: c_double,
-    step_size: c_double,
-    no_step_prior: c_int,
+    current_time: Fmi2Real,
+    step_size: Fmi2Real,
+    no_step_prior: Fmi2Boolean,
 ) -> Fmi2Status {
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2DoStep(
@@ -526,7 +561,7 @@ pub unsafe extern "C" fn fmi2GetReal(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut c_double,
+    values: *mut Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -587,7 +622,7 @@ pub unsafe extern "C" fn fmi2GetInteger(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut c_int,
+    values: *mut Fmi2Integer,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -648,7 +683,7 @@ pub unsafe extern "C" fn fmi2GetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut c_int,
+    values: *mut Fmi2Boolean,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -723,7 +758,7 @@ pub unsafe extern "C" fn fmi2GetString(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *mut *const c_char,
+    values: *mut Fmi2String,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
 
@@ -808,7 +843,7 @@ pub unsafe extern "C" fn fmi2SetReal(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
-    values: *const c_double,
+    values: *const Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
@@ -858,7 +893,7 @@ pub unsafe extern "C" fn fmi2SetInteger(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
-    values: *const c_int,
+    values: *const Fmi2Integer,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
@@ -913,7 +948,7 @@ pub unsafe extern "C" fn fmi2SetBoolean(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    values: *const c_int,
+    values: *const Fmi2Boolean,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values: Vec<bool> = unsafe { from_raw_parts(values, nvr) }
@@ -966,7 +1001,7 @@ pub unsafe extern "C" fn fmi2SetString(
     slave: &mut Fmi2Slave,
     vr: *const c_uint,
     nvr: size_t,
-    values: *const *const c_char,
+    values: *const Fmi2String,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
 
@@ -1045,8 +1080,8 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
     nvr_unknown: size_t,
     known_refs: *const c_uint,
     nvr_known: size_t,
-    direction_known: *const c_double,
-    direction_unknown: *mut c_double,
+    direction_known: *const Fmi2Real,
+    direction_unknown: *mut Fmi2Real,
 ) -> Fmi2Status {
     let references_unknown = unsafe {
         from_raw_parts(unknown_refs, nvr_known)
@@ -1130,8 +1165,8 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    orders: *const c_int,
-    values: *const c_double,
+    orders: *const Fmi2Integer,
+    values: *const Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
@@ -1186,8 +1221,8 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
     slave: &mut Fmi2Slave,
     references: *const c_uint,
     nvr: size_t,
-    orders: *const c_int,
-    values: *mut c_double,
+    orders: *const Fmi2Integer,
+    values: *mut Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
@@ -1402,7 +1437,7 @@ pub extern "C" fn fmi2GetStatus(
 pub unsafe extern "C" fn fmi2GetRealStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
-    value: *mut c_double,
+    value: *mut Fmi2Real,
 ) -> Fmi2Status {
     match status_kind {
         Fmi2StatusKind::Fmi2LastSuccessfulTime => match slave.last_successful_time {
@@ -1429,11 +1464,11 @@ pub unsafe extern "C" fn fmi2GetRealStatus(
 
 #[no_mangle]
 pub extern "C" fn fmi2GetIntegerStatus(
-    c: *const c_int,
-    status_kind: c_int,
-    value: *mut c_int,
+    slave: &mut Fmi2Slave,
+    status_kind: Fmi2StatusKind,
+    value: *mut Fmi2Integer,
 ) -> Fmi2Status {
-    error!("No 'fmi2StatusKind' exist for which 'fmi2GetIntegerStatus' can be called");
+    error!("fmi2GetIntegerStatus is not implemented by UNIFMU.");
     Fmi2Status::Error
 }
 
@@ -1441,7 +1476,7 @@ pub extern "C" fn fmi2GetIntegerStatus(
 pub extern "C" fn fmi2GetBooleanStatus(
     slave: &mut Fmi2Slave,
     status_kind: Fmi2StatusKind,
-    value: *mut c_int,
+    value: *mut Fmi2Boolean,
 ) -> Fmi2Status {
     error!("fmi2GetBooleanStatus is not implemented by UNIFMU.");
     Fmi2Status::Discard
@@ -1449,9 +1484,9 @@ pub extern "C" fn fmi2GetBooleanStatus(
 
 #[no_mangle]
 pub extern "C" fn fmi2GetStringStatus(
-    c: *const c_int,
-    status_kind: c_int,
-    value: *mut c_char,
+    slave: &mut Fmi2Slave,
+    status_kind: Fmi2StatusKind,
+    value: *mut Fmi2String,
 ) -> Fmi2Status {
     error!("fmi2GetStringStatus is not implemented by UNIFMU.");
     Fmi2Status::Error
