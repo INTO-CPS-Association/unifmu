@@ -1,8 +1,4 @@
-from collections.abc import Callable
 from fmpy import read_model_description, extract
-from fmpy.model_description import ModelDescription
-from fmpy.fmi2 import FMU2Slave
-from fmpy.fmi3 import FMU3Slave
 from shutil import rmtree
 
 """Test wrapper that does nothing except transforming exceptions into error
@@ -17,10 +13,7 @@ inner_function : Callable
     Function containing the actual tests. Any exception in this function is
     treated as test failure.
 """
-def barren_test(
-    caller: str,
-    inner_function: Callable
-):
+def barren_test(caller, inner_function):
     try:
         inner_function()
     except Exception as e:
@@ -43,11 +36,11 @@ fmu_class : FMU2Slave | FMU3Slave
     Class name of the fmpy FMU object to create from the given fmu_filename.
 """
 def uninstantiating_test(
-    caller: str,
-    inner_function: Callable,
-    fmu_filename: str,
-    fmu_class: FMU2Slave | FMU3Slave,
-    is_zipped: bool = False
+    caller,
+    inner_function,
+    fmu_filename,
+    fmu_class,
+    is_zipped = False
 ):
     if is_zipped:
         try:
@@ -91,11 +84,11 @@ fmu_class : FMU2Slave | FMU3Slave
     Class name of the fmpy FMU object to create from the given fmu_filename.
 """
 def instantiating_test(
-    caller: str,
-    inner_function: Callable,
-    fmu_filename: str,
-    fmu_class: FMU2Slave | FMU3Slave,
-    is_zipped: bool = False
+    caller,
+    inner_function,
+    fmu_filename,
+    fmu_class,
+    is_zipped = False
 ):
     if is_zipped:
         try:

@@ -336,7 +336,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
    
 .
    - For testing:
-     - [Python](https://www.python.org/) along with the packages [pyzmq](https://pypi.org/project/pyzmq/), [FMPy](https://pypi.org/project/FMPy/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/). The packages [colorama](https://pypi.org/project/colorama/), [coloredlogs](https://pypi.org/project/coloredlogs/), and [toml](https://pypi.org/project/toml/) are also required for distributed FMUs.
+     - [Python](https://www.python.org/) (no older than **version 3.8**) along with the packages [pyzmq](https://pypi.org/project/pyzmq/), [FMPy](https://pypi.org/project/FMPy/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/). The packages [colorama](https://pypi.org/project/colorama/), [coloredlogs](https://pypi.org/project/coloredlogs/), and [toml](https://pypi.org/project/toml/) are also required for distributed FMUs.
      - [Java](https://openjdk.org/) (no higher than **version 17**) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
      - [.NET SDK (for C#)](https://dotnet.microsoft.com/en-us/download).
 
