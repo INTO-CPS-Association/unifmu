@@ -98,7 +98,7 @@ pub struct ComponentEnvironment {
 /// Represents the function signature of the logging callback function passsed
 /// from the envrionment to the slave during instantiation.
 pub type Fmi2CallbackLogger = unsafe extern "C" fn(
-    component_environment: ComponentEnvironment,
+    component_environment: *const ComponentEnvironment,
     instance_name: Fmi2String,
     status: Fmi2Status,
     category: Fmi2String,
@@ -109,7 +109,7 @@ pub type Fmi2CallbackLogger = unsafe extern "C" fn(
 //pub type Fmi2CallbackAllocateMemory = extern "C" fn(nobj: c_ulonglong, size: c_ulonglong);
 //pub type Fmi2CallbackFreeMemory = extern "C" fn(obj: *const c_void);
 pub type Fmi2StepFinished = unsafe extern "C" fn(
-    component_environment: ComponentEnvironment,
+    component_environment: *const ComponentEnvironment,
     status: Fmi2Status
 );
 
