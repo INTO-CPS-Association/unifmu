@@ -42,6 +42,9 @@ struct LanguageAssets {
     fmi3_resources: Vec<(&'static str, &'static str)>,
 }
 
+static FMI3_OS_NAMES: [&str; 3] = ["darwin", "linux", "windows"];
+static FMI3_ARCHITECTURES: [&str; 4] = ["aarch32", "aarch64", "x86", "x86_64"];
+
 lazy_static! {
     static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
@@ -259,6 +262,7 @@ lazy_static! {
 pub enum GenerateError {
     Error,
     FileExists,
+    IoError(std::io::Error),
     ZipError(ZipError),
 }
 
@@ -284,89 +288,97 @@ pub fn generate(
         outpath
     );
 
-    // copy common files to root directory and binaries
-    let (bin_macos, bin_win, bin_linux) = match fmu_version {
-        FmiFmuVersion::FMI2 => {
-            let bin_macos = tmpdir
-                .path()
-                .join("binaries")
-                .join("darwin64")
-                .join("unifmu.dylib");
-            let bin_win = tmpdir
-                .path()
-                .join("binaries")
-                .join("win64")
-                .join("unifmu.dll");
-            let bin_linux = tmpdir
-                .path()
-                .join("binaries")
-                .join("linux64")
-                .join("unifmu.so");
+    match FMI3_OS_NAMES.iter()
+        .flat_map(|os_name| {
+            FMI3_ARCHITECTURES.iter()
+                .map(move |arch| {
+                    (*arch, *os_name)
+                })
+        })
+        .map(|platform_tuple| {
+            let library_name = match platform_tuple.1 {
+                "darwin" => "unifmu.dylib",
+                "linux" => "unifmu.so",
+                "windows" => "unifmu.dll",
+                _ => "unifmu.so"
+            };
+            let platform_name = format!(
+                "{}-{}", platform_tuple.0, platform_tuple.1
+            );
+            let asset_placement = format!(
+                "auto_generated/binaries/{}/{}", platform_name, library_name
+            );
+            match Assets::get(&asset_placement) {
+                None => Err(()),
+                Some(asset) => {
+                    let destination_folder_name = match fmu_version {
+                        FmiFmuVersion::FMI2 => match platform_tuple.0 {
+                            "x86" => match platform_tuple.1 {
+                                "windows" => "win32".to_owned(),
+                                _ => format!("{}32", platform_tuple.1)
+                            }
+                            "x86_64" => match platform_tuple.1 {
+                                "windows" => "win64".to_owned(),
+                                _ => format!("{}64", platform_tuple.1)
+                            }
+                            _ => platform_name
+                        }
+                        FmiFmuVersion::FMI3 => platform_name
+                    };
 
-            (bin_macos, bin_win, bin_linux)
+                    let destination_folder_path = tmpdir
+                        .path()
+                        .join("binaries")
+                        .join(destination_folder_name);
+
+                    std::fs::create_dir_all(&destination_folder_path)
+                        .map_err(|io_error| {
+                            error!(
+                                "Couldn't create binary fodler structure {}: {}",
+                                destination_folder_path.display(),
+                                io_error
+                            );
+                            ()
+                        })?;
+
+                    let destination_path = destination_folder_path
+                        .join(library_name);
+
+                    std::fs::write(
+                        &destination_path,
+                        asset.data
+                    ).map_err(|io_error| {
+                        error!(
+                            "Couldn't write binary {} to {}: {}",
+                            asset_placement,
+                            destination_path.display(),
+                            io_error
+                        );
+                        ()
+                    })
+                }
+            }
+        })
+        .reduce(|accumulator, result| {
+            match accumulator {
+                Ok(_) => Ok(()),
+                Err(_) => result
+            }
+        })
+        .unwrap_or_else(|| {
+            error!("No combination of os names and architechture found. Check statics FMI3_OS_NAMES and static FMI3_ARCHITECTURES");
+            Err(())
+        }) {
+            Ok(_) => (),
+            Err(_) => {
+                error!("Didn't move any API binaries from assets to generated FMI. Check that assets include compiled API binaries");
+                return Err(GenerateError::Error)
+            }
         }
-        FmiFmuVersion::FMI3 => {
-            let bin_macos = tmpdir
-                .path()
-                .join("binaries")
-                .join("x86_64-darwin")
-                .join("unifmu.dylib");
-            let bin_win = tmpdir
-                .path()
-                .join("binaries")
-                .join("x86_64-windows")
-                .join("unifmu.dll");
-            let bin_linux = tmpdir
-                .path()
-                .join("binaries")
-                .join("x86_64-linux")
-                .join("unifmu.so");
-
-            (bin_macos, bin_win, bin_linux)
-        }
-    };
-
-    for p in [&bin_macos, &bin_win, &bin_linux] {
-        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
-    }
 
     let md = tmpdir.path().join("modelDescription.xml");
 
-    let unifmu_src_win = "auto_generated/unifmu.dll";
-    if Assets::get(unifmu_src_win).is_none() {
-        warn!("Could not find unifmu.dll in {:?}", unifmu_src_win);
-    } else {
-        std::fs::write(
-            bin_win,
-            Assets::get(unifmu_src_win).unwrap().data,
-        )
-        .unwrap();
-    }
-
-    let unifmu_src_linux = "auto_generated/unifmu.so";
-    if Assets::get(unifmu_src_linux).is_none() {
-        warn!("Could not find unifmu.so in {:?}", unifmu_src_linux);
-    } else {
-        std::fs::write(
-            bin_linux,
-            Assets::get(unifmu_src_linux).unwrap().data,
-        )
-        .unwrap();
-    }
-
-    let unifmu_src_macos = "auto_generated/unifmu.dylib";
-    if Assets::get(unifmu_src_macos).is_none() {
-        warn!("Could not find unifmu.dylib in {:?}", unifmu_src_macos);
-    } else {
-        std::fs::write(
-            bin_macos,
-            Assets::get(unifmu_src_macos).unwrap().data,
-        )
-        .unwrap();
-    }
-
     // copy language specific files to 'resources' directory
-
     let copy_to_resources = |assets: &LanguageAssets| {
         let assets_all = match fmu_version {
             FmiFmuVersion::FMI2 => assets.fmi2_resources.to_owned(),
@@ -504,90 +516,100 @@ pub fn generate_distributed(
         outpath_proxy,
         outpath_private
     );
+
     // First FMU (Proxy)
     // copy common files to root directory and binaries
-    let (bin_macos, bin_win, bin_linux) = match fmu_version {
-        FmiFmuVersion::FMI2 => {
-            let bin_macos = tmpdir_proxy
-                .path()
-                .join("binaries")
-                .join("darwin64")
-                .join("unifmu.dylib");
-            let bin_win = tmpdir_proxy
-                .path()
-                .join("binaries")
-                .join("win64")
-                .join("unifmu.dll");
-            let bin_linux = tmpdir_proxy
-                .path()
-                .join("binaries")
-                .join("linux64")
-                .join("unifmu.so");
+    match FMI3_OS_NAMES.iter()
+        .flat_map(|os_name| {
+            FMI3_ARCHITECTURES.iter()
+                .map(move |arch| {
+                    (*arch, *os_name)
+                })
+        })
+        .map(|platform_tuple| {
+            let library_name = match platform_tuple.1 {
+                "darwin" => "unifmu.dylib",
+                "linux" => "unifmu.so",
+                "windows" => "unifmu.dll",
+                _ => "unifmu.so"
+            };
+            let platform_name = format!(
+                "{}-{}", platform_tuple.0, platform_tuple.1
+            );
+            let asset_placement = format!(
+                "auto_generated/binaries/{}/{}", platform_name, library_name
+            );
+            match Assets::get(&asset_placement) {
+                None => Err(()),
+                Some(asset) => {
+                    let destination_folder_name = match fmu_version {
+                        FmiFmuVersion::FMI2 => match platform_tuple.0 {
+                            "x86" => match platform_tuple.1 {
+                                "windows" => "win32".to_owned(),
+                                _ => format!("{}32", platform_tuple.1)
+                            }
+                            "x86_64" => match platform_tuple.1 {
+                                "windows" => "win64".to_owned(),
+                                _ => format!("{}64", platform_tuple.1)
+                            }
+                            _ => platform_name
+                        }
+                        FmiFmuVersion::FMI3 => platform_name
+                    };
 
-            (bin_macos, bin_win, bin_linux)
+                    let destination_folder_path = tmpdir_proxy
+                        .path()
+                        .join("binaries")
+                        .join(destination_folder_name);
+
+                    std::fs::create_dir_all(&destination_folder_path)
+                        .map_err(|io_error| {
+                            error!(
+                                "Couldn't create binary fodler structure {}: {}",
+                                destination_folder_path.display(),
+                                io_error
+                            );
+                            ()
+                        })?;
+
+                    let destination_path = destination_folder_path
+                        .join(library_name);
+
+                    std::fs::write(
+                        &destination_path,
+                        asset.data
+                    ).map_err(|io_error| {
+                        error!(
+                            "Couldn't write binary {} to {}: {}",
+                            asset_placement,
+                            destination_path.display(),
+                            io_error
+                        );
+                        ()
+                    })
+                }
+            }
+        })
+        .reduce(|accumulator, result| {
+            match accumulator {
+                Ok(_) => Ok(()),
+                Err(_) => result
+            }
+        })
+        .unwrap_or_else(|| {
+            error!("No combination of os names and architechture found. Check statics FMI3_OS_NAMES and static FMI3_ARCHITECTURES");
+            Err(())
+        }) {
+            Ok(_) => (),
+            Err(_) => {
+                error!("Didn't move any API binaries from assets to generated FMI. Check that assets include compiled API binaries");
+                return Err(GenerateError::Error)
+            }
         }
-        FmiFmuVersion::FMI3 => {
-            let bin_macos = tmpdir_proxy
-                .path()
-                .join("binaries")
-                .join("x86_64-darwin")
-                .join("unifmu.dylib");
-            let bin_win = tmpdir_proxy
-                .path()
-                .join("binaries")
-                .join("x86_64-windows")
-                .join("unifmu.dll");
-            let bin_linux = tmpdir_proxy
-                .path()
-                .join("binaries")
-                .join("x86_64-linux")
-                .join("unifmu.so");
-
-            (bin_macos, bin_win, bin_linux)
-        }
-    };
-
-    for p in [&bin_macos, &bin_win, &bin_linux] {
-        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
-    }
 
     let md = tmpdir_proxy.path().join("modelDescription.xml");
 
-    let unifmu_src_win = "auto_generated/unifmu.dll";
-    if Assets::get(unifmu_src_win).is_none() {
-        warn!("Could not find unifmu.dll in {:?}", unifmu_src_win);
-    } else {
-        std::fs::write(
-            bin_win,
-            Assets::get(unifmu_src_win).unwrap().data,
-        )
-        .unwrap();
-    }
-
-    let unifmu_src_linux = "auto_generated/unifmu.so";
-    if Assets::get(unifmu_src_linux).is_none() {
-        warn!("Could not find unifmu.so in {:?}", unifmu_src_linux);
-    } else {
-        std::fs::write(
-            bin_linux,
-            Assets::get(unifmu_src_linux).unwrap().data,
-        )
-        .unwrap();
-    }
-
-    let unifmu_src_macos = "auto_generated/unifmu.dylib";
-    if Assets::get(unifmu_src_macos).is_none() {
-        warn!("Could not find unifmu.dylib in {:?}", unifmu_src_macos);
-    } else {
-        std::fs::write(
-            bin_macos,
-            Assets::get(unifmu_src_macos).unwrap().data,
-        )
-        .unwrap();
-    }
-
     // copy language specific files to 'resources' directory
-
     let copy_to_resources_proxy =|assets: &Vec<(&'static str, &'static str)>| {
         let assets_all = assets.to_owned();
 
