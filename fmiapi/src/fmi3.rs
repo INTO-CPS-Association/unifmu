@@ -6,7 +6,8 @@ use std::{
     path::{Path, PathBuf},
     slice::{from_raw_parts, from_raw_parts_mut},
     str::Utf8Error,
-    sync::LazyLock
+    sync::LazyLock,
+    fmt // For handling binaries
 };
 
 use libc::{c_char, size_t};
@@ -1379,7 +1380,7 @@ pub unsafe extern "C" fn fmi3GetString(
 }
 
 #[no_mangle]
-pub extern "C" fn fmi3GetBinary(
+pub unsafe extern "C" fn fmi3GetBinary(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
@@ -1387,51 +1388,55 @@ pub extern "C" fn fmi3GetBinary(
     values: *mut *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetBinary is not implemented by UNIFMU.");
-    Fmi3Status::Error
-
-    // Partially implemented: only the privious corresponding dispatcher
-    // function wasn't implemented.
-
-    /*
+    
     let value_references =
         unsafe { from_raw_parts(value_references, n_value_references) }.to_owned();
-    let values_v = unsafe { from_raw_parts(values, n_values) };
+    let values_out = unsafe { from_raw_parts(values, n_values) };
+    
     let value_sizes = unsafe { from_raw_parts(value_sizes, n_values) };
 
-    let values_v: Vec<Vec<u8>> = values_v
-        .iter()
-        .zip(value_sizes.iter())
-        .map(|(v, s)| unsafe { from_raw_parts(*v, *s).to_vec() })
-        .collect();
-
     let cmd = Fmi3Command {
-        command: Some(Command::??(
-            fmi3_messages::?? { ?? }
+        command: Some(Command::Fmi3GetBinary(
+            fmi3_messages::Fmi3GetBinary { value_references }
         )),
     };
 
     match instance.dispatcher
-        .send_and_recv::<_, ??>(&cmd)
-        .map(|result| {
-            todo!()
-        })
+        .send_and_recv::<_, fmi3_messages::Fmi3GetBinaryReturn>(&cmd)
     {
-        Ok((s, v)) => match v {
-            Some(vs) => unsafe {
-                for (idx, v) in vs.iter().enumerate() {
-                    std::ptr::write(values.offset(idx as isize), v.as_ptr());
-                }
-                s
-            },
-            None => s,
-        },
+        Ok(result) => {
+            if !result.values.is_empty() {
+                // Extract pointers to the inner vectors
+                let mut c_compatible: Vec<*const u8> = result
+                .values
+                .iter()
+                .map(|v| v.as_ptr()) // Get raw pointer to each vector's data
+                .collect();
+
+                // Convert to a mutable pointer to be passed to C
+                let values_out: *mut *const u8 = c_compatible.as_mut_ptr();
+
+                // Extract sizes of each inner vector
+                let compatible_value_sizes: Vec<size_t> = result.
+                values
+                .iter()
+                .map(|v| v.len() as size_t)
+                .collect();
+
+                let value_sizes: *const size_t = value_sizes.as_ptr();                
+            };           
+            
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+                })
+        }
         Err(error) => {
-            error!("fmi3GetBinary failed with error: {:?}.", error);
+            error!("Fmi3GetBinary failed with error: {:?}.", error);
             Fmi3Status::Error
         }
-    }
-    */
+    }    
 }
 
 /// # Safety
@@ -2649,7 +2654,7 @@ pub unsafe extern "C" fn fmi3SetBinary(
     values: *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    // Convert raw pointers to Rust slices
+
     let value_references = unsafe {
         std::slice::from_raw_parts(value_references, n_value_references)
     }
@@ -2788,61 +2793,178 @@ pub extern "C" fn fmi3GetVariableDependencies(
 
 #[no_mangle]
 pub extern "C" fn fmi3GetFMUState(
-    instance: &mut Fmi3Slave,
-    state: &mut Option<SlaveState>,
+    instance: *mut Fmi3Slave,
+    state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3GetFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    if state.is_null() {
+        error!("fmi3GetFMUstate called with state pointing to null!");
+        return Fmi3Status::Error;
+    }
+
+    if instance.is_null() {
+        error!("fmi3GetFMUstate called with instance pointing to null!");
+        return Fmi3Status::Error;
+    }
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SerializeFmuState(
+            fmi3_messages::Fmi3SerializeFmuState {}
+        )),
+    };
+
+    let instance = unsafe { &mut *instance };
+
+    match instance.dispatcher.send_and_recv::<_, fmi3_messages::Fmi3SerializeFmuStateReturn>(&cmd) {
+        Ok(result) => {
+            unsafe {
+                match (*state).as_mut() {
+                    Some(state_ptr) => {
+                        let state = &mut *state_ptr;
+                        state.bytes = result.state;
+                    }
+                    None => {
+                        let new_state = Box::new(SlaveState::new(&result.state));
+                        *state = Box::into_raw(new_state);
+                    }
+                }
+            }
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("fmi3GetFMUstate: Unknown status ({:?}) returned from backend.", result.status);
+                    Fmi3Status::Fatal
+                })
+        }
+        Err(error) => {
+            error!("fmi3GetFMUstate failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SetFMUState(
-	instance: &mut Fmi3Slave,
-	state: &SlaveState,
+	instance: *mut Fmi3Slave,
+	state: *const SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3SetFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    if instance.is_null() {
+        error!("fmi3SetFMUstate called with instance pointing to null!");
+        return Fmi3Status::Error;
+    }
+    if state.is_null() {
+        error!("fmi3SetFMUstate called with state pointing to null!");
+        return Fmi3Status::Error;
+    }
+    let state_ref = unsafe { &*state };
+    let state_bytes = state_ref.bytes.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3DeserializeFmuState(
+            fmi3_messages::Fmi3DeserializeFmuState {
+                state: state_bytes,
+            }
+        )),
+    };
+    unsafe { (*instance).dispatcher.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd) }
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetFMUstate failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3FreeFMUState(
-    instance: &mut Fmi3Slave,
-    state: Option<Box<SlaveState>>,
+    instance: *mut Fmi3Slave,
+    state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3FreeFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    if state.is_null(){
+        warn!("fmi3FreeFMUstate called with state pointing to null!");
+        return Fmi3Status::OK;
+    }
+
+    if instance.is_null(){
+        warn!("fmi3FreeFMUstate called with instance pointing to null!");
+        return Fmi3Status::OK;
+    }
+
+    unsafe {
+        let state_ptr = *state;
+
+        if state_ptr.is_null() {
+            warn!("fmi3FreeFMUstate called with state pointing to null!");
+            return Fmi3Status::OK;
+        }
+
+        drop(Box::from_raw(state_ptr)); 
+        *state = std::ptr::null_mut(); // Setting the state to null
+
+    }
+
+    Fmi3Status::OK
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SerializedFMUStateSize(
-    instance: &mut Fmi3Slave,
-    state: Option<Box<SlaveState>>,
-	size: *const size_t,
+    instance: &Fmi3Slave,
+    state: &SlaveState,
+	size: &mut size_t,
 ) -> Fmi3Status {
-    error!("fmi3SerializedFMUStateSize is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    *size = state.bytes.len();
+    Fmi3Status::OK
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SerializeFMUState(
-    instance: &mut Fmi3Slave,
-    state: Option<Box<SlaveState>>,
-	serialized_state: *const u8,
+    instance: &Fmi3Slave,
+    state: &SlaveState,
+	serialized_state: *mut u8,
 	size: size_t,
 ) -> Fmi3Status {
-    error!("fmi3SerializeFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    let serialized_state_len = state.bytes.len();
+
+    if serialized_state_len > size {
+        error!("Error while calling fmi3SerializeFMUstate: FMUstate too big to be contained in given byte vector.");
+        return Fmi3Status::Error;
+    }
+
+    unsafe { std::ptr::copy(
+        state.bytes.as_ptr(),
+        serialized_state.cast(),
+        serialized_state_len
+    ) };
+
+    Fmi3Status::OK
 }
 
 #[no_mangle]
-pub extern "C" fn fmi3DeserializeFMUState(
+pub unsafe extern "C" fn fmi3DeserializeFMUState(
     instance: &mut Fmi3Slave,
 	serialized_state: *const u8,
 	size: size_t,
-	state: &SlaveState,
+	state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3DeserializeFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
+
+    if state.is_null() {
+        error!("fmi3DeSerializeFMUstate called with state pointing to null!");
+        return Fmi3Status::Error;
+    }
+
+    unsafe {
+        if (*state).is_null() {
+            // If null allocate the new state and set the pointer to it
+            let new_state = Box::new(SlaveState::new(serialized_state));
+            *state = Box::into_raw(new_state);
+        } else {
+            // If not null overwrite the state
+            let state_ptr = *state;
+            let state = &mut *state_ptr;
+            state.bytes = serialized_state.to_owned();
+        }
+    }
+    Fmi3Status::OK
 }
 
 #[no_mangle]
@@ -2935,7 +3057,7 @@ pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
         .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|s| s.into())
         .unwrap_or_else(|error| {
-            error!("Error while resetting instance: {:?}.", error);
+            error!("fmi3Reset failed with error: {:?}.", error);
             Fmi3Status::Error
         })
 }

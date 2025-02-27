@@ -137,7 +137,7 @@ message Fmi3GetString {
   repeated uint32 value_references = 1;
 }
 
-message FmiGetBinary {
+message Fmi3GetBinary {
   repeated uint32 value_references = 1;
 }
 
@@ -318,7 +318,7 @@ message Fmi3GetStringReturn {
   repeated string values = 2;
 }
 
-message FmiGetBinaryReturn {
+message Fmi3GetBinaryReturn {
   Fmi3Status status = 1;
   repeated bytes values = 2;
 }
@@ -407,7 +407,7 @@ message Fmi3Command {
     Fmi3GetUInt64 Fmi3GetUInt64 = 22;
     Fmi3GetBoolean Fmi3GetBoolean = 23;
     Fmi3GetString Fmi3GetString = 24;
-    FmiGetBinary FmiGetBinary = 25;
+    Fmi3GetBinary Fmi3GetBinary = 25;
     Fmi3GetDirectionalDerivative Fmi3GetDirectionalDerivative = 26;
     Fmi3GetAdjointDerivative Fmi3GetAdjointDerivative = 27;
     Fmi3GetOutputDerivatives Fmi3GetOutputDerivatives = 28;

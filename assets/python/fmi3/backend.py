@@ -23,7 +23,7 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetUInt64Return,
     Fmi3GetBooleanReturn,
     Fmi3GetStringReturn,
-    FmiGetBinaryReturn,
+    Fmi3GetBinaryReturn,
     Fmi3GetClockReturn,
     Fmi3GetIntervalDecimalReturn,
     Fmi3UpdateDiscreteStatesReturn,
@@ -64,7 +64,6 @@ if __name__ == "__main__":
         data = getattr(command, command.WhichOneof("command"))
 
         logger.info(f"Command: {command}")
-        #print('Command:\n' + repr(command))
 
         # ================= FMI3 =================
         if group == "Fmi3InstantiateModelExchange":
@@ -124,7 +123,7 @@ if __name__ == "__main__":
             result = Fmi3SerializeFmuStateReturn()
             (result.status, result.state) = model.fmi3SerializeFmuState()
         elif group == "Fmi3DeserializeFmuState":
-            result = Fmi3StatusReturn
+            result = Fmi3StatusReturn()
             result.status = model.fmi3DeserializeFmuState(data.state)
         elif group == "Fmi3GetFloat32":
             result = Fmi3GetFloat32Return()
@@ -162,8 +161,8 @@ if __name__ == "__main__":
         elif group == "Fmi3GetString":
             result = Fmi3GetStringReturn()
             result.status, result.values[:] = model.fmi3GetString(data.value_references)
-        elif group == "FmiGetBinary":
-            result = FmiGetBinaryReturn()
+        elif group == "Fmi3GetBinary":
+            result = Fmi3GetBinaryReturn()
             result.status, result.values[:] = model.fmi3GetBinary(data.value_references)
         elif group == "Fmi3GetClock":
             result = Fmi3GetClockReturn()
@@ -234,7 +233,6 @@ if __name__ == "__main__":
             logger.error(f"unrecognized command '{group}' received, shutting down")
             sys.exit(-1)
 
-        #print('Result:\n' + repr(result))
         logger.info(f"Result: {result}")
         state = result.SerializeToString()
         socket.send(state)
