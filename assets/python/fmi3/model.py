@@ -152,6 +152,41 @@ class Model:
         return Fmi3Status.ok
 
     def fmi3Reset(self):
+        self.float32_a = 0.0
+        self.float32_b = 0.0
+        self.float64_a = 0.0
+        self.float64_b = 0.0
+        self.int8_a = 0
+        self.int8_b = 0
+        self.uint8_a = 0
+        self.uint8_b = 0
+        self.int16_a = 0
+        self.int16_b = 0
+        self.uint16_a = 0
+        self.uint16_b = 0
+        self.int32_a = 0
+        self.int32_b = 0
+        self.uint32_a = 0
+        self.uint32_b = 0
+        self.int64_a = 0
+        self.int64_b = 0
+        self.uint64_a = 0
+        self.uint64_b = 0
+        self.boolean_a = False
+        self.boolean_b = False
+        self.string_a = ""
+        self.string_b = ""
+        self.binary_a = bytes([0])
+        self.binary_b = bytes([0])
+
+        self.clock_a = False
+        self.clock_b = False
+        self.clock_reference_to_interval = {
+            1001: 1.0,
+        }
+
+        self._update_outputs()
+        self._update_clocks()
         return Fmi3Status.ok
 
     def fmi3SerializeFmuState(self):

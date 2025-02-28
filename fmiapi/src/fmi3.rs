@@ -1384,16 +1384,13 @@ pub unsafe extern "C" fn fmi3GetBinary(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    value_sizes: *const size_t,
+    value_sizes: *mut size_t,
     values: *mut *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
     
     let value_references =
         unsafe { from_raw_parts(value_references, n_value_references) }.to_owned();
-    let values_out = unsafe { from_raw_parts(values, n_values) };
-    
-    let value_sizes = unsafe { from_raw_parts(value_sizes, n_values) };
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetBinary(
@@ -1406,24 +1403,41 @@ pub unsafe extern "C" fn fmi3GetBinary(
     {
         Ok(result) => {
             if !result.values.is_empty() {
-                // Extract pointers to the inner vectors
-                let mut c_compatible: Vec<*const u8> = result
-                .values
-                .iter()
-                .map(|v| v.as_ptr()) // Get raw pointer to each vector's data
-                .collect();
-
-                // Convert to a mutable pointer to be passed to C
-                let values_out: *mut *const u8 = c_compatible.as_mut_ptr();
-
-                // Extract sizes of each inner vector
                 let compatible_value_sizes: Vec<size_t> = result.
                 values
+                .clone()
                 .iter()
-                .map(|v| v.len() as size_t)
+                .map(|v| {v.len() as size_t})
                 .collect();
 
-                let value_sizes: *const size_t = value_sizes.as_ptr();                
+                value_sizes.copy_from_nonoverlapping(compatible_value_sizes.as_ptr(), n_values);
+
+                unsafe {
+                    for (idx, value) in result.values.clone().iter().enumerate() {
+                        let len = value.len();
+                
+                        if len == 0 {
+                            // Store NULL pointer for empty data
+                            std::ptr::write(values.add(idx), std::ptr::null());
+                            continue;
+                        }
+                
+                        // Allocate memory for each binary array
+                        let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+                        let data_ptr = std::alloc::alloc(layout) as *mut u8;
+                
+                        if data_ptr.is_null() {
+                            panic!("Memory allocation for binary data failed");
+                        }
+                
+                        // Copy data to allocated memory
+                        std::ptr::copy_nonoverlapping(value.as_ptr(), data_ptr, len);
+                
+                        // Store the pointer in `values`
+                        std::ptr::write(values.add(idx), data_ptr);
+                    }
+                }
+
             };           
             
             Fmi3Status::try_from(result.status)
