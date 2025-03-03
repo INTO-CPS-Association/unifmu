@@ -349,7 +349,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
 5. **Windows:** Build the FMU dll using `cargo build --target x86_64-pc-windows-msvc --release`. This should build the project for your operating system, and generate the `fmiapi.dll` in the folder [target/x86_64-pc-windows-msvc/release](target/x86_64-pc-windows-msvc/release/). The dll contains the FMU headers' implementation. **Linux:** Build the FMU `so` using the toolchain of your machine, e.g., `cargo build --target x86_64-unknown-linux-gnu --release`. This generates the `libfmiapi.so` in the folder [target/x86_64-unknown-linux-gnu/release](target/x86_64-unknown-linux-gnu/release/), which contains the FMU headers' implementation.
 
 6. Generate the content for the [./assets/auto_generated/](./assets/auto_generated/) folder, that the CLI is packaged with.
-   1. Copy the binaries compiled in the previous step to the correct subfulder under [./assets/auto_generated/binaries/](./assets/auto_generated/binaries/).
+   1. Copy the binaries compiled in the previous step to the correct subfolder under [./assets/auto_generated/binaries/](./assets/auto_generated/binaries/) creating the subfolder first if it isn't already present.
       The name of the subfolder is both OS and CPU architecture dependent. It follows the naming scheme of the [FMI3 platform tuple](https://fmi-standard.org/docs/3.0.2/#platform-tuple-definition) `<arch>-<sys>`:
       **Architecture** `<arch>`
       | **Name** | **Description**         |
@@ -367,17 +367,21 @@ Building for local machine (with Windows as the example, and PowerShell commands
       | windows  | Microsoft Windows                           |
 
       Furthermore, the name of the binary after copying should be `unifmu.<extension>` where `<extension>` is the original extension of the binary.
-      **Examples**
+
+      **Examples** (run these commands from the root of the repository)
       *Windows running on Intel/AMD x86 64-bit architecture:*
       ```powershell
+      New-Item -Type dir ./assets/auto_generated/binaries/x86_64-windows
       Copy-Item -Force ./target/x86_64-pc-windows-msvc/release/fmiapi.dll ./assets/auto_generated/binaries/x86_64-windows/unifmu.dll
       ``` 
       *Linux running on Intel/AMD x86 64-bit architecture:*
       ```
-      cp target/x86_64-unknown-linux-gnu/release/libfmiapi.so assets/auto_generated/binaries/x86_64-windows/unifmu.so
+      mkdir -p assets/auto_generated/binaries/x86_64-linux
+      cp target/x86_64-unknown-linux-gnu/release/libfmiapi.so assets/auto_generated/binaries/x86_64-linux/unifmu.so
       ```
       *Darwin (macOS) running on ARM 64-bit architecture:*
       ```
+      mkdir -p assets/auto_generated/binaries/aarch64-darwin
       cp target/x86_64-unknown-linux-gnu/release/libfmiapi.dylib assets/auto_generated/binaries/aarch64-darwin/unifmu.dylib
       ```
    2. Generate the protobuf schemas for python, csharp, and java backends:
