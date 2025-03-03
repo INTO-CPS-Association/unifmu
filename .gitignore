@@ -13,6 +13,7 @@ Cargo.lock
 
 /assets/auto_generated/**
 !/assets/auto_generated/.gitkeep
+!/assets/auto_generated/binaries
 !/assets/auto_generated/binaries/.gitkeep
 /fmiapi/src/fmi2_proto.rs
 
