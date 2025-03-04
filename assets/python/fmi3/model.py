@@ -21,37 +21,7 @@ class Model:
         self.event_mode_used = event_mode_used
         self.early_return_allowed = early_return_allowed
         self.required_intermediate_variables = required_intermediate_variables
-
-        self.float32_a = 0.0
-        self.float32_b = 0.0
-        self.float64_a = 0.0
-        self.float64_b = 0.0
-        self.int8_a = 0
-        self.int8_b = 0
-        self.uint8_a = 0
-        self.uint8_b = 0
-        self.int16_a = 0
-        self.int16_b = 0
-        self.uint16_a = 0
-        self.uint16_b = 0
-        self.int32_a = 0
-        self.int32_b = 0
-        self.uint32_a = 0
-        self.uint32_b = 0
-        self.int64_a = 0
-        self.int64_b = 0
-        self.uint64_a = 0
-        self.uint64_b = 0
-        self.boolean_a = False
-        self.boolean_b = False
-        self.string_a = ""
-        self.string_b = ""
-        self.binary_a = bytes([0])
-        self.binary_b = bytes([0])
-
-        self.clock_a = False
-        self.clock_b = False
-
+     
         self.reference_to_attribute = {
             999: "time",
             0: "float32_a",
@@ -92,18 +62,35 @@ class Model:
             35: "string_c",
             36: "binary_a",
             37: "binary_b",
-            38: "binary_c",
+            38: "binary_c",            
             1001: "clock_a",
             1002: "clock_b",
             1003: "clock_c",
+        }
+
+        self.tunable_parameters = {
+            100: "float32_tunable_parameter",
+            101: "float64_tunable_parameter",
+            102: "int8_tunable_parameter",
+            103: "uint8_tunable_parameter",
+            104: "int16_tunable_parameter",
+            105: "uint16_tunable_parameter",
+            106: "int32_tunable_parameter",
+            107: "uint32_tunable_parameter",
+            108: "int64_tunable_parameter",
+            109: "uint64_tunable_parameter",
+            110: "boolean_tunable_parameter",
+            111: "string_tunable_parameter",
+            112: "binary_tunable_parameter",
         }
 
         self.clock_reference_to_interval = {
             1001: 1.0,
         }
 
-        self._update_outputs()
-        self._update_clocks()
+        self.all_references = {**self.tunable_parameters,**self.reference_to_attribute}
+
+        self.fmi3Reset()
 
     # ================= FMI3 =================
 
@@ -147,11 +134,22 @@ class Model:
 
     def fmi3EnterStepMode(self):
         return Fmi3Status.ok
+    
+    def fmi3EnterConfigurationMode(
+            self
+    ):
+        self.configuration_mode = True
+        return Fmi3Status.ok
+
+    def fmi3ExitConfigurationMode(self):
+        self.configuration_mode = False
+        return Fmi3Status.ok
 
     def fmi3Terminate(self):
         return Fmi3Status.ok
 
     def fmi3Reset(self):
+        self.configuration_mode = False
         self.float32_a = 0.0
         self.float32_b = 0.0
         self.float64_a = 0.0
@@ -178,7 +176,19 @@ class Model:
         self.string_b = ""
         self.binary_a = bytes([0])
         self.binary_b = bytes([0])
-
+        self.float32_tunable_parameter = 0.0
+        self.float64_tunable_parameter = 0.0
+        self.int8_tunable_parameter = 0
+        self.uint8_tunable_parameter = 0
+        self.int16_tunable_parameter = 0
+        self.uint16_tunable_parameter = 0
+        self.int32_tunable_parameter = 0
+        self.uint32_tunable_parameter = 0
+        self.int64_tunable_parameter = 0
+        self.uint64_tunable_parameter = 0
+        self.boolean_tunable_parameter = False
+        self.string_tunable_parameter = ""
+        self.binary_tunable_parameter = bytes([0])
         self.clock_a = False
         self.clock_b = False
         self.clock_reference_to_interval = {
@@ -219,6 +229,19 @@ class Model:
                 self.string_b,
                 self.binary_a,
                 self.binary_b,
+                self.float32_tunable_parameter,
+                self.float64_tunable_parameter,
+                self.int8_tunable_parameter,
+                self.uint8_tunable_parameter,
+                self.int16_tunable_parameter,
+                self.uint16_tunable_parameter,
+                self.int32_tunable_parameter,
+                self.uint32_tunable_parameter,
+                self.int64_tunable_parameter,
+                self.uint64_tunable_parameter,
+                self.boolean_tunable_parameter,
+                self.string_tunable_parameter,
+                self.binary_tunable_parameter,
                 self.clock_a,
                 self.clock_b,
             )
@@ -253,6 +276,19 @@ class Model:
             string_b,
             binary_a,
             binary_b,
+            float32_tunable_parameter,
+            float64_tunable_parameter,
+            int8_tunable_parameter,
+            uint8_tunable_parameter,
+            int16_tunable_parameter,
+            uint16_tunable_parameter,
+            int32_tunable_parameter,
+            uint32_tunable_parameter,
+            int64_tunable_parameter,
+            uint64_tunable_parameter,
+            boolean_tunable_parameter,
+            string_tunable_parameter,
+            binary_tunable_parameter,
             clock_a,
             clock_b,
         ) = pickle.loads(bytes)
@@ -282,6 +318,19 @@ class Model:
         self.string_b = string_b
         self.binary_a = binary_a
         self.binary_b = binary_b
+        self.float32_tunable_parameter = float32_tunable_parameter
+        self.float64_tunable_parameter = float64_tunable_parameter
+        self.int8_tunable_parameter = int8_tunable_parameter
+        self.uint8_tunable_parameter = uint8_tunable_parameter
+        self.int16_tunable_parameter = int16_tunable_parameter
+        self.uint16_tunable_parameter = uint16_tunable_parameter
+        self.int32_tunable_parameter = int32_tunable_parameter
+        self.uint32_tunable_parameter = uint32_tunable_parameter
+        self.int64_tunable_parameter = int64_tunable_parameter
+        self.uint64_tunable_parameter = uint64_tunable_parameter
+        self.boolean_tunable_parameter = boolean_tunable_parameter
+        self.string_tunable_parameter = string_tunable_parameter
+        self.binary_tunable_parameter = binary_tunable_parameter
         self.clock_a = clock_a
         self.clock_b = clock_b
 
@@ -400,18 +449,20 @@ class Model:
     # ================= Helpers =================
 
     def _set_value(self, references, values):
-
-        for r, v in zip(references, values):
-            setattr(self, self.reference_to_attribute[r], v)
+        if (self.configuration_mode):
+            for r, v in zip(references, values):
+                setattr(self, self.all_references[r], v)
+        else:
+            for r, v in zip(references, values):
+                setattr(self, self.reference_to_attribute[r], v)
 
         return Fmi3Status.ok
 
     def _get_value(self, references):
 
         values = []
-
         for r in references:
-            values.append(getattr(self, self.reference_to_attribute[r]))
+            values.append(getattr(self, self.all_references[r]))
 
         return Fmi3Status.ok, values
 

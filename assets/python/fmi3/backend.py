@@ -109,9 +109,9 @@ if __name__ == "__main__":
         elif group == "Fmi3ExitInitializationMode":
             result = Fmi3StatusReturn()
             result.status = model.fmi3ExitInitializationMode()
-        elif group == "Fmi3FreeInstance":
+        elif group == "Fmi3FreeInstance":            
             result = Fmi3FreeInstanceReturn()
-            logger.info(f"Fmi3FreeInstance received, shutting down")
+            logger.info(f"Fmi3FreeInstance received, shutting down")        
             sys.exit(0)
         elif group == "Fmi3Terminate":
             result = Fmi3StatusReturn()

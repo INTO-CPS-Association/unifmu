@@ -2665,7 +2665,7 @@ pub unsafe extern "C" fn fmi3SetBinary(
     value_references: *const u32,
     n_value_references: size_t,
     value_sizes: *const size_t,
-    values: *const u8,
+    values: *const *const u8, // Updated
     n_values: size_t,
 ) -> Fmi3Status {
 
@@ -2675,30 +2675,31 @@ pub unsafe extern "C" fn fmi3SetBinary(
         .to_owned();
 
     let sizes = unsafe {
-        std::slice::from_raw_parts(value_sizes, n_values)
+        std::slice::from_raw_parts(value_sizes, n_value_references)
     };
 
-    // Create a vector of slices for the binary values
-    let mut binary_values: Vec<&[u8]> = Vec::with_capacity(n_value_references);
+    // Create a vector of slices for the binary values (with enough space for the amount of internal values)
+    let mut binary_values: Vec<&[u8]> = Vec::with_capacity(n_values);
 
-    // Use an offset to correctly slice the values based on sizes
-    let mut offset = 0;
-    for &size in sizes {
-        let value_slice = unsafe {
-            std::slice::from_raw_parts(values.add(offset), size)
-        };
-        binary_values.push(value_slice);
-        offset += size;
+    for i in 0..n_value_references {
+        let data_ptr = values.add(i).read();
+        let size = value_sizes.add(i).read();
+        // Ensure the pointer is not null
+        if !data_ptr.is_null() && size > 0 {
+            // Read the binary data into a slice
+            let value_slice = std::slice::from_raw_parts(data_ptr, size);
+            binary_values.push(value_slice);
+        }
     }
 
     let value_sizes = sizes
         .iter()
-        .map(|&size| size as u64)
+        .map(|&size| {size as u64})
         .collect();
 
     let values = binary_values
         .iter()
-        .map(|&v| v.to_vec())
+        .map(|&v| {v.to_vec()})
         .collect();
 
     // Ensure the instance pointer is valid
