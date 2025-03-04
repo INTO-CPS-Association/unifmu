@@ -49,6 +49,7 @@ if __name__ == "__main__":
 
         group = command.WhichOneof("command")
         data = getattr(command, command.WhichOneof("command"))
+        #logger.info(f"Command: {command}")
 
         # ================= FMI2 =================
 

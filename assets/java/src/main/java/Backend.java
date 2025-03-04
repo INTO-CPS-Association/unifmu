@@ -5,10 +5,18 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
+import java.util.logging.Logger;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+
+
 public class Backend {
+    private static final Logger logger = Logger.getLogger(Backend.class.getName());
 
     public static void main(String[] args) throws Exception {
-        System.out.println("starting FMU");
+        ConsoleHandler consoleHandler = new ConsoleHandler();
+        logger.addHandler(consoleHandler);
+        logger.setLevel(Level.ALL);
 
         Model model = null;
 
@@ -36,6 +44,7 @@ public class Backend {
                 byte[] message = socket.recv();
 
                 var command = Fmi2Messages.Fmi2Command.parseFrom(message);
+                //logger.info("Command: " + command.toString());
                 switch (command.getCommandCase()) {        
                     
                     case FMI2INSTANTIATE: {

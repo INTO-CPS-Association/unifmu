@@ -86,6 +86,10 @@ message Fmi3DeserializeFmuState {
 
 message Fmi3UpdateDiscreteStates {}
 
+message Fmi3EnterConfigurationMode {}
+
+message Fmi3ExitConfigurationMode {}
+
 // ----------------------- FMI3 Getters ----------------------
 
 
@@ -432,5 +436,7 @@ message Fmi3Command {
 	  Fmi3EnterStepMode Fmi3EnterStepMode = 47;
 	  Fmi3EnterEventMode Fmi3EnterEventMode = 48;
 	  Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
+    Fmi3EnterConfigurationMode Fmi3EnterConfigurationMode = 50;
+    Fmi3ExitConfigurationMode Fmi3ExitConfigurationMode = 51;
   }
 }

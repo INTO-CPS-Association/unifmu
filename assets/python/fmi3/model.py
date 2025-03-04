@@ -135,9 +135,7 @@ class Model:
     def fmi3EnterStepMode(self):
         return Fmi3Status.ok
     
-    def fmi3EnterConfigurationMode(
-            self
-    ):
+    def fmi3EnterConfigurationMode(self):
         self.configuration_mode = True
         return Fmi3Status.ok
 
@@ -454,6 +452,8 @@ class Model:
                 setattr(self, self.all_references[r], v)
         else:
             for r, v in zip(references, values):
+                if r in self.tunable_parameters:
+                    return Fmi3Status.error
                 setattr(self, self.reference_to_attribute[r], v)
 
         return Fmi3Status.ok

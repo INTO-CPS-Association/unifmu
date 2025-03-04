@@ -1,5 +1,5 @@
 from fmpy import read_model_description, extract
-from fmpy.fmi3 import FMU3Slave,fmi3OK, fmi3ValueReference, fmi3Binary
+from fmpy.fmi3 import FMU3Slave,fmi3OK, fmi3ValueReference, fmi3Binary, fmi3Error
 import shutil
 import sys
 import logging
@@ -317,15 +317,15 @@ if __name__ == "__main__":
     # Entering in configuration mode
     fmu.enterConfigurationMode()
     boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
-    print(f'boolean_tunable_parameter (before): {boolean_tunable_parameter}')
-    fmu.setBoolean([vrs["boolean_tunable_parameter"]],[True])
+    assert boolean_tunable_parameter == False
 
+    fmu.setBoolean([vrs["boolean_tunable_parameter"]],[True])
     boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
-    print(f'boolean_tunable_parameter (after): {boolean_tunable_parameter}')
-    fmu.exitConfigurationMode()
+    assert boolean_tunable_parameter == True
     # Exiting configuration mode
-    
-    
+    fmu.exitConfigurationMode()
+
+    # assert fmu.setBoolean([vrs["boolean_tunable_parameter"]],[False]) == fmi3Error # Throws FMI3Error    
 
     # Setting state to previous state
     print("Setting to a previous state")
@@ -435,8 +435,6 @@ if __name__ == "__main__":
     
     # terminate
     fmu.terminate()
-    print("fmi3FreeInstance")
     fmu.freeInstance()
-    logger.info(f"instance freed")
     # clean up
     shutil.rmtree(unzipdir, ignore_errors=True)

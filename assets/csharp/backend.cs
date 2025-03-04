@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using NetMQ.Sockets;
 using Google.Protobuf;
 using NetMQ;
-
+using System;
+using System.Diagnostics;
 
 namespace Launch
 {
@@ -17,6 +18,7 @@ namespace Launch
 
         public static void Main(string[] args)
         {
+            Trace.Listeners.Add(new ConsoleTraceListener()); // Logs to console
             var references_to_attr = new Dictionary<uint, string>();
             Model model = null;
 
@@ -43,6 +45,7 @@ namespace Launch
             while (true)
             {
                 command = Fmi2Command.Parser.ParseFrom(socket.ReceiveFrameBytes());
+                //Trace.TraceInformation("Command: " + command);
 
                 switch (command.CommandCase)
                 {

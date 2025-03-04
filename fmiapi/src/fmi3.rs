@@ -3018,16 +3018,42 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    // error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
+    // Fmi3Status::Error
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterConfigurationMode(
+            fmi3_messages::Fmi3EnterConfigurationMode {}
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterConfigurationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    // error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
+    // Fmi3Status::Error
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3ExitConfigurationMode(
+            fmi3_messages::Fmi3ExitConfigurationMode {}
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3ExitConfigurationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]

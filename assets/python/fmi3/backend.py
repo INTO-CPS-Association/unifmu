@@ -125,6 +125,12 @@ if __name__ == "__main__":
         elif group == "Fmi3DeserializeFmuState":
             result = Fmi3StatusReturn()
             result.status = model.fmi3DeserializeFmuState(data.state)
+        elif group == "Fmi3EnterConfigurationMode":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3EnterConfigurationMode()
+        elif group == "Fmi3ExitConfigurationMode":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3ExitConfigurationMode()
         elif group == "Fmi3GetFloat32":
             result = Fmi3GetFloat32Return()
             result.status, result.values[:] = model.fmi3GetFloat32(data.value_references)
