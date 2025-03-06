@@ -8,18 +8,18 @@ using Fmi2Messages;
 
 public class Model
 {
-    public double real_a { get; set; } = 0.0f;
-    public double real_b { get; set; } = 0.0f;
-    public double real_c { get; set; } = 0.0f;
-    public int integer_a { get; set; } = 0;
-    public int integer_b { get; set; } = 0;
-    public int integer_c { get; set; } = 0;
-    public bool boolean_a { get; set; } = false;
-    public bool boolean_b { get; set; } = false;
-    public bool boolean_c { get; set; } = false;
-    public string string_a { get; set; } = "";
-    public string string_b { get; set; } = "";
-    public string string_c { get; set; } = "";
+    public double real_a { get; set; }
+    public double real_b { get; set; }
+    public double real_c { get; set; }
+    public int integer_a { get; set; }
+    public int integer_b { get; set; }
+    public int integer_c { get; set; }
+    public bool boolean_a { get; set; }
+    public bool boolean_b { get; set; }
+    public bool boolean_c { get; set; }
+    public string string_a { get; set; }
+    public string string_b { get; set; }
+    public string string_c { get; set; }
 
     private Dictionary<uint, PropertyInfo> reference_to_attributes = new Dictionary<uint, PropertyInfo>();
 
@@ -42,7 +42,9 @@ public class Model
       { 11, this.GetType().GetProperty("string_c") },
     };
 
+    Fmi2Reset();
     }
+    
     public Fmi2Status Fmi2DoStep(double currentTime, double stepSize, bool noStepPrior)
     {
         UpdateOutputs();
@@ -118,6 +120,16 @@ public class Model
 
     public Fmi2Status Fmi2Reset()
     {
+        this.real_a = 0;
+        this.real_b = 0;
+        this.integer_a = 0;
+        this.integer_b = 0;
+        this.boolean_a = false;
+        this.boolean_b = false;
+        this.string_a = "";
+        this.string_b = "";
+        this.UpdateOutputs();
+
         return Fmi2Status.Fmi2Ok;
     }
 
