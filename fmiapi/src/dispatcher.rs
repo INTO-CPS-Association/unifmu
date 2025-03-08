@@ -75,9 +75,9 @@ impl Dispatch for Dispatcher {
 /// Holds the handle for the subprocess as well as the handle for the socket
 /// to said subprocess.
 pub struct LocalDispatcher {
-    runtime: Runtime,
     socket: BackendSocket,
     subprocess: BackendSubprocess,
+    runtime: Runtime,
 }
 
 impl LocalDispatcher {
@@ -107,9 +107,9 @@ impl LocalDispatcher {
 
         Ok(
             Self {
-                runtime,
                 socket,
-                subprocess
+                subprocess,
+                runtime,
             }
         )
     }
@@ -147,21 +147,12 @@ impl Dispatch for LocalDispatcher {
     }
 }
 
-impl Drop for LocalDispatcher {
-    fn drop(&mut self) {
-        match self.subprocess.terminate() {
-            Ok(_) => {},
-            Err(_) => error!("Terminating subprocess returned an error.")
-        };
-    }
-}
-
 /// Dispatcher for dispatching FMI commands to a remote backend.
 /// 
 /// Holds the socket to the remote backend.
 pub struct RemoteDispatcher {
-    runtime: Runtime,
     socket: BackendSocket,
+    runtime: Runtime,
 }
 
 impl RemoteDispatcher {
@@ -192,8 +183,8 @@ impl RemoteDispatcher {
 
         Ok(
             Self {
-                runtime,
                 socket,
+                runtime,
             }
         )
     }

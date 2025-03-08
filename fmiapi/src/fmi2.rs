@@ -12,7 +12,7 @@ use libc::size_t;
 
 
 use url::Url;
-use tracing::{error, warn};
+use tracing::{info, error, warn};
 use tracing_subscriber;
 
 use std::{
@@ -176,7 +176,7 @@ impl Drop for Fmi2Slave {
         };
 
         match self.dispatcher.send(&cmd) {
-            Ok(_) => (),
+            Ok(_) => {info!("Send free instance message to shut down backend");},
             Err(error) => error!(
                 "Freeing instance failed with error: {:?}.", error
             ),
