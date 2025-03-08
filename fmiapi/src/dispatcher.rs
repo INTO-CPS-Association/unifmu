@@ -84,7 +84,7 @@ impl LocalDispatcher {
     pub fn create(
         resource_path: &Path,
         launch_command: &Vec<String>,
-    ) -> Result<Self, DispatcherError> {
+    ) -> DispatcherResult<Self> {
         let runtime = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build() {
@@ -165,7 +165,7 @@ pub struct RemoteDispatcher {
 }
 
 impl RemoteDispatcher {
-    pub fn create() -> Result<Self, DispatcherError> {
+    pub fn create() -> DispatcherResult<Self> {
         let runtime = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build() {
@@ -273,7 +273,7 @@ struct BackendSocket {
 }
 
 impl BackendSocket {
-    pub async fn create(endpoint: &str) -> Result<Self, DispatcherError> {
+    pub async fn create(endpoint: &str) -> DispatcherResult<Self> {
         let mut socket = RepSocket::new();
 
         let endpoint = match socket.bind(endpoint).await {
@@ -297,7 +297,7 @@ impl BackendSocket {
     /// ZeroMQ message queue, NOT when the message has actually been received
     /// by the backend. As such, there is no absolute guarantee that the
     /// message has been received when this returns. 
-    async fn send<S: Message>(&mut self, msg: &S) -> Result<(), DispatcherError> {
+    async fn send<S: Message>(&mut self, msg: &S) -> DispatcherResult<()> {
         let bytes_send: Bytes = msg.encode_to_vec().into();
         match  self.socket.send(bytes_send.into()).await {
             Ok(_) => Ok(()),
@@ -317,7 +317,7 @@ impl BackendSocket {
     /// 
     /// A call to recv() will await until a message is received through the
     /// ZeroMQ socket.
-    async fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
+    async fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R> {
         match self.socket.recv().await {
             Ok(buf) => {
                 let buf: Bytes = match buf.get(0) {
@@ -347,7 +347,7 @@ impl BackendSocket {
     async fn send_and_recv<S: Message, R: Message + Default>(
         &mut self,
         msg: &S,
-    ) -> Result<R, DispatcherError> {
+    ) -> DispatcherResult<R> {
         self.send(msg).await?;
         self.recv().await
     }
