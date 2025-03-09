@@ -434,17 +434,4 @@ impl BackendSubprocess {
             }
         }
     }
-
-    /// Terminates the subprocess
-    /// 
-    /// On Unix-like systems, this sends the `SIGTERM` signal to the
-    /// subprocess, which can be caught by the subprocess in order to perform
-    /// cleanup befoure exiting.
-    /// 
-    /// On Windows, it invokes `TerminateProcess` on the process handle, which
-    /// cannot be caught.
-    fn terminate(&mut self) -> DispatcherResult<()> {
-        self.subprocess.terminate()
-            .map_err(|_| DispatcherError::SubprocessError)
-    }
 }
