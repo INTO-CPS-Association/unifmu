@@ -1264,7 +1264,7 @@ pub trait RemoteBackend: DistributedFileStructure {
                 "dotnet", "run", "backend.cs", port
             ),
             FmuBackendImplementationLanguage::Java => duct::cmd!(
-                "sh", "gradlew", "run", "--args='{port}'"
+                "sh", "gradlew", "run", "--args={port}"
             ),
             FmuBackendImplementationLanguage::Python => {
                 // Unix systems differentiates version 2 and 3 of python in their binary names
