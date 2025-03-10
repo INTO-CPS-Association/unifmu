@@ -1,5 +1,5 @@
 import pickle
-
+from fractions import Fraction
 
 class Model:
     def __init__(
@@ -82,10 +82,6 @@ class Model:
             110: "boolean_tunable_parameter",
             111: "string_tunable_parameter",
             112: "binary_tunable_parameter",
-        }
-
-        self.clock_reference_to_interval = {
-            1001: 1.0,
         }
 
         self.all_references = {**self.tunable_parameters,**self.reference_to_attribute}
@@ -189,7 +185,11 @@ class Model:
         self.binary_tunable_parameter = bytes([0])
         self.clock_a = False
         self.clock_b = False
+        self.clock_c = False
         self.clock_reference_to_interval = {
+            1001: 1.0,
+        }
+        self.clock_reference_to_shift = {
             1001: 1.0,
         }
 
@@ -242,6 +242,9 @@ class Model:
                 self.binary_tunable_parameter,
                 self.clock_a,
                 self.clock_b,
+                self.clock_c,
+                self.clock_reference_to_interval,
+                self.clock_reference_to_shift,
             )
         )
         return Fmi3Status.ok, bytes
@@ -289,6 +292,9 @@ class Model:
             binary_tunable_parameter,
             clock_a,
             clock_b,
+            clock_c,
+            clock_reference_to_interval,
+            clock_reference_to_shift,
         ) = pickle.loads(bytes)
         self.float32_a = float32_a
         self.float32_b = float32_b
@@ -331,6 +337,9 @@ class Model:
         self.binary_tunable_parameter = binary_tunable_parameter
         self.clock_a = clock_a
         self.clock_b = clock_b
+        self.clock_c = clock_c
+        self.clock_reference_to_interval = clock_reference_to_interval
+        self.clock_reference_to_shift = clock_reference_to_shift
 
         self._update_outputs()
         self._update_clocks()
@@ -388,6 +397,42 @@ class Model:
             qualifiers.append(2)
 
         return Fmi3Status.ok, intervals, qualifiers
+    
+    def fmi3GetIntervalFraction(self, value_references):
+        counters = []
+        resolutions = []
+        qualifiers = []
+
+        for r in value_references:
+            fraction = Fraction(str(self.clock_reference_to_interval[r]))
+            numerator = fraction.numerator
+            denominator = fraction.denominator
+            counters.append(numerator)
+            resolutions.append(denominator)
+            qualifiers.append(2)
+
+        return Fmi3Status.ok, counters, resolutions, qualifiers
+    
+    def fmi3GetShiftDecimal(self, value_references):
+        shifts = []
+
+        for r in value_references:
+            shifts.append(self.clock_reference_to_shift[r])
+
+        return Fmi3Status.ok, shifts
+    
+    def fmi3GetShiftFraction(self, value_references):
+        counters = []
+        resolutions = []
+
+        for r in value_references:
+            fraction = Fraction(str(self.clock_reference_to_shift[r]))
+            numerator = fraction.numerator
+            denominator = fraction.denominator
+            counters.append(numerator)
+            resolutions.append(denominator)
+
+        return Fmi3Status.ok, counters, resolutions
 
     def fmi3SetFloat32(self, value_references, values):
         return self._set_value(value_references, values)
@@ -432,6 +477,26 @@ class Model:
         status = self._set_value(value_references, values)
         self._update_clocks()
         return status
+    
+    def fmi3SetIntervalDecimal(self, value_references, intervals):
+        for idx,r in enumerate(value_references):
+            self.clock_reference_to_interval[r] = intervals[idx]
+        return Fmi3Status.ok
+    
+    def fmi3SetIntervalFraction(self, value_references, counters, resolutions):
+        for idx,r in enumerate(value_references):
+            self.clock_reference_to_interval[r] = float(counters[idx])/float(resolutions[idx])
+        return Fmi3Status.ok
+    
+    def fmi3SetShiftDecimal(self, value_references, shifts):
+        for idx,r in enumerate(value_references):
+            self.clock_reference_to_shift[r] = shifts[idx]
+        return Fmi3Status.ok
+    
+    def fmi3SetShiftFraction(self, value_references, counters, resolutions):
+        for idx,r in enumerate(value_references):
+            self.clock_reference_to_shift[r] = float(counters[idx])/float(resolutions[idx])
+        return Fmi3Status.ok
 
     def fmi3UpdateDiscreteStates(self):
         status = Fmi3Status.ok

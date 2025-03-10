@@ -380,7 +380,57 @@ message Fmi3GetIntervalDecimalReturn {
   repeated int32 qualifiers = 3;
 }
 
+message Fmi3GetIntervalFraction {
+  repeated uint32 value_references = 1;
+}
 
+message Fmi3GetIntervalFractionReturn {
+  Fmi3Status status = 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+  repeated int32 qualifiers = 4;
+}
+
+message Fmi3GetShiftDecimal {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3GetShiftDecimalReturn {
+  Fmi3Status status = 1;
+  repeated double shifts = 2;
+}
+
+message Fmi3GetShiftFraction {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3GetShiftFractionReturn {
+  Fmi3Status status = 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+}
+
+message Fmi3SetIntervalDecimal {
+  repeated uint32 value_references= 1;
+  repeated double intervals = 2;
+}
+
+message Fmi3SetIntervalFraction {
+  repeated uint32 value_references= 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+}
+
+message Fmi3SetShiftDecimal {
+  repeated uint32 value_references= 1;
+  repeated double shifts = 2;
+}
+
+message Fmi3SetShiftFraction {
+  repeated uint32 value_references= 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+}
 
 // ----------------------- FMI Command Wrapper ----------------------
 
@@ -438,5 +488,12 @@ message Fmi3Command {
 	  Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
     Fmi3EnterConfigurationMode Fmi3EnterConfigurationMode = 50;
     Fmi3ExitConfigurationMode Fmi3ExitConfigurationMode = 51;
+    Fmi3GetIntervalFraction Fmi3GetIntervalFraction = 52;
+    Fmi3GetShiftDecimal Fmi3GetShiftDecimal = 53;
+    Fmi3GetShiftFraction Fmi3GetShiftFraction = 54;
+    Fmi3SetIntervalDecimal Fmi3SetIntervalDecimal = 55;
+    Fmi3SetIntervalFraction Fmi3SetIntervalFraction = 56;
+    Fmi3SetShiftDecimal Fmi3SetShiftDecimal = 57;
+    Fmi3SetShiftFraction Fmi3SetShiftFraction = 58;
   }
 }

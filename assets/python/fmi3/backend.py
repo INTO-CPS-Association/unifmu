@@ -27,6 +27,9 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetClockReturn,
     Fmi3GetIntervalDecimalReturn,
     Fmi3UpdateDiscreteStatesReturn,
+    Fmi3GetIntervalFractionReturn,
+    Fmi3GetShiftDecimalReturn,
+    Fmi3GetShiftFractionReturn,
 )
 from schemas.unifmu_handshake_pb2 import (
     HandshakeStatus,
@@ -182,6 +185,33 @@ if __name__ == "__main__":
             ) = model.fmi3GetIntervalDecimal(
                 data.value_references
             )
+        elif group == "Fmi3GetIntervalFraction":
+            result = Fmi3GetIntervalFractionReturn()
+            (
+                result.status,
+                result.counters[:],
+                result.resolutions[:],
+                result.qualifiers[:]
+            ) = model.fmi3GetIntervalFraction(
+                data.value_references
+            )
+        elif group == "Fmi3GetShiftDecimal":
+            result = Fmi3GetShiftDecimalReturn()
+            (
+                result.status,
+                result.shifts[:],
+            ) = model.fmi3GetShiftDecimal(
+                data.value_references
+            )
+        elif group == "Fmi3GetShiftFraction":
+            result = Fmi3GetShiftFractionReturn()
+            (
+                result.status,
+                result.counters[:],
+                result.resolutions[:],
+            ) = model.fmi3GetShiftFraction(
+                data.value_references
+            )
         elif group == "Fmi3SetFloat32":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetFloat32(data.value_references, data.values)
@@ -224,6 +254,18 @@ if __name__ == "__main__":
         elif group == "Fmi3SetClock":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetClock(data.value_references, data.values)
+        elif group == "Fmi3SetIntervalDecimal":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetIntervalDecimal(data.value_references, data.intervals)
+        elif group == "Fmi3SetIntervalFraction":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetIntervalFraction(data.value_references, data.counters, data.resolutions)
+        elif group == "Fmi3SetShiftDecimal":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetShiftDecimal(data.value_references, data.shifts)
+        elif group == "Fmi3SetShiftFraction":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetShiftFraction(data.value_references, data.counters, data.resolutions)
         elif group == "Fmi3UpdateDiscreteStates":
             result = Fmi3UpdateDiscreteStatesReturn()
             (

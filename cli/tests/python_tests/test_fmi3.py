@@ -432,6 +432,44 @@ if __name__ == "__main__":
     assert boolean == [False, False, False]
     assert string == ["", "", ""]
     assert binary == [bytes(c_uint8(0)), bytes(c_uint8(0)), bytes(c_uint8(0))]
+
+
+    print("Test for clock-related functions")
+    interval_decimals = fmu.getIntervalDecimal([vrs["clock_a"]])
+    interval_fractions = fmu.getIntervalFraction([vrs["clock_a"]])
+    shift_decimals = fmu.getShiftDecimal([vrs["clock_a"]])
+    shift_fractions = fmu.getShiftFraction([vrs["clock_a"]])
+
+    assert interval_decimals == ([1.0],[2])
+    assert interval_fractions == ([1],[1],[2])
+    assert shift_decimals == [1.0]
+    assert shift_fractions == ([1],[1])
+
+    fmu.setIntervalDecimal([vrs["clock_a"]],[1.5])
+    fmu.setShiftDecimal([vrs["clock_a"]],[1.5])
+
+    interval_decimals = fmu.getIntervalDecimal([vrs["clock_a"]])
+    interval_fractions = fmu.getIntervalFraction([vrs["clock_a"]])
+    shift_decimals = fmu.getShiftDecimal([vrs["clock_a"]])
+    shift_fractions = fmu.getShiftFraction([vrs["clock_a"]])
+    assert interval_decimals == ([1.5],[2])
+    assert interval_fractions == ([3],[2],[2])
+    assert shift_decimals == [1.5]
+    assert shift_fractions == ([3],[2])
+
+    fmu.setIntervalFraction([vrs["clock_a"]],[5],[2])
+    fmu.setShiftFraction([vrs["clock_a"]],[5],[2])
+
+    interval_decimals = fmu.getIntervalDecimal([vrs["clock_a"]])
+    interval_fractions = fmu.getIntervalFraction([vrs["clock_a"]])
+    shift_decimals = fmu.getShiftDecimal([vrs["clock_a"]])
+    shift_fractions = fmu.getShiftFraction([vrs["clock_a"]])
+    assert interval_decimals == ([2.5],[2])
+    assert interval_fractions == ([5],[2],[2])
+    assert shift_decimals == [2.5]
+    assert shift_fractions == ([5],[2])
+
+
     
     # terminate
     fmu.terminate()

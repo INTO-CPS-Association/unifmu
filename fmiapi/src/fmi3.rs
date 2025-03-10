@@ -1603,13 +1603,62 @@ pub extern "C" fn fmi3GetIntervalFraction(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    interval_counters: *const u64,
-	resolution: *mut u64,
-	qualifier: *mut Fmi3IntervalQualifier,
+    counters: *mut u64,
+	resolutions: *mut u64,
+	//qualifiers: *mut Fmi3IntervalQualifier,
+    qualifiers: *mut i32,
     n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetIntervalFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let counters_out = unsafe {
+        from_raw_parts_mut(counters, n_value_references)
+    };
+
+    let resolutions_out = unsafe {
+        from_raw_parts_mut(resolutions, n_value_references)
+    };
+
+    let qualifiers_out = unsafe {
+        from_raw_parts_mut(qualifiers, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetIntervalFraction(
+            fmi3_messages::Fmi3GetIntervalFraction { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetIntervalFractionReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.counters.is_empty() {
+                counters_out.copy_from_slice(&result.counters);
+            };
+
+            if !result.resolutions.is_empty() {
+                resolutions_out.copy_from_slice(&result.resolutions);
+            };
+
+            if !result.qualifiers.is_empty() {
+                qualifiers_out.copy_from_slice(&result.qualifiers);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetIntervalFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
 
 #[no_mangle]
@@ -1617,10 +1666,42 @@ pub extern "C" fn fmi3GetShiftDecimal(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    shifts: *const f64,
+    shifts: *mut f64,
 ) -> Fmi3Status {
-    error!("fmi3GetShiftDecimal is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let shifts_out = unsafe {
+        from_raw_parts_mut(shifts, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetShiftDecimal(
+            fmi3_messages::Fmi3GetShiftDecimal { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetShiftDecimalReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.shifts.is_empty() {
+                shifts_out.copy_from_slice(&result.shifts);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetShiftDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
+
 }
 
 #[no_mangle]
@@ -1628,11 +1709,51 @@ pub extern "C" fn fmi3GetShiftFraction(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    counters: *const u64,
-	resolutions: *const u64,
+    counters: *mut u64,
+	resolutions: *mut u64,
 ) -> Fmi3Status {
-    error!("fmi3GetShiftFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let counters_out = unsafe {
+        from_raw_parts_mut(counters, n_value_references)
+    };
+
+    let resolutions_out = unsafe {
+        from_raw_parts_mut(resolutions, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetShiftFraction(
+            fmi3_messages::Fmi3GetShiftFraction { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetShiftFractionReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.counters.is_empty() {
+                counters_out.copy_from_slice(&result.counters);
+            };
+
+            if !result.resolutions.is_empty() {
+                resolutions_out.copy_from_slice(&result.resolutions);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetShiftFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
 
 #[no_mangle]
@@ -1640,10 +1761,34 @@ pub extern "C" fn fmi3SetIntervalDecimal(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    intervals: *mut f64,
+    intervals: *const f64,
 ) -> Fmi3Status {
-    error!("fmi3SetIntervalDecimal is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let intervals = unsafe {
+        from_raw_parts(intervals, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetIntervalDecimal(
+            fmi3_messages::Fmi3SetIntervalDecimal {
+                value_references,
+                intervals,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetIntervalDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+
 }
 
 #[no_mangle]
@@ -1651,11 +1796,39 @@ pub extern "C" fn fmi3SetIntervalFraction(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    interval_counters: *const u64,
-	resolutions: *mut u64,
+    counters: *const u64,
+	resolutions: *const u64,
 ) -> Fmi3Status {
-    error!("fmi3SetIntervalFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let counters = unsafe {
+        from_raw_parts(counters, n_value_references)
+    }.to_owned();
+
+    let resolutions = unsafe {
+        from_raw_parts(resolutions, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetIntervalFraction(
+            fmi3_messages::Fmi3SetIntervalFraction {
+                value_references,
+                counters,
+                resolutions,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetIntervalFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1665,8 +1838,31 @@ pub extern "C" fn fmi3SetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    error!("fmi3SetShiftDecimal is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let shifts = unsafe {
+        from_raw_parts(shifts, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetShiftDecimal(
+            fmi3_messages::Fmi3SetShiftDecimal {
+                value_references,
+                shifts,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetShiftDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1677,8 +1873,36 @@ pub extern "C" fn fmi3SetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    error!("fmi3SetShiftFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let counters = unsafe {
+        from_raw_parts(counters, n_value_references)
+    }.to_owned();
+
+    let resolutions = unsafe {
+        from_raw_parts(resolutions, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetShiftFraction(
+            fmi3_messages::Fmi3SetShiftFraction {
+                value_references,
+                counters,
+                resolutions,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetShiftFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
