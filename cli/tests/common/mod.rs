@@ -525,7 +525,7 @@ impl BreakableFmu for LocalFmu {
     fn do_step_function_line_number(&self) -> u64 {
         match self.language() {
             FmuBackendImplementationLanguage::CSharp => 50,
-            FmuBackendImplementationLanguage::Java => 47,
+            FmuBackendImplementationLanguage::Java => 51,
             FmuBackendImplementationLanguage::Python => {
                 match self.version() {
                     FmiVersion::Fmi2 => 38,
@@ -1263,9 +1263,12 @@ pub trait RemoteBackend: DistributedFileStructure {
             FmuBackendImplementationLanguage::CSharp => duct::cmd!(
                 "dotnet", "run", "backend.cs", port
             ),
-            FmuBackendImplementationLanguage::Java => duct::cmd!(
-                "sh", "gradlew", "run", "--args='{port}'"
-            ),
+            FmuBackendImplementationLanguage::Java => {
+                let args_list = format!("--args='{port}'");
+                duct::cmd!(
+                    "sh", "gradlew", "run", args_list
+                )
+            },
             FmuBackendImplementationLanguage::Python => {
                 // Unix systems differentiates version 2 and 3 of python in their binary names
                 // Windows doesn't
@@ -1365,7 +1368,7 @@ static CSHARP_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
 static JAVA_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
     LocalFmu::new_persistent(
         FmiVersion::Fmi2,
-        FmuBackendImplementationLanguage::CSharp,
+        FmuBackendImplementationLanguage::Java,
         "PROMETHEAN_java_fmi2",
     )
 });
@@ -1397,7 +1400,7 @@ static ZIPPED_CSHARP_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
 static ZIPPED_JAVA_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
     ZippedLocalFmu::new_persistent(
         FmiVersion::Fmi2,
-        FmuBackendImplementationLanguage::CSharp,
+        FmuBackendImplementationLanguage::Java,
         "PROMETHEAN_zipped_java_fmi2",
     )
 });
@@ -1429,7 +1432,7 @@ static DISTRIBUTED_CSHARP_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
 static DISTRIBUTED_JAVA_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
     DistributedFmu::new_persistent(
         FmiVersion::Fmi2,
-        FmuBackendImplementationLanguage::CSharp,
+        FmuBackendImplementationLanguage::Java,
         "PROMETHEAN_distributed_java_fmi2",
     )
 });
@@ -1461,7 +1464,7 @@ static ZIPPED_DISTRIBUTED_CSHARP_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock
 static ZIPPED_DISTRIBUTED_JAVA_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
     ZippedDistributedFmu::new_persistent(
         FmiVersion::Fmi2,
-        FmuBackendImplementationLanguage::CSharp,
+        FmuBackendImplementationLanguage::Java,
         "PROMETHEAN_zipped_distributed_java_fmi2",
     )
 });

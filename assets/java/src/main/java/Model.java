@@ -6,8 +6,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-public class Model {
+public class Model implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public Double real_a;
     public Double real_b;
@@ -22,7 +25,7 @@ public class Model {
     public String string_b;
     public String string_c;
 
-    private ArrayList<Field> references_to_attributes;
+    private transient ArrayList<Field> references_to_attributes;
 
     public Model() throws Exception {
 
