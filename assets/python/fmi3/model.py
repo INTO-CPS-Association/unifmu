@@ -1,6 +1,6 @@
 import pickle
 from fractions import Fraction
-from enum import Enum,IntFlag
+from enum import IntFlag
 
 class Model:
     def __init__(
@@ -62,9 +62,14 @@ class Model:
         self.boolean_tunable_parameter = False
         self.string_tunable_parameter = ""
         self.binary_tunable_parameter = bytes([0])
+        self.uint64_tunable_structural_parameter = 5
+        self.float32_vector_using_tunable_structural_parameter = [0.1,0.2,0.3,0.4,0.5]
         self.clock_a = False
         self.clock_b = False
         self.clock_c = False
+        self.clocked_variable_a = 0
+        self.clocked_variable_b = 0
+        self.clocked_variable_c = 0
         self.clock_reference_to_interval = {
             1001: 1.0,
         }
@@ -72,8 +77,6 @@ class Model:
             1001: 1.0,
         }
 
-        
-     
         self.reference_to_attribute = {
             999: "time",
             0: "float32_a",
@@ -115,9 +118,15 @@ class Model:
             36: "binary_a",
             37: "binary_b",
             38: "binary_c",            
+        }
+
+        self.clocked_variables = {
             1001: "clock_a",
             1002: "clock_b",
             1003: "clock_c",
+            1100: "clocked_variable_a",
+            1101: "clocked_variable_b",
+            1102: "clocked_variable_c",
         }
 
         self.tunable_parameters = {
@@ -134,12 +143,21 @@ class Model:
             110: "boolean_tunable_parameter",
             111: "string_tunable_parameter",
             112: "binary_tunable_parameter",
+            114: "float32_vector_using_tunable_structural_parameter",
         }
 
-        self.all_references = {**self.tunable_parameters,**self.reference_to_attribute}
+        self.tunable_structural_parameters = {
+            113: "uint64_tunable_structural_parameter",
+        }
+
+        self.all_references = {**self.tunable_structural_parameters,
+                               **self.tunable_parameters,
+                               **self.clocked_variables,
+                               **self.reference_to_attribute}
 
         self._update_outputs()
         self._update_clocks()
+        self._update_clocked_outputs()
 
     # ================= FMI3 =================
 
@@ -246,9 +264,14 @@ class Model:
         self.boolean_tunable_parameter = False
         self.string_tunable_parameter = ""
         self.binary_tunable_parameter = bytes([0])
+        self.uint64_tunable_structural_parameter = 5
+        self.float32_vector_using_tunable_structural_parameter = [0.1,0.2,0.3,0.4,0.5]
         self.clock_a = False
         self.clock_b = False
         self.clock_c = False
+        self.clocked_variable_a = 0
+        self.clocked_variable_b = 0
+        self.clocked_variable_c = 0
         self.clock_reference_to_interval = {
             1001: 1.0,
         }
@@ -258,6 +281,7 @@ class Model:
 
         self._update_outputs()
         self._update_clocks()
+        self._update_clocked_outputs()
         return Fmi3Status.ok
 
     def fmi3SerializeFmuState(self):
@@ -303,9 +327,14 @@ class Model:
                 self.boolean_tunable_parameter,
                 self.string_tunable_parameter,
                 self.binary_tunable_parameter,
+                self.uint64_tunable_structural_parameter,
+                self.float32_vector_using_tunable_structural_parameter,
                 self.clock_a,
                 self.clock_b,
                 self.clock_c,
+                self.clocked_variable_a,
+                self.clocked_variable_b,
+                self.clocked_variable_c,
                 self.clock_reference_to_interval,
                 self.clock_reference_to_shift,
             )
@@ -353,9 +382,14 @@ class Model:
             boolean_tunable_parameter,
             string_tunable_parameter,
             binary_tunable_parameter,
+            uint64_tunable_structural_parameter,
+            float32_vector_using_tunable_structural_parameter,
             clock_a,
             clock_b,
             clock_c,
+            clocked_variable_a,
+            clocked_variable_b,
+            clocked_variable_c,
             clock_reference_to_interval,
             clock_reference_to_shift,
         ) = pickle.loads(bytes)
@@ -398,14 +432,20 @@ class Model:
         self.boolean_tunable_parameter = boolean_tunable_parameter
         self.string_tunable_parameter = string_tunable_parameter
         self.binary_tunable_parameter = binary_tunable_parameter
+        self.uint64_tunable_structural_parameter = uint64_tunable_structural_parameter
+        self.float32_vector_using_tunable_structural_parameter = float32_vector_using_tunable_structural_parameter
         self.clock_a = clock_a
         self.clock_b = clock_b
         self.clock_c = clock_c
+        self.clocked_variable_a = clocked_variable_a
+        self.clocked_variable_b = clocked_variable_b
+        self.clocked_variable_c = clocked_variable_c
         self.clock_reference_to_interval = clock_reference_to_interval
         self.clock_reference_to_shift = clock_reference_to_shift
 
         self._update_outputs()
         self._update_clocks()
+        self._update_clocked_outputs()
 
         return Fmi3Status.ok
 
@@ -569,6 +609,10 @@ class Model:
         values_continuous_states_changed = False
         next_event_time_defined = True
         next_event_time = 1.0
+
+
+        self._update_clocked_outputs()
+
         return (status, discrete_states_need_update, terminate_simulation, nominals_continuous_states_changed,
                 values_continuous_states_changed, next_event_time_defined, next_event_time)
 
@@ -577,19 +621,27 @@ class Model:
     def _set_value(self, references, values):
         if (self.state == FMIState.FMIConfigurationModeState or self.state == FMIState.FMIReconfigurationModeState):
             for r, v in zip(references, values):
+                if (r in self.clocked_variables) or (r in self.reference_to_attribute):
+                    return Fmi3Status.error 
+                setattr(self, self.all_references[r], v)
+        elif (self.state == FMIState.FMIEventModeState):
+            for r, v in zip(references, values):
+                if (r in self.reference_to_attribute) or (r in self.tunable_structural_parameters):
+                    return Fmi3Status.error 
                 setattr(self, self.all_references[r], v)
         else:
             for r, v in zip(references, values):
-                if r in self.tunable_parameters:
-                    return Fmi3Status.error
+                if ((self.event_mode_used) and (r in self.tunable_parameters)) or (r in self.clocked_variables) or (r in self.tunable_structural_parameters):
+                    return Fmi3Status.error              
                 setattr(self, self.reference_to_attribute[r], v)
-
         return Fmi3Status.ok
 
     def _get_value(self, references):
 
         values = []
         for r in references:
+            if (self.state != FMIState.FMIEventModeState and (r in self.clocked_variables)):
+                return Fmi3Status.error
             values.append(getattr(self, self.all_references[r]))
 
         return Fmi3Status.ok, values
@@ -608,12 +660,15 @@ class Model:
         self.boolean_c = self.boolean_a or self.boolean_b
         self.string_c = self.string_a + self.string_b
         self.binary_c = bytes(a ^ b for a, b in zip(self.binary_a, self.binary_b))
-
+    
     def _update_clocks(self):
         self.clock_c = self.clock_a and self.clock_b
 
+    def _update_clocked_outputs(self):
+        self.clocked_variable_c += self.clocked_variable_a + self.clocked_variable_b
 
-class Fmi3Status(Enum):
+
+class Fmi3Status():
     """
     Represents the status of an FMI3 FMU or the results of function calls.
 

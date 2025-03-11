@@ -316,16 +316,21 @@ if __name__ == "__main__":
 
     # Entering in configuration mode
     fmu.enterConfigurationMode()
+    uint64_tunable_structural_parameter = fmu.getUInt64([vrs["uint64_tunable_structural_parameter"]])[0]
     boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
+    assert uint64_tunable_structural_parameter == 5
     assert boolean_tunable_parameter == False
 
+    fmu.setUInt64([vrs["uint64_tunable_structural_parameter"]],[6])
     fmu.setBoolean([vrs["boolean_tunable_parameter"]],[True])
+    uint64_tunable_structural_parameter = fmu.getUInt64([vrs["uint64_tunable_structural_parameter"]])[0]
     boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
+    assert uint64_tunable_structural_parameter == 6
     assert boolean_tunable_parameter == True
     # Exiting configuration mode
     fmu.exitConfigurationMode()
 
-    # assert fmu.setBoolean([vrs["boolean_tunable_parameter"]],[False]) == fmi3Error # Throws FMI3Error    
+    # assert fmu.setUInt64([vrs["uint64_tunable_structural_parameter"]],[7]) == fmi3Error # Throws FMI3Error    
 
     # Setting state to previous state
     print("Setting to a previous state")
@@ -434,7 +439,7 @@ if __name__ == "__main__":
     assert binary == [bytes(c_uint8(0)), bytes(c_uint8(0)), bytes(c_uint8(0))]
 
 
-    print("Test for clock-related functions")
+    print("Tests for clock-related functions")
     interval_decimals = fmu.getIntervalDecimal([vrs["clock_a"]])
     interval_fractions = fmu.getIntervalFraction([vrs["clock_a"]])
     shift_decimals = fmu.getShiftDecimal([vrs["clock_a"]])
@@ -469,6 +474,21 @@ if __name__ == "__main__":
     assert shift_decimals == [2.5]
     assert shift_fractions == ([5],[2])
 
+    print("Tests for event mode")
+    # fmu.getUInt32([vrs["clocked_variable_c"]]) == fmi3Error # Throws FMI3Error since not in event mode
+
+    fmu.enterEventMode()
+    clocked_variable_c = fmu.getUInt32([vrs["clocked_variable_c"]])[0]
+    print(f'clocked_variable_c: {clocked_variable_c}')
+    assert clocked_variable_c == 0
+
+    fmu.setUInt32([vrs["clocked_variable_a"],vrs["clocked_variable_b"]],[1,2])
+    fmu.updateDiscreteStates()
+    clocked_variable_c = fmu.getUInt32([vrs["clocked_variable_c"]])[0]
+    print(f'clocked_variable_c: {clocked_variable_c}')
+    assert clocked_variable_c == 3
+
+    fmu.enterStepMode()
 
     
     # terminate
