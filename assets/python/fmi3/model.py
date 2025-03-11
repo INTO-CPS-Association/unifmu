@@ -1,5 +1,6 @@
 import pickle
 from fractions import Fraction
+from enum import Enum,IntFlag
 
 class Model:
     def __init__(
@@ -21,6 +22,57 @@ class Model:
         self.event_mode_used = event_mode_used
         self.early_return_allowed = early_return_allowed
         self.required_intermediate_variables = required_intermediate_variables
+        self.state = FMIState.FMIInstantiatedState
+        self.float32_a = 0.0
+        self.float32_b = 0.0
+        self.float64_a = 0.0
+        self.float64_b = 0.0
+        self.int8_a = 0
+        self.int8_b = 0
+        self.uint8_a = 0
+        self.uint8_b = 0
+        self.int16_a = 0
+        self.int16_b = 0
+        self.uint16_a = 0
+        self.uint16_b = 0
+        self.int32_a = 0
+        self.int32_b = 0
+        self.uint32_a = 0
+        self.uint32_b = 0
+        self.int64_a = 0
+        self.int64_b = 0
+        self.uint64_a = 0
+        self.uint64_b = 0
+        self.boolean_a = False
+        self.boolean_b = False
+        self.string_a = ""
+        self.string_b = ""
+        self.binary_a = bytes([0])
+        self.binary_b = bytes([0])
+        self.float32_tunable_parameter = 0.0
+        self.float64_tunable_parameter = 0.0
+        self.int8_tunable_parameter = 0
+        self.uint8_tunable_parameter = 0
+        self.int16_tunable_parameter = 0
+        self.uint16_tunable_parameter = 0
+        self.int32_tunable_parameter = 0
+        self.uint32_tunable_parameter = 0
+        self.int64_tunable_parameter = 0
+        self.uint64_tunable_parameter = 0
+        self.boolean_tunable_parameter = False
+        self.string_tunable_parameter = ""
+        self.binary_tunable_parameter = bytes([0])
+        self.clock_a = False
+        self.clock_b = False
+        self.clock_c = False
+        self.clock_reference_to_interval = {
+            1001: 1.0,
+        }
+        self.clock_reference_to_shift = {
+            1001: 1.0,
+        }
+
+        
      
         self.reference_to_attribute = {
             999: "time",
@@ -86,7 +138,8 @@ class Model:
 
         self.all_references = {**self.tunable_parameters,**self.reference_to_attribute}
 
-        self.fmi3Reset()
+        self._update_outputs()
+        self._update_clocks()
 
     # ================= FMI3 =================
 
@@ -119,31 +172,41 @@ class Model:
             stop_time_defined: bool,
             stop_time: float
     ):
+        self.state = FMIState.FMIInitializationModeState
         return Fmi3Status.ok
 
     def fmi3ExitInitializationMode(self):
+        self.state = FMIState.FMIEventModeState if self.event_mode_used else FMIState.FMIStepModeState
         self._update_outputs()
         return Fmi3Status.ok
 
     def fmi3EnterEventMode(self):
+        self.state = FMIState.FMIEventModeState
         return Fmi3Status.ok
 
     def fmi3EnterStepMode(self):
+        self.state = FMIState.FMIStepModeState
         return Fmi3Status.ok
     
     def fmi3EnterConfigurationMode(self):
-        self.configuration_mode = True
+        self.state = FMIState.FMIConfigurationModeState if self.state == FMIState.FMIInstantiatedState else FMIState.FMIReconfigurationModeState
         return Fmi3Status.ok
 
     def fmi3ExitConfigurationMode(self):
-        self.configuration_mode = False
+        if self.state == FMIState.FMIConfigurationModeState:
+            self.state = FMIState.FMIInstantiatedState
+        elif self.state == FMIState.FMIReconfigurationModeState:
+            self.state = FMIState.FMIStepModeState
+        else:
+            return Fmi3Status.error
         return Fmi3Status.ok
 
     def fmi3Terminate(self):
+        self.state = FMIState.FMITerminatedState
         return Fmi3Status.ok
 
     def fmi3Reset(self):
-        self.configuration_mode = False
+        self.state = FMIState.FMIInstantiatedState
         self.float32_a = 0.0
         self.float32_b = 0.0
         self.float64_a = 0.0
@@ -512,7 +575,7 @@ class Model:
     # ================= Helpers =================
 
     def _set_value(self, references, values):
-        if (self.configuration_mode):
+        if (self.state == FMIState.FMIConfigurationModeState or self.state == FMIState.FMIReconfigurationModeState):
             for r, v in zip(references, values):
                 setattr(self, self.all_references[r], v)
         else:
@@ -550,7 +613,7 @@ class Model:
         self.clock_c = self.clock_a and self.clock_b
 
 
-class Fmi3Status:
+class Fmi3Status(Enum):
     """
     Represents the status of an FMI3 FMU or the results of function calls.
 
@@ -567,6 +630,18 @@ class Fmi3Status:
     discard = 2
     error = 3
     fatal = 4
+
+class FMIState(IntFlag):
+    FMIStartAndEndState         = 1 << 0,
+    FMIInstantiatedState        = 1 << 1,
+    FMIInitializationModeState  = 1 << 2,
+    FMITerminatedState          = 1 << 3,
+    FMIConfigurationModeState   = 1 << 4,
+    FMIReconfigurationModeState = 1 << 5,
+    FMIEventModeState           = 1 << 6,
+    FMIContinuousTimeModeState  = 1 << 7,
+    FMIStepModeState            = 1 << 8,
+    FMIClockActivationMode      = 1 << 9
 
 
 if __name__ == "__main__":
