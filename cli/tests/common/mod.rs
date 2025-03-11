@@ -1265,8 +1265,13 @@ pub trait RemoteBackend: DistributedFileStructure {
             ),
             FmuBackendImplementationLanguage::Java => {
                 let args_list = format!("--args='{port}'");
+                let (shell_command, gradle_file) = match std::env::consts::OS {
+                    "windows" => ("powershell.exe", "./gradlew.bat"),
+                    "macos" => ("zsh", "./gradlew"),
+                    _other => ("sh", "gradlew")
+                };
                 duct::cmd!(
-                    "sh", "gradlew", "run", args_list
+                    shell_command, gradle_file, "run", args_list
                 )
             },
             FmuBackendImplementationLanguage::Python => {
