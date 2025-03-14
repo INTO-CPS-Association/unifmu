@@ -2,7 +2,7 @@
 authors = ["Christian Legaard <clegaard@outlook.com>"]
 edition = "2021"
 name = "unifmu"
-version = "0.0.9"
+version = "0.0.10"
 
 [dependencies]
 clap = { version = "4.5.3", features = ["derive"] }
