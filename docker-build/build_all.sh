@@ -18,7 +18,7 @@ mkdir -p assets/auto_generated/binaries/x86_64-windows
 mkdir -p assets/auto_generated/binaries/x86/64-darwin
 cp target/x86_64-unknown-linux-gnu/release/lib${tgt}.so assets/auto_generated/binaries/x86_64-linux/unifmu.so
 cp target/x86_64-pc-windows-gnu/release/${tgt}.dll assets/auto_generated/binaries/x86_64-windows/unifmu.dll
-cp target/x86_64-apple-darwin/release/lib${tgt}.dylib assets/auto_generated/binaries/x86/64-darwin/unifmu.dylib
+cp target/x86_64-apple-darwin/release/lib${tgt}.dylib assets/auto_generated/binaries/x86_64-darwin/unifmu.dylib
 
 # ------------------------------ schemas ------------------------------
 echo "generating protobuf schemas for python, csharp, and java backends"
