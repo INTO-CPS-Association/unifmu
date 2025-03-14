@@ -344,6 +344,12 @@ pub fn generate(
                     let destination_path = destination_folder_path
                         .join(library_name);
 
+                    info!(
+                        "copying resource \"{}\" to \"{}\"",
+                        asset_placement,
+                        destination_path.display()
+                    );
+
                     std::fs::write(
                         &destination_path,
                         asset.data
