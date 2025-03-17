@@ -37,7 +37,12 @@ if __name__ == "__main__":
                     instanceName='instance1')
 
     # initialize
-    fmu.instantiate()
+    fmu.instantiate(visible=False,
+                    loggingOn=False,
+                    eventModeUsed=True,
+                    earlyReturnAllowed=True,
+                    logMessage=None,
+                    intermediateUpdate=None)
     fmu.enterInitializationMode()
     fmu.exitInitializationMode()
 

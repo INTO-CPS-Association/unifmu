@@ -129,6 +129,10 @@ class Model:
             1102: "clocked_variable_c",
         }
 
+        self.parameters = {
+            
+        }
+
         self.tunable_parameters = {
             100: "float32_tunable_parameter",
             101: "float64_tunable_parameter",
@@ -151,9 +155,14 @@ class Model:
         }
 
         self.all_references = {**self.tunable_structural_parameters,
+                               **self.parameters,
                                **self.tunable_parameters,
                                **self.clocked_variables,
                                **self.reference_to_attribute}
+        
+        self.all_parameters = {**self.tunable_structural_parameters,
+                               **self.parameters,
+                               **self.tunable_parameters}
 
         self._update_outputs()
         self._update_clocks()
@@ -629,9 +638,11 @@ class Model:
                 if (r in self.reference_to_attribute) or (r in self.tunable_structural_parameters):
                     return Fmi3Status.error 
                 setattr(self, self.all_references[r], v)
+        elif (self.state == FMIState.FMIInitializationModeState):
+            setattr(self, self.all_references[r], v)
         else:
             for r, v in zip(references, values):
-                if ((self.event_mode_used) and (r in self.tunable_parameters)) or (r in self.clocked_variables) or (r in self.tunable_structural_parameters):
+                if ((self.event_mode_used) and (r in self.tunable_parameters)) or (r in self.clocked_variables) or (r in self.tunable_structural_parameters) or (r in self.parameters):
                     return Fmi3Status.error              
                 setattr(self, self.reference_to_attribute[r], v)
         return Fmi3Status.ok
