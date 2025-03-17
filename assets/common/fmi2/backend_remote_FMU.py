@@ -18,6 +18,10 @@ from schemas.fmi2_messages_pb2 import (
     Fmi2GetBooleanReturn,
     Fmi2GetStringReturn,
 )
+from schemas.unifmu_handshake_pb2 import (
+    HandshakeStatus,
+    HandshakeReply,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
@@ -76,8 +80,9 @@ if __name__ == "__main__":
     logger.info(f"Socket connected successfully.")
 
     # send handshake
-    state = Fmi2EmptyReturn().SerializeToString()
-    socket.send(state)
+    handshake = HandshakeReply()
+    handshake.status = HandshakeStatus.OK
+    socket.send(handshake.SerializeToString())
 
     # dispatch commands to black-box FMU with fmpy
     command = Fmi2Command()
