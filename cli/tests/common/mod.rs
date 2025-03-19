@@ -660,7 +660,7 @@ impl BasicFmu for ZippedLocalFmu {
     }
 
     fn directory(&self) -> &Path {
-        &self.directory.path()
+        self.directory.path()
     }
 
     fn language(&self) -> &FmuBackendImplementationLanguage {
@@ -812,7 +812,7 @@ impl BasicFmu for DistributedFmu {
     }
 
     fn directory(&self) -> &Path {
-        &self.directory.path()
+        self.directory.path()
     }
 
     fn language(&self) -> &FmuBackendImplementationLanguage {
@@ -1014,7 +1014,7 @@ impl BasicFmu for ZippedDistributedFmu {
     }
 
     fn directory(&self) -> &Path {
-        &self.directory.path()
+        self.directory.path()
     }
 
     fn language(&self) -> &FmuBackendImplementationLanguage {
