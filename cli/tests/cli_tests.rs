@@ -16,6 +16,7 @@ use common::{
     fmu_python_test,
     vdm_check,
     BasicFmu,
+    BlackboxDistributedFmu,
     BreakableFmu,
     DistributedFmu,
     FmiVersion,
@@ -598,6 +599,16 @@ fn test_instantiate_java_fmi2_distributed_zipped() {
 #[test]
 fn test_instantiate_python_fmi2_distributed_zipped() {
     let fmu = ZippedDistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate");
+}
+
+#[test]
+fn test_instantiate_python_fmi2_distributed_blackbox() {
+    let fmu = BlackboxDistributedFmu::get_clone(
         &FmiVersion::Fmi2, 
         &FmuBackendImplementationLanguage::Python
     );
