@@ -141,7 +141,7 @@ if __name__ == "__main__":
             result.status = 0
         elif group == "Fmi2DeserializeFmuState":
             result = Fmi2StatusReturn()
-            result.status = fmu.deserializeFMUstate(data.state)
+            result.status = fmu.deSerializeFMUstate(data.state)
         elif group == "Fmi2GetReal":
             result = Fmi2GetRealReturn()            
             result.values[:] = fmu.getReal(data.references)
