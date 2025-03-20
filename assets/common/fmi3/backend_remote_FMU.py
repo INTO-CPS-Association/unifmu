@@ -6,6 +6,7 @@ import zmq
 import toml
 from fmpy import read_model_description, extract
 from fmpy.fmi3 import FMU3Slave, fmi3Float64, fmi3IntervalQualifier, fmi3ValueReference
+from shutil import rmtree
 
 from schemas.fmi3_messages_pb2 import (
     Fmi3Command,
@@ -151,6 +152,8 @@ if __name__ == "__main__":
         elif group == "Fmi3FreeInstance":
             result = Fmi3FreeInstanceReturn()
             fmu.freeInstance()
+            # Clean up unzipped temporary FMU directory
+            rmtree(unzipdir, ignore_errors=True)
             logger.info(f"Fmi3FreeInstance received, shutting down")
             sys.exit(0)
         elif group == "Fmi3Terminate":
