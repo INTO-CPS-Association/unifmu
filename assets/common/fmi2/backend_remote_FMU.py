@@ -7,6 +7,7 @@ import toml
 from fmpy import read_model_description, extract
 from fmpy.fmi2 import FMU2Slave
 from shutil import rmtree
+import ctypes
 
 from schemas.fmi2_messages_pb2 import (
     Fmi2EmptyReturn,
@@ -49,6 +50,10 @@ if __name__ == "__main__":
                     unzipDirectory=unzipdir,
                     modelIdentifier=model_description.coSimulation.modelIdentifier,
                     instanceName='instance1')
+    
+    can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
+    max_size = 1024
+    ArrayType = ctypes.c_ubyte * max_size
 
     input_ok = False
     if len(sys.argv) == 2:
@@ -137,11 +142,27 @@ if __name__ == "__main__":
             result.status = fmu.reset()
         elif group == "Fmi2SerializeFmuState":
             result = Fmi2SerializeFmuStateReturn()
-            result.state = fmu.serializeFMUstate(fmu.getFMUState())
-            result.status = 0
+            if can_handle_state:
+                state = fmu.getFMUState()
+                data = ctypes.cast(state, ctypes.POINTER(ArrayType)).contents
+                bytes_data = bytes(data)
+                if isinstance(bytes_data, bytes):
+                    result.status = 0
+                    result.state = bytes_data
+                else:
+                    result.status = 3
+            else:
+                result.status = 3
         elif group == "Fmi2DeserializeFmuState":
             result = Fmi2StatusReturn()
-            result.status = fmu.deSerializeFMUstate(data.state)
+            if can_handle_state:
+                if isinstance(data.state, bytes):
+                    fmu.setFMUstate(data.state)
+                    result.status = 0
+                else:
+                    result.status = 3
+            else:
+                result.status = 3 
         elif group == "Fmi2GetReal":
             result = Fmi2GetRealReturn()            
             result.values[:] = fmu.getReal(data.references)
