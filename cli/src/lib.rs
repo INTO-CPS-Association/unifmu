@@ -244,6 +244,10 @@ lazy_static! {
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi2/README.md", "README.md"),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
+            ),
         ],
         fmi3_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
@@ -254,6 +258,10 @@ lazy_static! {
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
+            ),
         ],
     };
 }

@@ -53,7 +53,7 @@ The current responsible for the tool maintenance is [Claudio Gomes](https://clag
 To display the synopsis use the `--help` flag.
 
 ```
-unifmu 0.0.10
+unifmu 0.0.11
 
 Implement Functional Mock-up units (FMUs) in various source languages.
 
