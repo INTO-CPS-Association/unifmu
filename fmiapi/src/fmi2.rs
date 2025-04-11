@@ -19,15 +19,19 @@ use crate::fmi2_types::{
     Fmi2StepFinished,
     Fmi2CallbackFunctions
 };
+use crate::logger;
 use crate::spawn::spawn_slave;
+
 use libc::c_double;
 use libc::size_t;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use tracing_subscriber::layer::SubscriberExt;
 use url::Url;
-use tracing::{error, warn};
-use tracing_subscriber;
+use tracing::{error, info, warn, span, error_span, Level};
+use tracing_subscriber::{Registry, Layer};
 
+use std::path::Component;
 use std::{
     ffi::{CStr, CString, NulError},
     os::raw::{c_char, c_int, c_uint, c_ulonglong, c_void},
@@ -36,21 +40,6 @@ use std::{
     str::Utf8Error,
     sync::LazyLock
 };
-
-/// One shot function that sets up logging.
-/// 
-/// Checking the result runs the contained function once if it hasn't been run
-/// or returns the stored result.
-/// 
-/// Result should be checked at entrance to instantiation functions, and an
-/// error should be considered a grave error signifying something seriously
-/// wrong (most probably that the global logger was already set somewhere else).
-static ENABLE_LOGGING: LazyLock<Result<(), Fmi2Status>> = LazyLock::new(|| {
-    if tracing_subscriber::fmt::try_init().is_err() {
-        return Err(Fmi2Status::Fatal);
-    }
-    Ok(())
-});
 
 impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
     fn from(src: fmi2_messages::Fmi2StatusReturn) -> Self {
@@ -106,6 +95,7 @@ pub struct Fmi2Slave {
     pub last_successful_time: Option<f64>,
     pub pending_message: Option<String>,
     pub dostep_status: Option<Fmi2Status>,
+    logger_uid: u64
 }
 //  + Send + UnwindSafe + RefUnwindSafe
 // impl RefUnwindSafe for Slave {}
@@ -113,13 +103,17 @@ pub struct Fmi2Slave {
 // unsafe impl Send for Slave {}
 
 impl Fmi2Slave {
-    fn new(dispatcher: Dispatcher) -> Self {
+    fn new(
+        dispatcher: Dispatcher,
+        logger_uid: u64
+    ) -> Self {
         Self {
             dispatcher,
             string_buffer: Vec::new(),
             last_successful_time: None,
             pending_message: None,
             dostep_status: None,
+            logger_uid
         }
     }
 }
@@ -193,10 +187,10 @@ pub unsafe extern "C" fn fmi2Instantiate(
     visible: Fmi2Boolean,
     logging_on: Fmi2Boolean,
 ) -> Option<Box<Fmi2Slave>> {
-    if (*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set global tracing subscriber.");
-        return None;
-    }
+    if logger::enable().is_err() {
+        error!("A logging/tracing subscriber was unexpectedly already set.");
+        return None
+    };
 
     let functions = match unsafe { functions.as_ref() } {
         None => {
@@ -206,17 +200,33 @@ pub unsafe extern "C" fn fmi2Instantiate(
         Some(functions_reference) => functions_reference
     };
 
-    let test_environment: *const ComponentEnvironment = &functions.component_environment;
-    let test_name = CStr::from_bytes_until_nul("TEST\0".as_bytes()).unwrap().as_ptr();
-    let test_category = CStr::from_bytes_until_nul("logAll\0".as_bytes()).unwrap().as_ptr();
-    let test_message = CStr::from_bytes_until_nul("This is a test\0".as_bytes()).unwrap().as_ptr();
-    unsafe { (functions.logger)(
-        test_environment,
-        test_name,
-        Fmi2Status::Error,
-        test_category,
-        test_message
-    ) }
+    let logging_on = match logging_on {
+        0 => false,
+        1 => true,
+        _ => {
+            error!("Invalid value passed to 'logging_on'.");
+            return None;
+        }
+    };
+
+    let logger_uid = match logger::add_callback(
+        functions.logger,
+        &(functions.component_environment),
+        logging_on
+    ) {
+        Err(_) => {
+            error!("couldn't add FMU callback to logger.");
+            return None;
+        }
+        Ok(uid) => uid
+    };
+
+    info!("Testing testing, 1 - 2 - 3, preguard");
+
+    let _guard = error_span!("fmi2Instantiate", luid = logger_uid).entered();
+
+    info!("Testing testing, 1 - 2 - 3");
+    error!("Not actually and error");
 
     // Erroring out in case the importer tries to instantiate the FMU for
     // Model Exchange as that is not yet implemented.
@@ -279,15 +289,6 @@ pub unsafe extern "C" fn fmi2Instantiate(
         }
     };
 
-    let logging_on = match logging_on {
-        0 => false,
-        1 => true,
-        _ => {
-            error!("Invalid value passed to 'logging_on'.");
-            return None;
-        }
-    };
-
     let resource_uri = match Url::parse(fmu_resource_location) {
         Err(error) => {
             error!("Unable to parse argument 'fmu_resource_location' as url.");
@@ -315,7 +316,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
         Ok(dispatcher) => dispatcher
     };
 
-    let mut slave = Fmi2Slave::new(dispatcher);
+    let mut slave = Fmi2Slave::new(dispatcher, logger_uid);
 
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Instantiate(

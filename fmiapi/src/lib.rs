@@ -4,5 +4,6 @@ pub mod fmi2_messages;
 pub mod fmi2_types;
 pub mod fmi3;
 pub mod fmi3_messages;
+mod logger;
 mod spawn;
 pub mod unifmu_handshake;

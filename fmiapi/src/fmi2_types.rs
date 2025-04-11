@@ -3,7 +3,6 @@
 
 use std::ffi::{c_char, c_double, c_int};
 
-use core::marker::{PhantomData, PhantomPinned};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 pub type Fmi2Real = c_double;
@@ -85,18 +84,13 @@ pub enum Fmi2Status {
 /// 
 /// Representing it this way lets us have type safety without knowing the
 /// structure of the type.
-/// 
-/// The _marker is there to ensure that the rust compiler knows that this
-/// type isn't thread safe (as it is essentially a gussied up pointer).
 #[repr(C)]
 pub struct ComponentEnvironment {
-    _data: [u8; 0],
-    _marker: PhantomData<(*mut u8, PhantomPinned)>
+    _data: [u8; 0]
 }
 
-///
 /// Represents the function signature of the logging callback function passsed
-/// from the envrionment to the slave during instantiation.
+/// from the environment to the slave during instantiation.
 pub type Fmi2CallbackLogger = unsafe extern "C" fn(
     component_environment: *const ComponentEnvironment,
     instance_name: Fmi2String,
