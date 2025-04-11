@@ -128,7 +128,7 @@ impl Drop for Fmi2Slave {
         };
 
         match self.dispatcher.send(&cmd) {
-            Ok(_) => (),
+            Ok(_) => {info!("Send free instance message to shut down backend");},
             Err(error) => error!(
                 "Freeing instance failed with error: {:?}.", error
             ),
@@ -136,6 +136,7 @@ impl Drop for Fmi2Slave {
     }
 }
 
+#[derive(Debug)]
 pub struct SlaveState {
     bytes: Vec<u8>,
 }
@@ -1260,57 +1261,104 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
 }
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
+/// Saves the state of the FMU in the state pointer 
+/// 
+/// # Parameters
+/// - `slave`: a raw pointer to the FMU slave instance
+/// - `state`: a raw pointer to the state, that will save the FMU's state
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds.
+/// - `Fmi2Status::Error`: If an error occurs during the process (e.g., invalid pointers or failed serialization).
+///
 #[no_mangle]
-pub extern "C" fn fmi2SetFMUstate(slave: &mut Fmi2Slave, state: &SlaveState) -> Fmi2Status {
-    let state = state.bytes.to_owned();
+pub extern "C" fn fmi2SetFMUstate(
+    slave: *mut Fmi2Slave, 
+    state: *const SlaveState
+) -> Fmi2Status {
+
+    if slave.is_null() {
+        error!("fmi2SetFMUstate called with slave pointing to null!");
+        return Fmi2Status::Error;
+    }
+    if state.is_null() {
+        error!("fmi2SetFMUstate called with state pointing to null!");
+        return Fmi2Status::Error;
+    }
+
+    let state_ref = unsafe { &*state };
+
+    let state_bytes = state_ref.bytes.to_owned();
     
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2DeserializeFmuState(
             fmi2_messages::Fmi2DeserializeFmuState {
-                state,
+                state: state_bytes,
             }
         )),
     };
     
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    unsafe { (*slave).dispatcher.send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd) }
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2SetRealInputDerivatives failed with error: {:?}.", error);
+            error!("fmi2SetFMUstate failed with error: {:?}.", error);
             Fmi2Status::Error
         })
 }
 
-//
-
-#[no_mangle]
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
+///
+/// # Parameters
+/// - `slave`: A raw pointer to the FMU slave instance, which is responsible for managing the state of the FMU.
+/// - `state`: A raw pointer to the location where the FMU's state will be stored. After the call, this pointer will hold a copy of the FMU state.
+/// 
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the FMU state is successfully serialized and stored.
+/// - `Fmi2Status::Error`: If an error occurs during the serialization or if invalid pointers are provided.
+/// - `Fmi2Status::Fatal`: If an unknown status is returned from the backend or there is an issue with the result status.
+///
+#[no_mangle]
 pub extern "C" fn fmi2GetFMUstate(
-    slave: &mut Fmi2Slave,
-    state: &mut Option<SlaveState>,
+    slave: *mut Fmi2Slave,
+    state: *mut *mut SlaveState, 
 ) -> Fmi2Status {
+
+    if state.is_null() {
+        error!("fmi2GetFMUstate called with state pointing to null!");
+        return Fmi2Status::Error;
+    }
+
+    if slave.is_null() {
+        error!("fmi2GetFMUstate called with slave pointing to null!");
+        return Fmi2Status::Error;
+    }
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2SerializeFmuState(
             fmi2_messages::Fmi2SerializeFmuState {}
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd)
-    {
+    let slave = unsafe { &mut *slave };
+
+    match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) {
         Ok(result) => {
-            match state.as_mut() {
-                Some(state) => {
-                    state.bytes = result.state;
-                }
-                None => {
-                    *state = Some(SlaveState::new(&result.state));
+            unsafe {
+                match (*state).as_mut() {
+                    Some(state_ptr) => {
+                        let state = &mut *state_ptr;
+                        state.bytes = result.state;
+                    }
+                    None => {
+                        let new_state = Box::new(SlaveState::new(&result.state));
+                        *state = Box::into_raw(new_state);
+                    }
                 }
             }
 
             Fmi2Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    error!("fmi2GetFMUstate: Unknown status ({:?}) returned from backend.", result.status);
                     Fmi2Status::Fatal
                 })
         }
@@ -1323,22 +1371,57 @@ pub extern "C" fn fmi2GetFMUstate(
 
 /// Free previously recorded state of slave
 /// If state points to null the call is ignored as defined by the specification
+///
+/// # Parameters
+/// - `slave`: A raw pointer to the FMU slave instance.
+/// - `state`: A raw pointer to the state that should be freed. If the pointer is null, no action is taken.
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: Indicates that the state was successfully freed (or the state was null, and no action was required).
+///
 #[no_mangle]
 pub extern "C" fn fmi2FreeFMUstate(
-    slave: &mut Fmi2Slave,
-    state: Option<Box<SlaveState>>,
+    slave: *mut Fmi2Slave,
+    state: *mut *mut SlaveState,
 ) -> Fmi2Status {
-    match state {
-        Some(state) => drop(state),
-        None => warn!("fmi2FreeFMUstate called with state pointing to null!")
+
+    if state.is_null(){
+        warn!("fmi2FreeFMUstate called with state pointing to null!");
+        return Fmi2Status::Ok;
     }
+
+    if slave.is_null(){
+        warn!("fmi2FreeFMUstate called with slave pointing to null!");
+        return Fmi2Status::Ok;
+    }
+
+    unsafe {
+        let state_ptr = *state;
+
+        if state_ptr.is_null() {
+            warn!("fmi2FreeFMUstate called with state pointing to null!");
+            return Fmi2Status::Ok;
+        }
+
+        drop(Box::from_raw(state_ptr)); 
+        *state = std::ptr::null_mut(); // Setting the state to null
+
+    }
+
     Fmi2Status::Ok
 }
 
 /// Copies the state of a slave into a buffer provided by the environment
 ///
-/// Oddly, the length of the buffer is also provided,
-/// as i would expect the environment to have enquired about the state size by calling fmi2SerializedFMUstateSize.
+/// # Parameters 
+/// - `slave`: A reference to the FMU slave instance
+/// - `state`: A reference to the state of the FMU
+/// - `data`: A pointer to the buffer where the state will be copied
+/// - `size`: The size of the buffer
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the FMU state is successfully serialized and stored.
+/// - `Fmi2Status::Error`: If an error occurs during the serialization or if invalid pointers are provided.
 #[no_mangle]
 /// We assume that the buffer is sufficiently large
 pub extern "C" fn fmi2SerializeFMUstate(
@@ -1388,13 +1471,39 @@ pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
     slave: &mut Fmi2Slave,
     serialized_state: *const u8,
     size: size_t,
-    state: &mut Box<Option<SlaveState>>,
+    state: *mut *mut SlaveState,
 ) -> Fmi2Status {
     let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
 
-    *state = Box::new(Some(SlaveState::new(serialized_state)));
+    if state.is_null() {
+        error!("fmi2DeSerializeFMUstate called with state pointing to null!");
+        return Fmi2Status::Error;
+    }
+
+    unsafe {
+        if (*state).is_null() {
+            // If null allocate the new state and set the pointer to it
+            let new_state = Box::new(SlaveState::new(serialized_state));
+            *state = Box::into_raw(new_state);
+        } else {
+            // If not null overwrite the state
+            let state_ptr = *state;
+            let state = &mut *state_ptr;
+            state.bytes = serialized_state.to_owned();
+        }
+    }
     Fmi2Status::Ok
 }
+
+/// Retrieves the size of the serialized state of the FMU
+///
+/// # Parameters
+/// - `slave`: A reference to the FMU slave instance
+/// - `state`: A reference to the state of the FMU
+/// - `size`: A reference to the size of the serialized state
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the size of the serialized state is successfully retrieved.
 
 #[no_mangle]
 pub extern "C" fn fmi2SerializedFMUstateSize(
