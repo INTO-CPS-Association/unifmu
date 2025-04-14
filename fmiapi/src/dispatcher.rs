@@ -382,8 +382,6 @@ impl BackendSubprocess {
         ));
 
         info!("Spawning backend process.");
-        debug!("Launch command: {}", &launch_command[0]);
-        debug!("Environment variables: {:#?}", env_vars);
         let subprocess = match Popen::create(
             launch_command,
             PopenConfig {
