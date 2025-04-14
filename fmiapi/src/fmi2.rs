@@ -222,12 +222,9 @@ pub unsafe extern "C" fn fmi2Instantiate(
         Ok(uid) => uid
     };
 
-    info!("Testing testing, 1 - 2 - 3, preguard");
+    let _span = error_span!("fmi2Instantiate", luid = logger_uid).entered();
 
-    let _guard = error_span!("fmi2Instantiate", luid = logger_uid).entered();
-
-    info!("Testing testing, 1 - 2 - 3");
-    error!("Not actually and error");
+    info!("only luid");
 
     // Erroring out in case the importer tries to instantiate the FMU for
     // Model Exchange as that is not yet implemented.
@@ -255,6 +252,21 @@ pub unsafe extern "C" fn fmi2Instantiate(
             }
         }
     };
+
+    if let Err(e) = logger::add_name_to_callback(logger_uid, instance_name) {
+        match e {
+            logger::LoggerError::SubscriberAlreadySet => {
+                error!("Tracing subscriber unexpectedly already set elsewhere.");
+            }
+            logger::LoggerError::FmuLayerVectorMissing => {
+                error!("The tracing subscriber was missing the FMU logging layers vector.");
+            }
+            _ => {
+                error!("Couldn't add instance name to FMU logger layer with luid {}", logger_uid);
+            }
+        }
+        return None;
+    }
 
     let fmu_guid = match unsafe { fmu_guid.as_ref() } {
         None => {
@@ -350,6 +362,7 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
 
     match slave.as_mut() {
         Some(s) => {
+            let _span = error_span!("fmi2FreeInstance", luid = s.logger_uid).entered();
             // fmi2FreeInstance message is send to backend on drop
             drop(slave)
         }
@@ -364,6 +377,11 @@ pub extern "C" fn fmi2SetDebugLogging(
     n_categories: size_t,
     categories: *const Fmi2String,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetDebugLogging",
+        luid = slave.logger_uid
+    ).entered();
+
     error!("fmi2SetDebugLogging is not implemented by UNIFMU.");
     Fmi2Status::Error
 }
@@ -377,6 +395,11 @@ pub extern "C" fn fmi2SetupExperiment(
     stop_time_defined: Fmi2Boolean,
     stop_time: Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetupExperiment",
+        luid = slave.logger_uid
+    ).entered();
+
     let tolerance = {
         if tolerance_defined != 0 {
             Some(tolerance)
@@ -415,6 +438,11 @@ pub extern "C" fn fmi2SetupExperiment(
 
 #[no_mangle]
 pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2EnterInitializationMode",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2EnterInitializationMode(
             fmi2_messages::Fmi2EnterInitializationMode {},
@@ -432,6 +460,11 @@ pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Stat
 
 #[no_mangle]
 pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2ExitInitializationMode",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2ExitInitializationMode(
             fmi2_messages::Fmi2ExitInitializationMode {},
@@ -449,6 +482,11 @@ pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Statu
 
 #[no_mangle]
 pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2Terminate",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Terminate(
             fmi2_messages::Fmi2Terminate {},
@@ -466,6 +504,11 @@ pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
 
 #[no_mangle]
 pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2Reset",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Reset(
             fmi2_messages::Fmi2Reset {},
@@ -489,6 +532,11 @@ pub extern "C" fn fmi2DoStep(
     step_size: Fmi2Real,
     no_step_prior: Fmi2Boolean,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2DoStep",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2DoStep(
             fmi2_messages::Fmi2DoStep {
@@ -519,6 +567,11 @@ pub extern "C" fn fmi2DoStep(
 
 #[no_mangle]
 pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2CancelStep",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2CancelStep(
             fmi2_messages::Fmi2CancelStep {},
@@ -565,6 +618,11 @@ pub unsafe extern "C" fn fmi2GetReal(
     nvr: size_t,
     values: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetReal",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
@@ -626,6 +684,11 @@ pub unsafe extern "C" fn fmi2GetInteger(
     nvr: size_t,
     values: *mut Fmi2Integer,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetInteger",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
@@ -687,6 +750,11 @@ pub unsafe extern "C" fn fmi2GetBoolean(
     nvr: size_t,
     values: *mut Fmi2Boolean,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetBoolean",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
@@ -762,6 +830,11 @@ pub unsafe extern "C" fn fmi2GetString(
     nvr: size_t,
     values: *mut Fmi2String,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetString",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
 
     let cmd = Fmi2Command {
@@ -847,6 +920,11 @@ pub unsafe extern "C" fn fmi2SetReal(
     nvr: size_t,
     values: *const Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetReal",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
 
@@ -897,6 +975,11 @@ pub unsafe extern "C" fn fmi2SetInteger(
     nvr: size_t,
     values: *const Fmi2Integer,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetInteger",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
 
@@ -952,6 +1035,11 @@ pub unsafe extern "C" fn fmi2SetBoolean(
     nvr: size_t,
     values: *const Fmi2Boolean,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetBoolean",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values: Vec<bool> = unsafe { from_raw_parts(values, nvr) }
         .iter()
@@ -1005,6 +1093,11 @@ pub unsafe extern "C" fn fmi2SetString(
     nvr: size_t,
     values: *const Fmi2String,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetString",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
 
     let conversion_result: Result<Vec<String>, Utf8Error> = unsafe {
@@ -1085,6 +1178,11 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
     direction_known: *const Fmi2Real,
     direction_unknown: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetDirectionalDerivative",
+        luid = slave.logger_uid
+    ).entered();
+
     let references_unknown = unsafe {
         from_raw_parts(unknown_refs, nvr_known)
     }
@@ -1170,6 +1268,11 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
     orders: *const Fmi2Integer,
     values: *const Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetRealInputDerivatives",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
@@ -1226,6 +1329,11 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
     orders: *const Fmi2Integer,
     values: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetRealOutputDerivatives",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -1425,11 +1533,16 @@ pub extern "C" fn fmi2FreeFMUstate(
 #[no_mangle]
 /// We assume that the buffer is sufficiently large
 pub extern "C" fn fmi2SerializeFMUstate(
-    _slave: &Fmi2Slave,
+    slave: &Fmi2Slave,
     state: &SlaveState,
     data: *mut u8,
     size: size_t,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SerializeFMUstate",
+        luid = slave.logger_uid
+    ).entered();
+
     let serialized_state_len = state.bytes.len();
 
     if serialized_state_len > size {
@@ -1473,6 +1586,11 @@ pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
     size: size_t,
     state: *mut *mut SlaveState,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2DeSerializeFMUstate",
+        luid = slave.logger_uid
+    ).entered();
+
     let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
 
     if state.is_null() {
@@ -1504,13 +1622,17 @@ pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
 ///
 /// # Returns
 /// - `Fmi2Status::Ok`: If the operation succeeds and the size of the serialized state is successfully retrieved.
-
 #[no_mangle]
 pub extern "C" fn fmi2SerializedFMUstateSize(
     slave: &Fmi2Slave,
     state: &SlaveState,
     size: &mut size_t,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SerializedFMUstateSize",
+        luid = slave.logger_uid
+    ).entered();
+
     *size = state.bytes.len();
     Fmi2Status::Ok
 }
@@ -1522,6 +1644,11 @@ pub extern "C" fn fmi2GetStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Status,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetStatus",
+        luid = slave.logger_uid
+    ).entered();
+
     match status_kind {
         Fmi2StatusKind::Fmi2DoStepStatus => match slave.dostep_status {
             Some(status) => status,
@@ -1549,6 +1676,11 @@ pub unsafe extern "C" fn fmi2GetRealStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetRealStatus",
+        luid = slave.logger_uid
+    ).entered();
+
     match status_kind {
         Fmi2StatusKind::Fmi2LastSuccessfulTime => match slave.last_successful_time {
             Some(last_time) => {
@@ -1578,6 +1710,11 @@ pub extern "C" fn fmi2GetIntegerStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Integer,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetIntegerStatus",
+        luid = slave.logger_uid
+    ).entered();
+
     error!("fmi2GetIntegerStatus is not implemented by UNIFMU.");
     Fmi2Status::Error
 }
@@ -1588,6 +1725,11 @@ pub extern "C" fn fmi2GetBooleanStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Boolean,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetBooleanStatus",
+        luid = slave.logger_uid
+    ).entered();
+
     error!("fmi2GetBooleanStatus is not implemented by UNIFMU.");
     Fmi2Status::Discard
 }
@@ -1598,6 +1740,11 @@ pub extern "C" fn fmi2GetStringStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2String,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetStringStatus",
+        luid = slave.logger_uid
+    ).entered();
+
     error!("fmi2GetStringStatus is not implemented by UNIFMU.");
     Fmi2Status::Error
 }
