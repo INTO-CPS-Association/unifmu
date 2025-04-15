@@ -13,7 +13,7 @@ use std::{
     }
 };
 
-use tracing::Subscriber;
+use tracing::{Level, Subscriber};
 use tracing_subscriber::{
     fmt, layer::Layered, prelude::*, registry, reload::{self, Handle}, Layer, Registry
 };
@@ -78,8 +78,30 @@ pub fn add_name_to_callback(
     Ok(())
 }
 
+pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
+    let reload_handle = (*FMU_LOGGER_RELOAD_HANDLE)
+        .as_ref()
+        .map_err(|_| LoggerError::SubscriberAlreadySet)?;
+
+    let fmu_layers: Vec<FmuLayer> = reload_handle
+        .clone_current()
+        .ok_or(LoggerError::FmuLayerVectorMissing)?
+        .into_iter()
+        .filter(|layer| {
+            layer.logger_uid != logger_uid
+        })
+        .collect();
+
+    reload_handle.reload(fmu_layers).map_err(|_| LoggerError::FmuLayerVectorMissing)?;
+
+    tracing::callsite::rebuild_interest_cache();
+
+    Ok(())
+}
+
 pub type LoggerResult<T> = Result<T, LoggerError>;
 
+#[derive(Debug)]
 pub enum LoggerError {
     SubscriberAlreadySet,
     FmuLayerVectorMissing,
@@ -161,6 +183,12 @@ impl <S: Subscriber> Layer<S> for FmuLayer{
             let instance_name_bytes = self.instance_name_bytes
                 .clone()
                 .unwrap_or("UNKNOWN INSTANCE\0".as_bytes().to_vec());
+
+            let fmi_status = match *_event.metadata().level() {
+                Level::ERROR => Fmi2Status::Error,
+                Level::WARN => Fmi2Status::Warning,
+                _ => Fmi2Status::Ok
+            };
             
             let message = CStr::from_bytes_until_nul(&message_bytes).unwrap().as_ptr();
             let instance_name = CStr::from_bytes_until_nul(&instance_name_bytes).unwrap().as_ptr();
@@ -168,7 +196,7 @@ impl <S: Subscriber> Layer<S> for FmuLayer{
             unsafe { (self.callback)(
                 self.component_environment.0,
                 instance_name,
-                Fmi2Status::Error,
+                fmi_status,
                 test_category,
                 message
             ) }

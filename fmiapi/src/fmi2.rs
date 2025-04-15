@@ -128,10 +128,14 @@ impl Drop for Fmi2Slave {
         };
 
         match self.dispatcher.send(&cmd) {
-            Ok(_) => {info!("Send free instance message to shut down backend");},
+            Ok(_) => info!("Send free instance message to shut down backend"),
             Err(error) => error!(
                 "Freeing instance failed with error: {:?}.", error
             ),
+        };
+
+        if let Err(error) = logger::remove_callback(self.logger_uid) {
+            error!("Couldn't remove logger callback from tracing subscriber: {:?}.", error);
         };
     }
 }
@@ -223,8 +227,6 @@ pub unsafe extern "C" fn fmi2Instantiate(
     };
 
     let _span = error_span!("fmi2Instantiate", luid = logger_uid).entered();
-
-    info!("only luid");
 
     // Erroring out in case the importer tries to instantiate the FMU for
     // Model Exchange as that is not yet implemented.
