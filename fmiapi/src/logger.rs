@@ -30,25 +30,22 @@ pub fn add_callback(
     component_environment: *const ComponentEnvironment,
     enabled: bool
 ) -> LoggerResult<u64> {
-    let reload_handle = (*FMU_LOGGER_RELOAD_HANDLE)
-        .as_ref()
-        .map_err(|_| LoggerError::SubscriberAlreadySet)?;
-
-    let mut fmu_layers = reload_handle.clone_current()
-        .ok_or(LoggerError::FmuLayerVectorMissing)?;
-
     let logger_layer_id = new_logger_id()?;
 
-    fmu_layers.push(FmuLayer::new(
-        logger_layer_id,
-        callback,
-        SyncComponentEnvironment(component_environment),
-        enabled
-    ));
-
-    reload_handle.reload(fmu_layers).map_err(|_| LoggerError::FmuLayerVectorMissing)?;
-
-    tracing::callsite::rebuild_interest_cache();
+    (*FMU_LOGGER_RELOAD_HANDLE)
+        .as_ref()
+        .map_err(|_| LoggerError::SubscriberAlreadySet)?
+        .modify(|layer_vector| {
+            layer_vector.push(
+                FmuLayer::new(
+                    logger_layer_id,
+                    callback,
+                    SyncComponentEnvironment(component_environment),
+                    enabled
+                )
+            );
+        })
+        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
 
     Ok(logger_layer_id)
 }
@@ -57,46 +54,49 @@ pub fn add_name_to_callback(
     logger_uid: u64,
     instance_name: &str
 ) -> LoggerResult<()> {
-    let reload_handle = (*FMU_LOGGER_RELOAD_HANDLE)
+    let mut layer_found = false;
+
+    (*FMU_LOGGER_RELOAD_HANDLE)
         .as_ref()
-        .map_err(|_| LoggerError::SubscriberAlreadySet)?;
-
-    let fmu_layers: Vec<FmuLayer> = reload_handle
-        .clone_current()
-        .ok_or(LoggerError::FmuLayerVectorMissing)?
-        .into_iter()
-        .map(|mut layer| {
-            if layer.logger_uid == logger_uid {
-                layer.set_instance_name(instance_name);
+        .map_err(|_| LoggerError::SubscriberAlreadySet)?
+        .modify(|layer_vector| {
+            for layer in layer_vector {
+                if layer.logger_uid == logger_uid {
+                    layer_found = true;
+                    layer.set_instance_name(instance_name);
+                }
             }
-            layer
         })
-        .collect();
+        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
 
-    reload_handle.reload(fmu_layers).map_err(|_| LoggerError::FmuLayerVectorMissing)?;
-
-    Ok(())
+    if !layer_found {
+        return Err(LoggerError::LoggerLayerNotFound)
+    } else {
+        return Ok(())
+    }
 }
 
 pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
-    let reload_handle = (*FMU_LOGGER_RELOAD_HANDLE)
+    let mut layer_found = false;
+
+    (*FMU_LOGGER_RELOAD_HANDLE)
         .as_ref()
-        .map_err(|_| LoggerError::SubscriberAlreadySet)?;
-
-    let fmu_layers: Vec<FmuLayer> = reload_handle
-        .clone_current()
-        .ok_or(LoggerError::FmuLayerVectorMissing)?
-        .into_iter()
-        .filter(|layer| {
-            layer.logger_uid != logger_uid
+        .map_err(|_| LoggerError::SubscriberAlreadySet)?
+        .modify(|layer_vector| {
+            if let Some(index) = layer_vector.iter().position(
+                |layer| layer.logger_uid == logger_uid
+            ) {
+                layer_found = true;
+                layer_vector.swap_remove(index);
+            };
         })
-        .collect();
+        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
 
-    reload_handle.reload(fmu_layers).map_err(|_| LoggerError::FmuLayerVectorMissing)?;
-
-    tracing::callsite::rebuild_interest_cache();
-
-    Ok(())
+    if !layer_found {
+        return Err(LoggerError::LoggerLayerNotFound)
+    } else {
+        return Ok(())
+    }
 }
 
 pub type LoggerResult<T> = Result<T, LoggerError>;
@@ -105,7 +105,8 @@ pub type LoggerResult<T> = Result<T, LoggerError>;
 pub enum LoggerError {
     SubscriberAlreadySet,
     FmuLayerVectorMissing,
-    MaxLoggersExceeded
+    MaxLoggersExceeded,
+    LoggerLayerNotFound
 }
 
 static ID_COUNTER: AtomicU64 = AtomicU64::new(1);
@@ -118,10 +119,11 @@ fn new_logger_id() -> LoggerResult<u64> {
     Ok(new_id)
 }
 
-type FmuLayerReloadHandle<'b> = Handle<Vec<FmuLayer>, Layered<Option<fmt::Layer<Registry>>, Registry>>;
+type FmuLayerVector = Vec<FmuLayer>;
+type FmuLayerReloadHandle = Handle<FmuLayerVector, Layered<Option<fmt::Layer<Registry>>, Registry>>;
 
 static FMU_LOGGER_RELOAD_HANDLE: LazyLock<LoggerResult<FmuLayerReloadHandle>> = LazyLock::new(|| {
-    let fmu_layers: Vec<FmuLayer> = Vec::new();
+    let fmu_layers: FmuLayerVector = Vec::new();
 
     let (reloadable, reload_handle) = reload::Layer::new(fmu_layers);
 
@@ -157,6 +159,18 @@ impl FmuLayer{
         instance_name_bytes.push(0);
         self.instance_name_bytes = Some(instance_name_bytes);
     }
+
+    fn probe_context<S: tracing::Subscriber>(
+        &self,
+        ctx: &tracing_subscriber::layer::Context<'_,S>
+    ) -> bool {
+        let id = match ctx.current_span().id() {
+            Some(id) => id,
+            None => return false
+        };
+
+        true
+    }
 }
 
 impl Clone for FmuLayer{
@@ -172,7 +186,15 @@ impl Clone for FmuLayer{
 }
 
 impl <S: Subscriber> Layer<S> for FmuLayer{
-    fn on_event(&self, _event: &tracing::Event<'_>, _ctx: tracing_subscriber::layer::Context<'_, S>) {
+    fn on_event(
+        &self,
+        _event: &tracing::Event<'_>,
+        _ctx: tracing_subscriber::layer::Context<'_, S>
+    ) {
+        if !self.enabled || self.probe_context(&_ctx) {
+            return
+        }
+
         let mut visitor = FmuEventVisitor::new();
         _event.record(&mut visitor);
 

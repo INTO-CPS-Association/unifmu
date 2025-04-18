@@ -12,7 +12,7 @@ use subprocess::{ExitStatus, Popen, PopenConfig};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 use tokio::select;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend};
 
 /// Generic Dispatcher for dispatching FMI commands to arbitrary backend.

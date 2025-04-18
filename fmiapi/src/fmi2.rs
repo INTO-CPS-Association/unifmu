@@ -10,35 +10,25 @@ use crate::fmi2_types::{
     Fmi2Real,
     Fmi2Integer,
     Fmi2Boolean,
-    Fmi2Char,
     Fmi2String,
-    Fmi2Byte,
     Fmi2Status,
-    ComponentEnvironment,
-    Fmi2CallbackLogger,
-    Fmi2StepFinished,
     Fmi2CallbackFunctions
 };
 use crate::logger;
 use crate::spawn::spawn_slave;
 
-use libc::c_double;
 use libc::size_t;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use tracing_subscriber::layer::SubscriberExt;
 use url::Url;
-use tracing::{error, info, warn, span, error_span, Level};
-use tracing_subscriber::{Registry, Layer};
+use tracing::{error, info, warn, error_span};
 
-use std::path::Component;
 use std::{
     ffi::{CStr, CString, NulError},
-    os::raw::{c_char, c_int, c_uint, c_ulonglong, c_void},
+    os::raw::{c_char, c_uint},
     path::Path,
     slice::{from_raw_parts, from_raw_parts_mut},
-    str::Utf8Error,
-    sync::LazyLock
+    str::Utf8Error
 };
 
 impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
@@ -133,7 +123,7 @@ impl Drop for Fmi2Slave {
                 "Freeing instance failed with error: {:?}.", error
             ),
         };
-
+        
         if let Err(error) = logger::remove_callback(self.logger_uid) {
             error!("Couldn't remove logger callback from tracing subscriber: {:?}.", error);
         };
