@@ -677,6 +677,136 @@ fn test_instantiate_python_fmi3_distributed_blackbox() {
 }
 
 #[test]
+fn test_instantiate_multiple_csharp_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_java_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_python_fmi2_local() {
+    let fmu = LocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_csharp_fmi2_local_zipped() {
+    let fmu = ZippedLocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_java_fmi2_local_zipped() {
+    let fmu = ZippedLocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_python_fmi2_local_zipped() {
+    let fmu = ZippedLocalFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_csharp_fmi2_distributed() {
+    let fmu = DistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_java_fmi2_distributed() {
+    let fmu = DistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_python_fmi2_distributed() {
+    let fmu = DistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_csharp_fmi2_distributed_zipped() {
+    let fmu = ZippedDistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::CSharp
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_java_fmi2_distributed_zipped() {
+    let fmu = ZippedDistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Java
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_python_fmi2_distributed_zipped() {
+    let fmu = ZippedDistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
+fn test_instantiate_multiple_python_fmi2_distributed_blackbox() {
+    let fmu = BlackboxDistributedFmu::get_clone(
+        &FmiVersion::Fmi2, 
+        &FmuBackendImplementationLanguage::Python
+    );
+
+    distributed_fmu_python_test(fmu, "fmi2_instantiate_multiple");
+}
+
+#[test]
 fn test_simulate_csharp_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
