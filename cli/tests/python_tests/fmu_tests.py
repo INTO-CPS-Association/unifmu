@@ -281,9 +281,9 @@ def fmi2_instantiate_multiple(fmu_filename, is_zipped):
             instanceName='test_instance'
         )
 
-        fmu_1.instantiate()
-        fmu_2.instantiate()
-        fmu_3.instantiate()
+        fmu_1.instantiate(loggingOn=True)
+        fmu_2.instantiate(loggingOn=True)
+        fmu_3.instantiate(loggingOn=True)
 
     except Exception as e:
         print(f"TEST FAILED - fmi2_instantiate_multiple - instantiation: {e}")

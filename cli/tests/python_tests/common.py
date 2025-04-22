@@ -107,7 +107,7 @@ def instantiating_test(
             instanceName='test_instance'
         )
 
-        fmu.instantiate()
+        fmu.instantiate(loggingOn=True)
 
     except Exception as e:
         print(f"TEST FAILED - {caller} - instantiation: {e}")
