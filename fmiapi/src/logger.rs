@@ -13,9 +13,9 @@ use std::{
     }
 };
 
-use tracing::{Level, Subscriber};
+use tracing::{debug, error, span, warn, Level, Subscriber};
 use tracing_subscriber::{
-    fmt, layer::Layered, prelude::*, registry, reload::{self, Handle}, Layer, Registry
+    fmt, layer::Layered, prelude::*, registry::{self, SpanRef}, reload::{self, Handle}, Layer, Registry
 };
 
 pub fn enable() -> LoggerResult<()> {
@@ -70,9 +70,9 @@ pub fn add_name_to_callback(
         .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
 
     if !layer_found {
-        return Err(LoggerError::LoggerLayerNotFound)
+        Err(LoggerError::LoggerLayerNotFound)
     } else {
-        return Ok(())
+        Ok(())
     }
 }
 
@@ -93,9 +93,9 @@ pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
         .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
 
     if !layer_found {
-        return Err(LoggerError::LoggerLayerNotFound)
+        Err(LoggerError::LoggerLayerNotFound)
     } else {
-        return Ok(())
+        Ok(())
     }
 }
 
@@ -109,6 +109,8 @@ pub enum LoggerError {
     LoggerLayerNotFound
 }
 
+/// ID is just a simple counter under the assumption that users won't run more
+/// than 2^64 instances of one FMU in one simulation. 
 static ID_COUNTER: AtomicU64 = AtomicU64::new(1);
 
 fn new_logger_id() -> LoggerResult<u64> {
@@ -127,7 +129,7 @@ static FMU_LOGGER_RELOAD_HANDLE: LazyLock<LoggerResult<FmuLayerReloadHandle>> = 
 
     let (reloadable, reload_handle) = reload::Layer::new(fmu_layers);
 
-    match registry()
+    match tracing_subscriber::registry()
         .with(Some(fmt::layer()))
         .with(reloadable)
         .try_init() {
@@ -135,6 +137,10 @@ static FMU_LOGGER_RELOAD_HANDLE: LazyLock<LoggerResult<FmuLayerReloadHandle>> = 
             Err(_) => Err(LoggerError::SubscriberAlreadySet)
     }
 });
+
+struct EnabledForLayer { 
+    logger_uid: u64
+}
 
 struct FmuLayer{
     logger_uid: u64,
@@ -159,17 +165,41 @@ impl FmuLayer{
         instance_name_bytes.push(0);
         self.instance_name_bytes = Some(instance_name_bytes);
     }
+    
+    fn logger_uid_in_attributes(&self, attrs: &span::Attributes<'_>) -> bool {
+        let mut visitor = FmuSpanVisitor::new();
+        attrs.values().record(&mut visitor);
+        visitor.luid.is_some_and(|luid| luid == self.logger_uid)
+    }
 
-    fn probe_context<S: tracing::Subscriber>(
+    fn interested_in_parent_of_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> (
         &self,
-        ctx: &tracing_subscriber::layer::Context<'_,S>
+        span: &SpanRef<'_, S>
     ) -> bool {
-        let id = match ctx.current_span().id() {
-            Some(id) => id,
-            None => return false
-        };
+        span.parent()
+            .is_some_and(|parent_span|
+                self.interested_in_span(&parent_span)
+            )
+    }
 
-        true
+    fn interested_in_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> (
+        &self,
+        span: &SpanRef<'_, S>
+    ) -> bool {
+        span.extensions()
+            .get::<EnabledForLayer>()
+            .is_some_and(|enabled_for_layer|
+                enabled_for_layer.logger_uid == self.logger_uid
+            )
+    }
+
+    fn interested_in_event<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> (
+        &self,
+        event: &tracing::Event<'_>,
+        ctx: &tracing_subscriber::layer::Context<'_, S>
+    ) -> bool {
+        ctx.event_span(event)
+            .is_some_and(|span| self.interested_in_span(&span))
     }
 }
 
@@ -185,13 +215,29 @@ impl Clone for FmuLayer{
     }
 }
 
-impl <S: Subscriber> Layer<S> for FmuLayer{
+impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> Layer<S> for FmuLayer{
+    fn on_new_span(
+        &self,
+        attrs: &span::Attributes<'_>,
+        id: &span::Id,
+        ctx: tracing_subscriber::layer::Context<'_, S>
+    ) {
+        if let Some(span) = ctx.span(id) {
+            if self.interested_in_parent_of_span(&span)
+            || self.logger_uid_in_attributes(attrs)
+            {
+                span.extensions_mut().insert(EnabledForLayer{ logger_uid: self.logger_uid });
+            }
+        }
+        
+    }
+
     fn on_event(
         &self,
         _event: &tracing::Event<'_>,
         _ctx: tracing_subscriber::layer::Context<'_, S>
     ) {
-        if !self.enabled || self.probe_context(&_ctx) {
+        if !(self.enabled && self.interested_in_event(_event, &_ctx)) {
             return
         }
 
@@ -222,6 +268,44 @@ impl <S: Subscriber> Layer<S> for FmuLayer{
                 test_category,
                 message
             ) }
+        }
+    }
+}
+
+struct FmuSpanVisitor{
+    luid: Option<u64>
+}
+
+impl FmuSpanVisitor{
+    fn new() -> Self{
+        Self {luid: None}
+    }
+}
+
+impl tracing::field::Visit for FmuSpanVisitor{
+    fn record_debug(
+        &mut self,
+        field: &tracing::field::Field,
+        value: &dyn std::fmt::Debug
+    ) {
+        if field.name() == "luid" {
+            warn!("luid recorded as Debug with value: {value:?}");
+            if let Ok(luid) = format!("{value:?}").parse::<u64>() {
+                warn!("debug luid coerced into u64, using as actual luid");
+                self.luid = Some(luid);
+            } else {
+                error!("debug luid could not be coerced into u64");
+            }
+        }
+    }
+
+    fn record_u64(
+        &mut self,
+        field: &tracing::field::Field,
+        value: u64
+    ) {
+        if field.name() == "luid" {
+            self.luid = Some(value);
         }
     }
 }
