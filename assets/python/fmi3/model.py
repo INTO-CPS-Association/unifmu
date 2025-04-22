@@ -183,6 +183,7 @@ class Model:
 
     # ================= FMI3 =================
 
+    # ================= doStep and updateDiscreteStates =================
     def fmi3DoStep(
             self,
             current_communication_point: float,
@@ -203,6 +204,23 @@ class Model:
             early_return,
             last_successful_time,
         )
+    
+    def fmi3UpdateDiscreteStates(self):
+        status = Fmi3Status.ok
+        discrete_states_need_update = False
+        terminate_simulation = False
+        nominals_continuous_states_changed = False
+        values_continuous_states_changed = False
+        next_event_time_defined = True
+        next_event_time = 1.0
+
+
+        self._update_clocked_outputs()
+
+        return (status, discrete_states_need_update, terminate_simulation, nominals_continuous_states_changed,
+                values_continuous_states_changed, next_event_time_defined, next_event_time)
+
+    # ================= Initialization, Enter, Termination, and Reset =================
 
     def fmi3EnterInitializationMode(
             self,
@@ -319,10 +337,13 @@ class Model:
         self._update_clocked_outputs()
         return Fmi3Status.ok
 
+    # ================= Serialization =================
+
     def fmi3SerializeFmuState(self):
 
         bytes = pickle.dumps(
             (
+                self.state,
                 self.float32_a,
                 self.float32_b,
                 self.float64_a,
@@ -378,6 +399,7 @@ class Model:
 
     def fmi3DeserializeFmuState(self, bytes: bytes):
         (
+            state,
             float32_a,
             float32_b,
             float64_a,
@@ -428,6 +450,7 @@ class Model:
             clock_reference_to_interval,
             clock_reference_to_shift,
         ) = pickle.loads(bytes)
+        self.state = state
         self.float32_a = float32_a
         self.float32_b = float32_b
         self.float64_a = float64_a
@@ -483,6 +506,8 @@ class Model:
         self._update_clocked_outputs()
 
         return Fmi3Status.ok
+    
+    # ================= Getters =================
 
     def fmi3GetFloat32(self, value_references):
         return self._get_value(value_references)
@@ -571,6 +596,8 @@ class Model:
             resolutions.append(denominator)
 
         return Fmi3Status.ok, counters, resolutions
+    
+    # ================= Setters =================
 
     def fmi3SetFloat32(self, value_references, values):
         return self._set_value(value_references, values)
@@ -636,20 +663,7 @@ class Model:
             self.clock_reference_to_shift[r] = float(counters[idx])/float(resolutions[idx])
         return Fmi3Status.ok
 
-    def fmi3UpdateDiscreteStates(self):
-        status = Fmi3Status.ok
-        discrete_states_need_update = False
-        terminate_simulation = False
-        nominals_continuous_states_changed = False
-        values_continuous_states_changed = False
-        next_event_time_defined = True
-        next_event_time = 1.0
-
-
-        self._update_clocked_outputs()
-
-        return (status, discrete_states_need_update, terminate_simulation, nominals_continuous_states_changed,
-                values_continuous_states_changed, next_event_time_defined, next_event_time)
+    
 
     # ================= Helpers =================
 
@@ -669,7 +683,7 @@ class Model:
                 setattr(self, self.all_references[r], v)
         else:
             for r, v in zip(references, values):
-                if ((self.event_mode_used) and (r in self.tunable_parameters)) or (r in self.clocked_variables) or (r in self.tunable_structural_parameters) or (r in self.parameters):
+                if ((self.event_mode_used) and (r in self.all_parameters)) or (r in self.clocked_variables):
                     return Fmi3Status.error              
                 setattr(self, self.reference_to_attribute[r], v)
         return Fmi3Status.ok
