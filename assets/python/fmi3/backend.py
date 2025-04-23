@@ -250,7 +250,7 @@ if __name__ == "__main__":
             result.status = model.fmi3SetString(data.value_references, data.values)
         elif group == "Fmi3SetBinary":
             result = Fmi3StatusReturn()
-            result.status = model.fmi3SetBinary(data.value_references, data.values)
+            result.status = model.fmi3SetBinary(data.value_references, data.value_sizes, data.values)
         elif group == "Fmi3SetClock":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetClock(data.value_references, data.values)

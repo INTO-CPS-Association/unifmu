@@ -159,7 +159,7 @@ public class Backend {
                         break;
 
                     case FMI2EXITINITIALIZATIONMODE: {
-                        var res = model.fmi2EnterInitializationMode();
+                        var res = model.fmi2ExitInitializationMode();
                         reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
                                 .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
                                 .build();

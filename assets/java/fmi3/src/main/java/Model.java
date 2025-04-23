@@ -10,8 +10,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 
+
 public class Model {
-    
+    // No valid datatypes between Protobuf and Java for int8, uint8, int16, uint16 -> all handled as Integer
+    // No valid datatypes in Java for uint64 -> handled as Long
+
     private String instance_name = "";
     private String instantiation_token = "";
     private String resource_path = "";
@@ -19,39 +22,39 @@ public class Model {
     private Boolean logging_on = false;
     private Boolean event_mode_used = false;
     private Boolean early_return_allowed = false;
-    private Long[] required_intermediate_variables = new Long[] {0};
+    private List<Integer> required_intermediate_variables;
 
-    private FMIState state = FMIState.FMIInstantiatedState;
-    public Float float32_a = 0;
-    public Float float32_b = 0;
-    public Float float32_c = 0;
+    private int state = FMIState.FMIInstantiatedState;
+    public Float float32_a = 0.0f;
+    public Float float32_b = 0.0f;
+    public Float float32_c = 0.0f;
     public Double float64_a = 0.0;
     public Double float64_b = 0.0;
     public Double float64_c = 0.0;
-    public Byte int8_a = 0;
-    public Byte int8_b = 0;
-    public Byte int8_c = 0;
-    public Short uint8_a = 0; // No valid datatype in Java
-    public Short uint8_b = 0; // No valid datatype in Java
-    public Short uint8_c = 0; // No valid datatype in Java
-    public Short int16_a = 0;
-    public Short int16_b = 0;
-    public Short int16_c = 0;
-    public Integer uint16_a = 0; // No valid datatype in Java
-    public Integer uint16_b = 0; // No valid datatype in Java
-    public Integer uint16_c = 0; // No valid datatype in Java
+    public Integer int8_a = 0;
+    public Integer int8_b = 0;
+    public Integer int8_c = 0;
+    public Integer uint8_a = 0; 
+    public Integer uint8_b = 0; 
+    public Integer uint8_c = 0; 
+    public Integer int16_a = 0;
+    public Integer int16_b = 0;
+    public Integer int16_c = 0;
+    public Integer uint16_a = 0; 
+    public Integer uint16_b = 0; 
+    public Integer uint16_c = 0; 
     public Integer int32_a = 0;
     public Integer int32_b = 0;
     public Integer int32_c = 0;
-    public Long uint32_a = 0; // No valid datatype in Java
-    public Long uint32_b = 0; // No valid datatype in Java
-    public Long uint32_c = 0; // No valid datatype in Java
-    public Long int64_a = 0;
-    public Long int64_b = 0;
-    public Long int64_c = 0;
-    public BigInteger uint64_a = 0; // No valid datatype in Java
-    public BigInteger uint64_b = 0; // No valid datatype in Java
-    public BigInteger uint64_c = 0; // No valid datatype in Java
+    public Integer uint32_a = 0; 
+    public Integer uint32_b = 0; 
+    public Integer uint32_c = 0; 
+    public Long int64_a = 0L;
+    public Long int64_b = 0L;
+    public Long int64_c = 0L;
+    public Long uint64_a = 0L; 
+    public Long uint64_b = 0L; 
+    public Long uint64_c = 0L; 
     public Boolean boolean_a = false;
     public Boolean boolean_b = false;
     public Boolean boolean_c = false;
@@ -68,28 +71,28 @@ public class Model {
         (byte) 0b00000000
     };
 
-    public Float float32_tunable_parameter = 0;
+    public Float float32_tunable_parameter = 0.0f;
     public Double  float64_tunable_parameter = 0.0;
-    public Byte int8_tunable_parameter = 0;
-    public Short uint8_tunable_parameter = 0;
-    public Short int16_tunable_parameter = 0;
+    public Integer int8_tunable_parameter = 0;
+    public Integer uint8_tunable_parameter = 0;
+    public Integer int16_tunable_parameter = 0;
     public Integer uint16_tunable_parameter = 0;
     public Integer int32_tunable_parameter = 0;
-    public Long uint32_tunable_parameter = 0;
-    public Long int64_tunable_parameter = 0;
-    public BigInteger uint64_tunable_parameter = 0;
+    public Integer uint32_tunable_parameter = 0;
+    public Long int64_tunable_parameter = 0L;
+    public Long uint64_tunable_parameter = 0L;
     public Boolean boolean_tunable_parameter = false;
     public String string_tunable_parameter = "";
     public byte[] binary_tunable_parameter = new byte[] {
         (byte) 0b00000000
     };
-    public BigInteger uint64_tunable_structural_parameter = 5;
-    public Float float32_vector_using_tunable_structural_parameter = new Float[] {
-        0.1,
-        0.2,
-        0.3,
-        0.4,
-        0.5
+    public Long uint64_tunable_structural_parameter = 5L;
+    public Float[] float32_vector_using_tunable_structural_parameter = new Float[] {
+        0.1f,
+        0.2f,
+        0.3f,
+        0.4f,
+        0.5f
     };
     public Boolean clock_a = false;
     public Boolean clock_b = false;
@@ -114,7 +117,7 @@ public class Model {
 
     private ArrayList<Field> all_references;
 
-    public Model(String instance_name, String instantiation_token, String resource_path, Boolean visible, Boolean logging_on, Boolean event_mode_used, Boolean early_return_allowed, Long[] required_intermediate_variables) throws Exception {
+    public Model(String instance_name, String instantiation_token, String resource_path, Boolean visible, Boolean logging_on, Boolean event_mode_used, Boolean early_return_allowed, List<Integer> required_intermediate_variables) throws Exception {
 
         super();
 
@@ -261,17 +264,17 @@ public class Model {
         return status;
     }
 
-    public Fmi3Status fmi3SetInt8(Iterable<Integer> references, Iterable<Byte> values) throws Exception {
+    public Fmi3Status fmi3SetInt8(Iterable<Integer> references, Iterable<Integer> values) throws Exception {
         Fmi3Status status = SetValue(references, values);
         return status;
     }
 
-    public Fmi3Status fmi3SetUInt8(Iterable<Integer> references, Iterable<Short> values) throws Exception {
+    public Fmi3Status fmi3SetUInt8(Iterable<Integer> references, Iterable<Integer> values) throws Exception {
         Fmi3Status status = SetValue(references, values);
         return status;
     }
 
-    public Fmi3Status fmi3SetInt16(Iterable<Integer> references, Iterable<Short> values) throws Exception {
+    public Fmi3Status fmi3SetInt16(Iterable<Integer> references, Iterable<Integer> values) throws Exception {
         Fmi3Status status = SetValue(references, values);
         return status;
     }
@@ -286,7 +289,7 @@ public class Model {
         return status;
     }
 
-    public Fmi3Status fmi3SetUInt32(Iterable<Integer> references, Iterable<Long> values) throws Exception {
+    public Fmi3Status fmi3SetUInt32(Iterable<Integer> references, Iterable<Integer> values) throws Exception {
         Fmi3Status status = SetValue(references, values);
         return status;
     }
@@ -296,7 +299,7 @@ public class Model {
         return status;
     }
 
-    public Fmi3Status fmi3SetUInt64(Iterable<Integer> references, Iterable<BigInteger> values) throws Exception {
+    public Fmi3Status fmi3SetUInt64(Iterable<Integer> references, Iterable<Long> values) throws Exception {
         Fmi3Status status = SetValue(references, values);
         return status;
     }
@@ -316,7 +319,8 @@ public class Model {
         return status;
     }
 
-    public Fmi3Status fmi3SetBinary(Iterable<Integer> references, Iterable<Byte[]> values) throws Exception {
+    public Fmi3Status fmi3SetBinary(Iterable<Integer> references, Iterable<Long> valueSizes, Iterable<byte[]> values) throws Exception {
+        // Store 'valueSizes' somewhere if needed
         Fmi3Status status = SetValue(references, values);
         return status;
     }
@@ -329,8 +333,8 @@ public class Model {
     }
 
     public Fmi3Status fmi3SetIntervalDecimal(Iterable<Integer> references, Iterable<Double> intervals) {
-        Iterator i1 = references.iterator();
-        Iterator i2 = intervals.iterator();
+        Iterator<Integer> i1 = references.iterator();
+        Iterator<Double> i2 = intervals.iterator();
         while (i1.hasNext() && i2.hasNext()) {
             Integer ref = i1.next();
             Double interval = i2.next();
@@ -339,10 +343,10 @@ public class Model {
         return Fmi3Status.OK;
     }
 
-    public Fmi3Status fmi3SetIntervalFraction(Iterable<Integer> references, Iterable<BigInteger> counters, Iterable<BigInteger> resolutions) {
-        Iterator i1 = references.iterator();
-        Iterator i2 = counters.iterator();
-        Iterator i3 = resolutions.iterator();
+    public Fmi3Status fmi3SetIntervalFraction(Iterable<Integer> references, Iterable<Long> counters, Iterable<Long> resolutions) {
+        Iterator<Integer> i1 = references.iterator();
+        Iterator<Long> i2 = counters.iterator();
+        Iterator<Long> i3 = resolutions.iterator();
         while (i1.hasNext() && i2.hasNext() && i3.hasNext()) {
             Integer ref = i1.next();
             Double interval = i2.next().doubleValue() / i3.next().doubleValue();
@@ -352,8 +356,8 @@ public class Model {
     }
 
     public Fmi3Status fmi3SetShiftDecimal(Iterable<Integer> references, Iterable<Double> shifts) {
-        Iterator i1 = references.iterator();
-        Iterator i2 = shifts.iterator();
+        Iterator<Integer> i1 = references.iterator();
+        Iterator<Double> i2 = shifts.iterator();
         while (i1.hasNext() && i2.hasNext()) {
             Integer ref = i1.next();
             Double shift = i2.next();
@@ -362,14 +366,14 @@ public class Model {
         return Fmi3Status.OK;
     }
 
-    public Fmi3Status fmi3SetShiftFraction(Iterable<Integer> references, Iterable<BigInteger> counters, Iterable<BigInteger> resolutions) {
-        Iterator i1 = references.iterator();
-        Iterator i2 = counters.iterator();
-        Iterator i3 = resolutions.iterator();
+    public Fmi3Status fmi3SetShiftFraction(Iterable<Integer> references, Iterable<Long> counters, Iterable<Long> resolutions) {
+        Iterator<Integer> i1 = references.iterator();
+        Iterator<Long> i2 = counters.iterator();
+        Iterator<Long> i3 = resolutions.iterator();
         while (i1.hasNext() && i2.hasNext() && i3.hasNext()) {
             Integer ref = i1.next();
             Double shift = i2.next().doubleValue() / i3.next().doubleValue();
-            clockReferenceToShift.put(ref, shift);
+            clock_reference_to_shift.put(ref, shift);
         }
         return Fmi3Status.OK;
     }
@@ -387,18 +391,18 @@ public class Model {
         return pair;
     }
 
-    public Fmi3GetValuePair<Byte> fmi3GetInt8(Iterable<Integer> references) throws Exception {
-        Fmi3GetValuePair<Byte> pair = this.GetValue(references);
+    public Fmi3GetValuePair<Integer> fmi3GetInt8(Iterable<Integer> references) throws Exception {
+        Fmi3GetValuePair<Integer> pair = this.GetValue(references);
         return pair;
     }
 
-    public Fmi3GetValuePair<Short> fmi3GetUInt8(Iterable<Integer> references) throws Exception {
-        Fmi3GetValuePair<Short> pair = this.GetValue(references);
+    public Fmi3GetValuePair<Integer> fmi3GetUInt8(Iterable<Integer> references) throws Exception {
+        Fmi3GetValuePair<Integer> pair = this.GetValue(references);
         return pair;
     }
 
-    public Fmi3GetValuePair<Short> fmi3GetInt16(Iterable<Integer> references) throws Exception {
-        Fmi3GetValuePair<Short> pair = this.GetValue(references);
+    public Fmi3GetValuePair<Integer> fmi3GetInt16(Iterable<Integer> references) throws Exception {
+        Fmi3GetValuePair<Integer> pair = this.GetValue(references);
         return pair;
     }
 
@@ -412,8 +416,8 @@ public class Model {
         return pair;
     }
 
-    public Fmi3GetValuePair<Long> fmi3GetUInt32(Iterable<Integer> references) throws Exception {
-        Fmi3GetValuePair<Long> pair = this.GetValue(references);
+    public Fmi3GetValuePair<Integer> fmi3GetUInt32(Iterable<Integer> references) throws Exception {
+        Fmi3GetValuePair<Integer> pair = this.GetValue(references);
         return pair;
     }
 
@@ -422,8 +426,8 @@ public class Model {
         return pair;
     }
 
-    public Fmi3GetValuePair<BigInteger> fmi3GetUInt64(Iterable<Integer> references) throws Exception {
-        Fmi3GetValuePair<BigInteger> pair = this.GetValue(references);
+    public Fmi3GetValuePair<Long> fmi3GetUInt64(Iterable<Integer> references) throws Exception {
+        Fmi3GetValuePair<Long> pair = this.GetValue(references);
         return pair;
     }
 
@@ -437,8 +441,8 @@ public class Model {
         return pair;
     }
 
-    public Fmi3GetValuePair<Byte[]> fmi3GetBinary(Iterable<Integer> references) throws Exception {
-        Fmi3GetValuePair<Byte[]> pair = this.GetValue(references);
+    public Fmi3GetValuePair<byte[]> fmi3GetBinary(Iterable<Integer> references) throws Exception {
+        Fmi3GetValuePair<byte[]> pair = this.GetValue(references);
         return pair;
     }
 
@@ -447,59 +451,59 @@ public class Model {
         return pair;
     }
 
-    public Fmi3GetIntervalDecimalPair<List<BigDecimal>, List<Integer>> fmi3GetIntervalDecimal(Iterable<Integer> references) {
+    public Fmi3GetIntervalDecimalPair<Double,Integer> fmi3GetIntervalDecimal(Iterable<Integer> references) {
         List<Double> intervals = new ArrayList<>();
         List<Integer> qualifiers = new ArrayList<>();
-        Iterator i1 = references.iterator();
+        Iterator<Integer> i1 = references.iterator();
         while (i1.hasNext()) {
             intervals.add(clock_reference_to_interval.get(i1.next()));
             qualifiers.add(2);
         }
     
-        return new Fmi3GetIntervalDecimalPair<>(Fmi3Status.OK, intervals, qualifiers);
+        return new Fmi3GetIntervalDecimalPair<Double,Integer>(Fmi3Status.OK, intervals, qualifiers);
     }
 
-    public Fmi3GetIntervalFractionPair<List<BigInteger>, List<BigInteger>, List<Integer>> fmi3GetIntervalFraction(Iterable<Integer> references) {
-        List<BigInteger> numerators = new ArrayList<>();
-        List<BigInteger> denominators = new ArrayList<>();
+    public Fmi3GetIntervalFractionPair<Long,Integer> fmi3GetIntervalFraction(Iterable<Integer> references) {
+        List<Long> counters = new ArrayList<>();
+        List<Long> resolutions = new ArrayList<>();
         List<Integer> qualifiers = new ArrayList<>();
     
-        Iterator i1 = references.iterator();
+        Iterator<Integer> i1 = references.iterator();
         while (i1.hasNext()) {
-            String decimal = clock_reference_to_interval.get(i1.next()).toPlainString();
+            String decimal = String.valueOf(clock_reference_to_interval.get(i1.next()));
             Fraction fraction = new Fraction(decimal);
-            numerators.add(fraction.getNumerator());
-            denominators.add(fraction.getDenominator());
+            counters.add(fraction.getNumerator());
+            resolutions.add(fraction.getDenominator());
             qualifiers.add(2);
         }
     
-        return new Fmi3GetIntervalFractionPair<>(Fmi3Status.OK, numerators, denominators, qualifiers);
+        return new Fmi3GetIntervalFractionPair<Long,Integer>(Fmi3Status.OK, counters, resolutions, qualifiers);
     }
 
-    public Fmi3GetShiftDecimalPair<List<BigDecimal>> fmi3GetShiftDecimal(Iterable<Integer> references) {
-        List<BigDecimal> shifts = new ArrayList<>();
+    public Fmi3GetShiftDecimalPair<Double> fmi3GetShiftDecimal(Iterable<Integer> references) {
+        List<Double> shifts = new ArrayList<>();
     
-        Iterator i1 = references.iterator();
+        Iterator<Integer> i1 = references.iterator();
         while (i1.hasNext()) {
             shifts.add(clock_reference_to_shift.get(i1.next()));
         }
     
-        return new Fmi3GetShiftDecimalPair<>(Fmi3Status.OK, shifts);
+        return new Fmi3GetShiftDecimalPair<Double>(Fmi3Status.OK, shifts);
     }
 
-    public Fmi3GetShiftFractionPair<List<BigInteger>, List<BigInteger>> fmi3GetShiftFraction(Iterable<Integer> references) {
-        List<BigInteger> numerators = new ArrayList<>();
-        List<BigInteger> denominators = new ArrayList<>();
+    public Fmi3GetShiftFractionPair<Long> fmi3GetShiftFraction(Iterable<Integer> references) {
+        List<Long> counters = new ArrayList<>();
+        List<Long> resolutions = new ArrayList<>();
     
-        Iterator i1 = references.iterator();
+        Iterator<Integer> i1 = references.iterator();
         while (i1.hasNext()) {
-            String decimal = clock_reference_to_shift.get(i1.next()).toPlainString();
+            String decimal = String.valueOf(clock_reference_to_shift.get(i1.next()));
             Fraction fraction = new Fraction(decimal);
-            numerators.add(fraction.getNumerator());
-            denominators.add(fraction.getDenominator());
+            counters.add(fraction.getNumerator());
+            resolutions.add(fraction.getDenominator());
         }
     
-        return new Fmi3GetShiftFractionPair<>(Fmi3Status.OK, numerators, denominators);
+        return new Fmi3GetShiftFractionPair<Long>(Fmi3Status.OK, counters, resolutions);
     }
 
     /* Initialization, Enter, Termination, and Reset */
@@ -552,9 +556,9 @@ public class Model {
 
     public Fmi3Status fmi3Reset() {
         this.state = FMIState.FMIInstantiatedState;
-        this.float32_a = 0;
-        this.float32_b = 0;
-        this.float32_c = 0;
+        this.float32_a = 0.0f;
+        this.float32_b = 0.0f;
+        this.float32_c = 0.0f;
         this.float64_a = 0.0;
         this.float64_b = 0.0;
         this.float64_c = 0.0;
@@ -576,12 +580,12 @@ public class Model {
         this.uint32_a = 0; 
         this.uint32_b = 0; 
         this.uint32_c = 0; 
-        this.int64_a = 0;
-        this.int64_b = 0;
-        this.int64_c = 0;
-        this.uint64_a = 0; 
-        this.uint64_b = 0; 
-        this.uint64_c = 0; 
+        this.int64_a = 0L;
+        this.int64_b = 0L;
+        this.int64_c = 0L;
+        this.uint64_a = 0L; 
+        this.uint64_b = 0L; 
+        this.uint64_c = 0L; 
         this.boolean_a = false;
         this.boolean_b = false;
         this.boolean_c = false;
@@ -598,7 +602,7 @@ public class Model {
             (byte) 0b00000000
         };
 
-        this.float32_tunable_parameter = 0;
+        this.float32_tunable_parameter = 0.0f;
         this.float64_tunable_parameter = 0.0;
         this.int8_tunable_parameter = 0;
         this.uint8_tunable_parameter = 0;
@@ -606,20 +610,20 @@ public class Model {
         this.uint16_tunable_parameter = 0;
         this.int32_tunable_parameter = 0;
         this.uint32_tunable_parameter = 0;
-        this.int64_tunable_parameter = 0;
-        this.uint64_tunable_parameter = 0;
+        this.int64_tunable_parameter = 0L;
+        this.uint64_tunable_parameter = 0L;
         this.boolean_tunable_parameter = false;
         this.string_tunable_parameter = "";
         this.binary_tunable_parameter = new byte[] {
             (byte) 0b00000000
         };
-        this.uint64_tunable_structural_parameter = 5;
+        this.uint64_tunable_structural_parameter = 5L;;
         this.float32_vector_using_tunable_structural_parameter = new Float[] {
-            0.1,
-            0.2,
-            0.3,
-            0.4,
-            0.5
+            0.1f,
+            0.2f,
+            0.3f,
+            0.4f,
+            0.5f
         };
         this.clock_a = false;
         this.clock_b = false;
@@ -760,12 +764,12 @@ public class Model {
             var v = i2.next();
 
             if (this.state == FMIState.FMIConfigurationModeState || this.state == FMIState.FMIReconfigurationModeState){
-                if ((this.clocked_variables.contains(r)) || (this.reference_to_attribute.contains(r))){
+                if ((this.clocked_variables.contains(r)) || (this.references_to_attributes.contains(r))){
                     return Fmi3Status.Error;
                 }                    
             }
             else if (this.state == FMIState.FMIEventModeState){
-                if ((this.reference_to_attribute.contains(r)) || (this.tunable_structural_parameters.contains(r))){
+                if ((this.references_to_attributes.contains(r)) || (this.tunable_structural_parameters.contains(r))){
                     return Fmi3Status.Error;
                 }
             }
@@ -784,21 +788,16 @@ public class Model {
     }
 
     private void update_outputs() {
-        this.real_c = this.real_a + this.real_b;
-        this.integer_c = this.integer_a + this.integer_b;
-        this.boolean_c = this.boolean_a || this.boolean_b;
-        this.string_c = this.string_a + this.string_b;
-
         this.float32_c = this.float32_a + this.float32_b;
         this.float64_c = this.float64_a + this.float64_b;
-        this.int8_c = this.int8_a + this.int8_b;
-        this.uint8_c = this.uint8_a + this.uint8_b;
-        this.int16_c = this.int16_a + this.int16_b;
+        this.int8_c = (this.int8_a + this.int8_b);
+        this.uint8_c = (this.uint8_a + this.uint8_b);
+        this.int16_c = (this.int16_a + this.int16_b);
         this.uint16_c = this.uint16_a + this.uint16_b;
         this.int32_c = this.int32_a + this.int32_b;
         this.uint32_c = this.uint32_a + this.uint32_b;
         this.int64_c = this.int64_a + this.int64_b;
-        this.uint64_c = this.uint64_a.add(this.uint64_b);
+        this.uint64_c = this.uint64_a + this.uint64_b;
         this.boolean_c = this.boolean_a || this.boolean_b;
         this.string_c = this.string_a + this.string_b;
         int length = Math.min(this.binary_a.length, this.binary_b.length);
@@ -869,12 +868,12 @@ public class Model {
         }
     }
 
-    class Fmi3GetIntervalDecimalPair<T> {
+    class Fmi3GetIntervalDecimalPair<T, U> {
         Fmi3Status status;
         List<T> intervals;
-        List<T> qualifiers;
+        List<U> qualifiers;
 
-        Fmi3GetIntervalDecimalPair(Fmi3Status status, List<T> intervals, List<T> qualifiers)
+        Fmi3GetIntervalDecimalPair(Fmi3Status status, List<T> intervals, List<U> qualifiers)
 
         {
             this.status = status;
@@ -883,18 +882,18 @@ public class Model {
         }
     }
 
-    class Fmi3GetIntervalFractionPair<T> {
+    class Fmi3GetIntervalFractionPair<T, U> {
         Fmi3Status status;
-        List<T> numerators;
-        List<T> denominators;
-        List<T> qualifiers;
+        List<T> counters;
+        List<T> resolutions;
+        List<U> qualifiers;
 
-        Fmi3GetIntervalFractionPair(Fmi3Status status, List<T> numerators, List<T> denominators, List<T> qualifiers)
+        Fmi3GetIntervalFractionPair(Fmi3Status status, List<T> counters, List<T> resolutions, List<U> qualifiers)
 
         {
             this.status = status;
-            this.numerators = numerators;
-            this.denominators = denominators;
+            this.counters = counters;
+            this.resolutions = resolutions;
             this.qualifiers = qualifiers;
         }
     }
@@ -913,15 +912,15 @@ public class Model {
 
     class Fmi3GetShiftFractionPair<T> {
         Fmi3Status status;
-        List<T> numerators;
-        List<T> denominators;
+        List<T> counters;
+        List<T> resolutions;
 
-        Fmi3GetShiftFractionPair(Fmi3Status status, List<T> numerators, List<T> denominators)
+        Fmi3GetShiftFractionPair(Fmi3Status status, List<T> counters, List<T> resolutions)
 
         {
             this.status = status;
-            this.numerators = numerators;
-            this.denominators = denominators;
+            this.counters = counters;
+            this.resolutions = resolutions;
         }
     }    
 
@@ -958,8 +957,8 @@ public class Model {
     }
 
     class Fraction {
-        private final BigInteger numerator;
-        private final BigInteger denominator;
+        private final Long numerator;
+        private final Long denominator;
     
         public Fraction(String decimal) {
             BigDecimal bd = new BigDecimal(decimal);
@@ -968,15 +967,15 @@ public class Model {
             BigInteger num = bd.multiply(new BigDecimal(den)).toBigIntegerExact();
     
             BigInteger gcd = num.gcd(den);
-            this.numerator = num.divide(gcd);
-            this.denominator = den.divide(gcd);
+            this.numerator = num.divide(gcd).longValue();
+            this.denominator = den.divide(gcd).longValue();
         }
     
-        public BigInteger getNumerator() {
+        public Long getNumerator() {
             return numerator;
         }
     
-        public BigInteger getDenominator() {
+        public Long getDenominator() {
             return denominator;
         }
     }

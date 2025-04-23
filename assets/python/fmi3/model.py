@@ -635,7 +635,8 @@ class Model:
     def fmi3SetString(self, value_references, values):
         return self._set_value(value_references, values)
 
-    def fmi3SetBinary(self, value_references, values):
+    def fmi3SetBinary(self, value_references, value_sizes, values):
+        # Store 'value_sizes' somewhere if needed
         return self._set_value(value_references, values)
 
     def fmi3SetClock(self, value_references, values):

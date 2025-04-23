@@ -367,7 +367,7 @@ message Fmi3UpdateDiscreteStatesReturn {
 enum Fmi3IntervalQualifier {
   FMI3_INTERVALNOTYETKNOWN = 0;
   FMI3_INTERVALUNCHANGED=1;
-  FMI3_INTEVALCHANGED=2;
+  FMI3_INTERVALCHANGED=2;
 }
 
 message Fmi3GetIntervalDecimal {
