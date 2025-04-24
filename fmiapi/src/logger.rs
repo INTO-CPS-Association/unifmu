@@ -3,7 +3,6 @@ use crate::fmi2_types::{
     Fmi2CallbackLogger,
     Fmi2LogCategory,
     Fmi2Status,
-    Fmi2String,
     SyncComponentEnvironment
 };
 
@@ -259,28 +258,43 @@ impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'loo
         println!("This event has category {}", category);
 
         if let Some(message) = visitor.message {
-            let mut message_bytes = message.into_bytes();
-            message_bytes.push(0);
-
             let instance_name_bytes = self.instance_name_bytes
                 .clone()
                 .unwrap_or("UNKNOWN INSTANCE\0".as_bytes().to_vec());
+
+            let mut category_bytes = category.str_name()
+                .to_owned()
+                .into_bytes();
+            category_bytes.push(0);
+
+            let mut message_bytes = message.into_bytes();
+            message_bytes.push(0);
+
+            let instance_name = CStr::from_bytes_until_nul(&instance_name_bytes)
+                .unwrap_or_default()
+                .as_ptr();
 
             let fmi_status = match *_event.metadata().level() {
                 Level::ERROR => Fmi2Status::Error,
                 Level::WARN => Fmi2Status::Warning,
                 _ => Fmi2Status::Ok
             };
-            
-            let message = CStr::from_bytes_until_nul(&message_bytes).unwrap().as_ptr();
-            let instance_name = CStr::from_bytes_until_nul(&instance_name_bytes).unwrap().as_ptr();
+
+            let category = CStr::from_bytes_until_nul(&category_bytes)
+                .unwrap_or_default()
+                .as_ptr();
+
+            let message = CStr::from_bytes_until_nul(&message_bytes)
+                .unwrap_or_default()
+                .as_ptr();
+
             unsafe { (self.callback)(
                 self.component_environment.0,
                 instance_name,
                 fmi_status,
-                Fmi2String::from(category),
+                category,
                 message
-            ) }
+            ); }
         }
     }
 }

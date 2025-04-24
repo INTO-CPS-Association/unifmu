@@ -172,14 +172,6 @@ impl From<&str> for Fmi2LogCategory {
     }
 }
 
-impl From<Fmi2LogCategory> for Fmi2String {
-    fn from(value: Fmi2LogCategory) -> Self {
-        CStr::from_bytes_until_nul((value.str_name().to_owned() + "\0").as_bytes())
-            .unwrap_or_default()
-            .as_ptr()
-    }
-}
-
 //pub type Fmi2CallbackAllocateMemory = extern "C" fn(nobj: c_ulonglong, size: c_ulonglong);
 //pub type Fmi2CallbackFreeMemory = extern "C" fn(obj: *const c_void);
 pub type Fmi2StepFinished = unsafe extern "C" fn(
