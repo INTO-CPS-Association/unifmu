@@ -1,7 +1,7 @@
 // Type definitions for parameters in functions crossing the ABI boundary
 // betweeen C and Rust.
 
-use std::ffi::{c_char, c_double, c_int};
+use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int, CStr}, fmt::{Debug, Display}};
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -113,6 +113,72 @@ pub type Fmi2CallbackLogger = unsafe extern "C" fn(
     message: Fmi2String,
     ...
 );
+
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug, Default, PartialEq)]
+pub enum Fmi2LogCategory {
+    LogEvents,
+    LogSingularLinearSystems,
+    LogNonlinearSystems,
+    LogDynamicStateSelection,
+    LogStatusWarning,
+    LogStatusDiscard,
+    LogStatusError,
+    LogStatusFatal,
+    LogStatusPending,
+    #[default] LogAll,
+    LogUserDefined(String)
+}
+
+impl Fmi2LogCategory {
+    pub fn str_name(&self) -> &str {
+        match self {
+            Fmi2LogCategory::LogEvents => "logEvents",
+            Fmi2LogCategory::LogSingularLinearSystems => "logSingularLinearSystems",
+            Fmi2LogCategory::LogNonlinearSystems => "logNonlinearSystems",
+            Fmi2LogCategory::LogDynamicStateSelection => "logDynamicStateSelection",
+            Fmi2LogCategory::LogStatusWarning => "logStatusWarning",
+            Fmi2LogCategory::LogStatusDiscard => "logStatusDiscard",
+            Fmi2LogCategory::LogStatusError => "logStatusError",
+            Fmi2LogCategory::LogStatusFatal => "logStatusFatal",
+            Fmi2LogCategory::LogStatusPending => "logStatusPending",
+            Fmi2LogCategory::LogAll => "logAll",
+            Fmi2LogCategory::LogUserDefined(name) => name,
+        }
+    }
+}
+
+impl Display for Fmi2LogCategory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.str_name())
+    }
+}
+
+impl From<&str> for Fmi2LogCategory {
+    fn from(value: &str) -> Self {
+        match value {
+            "logEvents" => Fmi2LogCategory::LogEvents,
+            "logSingularLinearSystems" => Fmi2LogCategory::LogSingularLinearSystems,
+            "logNonlinearSystems" => Fmi2LogCategory::LogNonlinearSystems,
+            "logDynamicStateSelection" => Fmi2LogCategory::LogDynamicStateSelection,
+            "logStatusWarning" => Fmi2LogCategory::LogStatusWarning,
+            "logStatusDiscard" => Fmi2LogCategory::LogStatusDiscard,
+            "logStatusError" => Fmi2LogCategory::LogStatusError,
+            "logStatusFatal" => Fmi2LogCategory::LogStatusFatal,
+            "logStatusPending" => Fmi2LogCategory::LogStatusPending,
+            "logAll" => Fmi2LogCategory::LogAll,
+            _ => Fmi2LogCategory::LogUserDefined(String::from(value))
+        }
+    }
+}
+
+impl From<Fmi2LogCategory> for Fmi2String {
+    fn from(value: Fmi2LogCategory) -> Self {
+        CStr::from_bytes_until_nul((value.str_name().to_owned() + "\0").as_bytes())
+            .unwrap_or_default()
+            .as_ptr()
+    }
+}
 
 //pub type Fmi2CallbackAllocateMemory = extern "C" fn(nobj: c_ulonglong, size: c_ulonglong);
 //pub type Fmi2CallbackFreeMemory = extern "C" fn(obj: *const c_void);

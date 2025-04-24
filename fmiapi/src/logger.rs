@@ -1,7 +1,9 @@
 use crate::fmi2_types::{
     ComponentEnvironment,
     Fmi2CallbackLogger,
+    Fmi2LogCategory,
     Fmi2Status,
+    Fmi2String,
     SyncComponentEnvironment
 };
 
@@ -252,6 +254,10 @@ impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'loo
         let mut visitor = FmuEventVisitor::new();
         _event.record(&mut visitor);
 
+        let category = visitor.category.unwrap_or_default();
+
+        println!("This event has category {}", category);
+
         if let Some(message) = visitor.message {
             let mut message_bytes = message.into_bytes();
             message_bytes.push(0);
@@ -268,12 +274,11 @@ impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'loo
             
             let message = CStr::from_bytes_until_nul(&message_bytes).unwrap().as_ptr();
             let instance_name = CStr::from_bytes_until_nul(&instance_name_bytes).unwrap().as_ptr();
-            let test_category = CStr::from_bytes_until_nul("logAll\0".as_bytes()).unwrap().as_ptr();
             unsafe { (self.callback)(
                 self.component_environment.0,
                 instance_name,
                 fmi_status,
-                test_category,
+                Fmi2String::from(category),
                 message
             ) }
         }
@@ -319,12 +324,13 @@ impl tracing::field::Visit for FmuSpanVisitor{
 }
 
 struct FmuEventVisitor{
-    message: Option<String>
+    message: Option<String>,
+    category: Option<Fmi2LogCategory>
 }
 
 impl FmuEventVisitor{
     pub fn new() -> Self {
-        Self { message: None }
+        Self { message: None, category: None }
     }
 }
 
@@ -337,8 +343,10 @@ impl tracing::field::Visit for FmuEventVisitor{
     }
 
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
-        if field.name() == "message" {
-            self.message = Some(String::from(value));
+        match field.name() {
+            "message" => self.message = Some(String::from(value)),
+            "category" => self.category = Some(Fmi2LogCategory::from(value)),
+            _ => {}
         }
     }
 }
