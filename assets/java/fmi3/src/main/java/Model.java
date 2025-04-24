@@ -2,6 +2,7 @@ import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.io.ByteArrayInputStream;
@@ -9,9 +10,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
+import java.io.Serializable;
 
 
-public class Model {
+public class Model implements Serializable {
     // No valid datatypes between Protobuf and Java for int8, uint8, int16, uint16 -> all handled as Integer
     // No valid datatypes in Java for uint64 -> handled as Long
 
@@ -22,7 +24,7 @@ public class Model {
     private Boolean logging_on = false;
     private Boolean event_mode_used = false;
     private Boolean early_return_allowed = false;
-    private List<Integer> required_intermediate_variables;
+    private transient List<Integer> required_intermediate_variables;
 
     private int state = FMIState.FMIInstantiatedState;
     public Float float32_a = 0.0f;
@@ -100,22 +102,23 @@ public class Model {
     public Integer clocked_variable_a = 0;
     public Integer clocked_variable_b = 0;
     public Integer clocked_variable_c = 0;
-    public Map<Integer,Double> clock_reference_to_interval = Map.of(1001, 1.0);
-    public Map<Integer,Double> clock_reference_to_shift = Map.of(1001, 1.0);
+    public Map<Integer,Double> clock_reference_to_interval;
+    public Map<Integer,Double> clock_reference_to_shift;
 
-    private ArrayList<Field> references_to_attributes;
 
-    private ArrayList<Field> clocked_variables;
+    public transient Map<Integer,Field> map_to_attributes;
 
-    private ArrayList<Field> parameters;
+    private transient ArrayList<Field> references_to_attributes;
 
-    private ArrayList<Field> tunable_parameters;
+    private transient ArrayList<Field> clocked_variables;
 
-    private ArrayList<Field> tunable_structural_parameters;
+    private transient ArrayList<Field> parameters;
 
-    private ArrayList<Field> all_parameters;
+    private transient ArrayList<Field> tunable_parameters;
 
-    private ArrayList<Field> all_references;
+    private transient ArrayList<Field> tunable_structural_parameters;
+
+    private transient ArrayList<Field> all_parameters;
 
     public Model(String instance_name, String instantiation_token, String resource_path, Boolean visible, Boolean logging_on, Boolean event_mode_used, Boolean early_return_allowed, List<Integer> required_intermediate_variables) throws Exception {
 
@@ -130,6 +133,12 @@ public class Model {
         this.event_mode_used = false;
         this.early_return_allowed = early_return_allowed;
         this.required_intermediate_variables = required_intermediate_variables;
+
+        this.clock_reference_to_interval = new HashMap<>();
+        this.clock_reference_to_interval.put(1001, 1.0);
+
+        this.clock_reference_to_shift = new HashMap<>();
+        this.clock_reference_to_shift.put(1001, 1.0);
         
         this.references_to_attributes = new ArrayList<Field>();
         this.references_to_attributes.add(this.getClass().getField("float32_a"));
@@ -200,22 +209,51 @@ public class Model {
         this.tunable_parameters.add(this.getClass().getField("boolean_tunable_parameter"));
         this.tunable_parameters.add(this.getClass().getField("string_tunable_parameter"));
         this.tunable_parameters.add(this.getClass().getField("binary_tunable_parameter"));
-        this.tunable_parameters.add(this.getClass().getField("float32_vector_using_tunable_structural_parameter"));
-
-        this.tunable_structural_parameters = new ArrayList<Field>();
         this.tunable_parameters.add(this.getClass().getField("uint64_tunable_structural_parameter"));
 
-        this.all_references = new ArrayList<Field>();
-        this.all_references.addAll(this.tunable_structural_parameters);
-        this.all_references.addAll(this.parameters);
-        this.all_references.addAll(this.tunable_parameters);
-        this.all_references.addAll(this.clocked_variables);
-        this.all_references.addAll(this.references_to_attributes);
-
-        this.all_parameters = new ArrayList<Field>();
-        this.all_parameters.addAll(this.tunable_structural_parameters);
+        this.tunable_structural_parameters = new ArrayList<Field>();
+        this.tunable_structural_parameters.add(this.getClass().getField("float32_vector_using_tunable_structural_parameter"));
+       
+        // Map of indexes to attributes (based on ModelDescription.xml)
+        this.map_to_attributes = new HashMap<>();
+        List<Integer> references_to_attributes_indexes = new ArrayList<>();
+        List<Integer> clocked_variables_indexes = new ArrayList<>();
+        List<Integer> parameters_indexes = new ArrayList<>();
+        List<Integer> tunable_parameters_indexes = new ArrayList<>();
+        List<Integer> tunable_structural_parameters_indexes = new ArrayList<>();
+        for (int i=0;i<=38;i++){
+            references_to_attributes_indexes.add(i);
+        }
+        for (int i=1001;i<=1003;i++){
+            clocked_variables_indexes.add(i);
+        }
+        for (int i=1100;i<=1102;i++){
+            clocked_variables_indexes.add(i);
+        }
+        for (int i=100;i<=113;i++){
+            tunable_parameters_indexes.add(i);
+        }
+        tunable_structural_parameters_indexes.add(114);
+        for (int j = 0; j < references_to_attributes_indexes.size(); j++) {
+            this.map_to_attributes.put(references_to_attributes_indexes.get(j), references_to_attributes.get(j));
+        }
+        for (int j = 0; j < clocked_variables_indexes.size(); j++) {
+            this.map_to_attributes.put(clocked_variables_indexes.get(j), clocked_variables.get(j));
+        }
+        for (int j = 0; j < tunable_parameters_indexes.size(); j++) {
+            this.map_to_attributes.put(tunable_parameters_indexes.get(j), tunable_parameters.get(j));
+        }
+        for (int j = 0; j < parameters_indexes.size(); j++) {
+            this.map_to_attributes.put(parameters_indexes.get(j), parameters.get(j));
+        }
+        for (int j = 0; j < tunable_structural_parameters_indexes.size(); j++) {
+            this.map_to_attributes.put(tunable_structural_parameters_indexes.get(j), tunable_structural_parameters.get(j));
+        }
+     
+        this.all_parameters = new ArrayList<Field>(); 
         this.all_parameters.addAll(this.parameters);
-        this.all_parameters.addAll(this.tunable_parameters);        
+        this.all_parameters.addAll(this.tunable_parameters);
+        this.all_parameters.addAll(this.tunable_structural_parameters);        
 
         update_outputs();
         update_clocks();
@@ -228,7 +266,6 @@ public class Model {
     public Fmi3DoStepResult fmi3DoStep(double currentCommunicationPoint, double communicationStepSize, boolean noStepPrior) {
         
         update_outputs();
-
         Boolean event_handling_needed = false;
         Boolean terminate_simulation = false;
         Boolean early_return = false;
@@ -631,8 +668,10 @@ public class Model {
         this.clocked_variable_a = 0;
         this.clocked_variable_b = 0;
         this.clocked_variable_c = 0;
-        this.clock_reference_to_interval = Map.of(1001, 1.0);
-        this.clock_reference_to_shift = Map.of(1001, 1.0);
+        this.clock_reference_to_interval = new HashMap<>();
+        this.clock_reference_to_interval.put(1001, 1.0);
+        this.clock_reference_to_shift = new HashMap<>();
+        this.clock_reference_to_shift.put(1001, 1.0);
         update_outputs();
         update_clocks();
         update_clocked_outputs();
@@ -738,16 +777,16 @@ public class Model {
     private <T> Fmi3GetValuePair<T> GetValue(Iterable<Integer> references) throws Exception {
         Fmi3Status status;
         var values = new ArrayList<T>();
-
         for (var ref : references) {
-            if (this.clocked_variables.contains(ref)){
+            var field = (T) this.map_to_attributes.get(ref);
+            if (this.clocked_variables.contains(field)){
                 if (!((this.state == FMIState.FMIEventModeState) || (this.state == FMIState.FMIInitializationModeState)))
                 {
                     return new Fmi3GetValuePair<T>(Fmi3Status.Error, values);
                 }
             }
             @SuppressWarnings("unchecked")
-            var val = (T) this.references_to_attributes.get(ref).get(this);
+            var val = (T) this.map_to_attributes.get(ref).get(this);
             values.add(val);
         }
 
@@ -755,21 +794,21 @@ public class Model {
 
     }
 
-    private <T> Fmi3Status SetValue(Iterable<Integer> references, Iterable<T> values) throws Exception {
-        
+    private <T> Fmi3Status SetValue(Iterable<Integer> references, Iterable<T> values) throws Exception {        
         Iterator<Integer> i1 = references.iterator();
         Iterator<T> i2 = values.iterator();
         while (i1.hasNext() && i2.hasNext()) {
             Integer r = i1.next();
+            var field = (T) this.map_to_attributes.get(r);
             var v = i2.next();
 
             if (this.state == FMIState.FMIConfigurationModeState || this.state == FMIState.FMIReconfigurationModeState){
-                if ((this.clocked_variables.contains(r)) || (this.references_to_attributes.contains(r))){
+                if ((this.clocked_variables.contains(field)) || (this.references_to_attributes.contains(field))){
                     return Fmi3Status.Error;
                 }                    
             }
             else if (this.state == FMIState.FMIEventModeState){
-                if ((this.references_to_attributes.contains(r)) || (this.tunable_structural_parameters.contains(r))){
+                if ((this.references_to_attributes.contains(field)) || (this.tunable_structural_parameters.contains(field))){
                     return Fmi3Status.Error;
                 }
             }
@@ -777,14 +816,14 @@ public class Model {
     
             }
             else{
-                if ((this.event_mode_used) && (this.all_parameters.contains(r)) || (this.clocked_variables.contains(r))){
+                if ((this.event_mode_used) && ((this.all_parameters.contains(field)) || (this.clocked_variables.contains(field)))){
                     return Fmi3Status.Error;
                 }
             }
 
-            this.all_references.get(r).set(this, v);
-            return Fmi3Status.OK;
+            this.map_to_attributes.get(r).set(this, v);            
         }
+        return Fmi3Status.OK;
     }
 
     private void update_outputs() {

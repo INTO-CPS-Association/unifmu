@@ -14,9 +14,7 @@ import java.util.List;
 
 
 public class Backend {
-    private static final Logger logger = Logger.getLogger(Backend.class.getName());
-
-    
+    private static final Logger logger = Logger.getLogger(Backend.class.getName());    
 
     public static void main(String[] args) throws Exception {
         ConsoleHandler consoleHandler = new ConsoleHandler();
@@ -189,7 +187,7 @@ public class Backend {
 
                     case FMI3SETINTERVALDECIMAL: {
                         var c = command.getFmi3SetIntervalDecimal();
-                        var res = model.fmi3SetIntervalDecimal(c.getValueReferencesList(), c.getIntervals());
+                        var res = model.fmi3SetIntervalDecimal(c.getValueReferencesList(), c.getIntervalsList());
                         reply = Fmi3Messages.Fmi3StatusReturn.newBuilder()
                                 .setStatus(Fmi3Messages.Fmi3Status.forNumber(res.ordinal()))
                                 .build();
@@ -198,7 +196,7 @@ public class Backend {
 
                     case FMI3SETINTERVALFRACTION: {
                         var c = command.getFmi3SetIntervalFraction();
-                        var res = model.fmi3SetIntervalFraction(c.getValueReferencesList(), c.getCounters(), c.getResolutions());
+                        var res = model.fmi3SetIntervalFraction(c.getValueReferencesList(), c.getCountersList(), c.getResolutionsList());
                         reply = Fmi3Messages.Fmi3StatusReturn.newBuilder()
                                 .setStatus(Fmi3Messages.Fmi3Status.forNumber(res.ordinal()))
                                 .build();
@@ -207,7 +205,7 @@ public class Backend {
 
                     case FMI3SETSHIFTDECIMAL: {
                         var c = command.getFmi3SetShiftDecimal();
-                        var res = model.fmi3SetShiftDecimal(c.getValueReferencesList(), c.getShifts());
+                        var res = model.fmi3SetShiftDecimal(c.getValueReferencesList(), c.getShiftsList());
                         reply = Fmi3Messages.Fmi3StatusReturn.newBuilder()
                                 .setStatus(Fmi3Messages.Fmi3Status.forNumber(res.ordinal()))
                                 .build();
@@ -216,7 +214,7 @@ public class Backend {
 
                     case FMI3SETSHIFTFRACTION: {
                         var c = command.getFmi3SetShiftFraction();
-                        var res = model.fmi3SetShiftFraction(c.getValueReferencesList(), c.getCounters(), c.getResolutions());
+                        var res = model.fmi3SetShiftFraction(c.getValueReferencesList(), c.getCountersList(), c.getResolutionsList());
                         reply = Fmi3Messages.Fmi3StatusReturn.newBuilder()
                                 .setStatus(Fmi3Messages.Fmi3Status.forNumber(res.ordinal()))
                                 .build();
@@ -348,7 +346,7 @@ public class Backend {
                         var res = model.fmi3GetBinary(c.getValueReferencesList());
                         reply = Fmi3Messages.Fmi3GetBinaryReturn.newBuilder()
                                 .setStatus(Fmi3Messages.Fmi3Status.forNumber(res.status.ordinal()))
-                                .addAllValues(res.values)
+                                .addAllValues(convertToByteStringList(res.values))
                                 .build();
                     }
                         break;
@@ -413,10 +411,10 @@ public class Backend {
                         var res = model.fmi3DoStep(c.getCurrentCommunicationPoint(), c.getCommunicationStepSize(), c.getNoSetFmuStatePriorToCurrentPoint());
                         reply = Fmi3Messages.Fmi3DoStepReturn.newBuilder()
                                 .setStatus(Fmi3Messages.Fmi3Status.forNumber(res.status.ordinal()))
-                                .addBoolean(res.event_handling_needed)
-                                .addBoolean(res.terminate_simulation)
-                                .addBoolean(res.early_return)
-                                .addDouble(res.last_successful_time)
+                                .setEventHandlingNeeded(res.event_handling_needed)
+                                .setTerminateSimulation(res.terminate_simulation)
+                                .setEarlyReturn(res.early_return)
+                                .setLastSuccessfulTime(res.last_successful_time)
                                 .build();
                     }
                         break;
@@ -426,12 +424,12 @@ public class Backend {
                         var res = model.fmi3UpdateDiscreteStates();
                         reply = Fmi3Messages.Fmi3UpdateDiscreteStatesReturn.newBuilder()
                                 .setStatus(Fmi3Messages.Fmi3Status.forNumber(res.status.ordinal()))
-                                .addBoolean(res.discrete_states_need_update)
-                                .addBoolean(res.terminate_simulation)
-                                .addBoolean(res.nominals_continuous_states_changed)
-                                .addBoolean(res.values_continuous_states_changed)
-                                .addBoolean(res.next_event_time_defined)
-                                .addDouble(res.next_event_time)
+                                .setDiscreteStatesNeedUpdate(res.discrete_states_need_update)
+                                .setTerminateSimulation(res.terminate_simulation)
+                                .setNominalsContinuousStatesChanged(res.nominals_continuous_states_changed)
+                                .setValuesContinuousStatesChanged(res.values_continuous_states_changed)
+                                .setNextEventTimeDefined(res.next_event_time_defined)
+                                .setNextEventTime(res.next_event_time)
                                 .build();
                     }
                         break;
@@ -546,6 +544,14 @@ public class Backend {
             byteArrayList.add(bs.toByteArray());
         }
         return byteArrayList;
+    }
+
+    public static List<ByteString> convertToByteStringList(List<byte[]> byteArrays) {
+        List<ByteString> byteStringList = new ArrayList<>();
+        for (byte[] arr : byteArrays) {
+            byteStringList.add(ByteString.copyFrom(arr));
+        }
+        return byteStringList;
     }
 
 }
