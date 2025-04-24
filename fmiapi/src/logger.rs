@@ -55,26 +55,34 @@ pub fn add_name_to_callback(
     logger_uid: u64,
     instance_name: &str
 ) -> LoggerResult<()> {
-    let mut layer_found = false;
+    modify_callback(
+        logger_uid,
+        |layer| layer.set_instance_name(instance_name)
+    )
+}
 
-    (*FMU_LOGGER_RELOAD_HANDLE)
-        .as_ref()
-        .map_err(|_| LoggerError::SubscriberAlreadySet)?
-        .modify(|layer_vector| {
-            for layer in layer_vector {
-                if layer.logger_uid == logger_uid {
-                    layer_found = true;
-                    layer.set_instance_name(instance_name);
-                }
-            }
-        })
-        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
+pub fn update_enabled_for_callback(
+    logger_uid: u64,
+    enabled: bool
+) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| layer.enabled = enabled
+    )
+}
 
-    if !layer_found {
-        Err(LoggerError::LoggerLayerNotFound)
-    } else {
-        Ok(())
-    }
+pub fn set_categories_for_callback(
+    logger_uid: u64,
+    categories: Vec<Fmi2LogCategory>
+) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| layer.categories = categories
+    )
+}
+
+pub fn clear_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
+    set_categories_for_callback(logger_uid, vec![])
 }
 
 pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
@@ -90,6 +98,33 @@ pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
                 layer_found = true;
                 layer_vector.swap_remove(index);
             };
+        })
+        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
+
+    if !layer_found {
+        Err(LoggerError::LoggerLayerNotFound)
+    } else {
+        Ok(())
+    }
+}
+
+fn modify_callback(
+    logger_uid: u64,
+    modification_closure: impl FnOnce(&mut FmuLayer)
+) -> LoggerResult<()> {
+    let mut layer_found = false;
+
+    (*FMU_LOGGER_RELOAD_HANDLE)
+        .as_ref()
+        .map_err(|_| LoggerError::SubscriberAlreadySet)?
+        .modify(|layer_vector| {
+            for layer in layer_vector {
+                if layer.logger_uid == logger_uid {
+                    layer_found = true;
+                    modification_closure(layer);
+                    break
+                }
+            }
         })
         .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
 
@@ -154,6 +189,7 @@ struct EnabledForLayer {
 struct FmuLayer{
     logger_uid: u64,
     callback: Fmi2CallbackLogger,
+    categories: Vec<Fmi2LogCategory>,
     component_environment: SyncComponentEnvironment,
     enabled: bool,
     instance_name_bytes: Option<Vec<u8>>
@@ -166,7 +202,14 @@ impl FmuLayer{
         component_environment: SyncComponentEnvironment,
         enabled: bool
     ) -> Self {
-        Self {logger_uid, callback, component_environment, enabled, instance_name_bytes: None}
+        Self {
+            logger_uid,
+            callback,
+            categories: vec![],
+            component_environment,
+            enabled,
+            instance_name_bytes: None
+        }
     }
 
     pub fn set_instance_name(&mut self, instance_name: &str) {
@@ -209,18 +252,6 @@ impl FmuLayer{
     ) -> bool {
         ctx.event_span(event)
             .is_some_and(|span| self.interested_in_span(&span))
-    }
-}
-
-impl Clone for FmuLayer{
-    fn clone(&self) -> Self {
-        Self {
-            logger_uid: self.logger_uid,
-            callback: self.callback,
-            component_environment: self.component_environment,
-            enabled: self.enabled,
-            instance_name_bytes: self.instance_name_bytes.clone()
-        }
     }
 }
 

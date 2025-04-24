@@ -12,7 +12,8 @@ use crate::fmi2_types::{
     Fmi2Boolean,
     Fmi2String,
     Fmi2Status,
-    Fmi2CallbackFunctions
+    Fmi2CallbackFunctions,
+    Fmi2LogCategory
 };
 use crate::logger;
 use crate::spawn::spawn_slave;
@@ -372,8 +373,58 @@ pub extern "C" fn fmi2SetDebugLogging(
         luid = slave.logger_uid
     ).entered();
 
-    error!("fmi2SetDebugLogging is not implemented by UNIFMU.");
-    Fmi2Status::Error
+    let logging_on = match logging_on {
+        0 => false,
+        1 => true,
+        _ => {
+            error!("Invalid value passed to 'logging_on'.");
+            return Fmi2Status::Error;
+        }
+    };
+
+    if let Err(error) = logger::update_enabled_for_callback(
+        slave.logger_uid,
+        logging_on
+    ) {
+        error!("couldn't update enabled state of logger callback: {:?}", error);
+        return Fmi2Status::Error;
+    }
+
+    if n_categories != 0 {
+        match unsafe { from_raw_parts(categories, n_categories) }
+            .iter()
+            .map(|category| {
+                match unsafe { category.as_ref() } {
+                    None => {
+                        Err("one of the categories was null")
+                    }
+                    Some(category_reference) => match unsafe { CStr::from_ptr(category_reference).to_str() } {
+                        Err(_) => {
+                            Err("one of the categories could not be parsed as an utf-8 formatted string")
+                        }
+                        Ok(category_str) => Ok(Fmi2LogCategory::from(category_str))
+                    }
+                }
+            })
+            .collect::<Result<Vec<Fmi2LogCategory>, &str>>()
+        {
+            Err(error) => {
+                error!("couldn't parse argument categories: {}", error);
+                return Fmi2Status::Error;
+            }
+            Ok(categories) => {
+                if let Err(error) = logger::set_categories_for_callback(slave.logger_uid, categories) {
+                    error!("couldn't set new categories for logger callback: {:?}", error);
+                    return Fmi2Status::Error;
+                }
+            }
+        }
+    } else if let Err(error) = logger::clear_categories_for_callback(slave.logger_uid) {
+            error!("couldn't clear categories for logger callback: {:?}", error);
+            return Fmi2Status::Error;
+    }
+
+    Fmi2Status::Ok
 }
 
 #[no_mangle]
