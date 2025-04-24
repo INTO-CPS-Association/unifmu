@@ -5,11 +5,15 @@ version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+fmt_logging = []
+
 [lib]
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 bytes = "*"
+cfg-if = "1.0.0"
 colored = "3.0.0"
 libc = "*"
 num_enum = "*"

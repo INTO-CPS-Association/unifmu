@@ -121,6 +121,14 @@ fn new_logger_id() -> LoggerResult<u64> {
     Ok(new_id)
 }
 
+cfg_if::cfg_if! {
+    if #[cfg(feature = "fmt_logging")] {
+        const ENABLE_FMT_LOGGER: bool = true;
+    } else {
+        const ENABLE_FMT_LOGGER: bool = false;
+    }
+}
+
 type FmuLayerVector = Vec<FmuLayer>;
 type FmuLayerReloadHandle = Handle<FmuLayerVector, Layered<Option<fmt::Layer<Registry>>, Registry>>;
 
@@ -130,7 +138,7 @@ static FMU_LOGGER_RELOAD_HANDLE: LazyLock<LoggerResult<FmuLayerReloadHandle>> = 
     let (reloadable, reload_handle) = reload::Layer::new(fmu_layers);
 
     match tracing_subscriber::registry()
-        .with(Some(fmt::layer()))
+        .with(if ENABLE_FMT_LOGGER {Some(fmt::layer())} else {None})
         .with(reloadable)
         .try_init() {
             Ok(_subscriber) => Ok(reload_handle),
@@ -229,7 +237,7 @@ impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'loo
                 span.extensions_mut().insert(EnabledForLayer{ logger_uid: self.logger_uid });
             }
         }
-        
+      
     }
 
     fn on_event(
