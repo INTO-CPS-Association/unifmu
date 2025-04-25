@@ -323,11 +323,14 @@ impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'loo
                 .unwrap_or_default()
                 .as_ptr();
 
-            let fmi_status = match *_event.metadata().level() {
-                Level::ERROR => Fmi2Status::Error,
-                Level::WARN => Fmi2Status::Warning,
-                _ => Fmi2Status::Ok
-            };
+            let fmi_status = visitor.status
+                .unwrap_or(
+                    match *_event.metadata().level() {
+                        Level::ERROR => Fmi2Status::Error,
+                        Level::WARN => Fmi2Status::Warning,
+                        _ => Fmi2Status::Ok
+                    }
+                );
 
             let category = CStr::from_bytes_until_nul(&category_bytes)
                 .unwrap_or_default()
@@ -388,12 +391,13 @@ impl tracing::field::Visit for FmuSpanVisitor{
 
 struct FmuEventVisitor{
     category: Option<Fmi2LogCategory>,
-    message: Option<String>
+    message: Option<String>,
+    status: Option<Fmi2Status>
 }
 
 impl FmuEventVisitor{
     pub fn new() -> Self {
-        Self { message: None, category: None }
+        Self { message: None, category: None, status: None }
     }
 }
 
@@ -437,8 +441,15 @@ impl tracing::field::Visit for FmuEventVisitor{
                 let message = format!("{:?}", value);
                 self.message = Some(message);
             }
-            "status" => {}
             _ => {}
+        }
+    }
+
+    fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
+        if field.name() == "status" {
+            if let Ok(status) = Fmi2Status::try_from(value as i32) {
+                self.status = Some(status);
+            }
         }
     }
 }
