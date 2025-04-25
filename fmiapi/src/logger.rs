@@ -362,20 +362,13 @@ impl FmuSpanVisitor{
 }
 
 impl tracing::field::Visit for FmuSpanVisitor{
+    #[allow(unused_variables)]
     fn record_debug(
         &mut self,
         field: &tracing::field::Field,
         value: &dyn std::fmt::Debug
     ) {
-        if field.name() == "luid" {
-            warn!("luid recorded as Debug with value: {value:?}");
-            if let Ok(luid) = format!("{value:?}").parse::<u64>() {
-                warn!("debug luid coerced into u64, using as actual luid");
-                self.luid = Some(luid);
-            } else {
-                error!("debug luid could not be coerced into u64");
-            }
-        }
+        // Disable debug (and all methods not explicitly defined).
     }
 
     fn record_u64(
