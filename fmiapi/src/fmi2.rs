@@ -184,6 +184,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
     if logger::initialize().is_err() {
         error!(
             category = %Fmi2LogCategory::LogStatusFatal,
+            status = Fmi2Status::Fatal as i32,
             "A logging/tracing subscriber was unexpectedly already set."
         );
         return None
@@ -270,18 +271,21 @@ pub unsafe extern "C" fn fmi2Instantiate(
             logger::LoggerError::SubscriberAlreadySet => {
                 error!(
                     category = %Fmi2LogCategory::LogStatusFatal,
+                    status = Fmi2Status::Fatal as i32,
                     "Tracing subscriber unexpectedly already set elsewhere."
                 );
             }
             logger::LoggerError::FmuLayerVectorMissing => {
                 error!(
                     category = %Fmi2LogCategory::LogStatusFatal,
+                    status = Fmi2Status::Fatal as i32,
                     "The tracing subscriber was missing the FMU logging layers vector."
                 );
             }
             _ => {
                 error!(
                     category = %Fmi2LogCategory::LogStatusFatal,
+                    status = Fmi2Status::Fatal as i32,
                     "Couldn't add instance name to FMU logger layer with luid {}", logger_uid
                 );
             }
@@ -781,6 +785,7 @@ pub unsafe extern "C" fn fmi2GetReal(
                 .unwrap_or_else(|_| {
                     error!(
                         category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
                         "Unknown status returned from backend."
                     );
                     Fmi2Status::Fatal
@@ -853,6 +858,7 @@ pub unsafe extern "C" fn fmi2GetInteger(
                 .unwrap_or_else(|_| {
                     error!(
                         category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
                         "Unknown status returned from backend."
                     );
                     Fmi2Status::Fatal
@@ -933,6 +939,7 @@ pub unsafe extern "C" fn fmi2GetBoolean(
                 .unwrap_or_else(|_| {
                     error!(
                         category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
                         "Unknown status returned from backend."
                     );
                     Fmi2Status::Fatal
@@ -1016,6 +1023,7 @@ pub unsafe extern "C" fn fmi2GetString(
                     Err(e) =>  {
                         error!(
                             category = %Fmi2LogCategory::LogStatusFatal,
+                            status = Fmi2Status::Fatal as i32,
                             "Backend returned strings containing interior nul bytes. These cannot be converted into CStrings."
                         );
                         return Fmi2Status::Fatal;
@@ -1038,6 +1046,7 @@ pub unsafe extern "C" fn fmi2GetString(
                 .unwrap_or_else(|_| {
                     error!(
                         category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
                         "Unknown status returned from backend."
                     );
                     Fmi2Status::Fatal
@@ -1400,6 +1409,7 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
                     .unwrap_or_else(|_| {
                         error!(
                             category = %Fmi2LogCategory::LogStatusFatal,
+                            status = Fmi2Status::Fatal as i32,
                             "Unknown status returned from backend."
                         );
                         Fmi2Status::Fatal
@@ -1545,6 +1555,7 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
                 .unwrap_or_else(|_| {
                     error!(
                         category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
                         "Unknown status returned from backend."
                     );
                     Fmi2Status::Fatal
@@ -1675,6 +1686,7 @@ pub extern "C" fn fmi2GetFMUstate(
                 .unwrap_or_else(|_| {
                     error!(
                         category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
                         "fmi2GetFMUstate: Unknown status ({:?}) returned from backend.", result.status
                     );
                     Fmi2Status::Fatal
