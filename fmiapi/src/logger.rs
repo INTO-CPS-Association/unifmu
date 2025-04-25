@@ -14,7 +14,7 @@ use std::{
     }
 };
 
-use tracing::{debug, error, span, warn, Level, Subscriber};
+use tracing::{error, span, warn, Level, Subscriber};
 use tracing_subscriber::{
     fmt, layer::Layered, prelude::*, registry::{self, SpanRef}, reload::{self, Handle}, Layer, Registry
 };
@@ -73,16 +73,19 @@ pub fn update_enabled_for_callback(
 
 pub fn set_categories_for_callback(
     logger_uid: u64,
-    categories: Vec<Fmi2LogCategory>
+    mut categories: Vec<Fmi2LogCategory>
 ) -> LoggerResult<()> {
     modify_callback(
         logger_uid,
-        |layer| layer.categories = categories
+        |layer| layer.set_categories(&mut categories)
     )
 }
 
 pub fn clear_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
-    set_categories_for_callback(logger_uid, vec![])
+    modify_callback(
+        logger_uid,
+        |layer| layer.clear_categories()
+    )
 }
 
 pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
@@ -205,7 +208,7 @@ impl FmuLayer{
         Self {
             logger_uid,
             callback,
-            categories: vec![],
+            categories: Vec::with_capacity(16), //There are 10 predefined logCategories, so a capacity of 16 will allow the user to implement a handful of their own without this having to reallocate for size
             component_environment,
             enabled,
             instance_name_bytes: None
@@ -217,6 +220,15 @@ impl FmuLayer{
         instance_name_bytes.push(0);
         self.instance_name_bytes = Some(instance_name_bytes);
     }
+
+    pub fn set_categories(&mut self, categories: &mut Vec<Fmi2LogCategory>) {
+        self.clear_categories();
+        self.categories.append(categories);
+    }
+
+    pub fn clear_categories(&mut self) {
+        self.categories.clear();
+    }
     
     fn logger_uid_in_attributes(&self, attrs: &span::Attributes<'_>) -> bool {
         let mut visitor = FmuSpanVisitor::new();
@@ -224,7 +236,7 @@ impl FmuLayer{
         visitor.luid.is_some_and(|luid| luid == self.logger_uid)
     }
 
-    fn interested_in_parent_of_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> (
+    fn interested_in_parent_of_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>>(
         &self,
         span: &SpanRef<'_, S>
     ) -> bool {
@@ -234,7 +246,7 @@ impl FmuLayer{
             )
     }
 
-    fn interested_in_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> (
+    fn interested_in_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>>(
         &self,
         span: &SpanRef<'_, S>
     ) -> bool {
@@ -245,13 +257,17 @@ impl FmuLayer{
             )
     }
 
-    fn interested_in_event<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> (
+    fn interested_in_event<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>>(
         &self,
         event: &tracing::Event<'_>,
         ctx: &tracing_subscriber::layer::Context<'_, S>
     ) -> bool {
         ctx.event_span(event)
             .is_some_and(|span| self.interested_in_span(&span))
+    }
+
+    fn interested_in_category(&self, category: &Fmi2LogCategory) -> bool {
+        self.categories.is_empty() || self.categories.contains(category)
     }
 }
 
@@ -286,7 +302,9 @@ impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'loo
 
         let category = visitor.category.unwrap_or_default();
 
-        println!("This event has category {}", category);
+        if !(self.interested_in_category(&category)) {
+            return
+        }
 
         if let Some(message) = visitor.message {
             let instance_name_bytes = self.instance_name_bytes
@@ -369,8 +387,8 @@ impl tracing::field::Visit for FmuSpanVisitor{
 }
 
 struct FmuEventVisitor{
-    message: Option<String>,
-    category: Option<Fmi2LogCategory>
+    category: Option<Fmi2LogCategory>,
+    message: Option<String>
 }
 
 impl FmuEventVisitor{
@@ -380,17 +398,46 @@ impl FmuEventVisitor{
 }
 
 impl tracing::field::Visit for FmuEventVisitor{
-    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
-        if field.name() == "message" {
-            let message = format!("{:?}", value);
-            self.message = Some(message);
-        }
-    }
-
-    fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
+    fn record_debug(
+        &mut self,
+        field: &tracing::field::Field,
+        value: &dyn std::fmt::Debug
+    ) {
         match field.name() {
-            "message" => self.message = Some(String::from(value)),
-            "category" => self.category = Some(Fmi2LogCategory::from(value)),
+            "category" => {
+                // The value recorded here is NOT the debug value of a
+                // Fmi2LogCategory, despite what the function name might imply.
+                // Instead, it is the debug value of the value passed to the
+                // event, which - assuming we implemented the design properly -
+                // will be a String. This String should - again assuming proper
+                // implementation - be created at the event! macro with the
+                // Fmi2LogCategory's display() function (or it might just be a 
+                // String passed from the backend). Thus what is happening here
+                // is a Fmi2LogCategory Displayed into a String, Debugged into
+                // the same String, converted into a &str and then remade into
+                // a Fmi2LogCategory. We can't pass custom types through the
+                // eye of the needle that is a tracing event.
+                // And there is no record_display() function for the 
+                // tracing::field::Visit trait.
+                //
+                // P.S.: (If the String passed to the category field is 
+                // created from a Fmi2LogCategory with debug(), the resulting
+                // Fmi2LogCategory from this recording will be a 
+                // Fmi2LogCategory::LogUserDefined("<result of the debug() formatting>")
+                // regardless of the Fmi2LogCategory's actual type.
+                // You know, just, keep this in mind.)
+                let category_string = format!("{:?}", value);
+                self.category = Some(
+                    Fmi2LogCategory::from(
+                        category_string.as_str()
+                    )
+                );
+            }
+            "message" => {
+                let message = format!("{:?}", value);
+                self.message = Some(message);
+            }
+            "status" => {}
             _ => {}
         }
     }
