@@ -181,7 +181,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
     visible: Fmi2Boolean,
     logging_on: Fmi2Boolean,
 ) -> Option<Box<Fmi2Slave>> {
-    if logger::enable().is_err() {
+    if logger::initialize().is_err() {
         error!("A logging/tracing subscriber was unexpectedly already set.");
         return None
     };

@@ -19,7 +19,7 @@ use tracing_subscriber::{
     fmt, layer::Layered, prelude::*, registry::{self, SpanRef}, reload::{self, Handle}, Layer, Registry
 };
 
-pub fn enable() -> LoggerResult<()> {
+pub fn initialize() -> LoggerResult<()> {
     match &*FMU_LOGGER_RELOAD_HANDLE {
         Err(_) => Err(LoggerError::SubscriberAlreadySet),
         Ok(_) => Ok(())
