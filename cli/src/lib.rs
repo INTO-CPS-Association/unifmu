@@ -77,8 +77,8 @@ lazy_static! {
     };
     static ref CSHARPASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
-            ("csharp/backend.cs", "backend.cs"),
-            ("csharp/model.cs", "model.cs"),
+            ("csharp/fmi2/backend.cs", "backend.cs"),
+            ("csharp/fmi2/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
             (
@@ -89,11 +89,16 @@ lazy_static! {
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            ("csharp/fmi3/backend.cs", "backend.cs"),
+            ("csharp/fmi3/model.cs", "model.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
         ],
     };
     static ref JAVAASSETS: LanguageAssets = LanguageAssets {
@@ -248,8 +253,8 @@ lazy_static! {
 
     static ref CSHARPASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
-            ("csharp/backend_private.cs", "backend.cs"),
-            ("csharp/model.cs", "model.cs"),
+            ("csharp/fmi2/backend_private.cs", "backend.cs"),
+            ("csharp/fmi2/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
             (
@@ -260,11 +265,16 @@ lazy_static! {
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            ("csharp/fmi3/backend_private.cs", "backend.cs"),
+            ("csharp/fmi3/model.cs", "model.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
         ],
     };
 

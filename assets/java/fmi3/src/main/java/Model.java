@@ -341,11 +341,6 @@ public class Model implements Serializable {
         return status;
     }
 
-    public Fmi3Status fmi3SetInteger(Iterable<Integer> references, Iterable<Integer> values) throws Exception {
-        Fmi3Status status = SetValue(references, values);
-        return status;
-    }
-
     public Fmi3Status fmi3SetBoolean(Iterable<Integer> references, Iterable<Boolean> values) throws Exception {
         Fmi3Status status = SetValue(references, values);
         return status;
@@ -546,6 +541,7 @@ public class Model implements Serializable {
     /* Initialization, Enter, Termination, and Reset */
 
     public Fmi3Status fmi3EnterInitializationMode() {
+        this.state = FMIState.FMIInitializationModeState;
         return Fmi3Status.OK;
     }
 
@@ -654,7 +650,7 @@ public class Model implements Serializable {
         this.binary_tunable_parameter = new byte[] {
             (byte) 0b00000000
         };
-        this.uint64_tunable_structural_parameter = 5L;;
+        this.uint64_tunable_structural_parameter = 5L;
         this.float32_vector_using_tunable_structural_parameter = new Float[] {
             0.1f,
             0.2f,

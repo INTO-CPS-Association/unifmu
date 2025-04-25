@@ -160,11 +160,11 @@ class Model:
             110: "boolean_tunable_parameter",
             111: "string_tunable_parameter",
             112: "binary_tunable_parameter",
-            114: "float32_vector_using_tunable_structural_parameter",
+            113: "uint64_tunable_structural_parameter",
         }
 
         self.tunable_structural_parameters = {
-            113: "uint64_tunable_structural_parameter",
+            114: "float32_vector_using_tunable_structural_parameter",
         }
 
         self.all_references = {**self.tunable_structural_parameters,
