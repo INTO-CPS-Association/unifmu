@@ -12,7 +12,7 @@ use subprocess::{ExitStatus, Popen, PopenConfig};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 use tokio::select;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend};
 
 /// Generic Dispatcher for dispatching FMI commands to arbitrary backend.
@@ -75,16 +75,16 @@ impl Dispatch for Dispatcher {
 /// Holds the handle for the subprocess as well as the handle for the socket
 /// to said subprocess.
 pub struct LocalDispatcher {
-    runtime: Runtime,
     socket: BackendSocket,
     subprocess: BackendSubprocess,
+    runtime: Runtime,
 }
 
 impl LocalDispatcher {
     pub fn create(
         resource_path: &Path,
         launch_command: &Vec<String>,
-    ) -> Result<Self, DispatcherError> {
+    ) -> DispatcherResult<Self> {
         let runtime = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build() {
@@ -107,9 +107,9 @@ impl LocalDispatcher {
 
         Ok(
             Self {
-                runtime,
                 socket,
-                subprocess
+                subprocess,
+                runtime,
             }
         )
     }
@@ -147,25 +147,16 @@ impl Dispatch for LocalDispatcher {
     }
 }
 
-impl Drop for LocalDispatcher {
-    fn drop(&mut self) {
-        match self.subprocess.terminate() {
-            Ok(_) => {},
-            Err(_) => error!("Terminating subprocess returned an error.")
-        };
-    }
-}
-
 /// Dispatcher for dispatching FMI commands to a remote backend.
 /// 
 /// Holds the socket to the remote backend.
 pub struct RemoteDispatcher {
-    runtime: Runtime,
     socket: BackendSocket,
+    runtime: Runtime,
 }
 
 impl RemoteDispatcher {
-    pub fn create() -> Result<Self, DispatcherError> {
+    pub fn create() -> DispatcherResult<Self> {
         let runtime = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build() {
@@ -192,8 +183,8 @@ impl RemoteDispatcher {
 
         Ok(
             Self {
-                runtime,
                 socket,
+                runtime,
             }
         )
     }
@@ -273,7 +264,7 @@ struct BackendSocket {
 }
 
 impl BackendSocket {
-    pub async fn create(endpoint: &str) -> Result<Self, DispatcherError> {
+    pub async fn create(endpoint: &str) -> DispatcherResult<Self> {
         let mut socket = RepSocket::new();
 
         let endpoint = match socket.bind(endpoint).await {
@@ -297,7 +288,7 @@ impl BackendSocket {
     /// ZeroMQ message queue, NOT when the message has actually been received
     /// by the backend. As such, there is no absolute guarantee that the
     /// message has been received when this returns. 
-    async fn send<S: Message>(&mut self, msg: &S) -> Result<(), DispatcherError> {
+    async fn send<S: Message>(&mut self, msg: &S) -> DispatcherResult<()> {
         let bytes_send: Bytes = msg.encode_to_vec().into();
         match  self.socket.send(bytes_send.into()).await {
             Ok(_) => Ok(()),
@@ -317,7 +308,7 @@ impl BackendSocket {
     /// 
     /// A call to recv() will await until a message is received through the
     /// ZeroMQ socket.
-    async fn recv<R: Message + Default>(&mut self) -> Result<R, DispatcherError> {
+    async fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R> {
         match self.socket.recv().await {
             Ok(buf) => {
                 let buf: Bytes = match buf.get(0) {
@@ -347,7 +338,7 @@ impl BackendSocket {
     async fn send_and_recv<S: Message, R: Message + Default>(
         &mut self,
         msg: &S,
-    ) -> Result<R, DispatcherError> {
+    ) -> DispatcherResult<R> {
         self.send(msg).await?;
         self.recv().await
     }
@@ -391,8 +382,6 @@ impl BackendSubprocess {
         ));
 
         info!("Spawning backend process.");
-        debug!("Launch command: {}", &launch_command[0]);
-        debug!("Environment variables: {:#?}", env_vars);
         let subprocess = match Popen::create(
             launch_command,
             PopenConfig {
@@ -442,18 +431,5 @@ impl BackendSubprocess {
                 }
             }
         }
-    }
-
-    /// Terminates the subprocess
-    /// 
-    /// On Unix-like systems, this sends the `SIGTERM` signal to the
-    /// subprocess, which can be caught by the subprocess in order to perform
-    /// cleanup befoure exiting.
-    /// 
-    /// On Windows, it invokes `TerminateProcess` on the process handle, which
-    /// cannot be caught.
-    fn terminate(&mut self) -> DispatcherResult<()> {
-        self.subprocess.terminate()
-            .map_err(|_| DispatcherError::SubprocessError)
     }
 }

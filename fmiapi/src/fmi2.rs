@@ -10,47 +10,27 @@ use crate::fmi2_types::{
     Fmi2Real,
     Fmi2Integer,
     Fmi2Boolean,
-    Fmi2Char,
     Fmi2String,
-    Fmi2Byte,
     Fmi2Status,
-    ComponentEnvironment,
-    Fmi2CallbackLogger,
-    Fmi2StepFinished,
-    Fmi2CallbackFunctions
+    Fmi2CallbackFunctions,
+    Fmi2LogCategory
 };
+use crate::logger;
 use crate::spawn::spawn_slave;
-use libc::c_double;
+
 use libc::size_t;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use url::Url;
-use tracing::{error, warn};
-use tracing_subscriber;
+use tracing::{error, info, warn, error_span};
 
 use std::{
     ffi::{CStr, CString, NulError},
-    os::raw::{c_char, c_int, c_uint, c_ulonglong, c_void},
+    os::raw::{c_char, c_uint},
     path::Path,
     slice::{from_raw_parts, from_raw_parts_mut},
-    str::Utf8Error,
-    sync::LazyLock
+    str::Utf8Error
 };
-
-/// One shot function that sets up logging.
-/// 
-/// Checking the result runs the contained function once if it hasn't been run
-/// or returns the stored result.
-/// 
-/// Result should be checked at entrance to instantiation functions, and an
-/// error should be considered a grave error signifying something seriously
-/// wrong (most probably that the global logger was already set somewhere else).
-static ENABLE_LOGGING: LazyLock<Result<(), Fmi2Status>> = LazyLock::new(|| {
-    if tracing_subscriber::fmt::try_init().is_err() {
-        return Err(Fmi2Status::Fatal);
-    }
-    Ok(())
-});
 
 impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
     fn from(src: fmi2_messages::Fmi2StatusReturn) -> Self {
@@ -106,6 +86,7 @@ pub struct Fmi2Slave {
     pub last_successful_time: Option<f64>,
     pub pending_message: Option<String>,
     pub dostep_status: Option<Fmi2Status>,
+    logger_uid: u64
 }
 //  + Send + UnwindSafe + RefUnwindSafe
 // impl RefUnwindSafe for Slave {}
@@ -113,13 +94,17 @@ pub struct Fmi2Slave {
 // unsafe impl Send for Slave {}
 
 impl Fmi2Slave {
-    fn new(dispatcher: Dispatcher) -> Self {
+    fn new(
+        dispatcher: Dispatcher,
+        logger_uid: u64
+    ) -> Self {
         Self {
             dispatcher,
             string_buffer: Vec::new(),
             last_successful_time: None,
             pending_message: None,
             dostep_status: None,
+            logger_uid
         }
     }
 }
@@ -134,14 +119,19 @@ impl Drop for Fmi2Slave {
         };
 
         match self.dispatcher.send(&cmd) {
-            Ok(_) => (),
+            Ok(_) => info!("Send free instance message to shut down backend"),
             Err(error) => error!(
                 "Freeing instance failed with error: {:?}.", error
             ),
         };
+        
+        if let Err(error) = logger::remove_callback(self.logger_uid) {
+            error!("Couldn't remove logger callback from tracing subscriber: {:?}.", error);
+        };
     }
 }
 
+#[derive(Debug)]
 pub struct SlaveState {
     bytes: Vec<u8>,
 }
@@ -152,8 +142,6 @@ impl SlaveState {
         }
     }
 }
-
-// ------------------------------------- Errors -------------------------------------
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 
@@ -193,35 +181,62 @@ pub unsafe extern "C" fn fmi2Instantiate(
     visible: Fmi2Boolean,
     logging_on: Fmi2Boolean,
 ) -> Option<Box<Fmi2Slave>> {
-    if (*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set global tracing subscriber.");
-        return None;
-    }
+    if logger::initialize().is_err() {
+        error!(
+            category = %Fmi2LogCategory::LogStatusFatal,
+            status = Fmi2Status::Fatal as i32,
+            "A logging/tracing subscriber was unexpectedly already set."
+        );
+        return None
+    };
 
     let functions = match unsafe { functions.as_ref() } {
         None => {
-            error!("Pointer to callback functions was null.");
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Pointer to callback functions was null."
+            );
             return None;
         }
         Some(functions_reference) => functions_reference
     };
 
-    let test_environment: *const ComponentEnvironment = &functions.component_environment;
-    let test_name = CStr::from_bytes_until_nul("TEST\0".as_bytes()).unwrap().as_ptr();
-    let test_category = CStr::from_bytes_until_nul("logAll\0".as_bytes()).unwrap().as_ptr();
-    let test_message = CStr::from_bytes_until_nul("This is a test\0".as_bytes()).unwrap().as_ptr();
-    unsafe { (functions.logger)(
-        test_environment,
-        test_name,
-        Fmi2Status::Error,
-        test_category,
-        test_message
-    ) }
+    let logging_on = match logging_on {
+        0 => false,
+        1 => true,
+        _ => {
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Invalid value passed to 'logging_on'."
+            );
+            return None;
+        }
+    };
+
+    let logger_uid = match logger::add_callback(
+        functions.logger,
+        &(functions.component_environment),
+        logging_on
+    ) {
+        Err(_) => {
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "couldn't add FMU callback to logger."
+            );
+            return None;
+        }
+        Ok(uid) => uid
+    };
+
+    let _span = error_span!("fmi2Instantiate", luid = logger_uid).entered();
 
     // Erroring out in case the importer tries to instantiate the FMU for
     // Model Exchange as that is not yet implemented.
     if let Fmi2Type::Fmi2ModelExchange = fmu_type {
-        error!("Model Exchange is not implemented for UNIFMU.");
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "Model Exchange is not implemented for UNIFMU."
+        );
         return None;
     }
 
@@ -232,12 +247,18 @@ pub unsafe extern "C" fn fmi2Instantiate(
         }
         Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
             Err(_) => {
-                error!("Argument 'instance_name' could not be parsed as a utf-8 formatted string.");
+                error!(
+                    category = %Fmi2LogCategory::LogStatusError,
+                    "Argument 'instance_name' could not be parsed as a utf-8 formatted string."
+                );
                 return None;
             }
             Ok(name_str) => match name_str.len() {
                 0 => {
-                    error!("Argument 'instance_name' must not be an empty string.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusError,
+                        "Argument 'instance_name' must not be an empty string."
+                    );
                     return None;
                 }
                 _ => name_str
@@ -245,14 +266,47 @@ pub unsafe extern "C" fn fmi2Instantiate(
         }
     };
 
+    if let Err(e) = logger::add_name_to_callback(logger_uid, instance_name) {
+        match e {
+            logger::LoggerError::SubscriberAlreadySet => {
+                error!(
+                    category = %Fmi2LogCategory::LogStatusFatal,
+                    status = Fmi2Status::Fatal as i32,
+                    "Tracing subscriber unexpectedly already set elsewhere."
+                );
+            }
+            logger::LoggerError::FmuLayerVectorMissing => {
+                error!(
+                    category = %Fmi2LogCategory::LogStatusFatal,
+                    status = Fmi2Status::Fatal as i32,
+                    "The tracing subscriber was missing the FMU logging layers vector."
+                );
+            }
+            _ => {
+                error!(
+                    category = %Fmi2LogCategory::LogStatusFatal,
+                    status = Fmi2Status::Fatal as i32,
+                    "Couldn't add instance name to FMU logger layer with luid {}", logger_uid
+                );
+            }
+        }
+        return None;
+    }
+    
     let fmu_guid = match unsafe { fmu_guid.as_ref() } {
         None => {
-            error!("Argument 'fmu_guid' was null.");
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Argument 'fmu_guid' was null."
+            );
             return None;
         }
         Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
             Err(_) => {
-                error!("Argument 'fmu_guid' could not be parsed as a utf-8 formatted string.");
+                error!(
+                    category = %Fmi2LogCategory::LogStatusError,
+                    "Argument 'fmu_guid' could not be parsed as a utf-8 formatted string."
+                );
                 return None;
             }
             Ok(guid_str) => guid_str
@@ -261,17 +315,26 @@ pub unsafe extern "C" fn fmi2Instantiate(
 
     let fmu_resource_location = match unsafe { fmu_resource_location.as_ref() } {
         None => {
-            error!("Argument 'fmu_resource_location' was null.");
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Argument 'fmu_resource_location' was null."
+            );
             return None;
         }
         Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
             Err(_) => {
-                error!("Argument 'fmu_resource_location' could not be parsed as a utf-8 formatted string.");
+                error!(
+                    category = %Fmi2LogCategory::LogStatusError,
+                    "Argument 'fmu_resource_location' could not be parsed as a utf-8 formatted string."
+                );
                 return None;
             }
             Ok(resources_str) => match resources_str.len() {
                 0 => {
-                    error!("Argument 'fmu_resource_location' must not be an empty string.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusError,
+                        "Argument 'fmu_resource_location' must not be an empty string."
+                    );
                     return None;
                 }
                 _ => resources_str
@@ -279,18 +342,12 @@ pub unsafe extern "C" fn fmi2Instantiate(
         }
     };
 
-    let logging_on = match logging_on {
-        0 => false,
-        1 => true,
-        _ => {
-            error!("Invalid value passed to 'logging_on'.");
-            return None;
-        }
-    };
-
     let resource_uri = match Url::parse(fmu_resource_location) {
         Err(error) => {
-            error!("Unable to parse argument 'fmu_resource_location' as url.");
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Unable to parse argument 'fmu_resource_location' as url."
+            );
             return None;
         }
         Ok(url) => url
@@ -299,6 +356,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
     let resources_dir = match resource_uri.to_file_path() {
         Err(_) => {
             error!(
+                category = %Fmi2LogCategory::LogStatusError,
                 "URI was parsed but could not be converted into a file path, got: '{:?}'.",
                 resource_uri
             );
@@ -309,13 +367,16 @@ pub unsafe extern "C" fn fmi2Instantiate(
 
     let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
         Err(_) => {
-            error!("Spawning fmi2 slave failed.");
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Spawning fmi2 slave failed."
+            );
             return None;
         }
         Ok(dispatcher) => dispatcher
     };
 
-    let mut slave = Fmi2Slave::new(dispatcher);
+    let mut slave = Fmi2Slave::new(dispatcher, logger_uid);
 
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Instantiate(
@@ -333,6 +394,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
     match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2EmptyReturn>(&cmd) {
         Err(error) => {
             error!(
+                category = %Fmi2LogCategory::LogStatusError,
                 "Instantiation of fmi2 slave failed with error {:?}.",
                 error
             );
@@ -348,10 +410,16 @@ pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
 
     match slave.as_mut() {
         Some(s) => {
+            let _span = error_span!("fmi2FreeInstance", luid = s.logger_uid).entered();
             // fmi2FreeInstance message is send to backend on drop
             drop(slave)
         }
-        None => {warn!("No instance given.")}
+        None => {
+            warn!(
+                category = %Fmi2LogCategory::LogStatusWarning,
+                "No instance given."
+            );
+        }
     }
 }
 
@@ -362,8 +430,78 @@ pub extern "C" fn fmi2SetDebugLogging(
     n_categories: size_t,
     categories: *const Fmi2String,
 ) -> Fmi2Status {
-    error!("fmi2SetDebugLogging is not implemented by UNIFMU.");
-    Fmi2Status::Error
+    let _span = error_span!(
+        "fmi2SetDebugLogging",
+        luid = slave.logger_uid
+    ).entered();
+
+    let logging_on = match logging_on {
+        0 => false,
+        1 => true,
+        _ => {
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Invalid value passed to 'logging_on'."
+            );
+            return Fmi2Status::Error;
+        }
+    };
+
+    if let Err(error) = logger::update_enabled_for_callback(
+        slave.logger_uid,
+        logging_on
+    ) {
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "couldn't update enabled state of logger callback: {:?}", error
+        );
+        return Fmi2Status::Error;
+    }
+
+    if n_categories != 0 {
+        match unsafe { from_raw_parts(categories, n_categories) }
+            .iter()
+            .map(|category| {
+                match unsafe { category.as_ref() } {
+                    None => {
+                        Err("one of the categories was null")
+                    }
+                    Some(category_reference) => match unsafe { CStr::from_ptr(category_reference).to_str() } {
+                        Err(_) => {
+                            Err("one of the categories could not be parsed as an utf-8 formatted string")
+                        }
+                        Ok(category_str) => Ok(Fmi2LogCategory::from(category_str))
+                    }
+                }
+            })
+            .collect::<Result<Vec<Fmi2LogCategory>, &str>>()
+        {
+            Err(error) => {
+                error!(
+                    category = %Fmi2LogCategory::LogStatusError,
+                    "couldn't parse categories: {}", error
+                );
+                return Fmi2Status::Error;
+            }
+            Ok(categories) => {
+                if let Err(error) = logger::set_categories_for_callback(slave.logger_uid, categories) {
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusError,
+                        "couldn't set new categories for logger callback: {:?}", error
+                    );
+                    return Fmi2Status::Error;
+                }
+            }
+        }
+    } else if let Err(error) = logger::clear_categories_for_callback(slave.logger_uid) {
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "couldn't clear categories for logger callback: {:?}", error
+            );
+            return Fmi2Status::Error;
+    }
+
+    Fmi2Status::Ok
 }
 
 #[no_mangle]
@@ -375,6 +513,11 @@ pub extern "C" fn fmi2SetupExperiment(
     stop_time_defined: Fmi2Boolean,
     stop_time: Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetupExperiment",
+        luid = slave.logger_uid
+    ).entered();
+
     let tolerance = {
         if tolerance_defined != 0 {
             Some(tolerance)
@@ -406,13 +549,21 @@ pub extern "C" fn fmi2SetupExperiment(
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2SetupExperiment failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2SetupExperiment failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2EnterInitializationMode",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2EnterInitializationMode(
             fmi2_messages::Fmi2EnterInitializationMode {},
@@ -423,13 +574,21 @@ pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Stat
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2EnterInitializationMode failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2EnterInitializationMode failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2ExitInitializationMode",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2ExitInitializationMode(
             fmi2_messages::Fmi2ExitInitializationMode {},
@@ -440,13 +599,21 @@ pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Statu
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2ExitInitializationMode failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2ExitInitializationMode failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2Terminate",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Terminate(
             fmi2_messages::Fmi2Terminate {},
@@ -457,13 +624,21 @@ pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2Terminate failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2Terminate failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2Reset",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Reset(
             fmi2_messages::Fmi2Reset {},
@@ -474,7 +649,10 @@ pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2Reset failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2Reset failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
@@ -487,6 +665,11 @@ pub extern "C" fn fmi2DoStep(
     step_size: Fmi2Real,
     no_step_prior: Fmi2Boolean,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2DoStep",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2DoStep(
             fmi2_messages::Fmi2DoStep {
@@ -509,7 +692,10 @@ pub extern "C" fn fmi2DoStep(
             status => status,
         },
         Err(error) => {
-            error!("fmi2DoStep failed with error {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2DoStep failed with error {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
@@ -517,6 +703,11 @@ pub extern "C" fn fmi2DoStep(
 
 #[no_mangle]
 pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2CancelStep",
+        luid = slave.logger_uid
+    ).entered();
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2CancelStep(
             fmi2_messages::Fmi2CancelStep {},
@@ -527,7 +718,10 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2CancelStep failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2CancelStep failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
@@ -563,6 +757,11 @@ pub unsafe extern "C" fn fmi2GetReal(
     nvr: size_t,
     values: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetReal",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
@@ -584,12 +783,19 @@ pub unsafe extern "C" fn fmi2GetReal(
 
             Fmi2Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
+                        "Unknown status returned from backend."
+                    );
                     Fmi2Status::Fatal
                 })
         }
         Err(error) => {
-            error!("fmi2GetReal failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2GetReal failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
@@ -624,6 +830,11 @@ pub unsafe extern "C" fn fmi2GetInteger(
     nvr: size_t,
     values: *mut Fmi2Integer,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetInteger",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
@@ -645,12 +856,19 @@ pub unsafe extern "C" fn fmi2GetInteger(
 
             Fmi2Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
+                        "Unknown status returned from backend."
+                    );
                     Fmi2Status::Fatal
                 })
         }
         Err(error) => {
-            error!("fmi2GetInteger failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2GetInteger failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
@@ -685,6 +903,11 @@ pub unsafe extern "C" fn fmi2GetBoolean(
     nvr: size_t,
     values: *mut Fmi2Boolean,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetBoolean",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
@@ -714,12 +937,19 @@ pub unsafe extern "C" fn fmi2GetBoolean(
 
             Fmi2Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
+                        "Unknown status returned from backend."
+                    );
                     Fmi2Status::Fatal
                 })
         }
         Err(error) => {
-            error!("fmi2GetBoolean failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2GetBoolean failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
@@ -760,6 +990,11 @@ pub unsafe extern "C" fn fmi2GetString(
     nvr: size_t,
     values: *mut Fmi2String,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetString",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
 
     let cmd = Fmi2Command {
@@ -786,7 +1021,11 @@ pub unsafe extern "C" fn fmi2GetString(
                         slave.string_buffer = converted_values
                     },
                     Err(e) =>  {
-                        error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
+                        error!(
+                            category = %Fmi2LogCategory::LogStatusFatal,
+                            status = Fmi2Status::Fatal as i32,
+                            "Backend returned strings containing interior nul bytes. These cannot be converted into CStrings."
+                        );
                         return Fmi2Status::Fatal;
                     }
                 }
@@ -805,12 +1044,19 @@ pub unsafe extern "C" fn fmi2GetString(
 
             Fmi2Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
+                        "Unknown status returned from backend."
+                    );
                     Fmi2Status::Fatal
                 })
         }
         Err(error) => {
-            error!("fmi2GetString failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2GetString failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
@@ -845,6 +1091,11 @@ pub unsafe extern "C" fn fmi2SetReal(
     nvr: size_t,
     values: *const Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetReal",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
 
@@ -861,7 +1112,10 @@ pub unsafe extern "C" fn fmi2SetReal(
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2SetReal failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2SetReal failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
@@ -895,6 +1149,11 @@ pub unsafe extern "C" fn fmi2SetInteger(
     nvr: size_t,
     values: *const Fmi2Integer,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetInteger",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
 
@@ -911,7 +1170,10 @@ pub unsafe extern "C" fn fmi2SetInteger(
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2SetInteger failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2SetInteger failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
@@ -950,6 +1212,11 @@ pub unsafe extern "C" fn fmi2SetBoolean(
     nvr: size_t,
     values: *const Fmi2Boolean,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetBoolean",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let values: Vec<bool> = unsafe { from_raw_parts(values, nvr) }
         .iter()
@@ -969,7 +1236,10 @@ pub unsafe extern "C" fn fmi2SetBoolean(
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2SetBoolean failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2SetBoolean failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
@@ -1003,6 +1273,11 @@ pub unsafe extern "C" fn fmi2SetString(
     nvr: size_t,
     values: *const Fmi2String,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetString",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(vr, nvr) }.to_owned();
 
     let conversion_result: Result<Vec<String>, Utf8Error> = unsafe {
@@ -1031,12 +1306,18 @@ pub unsafe extern "C" fn fmi2SetString(
                 .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
                 .map(|status| status.into())
                 .unwrap_or_else(|error| {
-                    error!("fmi2SetString failed with error: {:?}.", error);
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusError,
+                        "fmi2SetString failed with error: {:?}.", error
+                    );
                     Fmi2Status::Error
                 })
         },
         Err(conversion_error) => {
-            error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "The String values could not be converted to Utf-8: {:?}.", conversion_error
+            );
             Fmi2Status::Error
         }
     }
@@ -1083,6 +1364,11 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
     direction_known: *const Fmi2Real,
     direction_unknown: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetDirectionalDerivative",
+        luid = slave.logger_uid
+    ).entered();
+
     let references_unknown = unsafe {
         from_raw_parts(unknown_refs, nvr_known)
     }
@@ -1121,7 +1407,11 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
                 
                 Fmi2Status::try_from(result.status)
                     .unwrap_or_else(|_| {
-                        error!("Unknown status returned from backend.");
+                        error!(
+                            category = %Fmi2LogCategory::LogStatusFatal,
+                            status = Fmi2Status::Fatal as i32,
+                            "Unknown status returned from backend."
+                        );
                         Fmi2Status::Fatal
                     })
             } else {
@@ -1129,7 +1419,10 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
             }
         },
         Err(error) => {
-            error!("fmi2GetDirectionalDerivative failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2GetDirectionalDerivative failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
@@ -1168,6 +1461,11 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
     orders: *const Fmi2Integer,
     values: *const Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SetRealInputDerivatives",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
     let values = unsafe { from_raw_parts(values, nvr) }.to_owned();
@@ -1186,7 +1484,10 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
         .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2SetRealInputDerivatives failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2SetRealInputDerivatives failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
@@ -1224,6 +1525,11 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
     orders: *const Fmi2Integer,
     values: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetRealOutputDerivatives",
+        luid = slave.logger_uid
+    ).entered();
+
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
     let values_out = unsafe { from_raw_parts_mut(values, nvr) };
@@ -1247,74 +1553,150 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
             
             Fmi2Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
+                        "Unknown status returned from backend."
+                    );
                     Fmi2Status::Fatal
                 })
         }
         Err(error) => {
-            error!("fmi2GetRealOutputDerivatives failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2GetRealOutputDerivatives failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
 }
 
 // ------------------------------------- FMI FUNCTIONS (Serialization) --------------------------------
+/// Saves the state of the FMU in the state pointer 
+/// 
+/// # Parameters
+/// - `slave`: a raw pointer to the FMU slave instance
+/// - `state`: a raw pointer to the state, that will save the FMU's state
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds.
+/// - `Fmi2Status::Error`: If an error occurs during the process (e.g., invalid pointers or failed serialization).
+///
 #[no_mangle]
-pub extern "C" fn fmi2SetFMUstate(slave: &mut Fmi2Slave, state: &SlaveState) -> Fmi2Status {
-    let state = state.bytes.to_owned();
+pub extern "C" fn fmi2SetFMUstate(
+    slave: *mut Fmi2Slave, 
+    state: *const SlaveState
+) -> Fmi2Status {
+
+    if slave.is_null() {
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "fmi2SetFMUstate called with slave pointing to null!"
+        );
+        return Fmi2Status::Error;
+    }
+    if state.is_null() {
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "fmi2SetFMUstate called with state pointing to null!"
+        );
+        return Fmi2Status::Error;
+    }
+
+    let state_ref = unsafe { &*state };
+
+    let state_bytes = state_ref.bytes.to_owned();
     
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2DeserializeFmuState(
             fmi2_messages::Fmi2DeserializeFmuState {
-                state,
+                state: state_bytes,
             }
         )),
     };
     
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    unsafe { (*slave).dispatcher.send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd) }
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi2SetRealInputDerivatives failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2SetFMUstate failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         })
 }
 
-//
-
-#[no_mangle]
 /// Store a copy of the FMU's state in a buffer for later retrival, see. p25
+///
+/// # Parameters
+/// - `slave`: A raw pointer to the FMU slave instance, which is responsible for managing the state of the FMU.
+/// - `state`: A raw pointer to the location where the FMU's state will be stored. After the call, this pointer will hold a copy of the FMU state.
+/// 
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the FMU state is successfully serialized and stored.
+/// - `Fmi2Status::Error`: If an error occurs during the serialization or if invalid pointers are provided.
+/// - `Fmi2Status::Fatal`: If an unknown status is returned from the backend or there is an issue with the result status.
+///
+#[no_mangle]
 pub extern "C" fn fmi2GetFMUstate(
-    slave: &mut Fmi2Slave,
-    state: &mut Option<SlaveState>,
+    slave: *mut Fmi2Slave,
+    state: *mut *mut SlaveState, 
 ) -> Fmi2Status {
+
+    if state.is_null() {
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "fmi2GetFMUstate called with state pointing to null!"
+        );
+        return Fmi2Status::Error;
+    }
+
+    if slave.is_null() {
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "fmi2GetFMUstate called with slave pointing to null!"
+        );
+        return Fmi2Status::Error;
+    }
+
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2SerializeFmuState(
             fmi2_messages::Fmi2SerializeFmuState {}
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd)
-    {
+    let slave = unsafe { &mut *slave };
+
+    match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) {
         Ok(result) => {
-            match state.as_mut() {
-                Some(state) => {
-                    state.bytes = result.state;
-                }
-                None => {
-                    *state = Some(SlaveState::new(&result.state));
+            unsafe {
+                match (*state).as_mut() {
+                    Some(state_ptr) => {
+                        let state = &mut *state_ptr;
+                        state.bytes = result.state;
+                    }
+                    None => {
+                        let new_state = Box::new(SlaveState::new(&result.state));
+                        *state = Box::into_raw(new_state);
+                    }
                 }
             }
 
             Fmi2Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    error!(
+                        category = %Fmi2LogCategory::LogStatusFatal,
+                        status = Fmi2Status::Fatal as i32,
+                        "fmi2GetFMUstate: Unknown status ({:?}) returned from backend.", result.status
+                    );
                     Fmi2Status::Fatal
                 })
         }
         Err(error) => {
-            error!("fmi2GetFMUstate failed with error: {:?}.", error);
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "fmi2GetFMUstate failed with error: {:?}.", error
+            );
             Fmi2Status::Error
         }
     }
@@ -1322,34 +1704,77 @@ pub extern "C" fn fmi2GetFMUstate(
 
 /// Free previously recorded state of slave
 /// If state points to null the call is ignored as defined by the specification
+///
+/// # Parameters
+/// - `slave`: A raw pointer to the FMU slave instance.
+/// - `state`: A raw pointer to the state that should be freed. If the pointer is null, no action is taken.
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: Indicates that the state was successfully freed (or the state was null, and no action was required).
+///
 #[no_mangle]
 pub extern "C" fn fmi2FreeFMUstate(
-    slave: &mut Fmi2Slave,
-    state: Option<Box<SlaveState>>,
+    slave: *mut Fmi2Slave,
+    state: *mut *mut SlaveState,
 ) -> Fmi2Status {
-    match state {
-        Some(state) => drop(state),
-        None => warn!("fmi2FreeFMUstate called with state pointing to null!")
+
+    if state.is_null(){
+        warn!("fmi2FreeFMUstate called with state pointing to null!");
+        return Fmi2Status::Ok;
     }
+
+    if slave.is_null(){
+        warn!("fmi2FreeFMUstate called with slave pointing to null!");
+        return Fmi2Status::Ok;
+    }
+
+    unsafe {
+        let state_ptr = *state;
+
+        if state_ptr.is_null() {
+            warn!("fmi2FreeFMUstate called with state pointing to null!");
+            return Fmi2Status::Ok;
+        }
+
+        drop(Box::from_raw(state_ptr)); 
+        *state = std::ptr::null_mut(); // Setting the state to null
+
+    }
+
     Fmi2Status::Ok
 }
 
 /// Copies the state of a slave into a buffer provided by the environment
 ///
-/// Oddly, the length of the buffer is also provided,
-/// as i would expect the environment to have enquired about the state size by calling fmi2SerializedFMUstateSize.
+/// # Parameters 
+/// - `slave`: A reference to the FMU slave instance
+/// - `state`: A reference to the state of the FMU
+/// - `data`: A pointer to the buffer where the state will be copied
+/// - `size`: The size of the buffer
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the FMU state is successfully serialized and stored.
+/// - `Fmi2Status::Error`: If an error occurs during the serialization or if invalid pointers are provided.
 #[no_mangle]
 /// We assume that the buffer is sufficiently large
 pub extern "C" fn fmi2SerializeFMUstate(
-    _slave: &Fmi2Slave,
+    slave: &Fmi2Slave,
     state: &SlaveState,
     data: *mut u8,
     size: size_t,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SerializeFMUstate",
+        luid = slave.logger_uid
+    ).entered();
+
     let serialized_state_len = state.bytes.len();
 
     if serialized_state_len > size {
-        error!("Error while calling fmi2SerializeFMUstate: FMUstate too big to be contained in given byte vector.");
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "Error while calling fmi2SerializeFMUstate: FMUstate too big to be contained in given byte vector."
+        );
         return Fmi2Status::Error;
     }
 
@@ -1387,20 +1812,58 @@ pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
     slave: &mut Fmi2Slave,
     serialized_state: *const u8,
     size: size_t,
-    state: &mut Box<Option<SlaveState>>,
+    state: *mut *mut SlaveState,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2DeSerializeFMUstate",
+        luid = slave.logger_uid
+    ).entered();
+
     let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
 
-    *state = Box::new(Some(SlaveState::new(serialized_state)));
+    if state.is_null() {
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "fmi2DeSerializeFMUstate called with state pointing to null!"
+        );
+        return Fmi2Status::Error;
+    }
+
+    unsafe {
+        if (*state).is_null() {
+            // If null allocate the new state and set the pointer to it
+            let new_state = Box::new(SlaveState::new(serialized_state));
+            *state = Box::into_raw(new_state);
+        } else {
+            // If not null overwrite the state
+            let state_ptr = *state;
+            let state = &mut *state_ptr;
+            state.bytes = serialized_state.to_owned();
+        }
+    }
     Fmi2Status::Ok
 }
 
+/// Retrieves the size of the serialized state of the FMU
+///
+/// # Parameters
+/// - `slave`: A reference to the FMU slave instance
+/// - `state`: A reference to the state of the FMU
+/// - `size`: A reference to the size of the serialized state
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the size of the serialized state is successfully retrieved.
 #[no_mangle]
 pub extern "C" fn fmi2SerializedFMUstateSize(
     slave: &Fmi2Slave,
     state: &SlaveState,
     size: &mut size_t,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2SerializedFMUstateSize",
+        luid = slave.logger_uid
+    ).entered();
+
     *size = state.bytes.len();
     Fmi2Status::Ok
 }
@@ -1412,16 +1875,25 @@ pub extern "C" fn fmi2GetStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Status,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetStatus",
+        luid = slave.logger_uid
+    ).entered();
+
     match status_kind {
         Fmi2StatusKind::Fmi2DoStepStatus => match slave.dostep_status {
             Some(status) => status,
             None => {
-                error!("'fmi2GetStatus' called with fmi2StatusKind 'Fmi2DoStepStatus' before 'fmi2DoStep' has returned pending.");
+                error!(
+                    category = %Fmi2LogCategory::LogStatusError,
+                    "'fmi2GetStatus' called with fmi2StatusKind 'Fmi2DoStepStatus' before 'fmi2DoStep' has returned pending."
+                );
                 Fmi2Status::Error
             }
         },
         _ => {
             error!(
+                category = %Fmi2LogCategory::LogStatusError,
                 "'fmi2GetStatus' only accepts the status kind '{:?}'",
                 Fmi2StatusKind::Fmi2DoStepStatus
             );
@@ -1439,6 +1911,11 @@ pub unsafe extern "C" fn fmi2GetRealStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Real,
 ) -> Fmi2Status {
+    let _span = error_span!(
+        "fmi2GetRealStatus",
+        luid = slave.logger_uid
+    ).entered();
+
     match status_kind {
         Fmi2StatusKind::Fmi2LastSuccessfulTime => match slave.last_successful_time {
             Some(last_time) => {
@@ -1448,12 +1925,16 @@ pub unsafe extern "C" fn fmi2GetRealStatus(
                 Fmi2Status::Ok
             }
             None => {
-                error!("'fmi2GetRealStatus' can not be called before 'Fmi2DoStep'");
+                error!(
+                    category = %Fmi2LogCategory::LogStatusError,
+                    "'fmi2GetRealStatus' can not be called before 'Fmi2DoStep'"
+                );
                 Fmi2Status::Error
             }
         },
         _ => {
             error!(
+                category = %Fmi2LogCategory::LogStatusError,
                 "'fmi2GetRealStatus' only accepts the status kind '{:?}'",
                 Fmi2StatusKind::Fmi2DoStepStatus
             );
@@ -1468,7 +1949,15 @@ pub extern "C" fn fmi2GetIntegerStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Integer,
 ) -> Fmi2Status {
-    error!("fmi2GetIntegerStatus is not implemented by UNIFMU.");
+    let _span = error_span!(
+        "fmi2GetIntegerStatus",
+        luid = slave.logger_uid
+    ).entered();
+
+    error!(
+        category = %Fmi2LogCategory::LogStatusError,
+        "fmi2GetIntegerStatus is not implemented by UniFMU."
+    );
     Fmi2Status::Error
 }
 
@@ -1478,8 +1967,16 @@ pub extern "C" fn fmi2GetBooleanStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2Boolean,
 ) -> Fmi2Status {
-    error!("fmi2GetBooleanStatus is not implemented by UNIFMU.");
-    Fmi2Status::Discard
+    let _span = error_span!(
+        "fmi2GetBooleanStatus",
+        luid = slave.logger_uid
+    ).entered();
+
+    error!(
+        category = %Fmi2LogCategory::LogStatusError,
+        "fmi2GetBooleanStatus is not implemented by UniFMU."
+    );
+    Fmi2Status::Error
 }
 
 #[no_mangle]
@@ -1488,6 +1985,14 @@ pub extern "C" fn fmi2GetStringStatus(
     status_kind: Fmi2StatusKind,
     value: *mut Fmi2String,
 ) -> Fmi2Status {
-    error!("fmi2GetStringStatus is not implemented by UNIFMU.");
+    let _span = error_span!(
+        "fmi2GetStringStatus",
+        luid = slave.logger_uid
+    ).entered();
+
+    error!(
+        category = %Fmi2LogCategory::LogStatusError,
+        "fmi2GetStringStatus is not implemented by UniFMU."
+    );
     Fmi2Status::Error
 }

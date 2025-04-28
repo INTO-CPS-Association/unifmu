@@ -1,9 +1,8 @@
 // Type definitions for parameters in functions crossing the ABI boundary
 // betweeen C and Rust.
 
-use std::ffi::{c_char, c_double, c_int};
+use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int, CStr}, fmt::{Debug, Display}};
 
-use core::marker::{PhantomData, PhantomPinned};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 pub type Fmi2Real = c_double;
@@ -85,18 +84,27 @@ pub enum Fmi2Status {
 /// 
 /// Representing it this way lets us have type safety without knowing the
 /// structure of the type.
-/// 
-/// The _marker is there to ensure that the rust compiler knows that this
-/// type isn't thread safe (as it is essentially a gussied up pointer).
 #[repr(C)]
 pub struct ComponentEnvironment {
-    _data: [u8; 0],
-    _marker: PhantomData<(*mut u8, PhantomPinned)>
+    _data: [u8; 0]
 }
 
-///
+/// The ComponentEnvironment is assumed to be kept valid by the importer for
+/// the FMU's lifetime, or at least be kept in the proper state before calling
+/// the FMI API. We tell the Rust compiler that it is safe to share this
+/// between threads to get logging to work, but we must "manually" ensure that
+/// it is only used when a FMI call is made with the related FMU component
+/// (AKA the fmu_slave). (By manually it is meant that we write the code without
+/// relying on the compiler to catch our mistakes. Very unrustian, but such is
+/// the FFI life.)
+#[derive(Copy, Clone)]
+pub struct SyncComponentEnvironment(pub *const ComponentEnvironment);
+
+unsafe impl Send for SyncComponentEnvironment {}
+unsafe impl Sync for SyncComponentEnvironment {}
+
 /// Represents the function signature of the logging callback function passsed
-/// from the envrionment to the slave during instantiation.
+/// from the environment to the slave during instantiation.
 pub type Fmi2CallbackLogger = unsafe extern "C" fn(
     component_environment: *const ComponentEnvironment,
     instance_name: Fmi2String,
@@ -105,6 +113,64 @@ pub type Fmi2CallbackLogger = unsafe extern "C" fn(
     message: Fmi2String,
     ...
 );
+
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug, Default, PartialEq)]
+pub enum Fmi2LogCategory {
+    LogEvents,
+    LogSingularLinearSystems,
+    LogNonlinearSystems,
+    LogDynamicStateSelection,
+    LogStatusWarning,
+    LogStatusDiscard,
+    LogStatusError,
+    LogStatusFatal,
+    LogStatusPending,
+    #[default] LogAll,
+    LogUserDefined(String)
+}
+
+impl Fmi2LogCategory {
+    pub fn str_name(&self) -> &str {
+        match self {
+            Fmi2LogCategory::LogEvents => "logEvents",
+            Fmi2LogCategory::LogSingularLinearSystems => "logSingularLinearSystems",
+            Fmi2LogCategory::LogNonlinearSystems => "logNonlinearSystems",
+            Fmi2LogCategory::LogDynamicStateSelection => "logDynamicStateSelection",
+            Fmi2LogCategory::LogStatusWarning => "logStatusWarning",
+            Fmi2LogCategory::LogStatusDiscard => "logStatusDiscard",
+            Fmi2LogCategory::LogStatusError => "logStatusError",
+            Fmi2LogCategory::LogStatusFatal => "logStatusFatal",
+            Fmi2LogCategory::LogStatusPending => "logStatusPending",
+            Fmi2LogCategory::LogAll => "logAll",
+            Fmi2LogCategory::LogUserDefined(name) => name,
+        }
+    }
+}
+
+impl Display for Fmi2LogCategory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.str_name())
+    }
+}
+
+impl From<&str> for Fmi2LogCategory {
+    fn from(value: &str) -> Self {
+        match value {
+            "logEvents" => Fmi2LogCategory::LogEvents,
+            "logSingularLinearSystems" => Fmi2LogCategory::LogSingularLinearSystems,
+            "logNonlinearSystems" => Fmi2LogCategory::LogNonlinearSystems,
+            "logDynamicStateSelection" => Fmi2LogCategory::LogDynamicStateSelection,
+            "logStatusWarning" => Fmi2LogCategory::LogStatusWarning,
+            "logStatusDiscard" => Fmi2LogCategory::LogStatusDiscard,
+            "logStatusError" => Fmi2LogCategory::LogStatusError,
+            "logStatusFatal" => Fmi2LogCategory::LogStatusFatal,
+            "logStatusPending" => Fmi2LogCategory::LogStatusPending,
+            "logAll" => Fmi2LogCategory::LogAll,
+            _ => Fmi2LogCategory::LogUserDefined(String::from(value))
+        }
+    }
+}
 
 //pub type Fmi2CallbackAllocateMemory = extern "C" fn(nobj: c_ulonglong, size: c_ulonglong);
 //pub type Fmi2CallbackFreeMemory = extern "C" fn(obj: *const c_void);

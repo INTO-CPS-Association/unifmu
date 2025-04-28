@@ -6,23 +6,26 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-public class Model {
+public class Model implements Serializable {
 
-    public Double real_a = 0.0;
-    public Double real_b = 0.0;
-    public Double real_c = 0.0;
-    public Integer integer_a = 0;
-    public Integer integer_b = 0;
-    public Integer integer_c = 0;
-    public Boolean boolean_a = false;
-    public Boolean boolean_b = false;
-    public Boolean boolean_c = false;
-    public String string_a = "";
-    public String string_b = "";
-    public String string_c = "";
+    private static final long serialVersionUID = 1L;
 
-    private ArrayList<Field> references_to_attributes;
+    public Double real_a;
+    public Double real_b;
+    public Double real_c;
+    public Integer integer_a;
+    public Integer integer_b;
+    public Integer integer_c;
+    public Boolean boolean_a;
+    public Boolean boolean_b;
+    public Boolean boolean_c;
+    public String string_a;
+    public String string_b;
+    public String string_c;
+
+    private transient ArrayList<Field> references_to_attributes;
 
     public Model() throws Exception {
 
@@ -41,6 +44,7 @@ public class Model {
         this.references_to_attributes.add(this.getClass().getField("string_b"));
         this.references_to_attributes.add(this.getClass().getField("string_c"));
 
+        fmi2Reset();
     }
 
     public Fmi2Status fmi2DoStep(double current_time, double step_size, boolean noStepPrior) {
@@ -105,17 +109,15 @@ public class Model {
 
     public Fmi2Status fmi2Reset() {
         this.real_a = 0.0;
-        this.real_c = 0.0;
-        this.integer_a = 0;
         this.real_b = 0.0;
+        this.integer_a = 0;
         this.integer_b = 0;
-        this.integer_c = 0;
         this.boolean_a = false;
         this.boolean_b = false;
-        this.boolean_c = false;
         this.string_a = "";
         this.string_b = "";
-        this.string_c = "";
+        update_outputs();
+
         return Fmi2Status.OK;
     }
 
