@@ -483,13 +483,13 @@ if __name__ == "__main__":
     # fmu.getUInt32([vrs["clocked_variable_c"]]) == fmi3Error # Throws FMI3Error since not in event mode
 
     fmu.enterEventMode()
-    clocked_variable_c = fmu.getUInt32([vrs["clocked_variable_c"]])[0]
+    clocked_variable_c = fmu.getInt32([vrs["clocked_variable_c"]])[0]
     print(f'clocked_variable_c: {clocked_variable_c}')
     assert clocked_variable_c == 0
 
-    fmu.setUInt32([vrs["clocked_variable_a"],vrs["clocked_variable_b"]],[1,2])
+    fmu.setInt32([vrs["clocked_variable_a"],vrs["clocked_variable_b"]],[1,2])
     fmu.updateDiscreteStates()
-    clocked_variable_c = fmu.getUInt32([vrs["clocked_variable_c"]])[0]
+    clocked_variable_c = fmu.getInt32([vrs["clocked_variable_c"]])[0]
     print(f'clocked_variable_c: {clocked_variable_c}')
     assert clocked_variable_c == 3
 

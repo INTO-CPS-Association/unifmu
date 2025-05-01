@@ -19,83 +19,83 @@ public class Model
     private List<uint> required_intermediate_variables;
 
     private FMIState state = FMIState.FMIInstantiatedState;
-    public float float32_a = 0.0f;
-    public float float32_b = 0.0f;
-    public float float32_c = 0.0f;
-    public double float64_a = 0.0;
-    public double float64_b = 0.0;
-    public double float64_c = 0.0;
-    public int int8_a = 0;
-    public int int8_b = 0;
-    public int int8_c = 0;
-    public uint uint8_a = 0; 
-    public uint uint8_b = 0; 
-    public uint uint8_c = 0; 
-    public int int16_a = 0;
-    public int int16_b = 0;
-    public int int16_c = 0;
-    public uint uint16_a = 0; 
-    public uint uint16_b = 0; 
-    public uint uint16_c = 0; 
-    public int int32_a = 0;
-    public int int32_b = 0;
-    public int int32_c = 0;
-    public uint uint32_a = 0; 
-    public uint uint32_b = 0; 
-    public uint uint32_c = 0; 
-    public long int64_a = 0L;
-    public long int64_b = 0L;
-    public long int64_c = 0L;
-    public ulong uint64_a = 0L; 
-    public ulong uint64_b = 0L; 
-    public ulong uint64_c = 0L; 
-    public bool boolean_a = false;
-    public bool boolean_b = false;
-    public bool boolean_c = false;
-    public string string_a = "";
-    public string string_b = "";
-    public string string_c = "";
-    public byte[] binary_a = new byte[] {
+    public float float32_a { get; set; } = 0.0f;
+    public float float32_b { get; set; } = 0.0f;
+    public float float32_c { get; set; } = 0.0f;
+    public double float64_a { get; set; } = 0.0;
+    public double float64_b { get; set; } = 0.0;
+    public double float64_c { get; set; } = 0.0;
+    public int int8_a { get; set; } = 0;
+    public int int8_b { get; set; } = 0;
+    public int int8_c { get; set; } = 0;
+    public uint uint8_a { get; set; } = 0; 
+    public uint uint8_b { get; set; } = 0; 
+    public uint uint8_c { get; set; } = 0; 
+    public int int16_a { get; set; } = 0;
+    public int int16_b { get; set; } = 0;
+    public int int16_c { get; set; } = 0;
+    public uint uint16_a { get; set; } = 0; 
+    public uint uint16_b { get; set; } = 0; 
+    public uint uint16_c { get; set; } = 0; 
+    public int int32_a { get; set; } = 0;
+    public int int32_b { get; set; } = 0;
+    public int int32_c { get; set; } = 0;
+    public uint uint32_a { get; set; } = 0; 
+    public uint uint32_b { get; set; } = 0; 
+    public uint uint32_c { get; set; } = 0; 
+    public long int64_a { get; set; } = 0L;
+    public long int64_b { get; set; } = 0L;
+    public long int64_c { get; set; } = 0L;
+    public ulong uint64_a { get; set; } = 0L; 
+    public ulong uint64_b { get; set; } = 0L; 
+    public ulong uint64_c { get; set; } = 0L; 
+    public bool boolean_a { get; set; } = false;
+    public bool boolean_b { get; set; } = false;
+    public bool boolean_c { get; set; } = false;
+    public string string_a { get; set; } = "";
+    public string string_b { get; set; } = "";
+    public string string_c { get; set; } = "";
+    public byte[] binary_a { get; set; } = new byte[] {
         (byte) 0b00000000
     };
-    public byte[] binary_b = new byte[] {
+    public byte[] binary_b { get; set; } = new byte[] {
         (byte) 0b00000000
     };
-    public byte[] binary_c = new byte[] {
+    public byte[] binary_c { get; set; } = new byte[] {
         (byte) 0b00000000
     };
 
-    public float float32_tunable_parameter = 0.0f;
-    public double  float64_tunable_parameter = 0.0;
-    public int int8_tunable_parameter = 0;
-    public uint uint8_tunable_parameter = 0;
-    public int int16_tunable_parameter = 0;
-    public uint uint16_tunable_parameter = 0;
-    public int int32_tunable_parameter = 0;
-    public uint uint32_tunable_parameter = 0;
-    public long int64_tunable_parameter = 0L;
-    public ulong uint64_tunable_parameter = 0L;
-    public bool boolean_tunable_parameter = false;
-    public string string_tunable_parameter = "";
-    public byte[] binary_tunable_parameter = new byte[] {
+    public float float32_tunable_parameter { get; set; } = 0.0f;
+    public double  float64_tunable_parameter { get; set; } = 0.0;
+    public int int8_tunable_parameter { get; set; } = 0;
+    public uint uint8_tunable_parameter { get; set; } = 0;
+    public int int16_tunable_parameter { get; set; } = 0;
+    public uint uint16_tunable_parameter { get; set; } = 0;
+    public int int32_tunable_parameter { get; set; } = 0;
+    public uint uint32_tunable_parameter { get; set; } = 0;
+    public long int64_tunable_parameter { get; set; } = 0L;
+    public ulong uint64_tunable_parameter { get; set; } = 0L;
+    public bool boolean_tunable_parameter { get; set; } = false;
+    public string string_tunable_parameter { get; set; } = "";
+    public byte[] binary_tunable_parameter { get; set; } = new byte[] {
         (byte) 0b00000000
     };
-    public ulong uint64_tunable_structural_parameter = 5L;
-    public float[] float32_vector_using_tunable_structural_parameter = new float[] {
+    public ulong uint64_tunable_structural_parameter { get; set; } = 5L;
+    public float[] float32_vector_using_tunable_structural_parameter { get; set; } = new float[] {
         0.1f,
         0.2f,
         0.3f,
         0.4f,
         0.5f
     };
-    public bool clock_a = false;
-    public bool clock_b = false;
-    public bool clock_c = false;
-    public int clocked_variable_a = 0;
-    public int clocked_variable_b = 0;
-    public int clocked_variable_c = 0;
-    public Dictionary<uint,double> clock_reference_to_interval = new Dictionary<uint,double>{1001, 1.0};
-    public Dictionary<uint,double> clock_reference_to_shift = new Dictionary<uint,double>{1001, 1.0};
+    public bool clock_a { get; set; } = false;
+    public bool clock_b { get; set; } = false;
+    public bool clock_c { get; set; } = false;
+    public int clocked_variable_a { get; set; } = 0;
+    public int clocked_variable_b { get; set; } = 0;
+    public int clocked_variable_c { get; set; } = 0;
+    public Dictionary<uint,double> clock_reference_to_interval = new Dictionary<uint,double>{{1001, 1.0}};
+    public Dictionary<uint,double> clock_reference_to_shift = new Dictionary<uint,double>{{1001, 1.0}};
 
 
     private Dictionary<uint, PropertyInfo> reference_to_attributes = new Dictionary<uint, PropertyInfo>();
@@ -124,7 +124,7 @@ public class Model
         this.required_intermediate_variables = required_intermediate_variables;
         var type = this.GetType();
 
-        this.reference_to_attribute = new Dictionary<uint, PropertyInfo>
+        this.reference_to_attributes = new Dictionary<uint, PropertyInfo>
         {
             { 0, type.GetProperty("float32_a") },
             { 1, type.GetProperty("float32_b") },
@@ -207,7 +207,7 @@ public class Model
         foreach (var kv in this.parameters) all_references[kv.Key] = kv.Value;
         foreach (var kv in this.tunable_parameters) all_references[kv.Key] = kv.Value;
         foreach (var kv in this.clocked_variables) all_references[kv.Key] = kv.Value;
-        foreach (var kv in this.reference_to_attribute) all_references[kv.Key] = kv.Value;
+        foreach (var kv in this.reference_to_attributes) all_references[kv.Key] = kv.Value;
 
         this.all_parameters = new Dictionary<uint, PropertyInfo>();
         foreach (var kv in this.tunable_structural_parameters) all_parameters[kv.Key] = kv.Value;
@@ -264,17 +264,17 @@ public class Model
         return Fmi3Status.Fmi3Ok;
     }
 
-    public Fmi3Status fmi3EnterEventMode(){
+    public Fmi3Status Fmi3EnterEventMode(){
         this.state = FMIState.FMIEventModeState;
         return Fmi3Status.Fmi3Ok;
     }
 
-    public Fmi3Status fmi3EnterStepMode(){
+    public Fmi3Status Fmi3EnterStepMode(){
         this.state = FMIState.FMIStepModeState;
         return Fmi3Status.Fmi3Ok;
     }
     
-    public Fmi3Status fmi3EnterConfigurationMode(){
+    public Fmi3Status Fmi3EnterConfigurationMode(){
         if (this.state == FMIState.FMIInstantiatedState){
             this.state = FMIState.FMIConfigurationModeState;
         } else{
@@ -283,7 +283,7 @@ public class Model
         return Fmi3Status.Fmi3Ok;
     }
 
-    public Fmi3Status fmi3ExitConfigurationMode(){
+    public Fmi3Status Fmi3ExitConfigurationMode(){
         if (this.state == FMIState.FMIConfigurationModeState){
             this.state = FMIState.FMIInstantiatedState;
         }            
@@ -291,7 +291,7 @@ public class Model
             this.state = FMIState.FMIStepModeState;
         }            
         else{
-            return Fmi3Status.Error;
+            return Fmi3Status.Fmi3Error;
         }
         return Fmi3Status.Fmi3Ok;   
     }
@@ -361,7 +361,7 @@ public class Model
             (byte) 0b00000000
         };
         this.uint64_tunable_structural_parameter = 5L;
-        this.float32_vector_using_tunable_structural_parameter = new Float[] {
+        this.float32_vector_using_tunable_structural_parameter = new float[] {
             0.1f,
             0.2f,
             0.3f,
@@ -374,8 +374,8 @@ public class Model
         this.clocked_variable_a = 0;
         this.clocked_variable_b = 0;
         this.clocked_variable_c = 0;
-        this.clock_reference_to_interval = new Dictionary<uint,double>{1001, 1.0};
-        this.clock_reference_to_shift = new Dictionary<uint,double>{1001, 1.0};
+        this.clock_reference_to_interval = new Dictionary<uint,double>{{1001, 1.0}};
+        this.clock_reference_to_shift = new Dictionary<uint,double>{{1001, 1.0}};
         UpdateOutputs();
         UpdateClocks();
         UpdateClockedOutputs();
@@ -400,22 +400,22 @@ public class Model
         return this.SetValueReflection(references, values);
     }
 
-    public Fmi3Status Fmi3SetInt8(IEnumerable<uint> references, IEnumerable<sbyte> values)
+    public Fmi3Status Fmi3SetInt8(IEnumerable<uint> references, IEnumerable<int> values)
     {
         return this.SetValueReflection(references, values);
     }
 
-    public Fmi3Status Fmi3SetUInt8(IEnumerable<uint> references, IEnumerable<byte> values)
+    public Fmi3Status Fmi3SetUInt8(IEnumerable<uint> references, IEnumerable<uint> values)
     {
         return this.SetValueReflection(references, values);
     }
 
-    public Fmi3Status Fmi3SetInt16(IEnumerable<uint> references, IEnumerable<short> values)
+    public Fmi3Status Fmi3SetInt16(IEnumerable<uint> references, IEnumerable<int> values)
     {
         return this.SetValueReflection(references, values);
     }
 
-    public Fmi3Status Fmi3SetUInt16(IEnumerable<uint> references, IEnumerable<ushort> values)
+    public Fmi3Status Fmi3SetUInt16(IEnumerable<uint> references, IEnumerable<uint> values)
     {
         return this.SetValueReflection(references, values);
     }
@@ -478,7 +478,7 @@ public class Model
         return Fmi3Status.Fmi3Ok;
     }
 
-    public Fmi3Status Fmi3SetIntervalFraction(IEnumerable<uint> references, IEnumerable<long> counters, IEnumerable<long> resolutions)
+    public Fmi3Status Fmi3SetIntervalFraction(IEnumerable<uint> references, IEnumerable<ulong> counters, IEnumerable<ulong> resolutions)
     {
         using (var referenceEnumerator = references.GetEnumerator())
         using (var counterEnumerator = counters.GetEnumerator())
@@ -508,7 +508,7 @@ public class Model
         return Fmi3Status.Fmi3Ok;
     }
 
-    public Fmi3Status Fmi3SetShiftFraction(IEnumerable<uint> references, IEnumerable<long> counters, IEnumerable<long> resolutions)
+    public Fmi3Status Fmi3SetShiftFraction(IEnumerable<uint> references, IEnumerable<ulong> counters, IEnumerable<ulong> resolutions)
     {
         using (var referenceEnumerator = references.GetEnumerator())
         using (var counterEnumerator = counters.GetEnumerator())
@@ -536,24 +536,24 @@ public class Model
         return this.GetValueReflection<double>(references);
     }
 
-    public (Fmi3Status, IEnumerable<sbyte>) Fmi3GetInt8(IEnumerable<uint> references)
+    public (Fmi3Status, IEnumerable<int>) Fmi3GetInt8(IEnumerable<uint> references)
     {
-        return this.GetValueReflection<sbyte>(references);
+        return this.GetValueReflection<int>(references);
     }
 
-    public (Fmi3Status, IEnumerable<byte>) Fmi3GetUInt8(IEnumerable<uint> references)
+    public (Fmi3Status, IEnumerable<uint>) Fmi3GetUInt8(IEnumerable<uint> references)
     {
-        return this.GetValueReflection<byte>(references);
+        return this.GetValueReflection<uint>(references);
     }
 
-    public (Fmi3Status, IEnumerable<short>) Fmi3GetInt16(IEnumerable<uint> references)
+    public (Fmi3Status, IEnumerable<int>) Fmi3GetInt16(IEnumerable<uint> references)
     {
-        return this.GetValueReflection<short>(references);
+        return this.GetValueReflection<int>(references);
     }
 
-    public (Fmi3Status, IEnumerable<ushort>) Fmi3GetUInt16(IEnumerable<uint> references)
+    public (Fmi3Status, IEnumerable<uint>) Fmi3GetUInt16(IEnumerable<uint> references)
     {
-        return this.GetValueReflection<ushort>(references);
+        return this.GetValueReflection<uint>(references);
     }
 
     public (Fmi3Status, IEnumerable<int>) Fmi3GetInt32(IEnumerable<uint> references)
@@ -610,10 +610,10 @@ public class Model
         return (Fmi3Status.Fmi3Ok, intervals, qualifiers);
     }
 
-    public (Fmi3Status, IEnumerable<long>, IEnumerable<long>, IEnumerable<int>) Fmi3GetIntervalFraction(IEnumerable<uint> references)
+    public (Fmi3Status, IEnumerable<ulong>, IEnumerable<ulong>, IEnumerable<int>) Fmi3GetIntervalFraction(IEnumerable<uint> references)
     {
-        var counters = new List<long>();
-        var resolutions = new List<long>();
+        var counters = new List<ulong>();
+        var resolutions = new List<ulong>();
         var qualifiers = new List<int>();
 
         foreach (var reference in references)
@@ -640,10 +640,10 @@ public class Model
         return (Fmi3Status.Fmi3Ok, shifts);
     }
 
-    public (Fmi3Status, IEnumerable<long>, IEnumerable<long>) Fmi3GetShiftFraction(IEnumerable<uint> references)
+    public (Fmi3Status, IEnumerable<ulong>, IEnumerable<ulong>) Fmi3GetShiftFraction(IEnumerable<uint> references)
     {
-        var counters = new List<long>();
-        var resolutions = new List<long>();
+        var counters = new List<ulong>();
+        var resolutions = new List<ulong>();
 
         foreach (var reference in references)
         {
@@ -687,6 +687,11 @@ public class Model
                             writer.Write(arr.Length);
                             writer.Write(arr);
                             break;
+                        case float[] arr:
+                            writer.Write(arr.Length);
+                            foreach (float f in arr)
+                                writer.Write(f);
+                            break;
                         default:
                             throw new InvalidOperationException($"Unsupported type for property {prop.Name}");
                     }
@@ -723,6 +728,14 @@ public class Model
                     {
                         int len = reader.ReadInt32();
                         byte[] data = reader.ReadBytes(len);
+                        prop.SetValue(this, data);
+                    }
+                    else if (type == typeof(float[]))
+                    {
+                        int len = reader.ReadInt32();
+                        float[] data = new float[len];
+                        for (int i = 0; i < len; i++)
+                            data[i] = reader.ReadSingle();
                         prop.SetValue(this, data);
                     }
                     else
@@ -776,7 +789,7 @@ public class Model
             foreach (var r in references)
             {
                 if (clocked_variables.ContainsKey(r) || reference_to_attributes.ContainsKey(r))
-                    return Fmi3Status.Error;
+                    return Fmi3Status.Fmi3Error;
             }
         }
         else if (state == FMIState.FMIEventModeState)
@@ -784,7 +797,7 @@ public class Model
             foreach (var r in references)
             {
                 if (reference_to_attributes.ContainsKey(r) || tunable_structural_parameters.ContainsKey(r))
-                    return Fmi3Status.Error;
+                    return Fmi3Status.Fmi3Error;
             }
         }
         else if (state == FMIState.FMIInitializationModeState)
@@ -795,7 +808,7 @@ public class Model
             foreach (var r in references)
             {
                 if ((event_mode_used && all_parameters.ContainsKey(r)) || clocked_variables.ContainsKey(r))
-                    return Fmi3Status.Error;
+                    return Fmi3Status.Fmi3Error;
             }
         }
 
@@ -814,7 +827,7 @@ public class Model
             if (clocked_variables.ContainsKey(r))
             {
                 if (!(state.HasFlag(FMIState.FMIEventModeState) || state.HasFlag(FMIState.FMIInitializationModeState)))
-                    return (Fmi3Status.Error, null);
+                    return (Fmi3Status.Fmi3Error, null);
             }
         }
 
@@ -845,8 +858,8 @@ public class Model
     
     public class Fraction
     {
-        public long Numerator { get; }
-        public long Denominator { get; }
+        public ulong Numerator { get; }
+        public ulong Denominator { get; }
 
         public Fraction(string decimalValue)
         {
@@ -857,8 +870,8 @@ public class Model
             BigInteger num = (BigInteger)(decimalNumber * (decimal)den);
 
             BigInteger gcd = BigInteger.GreatestCommonDivisor(num, den);
-            this.Numerator = (long)(num / gcd);
-            this.Denominator = (long)(den / gcd);
+            this.Numerator = (ulong)(num / gcd);
+            this.Denominator = (ulong)(den / gcd);
         }
 
         private int GetScale(string decimalValue)

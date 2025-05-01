@@ -9,6 +9,7 @@ using Google.Protobuf;
 using NetMQ;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Launch
 {
@@ -45,7 +46,7 @@ namespace Launch
             while (true)
             {
                 command = Fmi3Command.Parser.ParseFrom(socket.ReceiveFrameBytes());
-                //Trace.TraceInformation("Command: " + command);
+                Trace.TraceInformation("Command: " + command);
 
                 switch (command.CommandCase)
                 {
@@ -54,12 +55,13 @@ namespace Launch
                         {
                             model = new Model(
                                 command.Fmi3InstantiateCoSimulation.InstanceName,
+                                command.Fmi3InstantiateCoSimulation.InstantiationToken,
                                 command.Fmi3InstantiateCoSimulation.ResourcePath,
                                 command.Fmi3InstantiateCoSimulation.Visible,
                                 command.Fmi3InstantiateCoSimulation.LoggingOn,
                                 command.Fmi3InstantiateCoSimulation.EventModeUsed,
                                 command.Fmi3InstantiateCoSimulation.EarlyReturnAllowed,
-                                command.Fmi3InstantiateCoSimulation.RequiredIntermediateVariables
+                                command.Fmi3InstantiateCoSimulation.RequiredIntermediateVariables.ToList()
                             );
                             var result = new Fmi3EmptyReturn();
                             message = result;
@@ -151,7 +153,6 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3SetFloat32:
                         {
                             var result = new Fmi3StatusReturn();
-                            result = new Fmi3StatusReturn();
                             result.Status = model.Fmi3SetFloat32(command.Fmi3SetFloat32.ValueReferences, command.Fmi3SetFloat32.Values);
                             message = result;
                         }
@@ -160,7 +161,6 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3SetFloat64:
                         {
                             var result = new Fmi3StatusReturn();
-                            result = new Fmi3StatusReturn();
                             result.Status = model.Fmi3SetFloat64(command.Fmi3SetFloat64.ValueReferences, command.Fmi3SetFloat64.Values);
                             message = result;
                         }
@@ -274,7 +274,7 @@ namespace Launch
                             result.Status = model.Fmi3SetBinary(
                                 command.Fmi3SetBinary.ValueReferences,
                                 command.Fmi3SetBinary.ValueSizes,
-                                command.Fmi3SetBinary.convertToByteArrayList(Values)
+                                ConvertToByteArrayList(command.Fmi3SetBinary.Values)
                             );
                             message = result;
 
@@ -298,8 +298,8 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3SetIntervalDecimal:
                         {
                             var c = command.Fmi3SetIntervalDecimal;
-                            var res = model.fmi3SetIntervalDecimal(c.ValueReferences, c.Intervals);
-                            result = new Fmi3StatusReturn
+                            var res = model.Fmi3SetIntervalDecimal(c.ValueReferences, c.Intervals);
+                            var result = new Fmi3StatusReturn
                             {
                                 Status = res,
                             };
@@ -311,8 +311,8 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3SetIntervalFraction:
                         {
                             var c = command.Fmi3SetIntervalFraction;
-                            var res = model.fmi3SetIntervalFraction(c.ValueReferences, c.Counters, c.Resolutions);
-                            result = new Fmi3StatusReturn
+                            var res = model.Fmi3SetIntervalFraction(c.ValueReferences, c.Counters, c.Resolutions);
+                            var result = new Fmi3StatusReturn
                             {
                                 Status = res,
                             };
@@ -323,8 +323,8 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3SetShiftDecimal:
                         {
                             var c = command.Fmi3SetShiftDecimal;
-                            var res = model.fmi3SetShiftDecimal(c.ValueReferences, c.Shifts);
-                            result = new Fmi3StatusReturn
+                            var res = model.Fmi3SetShiftDecimal(c.ValueReferences, c.Shifts);
+                            var result = new Fmi3StatusReturn
                             {
                                 Status = res,
                             };
@@ -335,8 +335,8 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3SetShiftFraction:
                         {
                             var c = command.Fmi3SetShiftFraction;
-                            var res = model.fmi3SetShiftFraction(c.ValueReferences, c.Counters, c.Resolutions);
-                            result = new Fmi3StatusReturn
+                            var res = model.Fmi3SetShiftFraction(c.ValueReferences, c.Counters, c.Resolutions);
+                            var result = new Fmi3StatusReturn
                             {
                                 Status = res,
                             };
@@ -477,7 +477,7 @@ namespace Launch
                         {
                             var result = new Fmi3GetBinaryReturn();
                             (var status, var values) = model.Fmi3GetBinary(command.Fmi3GetBinary.ValueReferences);
-                            result.Values.AddRange(convertToByteStringList(values));
+                            result.Values.AddRange(ConvertToByteStringList(values));
                             result.Status = status;
                             message = result;
 
@@ -509,13 +509,11 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3GetIntervalDecimal:
                         {
                             var c = command.Fmi3GetIntervalDecimal;
-                            var res = model.fmi3GetIntervalDecimal(c.ValueReferences);
-                            result = new Fmi3GetIntervalDecimalReturn
-                            {
-                                Status = res.Status,
-                            };
-                            result.Intervals.AddRange(res.Intervals);
-                            result.Qualifiers.AddRange(res.Qualifiers);
+                            (var status, var intervals, var qualifiers) = model.Fmi3GetIntervalDecimal(c.ValueReferences);
+                            var result = new Fmi3GetIntervalDecimalReturn();
+                            result.Status = status;
+                            result.Intervals.AddRange(intervals);
+                            result.Qualifiers.AddRange(qualifiers);
                             message = result;
                         }
                         break;
@@ -523,14 +521,12 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3GetIntervalFraction:
                         {
                             var c = command.Fmi3GetIntervalFraction;
-                            var res = model.fmi3GetIntervalFraction(c.ValueReferences);
-                            result = new Fmi3GetIntervalFractionReturn
-                            {
-                                Status = res.Status,
-                            };
-                            result.Counters.AddRange(res.Counters);
-                            result.Resolutions.AddRange(res.Resolutions);
-                            result.Qualifiers.AddRange(res.Qualifiers);
+                            (var status, var counters, var resolutions, var qualifiers) = model.Fmi3GetIntervalFraction(c.ValueReferences);
+                            var result = new Fmi3GetIntervalFractionReturn();
+                            result.Status = status;
+                            result.Counters.AddRange(counters);
+                            result.Resolutions.AddRange(resolutions);
+                            result.Qualifiers.AddRange(qualifiers);
                             message = result;
                         }
                         break;
@@ -538,12 +534,10 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3GetShiftDecimal:
                         {
                             var c = command.Fmi3GetShiftDecimal;
-                            var res = model.fmi3GetShiftDecimal(c.ValueReferences);
-                            result = new Fmi3GetShiftDecimalReturn
-                            {
-                                Status = res.Status,
-                            };
-                            result.Shifts.AddRange(res.Shifts);
+                            (var status, var shifts) = model.Fmi3GetShiftDecimal(c.ValueReferences);
+                            var result = new Fmi3GetShiftDecimalReturn();
+                            result.Status = status;
+                            result.Shifts.AddRange(shifts);
                             message = result;
                         }
                         break;
@@ -551,13 +545,11 @@ namespace Launch
                     case Fmi3Command.CommandOneofCase.Fmi3GetShiftFraction:
                         {
                             var c = command.Fmi3GetShiftFraction;
-                            var res = model.fmi3GetShiftFraction(c.ValueReferences);
-                            result = new Fmi3GetShiftFractionReturn
-                            {
-                                Status = res.Status,
-                            };
-                            result.Counters.AddRange(res.Counters);
-                            result.Resolutions.AddRange(res.Resolutions);
+                            (var status, var counters, var resolutions) = model.Fmi3GetShiftFraction(c.ValueReferences);
+                            var result = new Fmi3GetShiftFractionReturn();
+                            result.Status = status;
+                            result.Counters.AddRange(counters);
+                            result.Resolutions.AddRange(resolutions);
                             message = result;
                         }
                         break;
@@ -620,7 +612,7 @@ namespace Launch
 
         }
 
-        public static IEnumerable<byte[]> ConvertToByteArrayList(List<ByteString> byteStrings)
+        public static IEnumerable<byte[]> ConvertToByteArrayList(IEnumerable<ByteString> byteStrings)
         {
             var byteArrayList = new List<byte[]>();
             foreach (var bs in byteStrings)
@@ -630,7 +622,7 @@ namespace Launch
             return byteArrayList;
         }
 
-        public static List<ByteString> ConvertToByteStringList(List<byte[]> byteArrays)
+        public static IEnumerable<ByteString> ConvertToByteStringList(IEnumerable<byte[]> byteArrays)
         {
             var byteStringList = new List<ByteString>();
             foreach (var arr in byteArrays)
