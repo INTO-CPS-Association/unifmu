@@ -18,12 +18,10 @@ public class Backend {
     public static void main(String[] args) throws Exception {
         String RESET = "\u001B[0m";
         String RED = "\u001B[31m";
-        String GREEN = "\u001B[32m";
         String YELLOW = "\u001B[33m";
         String BOLD = "\033[0;1m";
         String BACKGROUNDGREEN = "\u001B[42m";
-        String BACKGROUNDYELLOW = "\u001B[43m";
-        Model model = new Model();
+        Model model = null;
 
         boolean inputOk = false;
         String port_str = "";
@@ -60,7 +58,14 @@ public class Backend {
             socket.connect(dispatcher_endpoint);
             System.out.println(YELLOW + "Socket connected successfully." + RESET);
 
-            socket.send(Fmi2Messages.Fmi2EmptyReturn.newBuilder().build().toByteArray(), 0);
+            socket.send(
+                UnifmuHandshake.HandshakeReply
+                    .newBuilder()
+                    .setStatus(UnifmuHandshake.HandshakeStatus.OK)
+                    .build()
+                    .toByteArray(),
+                0
+            );
 
             Message reply;
             // Java compiler does not know that reply is always initialized after switch
@@ -73,6 +78,14 @@ public class Backend {
                 var command = Fmi2Messages.Fmi2Command.parseFrom(message);
 
                 switch (command.getCommandCase()) {
+
+                    case FMI2INSTANTIATE: {
+                        model = new Model();
+                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
+                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(0))
+                                .build();                        
+                    }
+                        break;
 
                     case FMI2SETREAL: {
                         var c = command.getFmi2SetReal();

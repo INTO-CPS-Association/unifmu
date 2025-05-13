@@ -5,20 +5,67 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.File;
+import java.util.Scanner;
+
+import com.moandjiezana.toml.Toml;
+
 public class Backend {
 
     public static void main(String[] args) throws Exception {
-        System.out.println("starting FMU");
+        String RESET = "\u001B[0m";
+        String RED = "\u001B[31m";
+        String YELLOW = "\u001B[33m";
+        String BOLD = "\033[0;1m";
+        String BACKGROUNDGREEN = "\u001B[42m";
+        Model model = null;
 
-        Model model = new Model();
+        boolean inputOk = false;
+        String port_str = "";
+        int port_int = 0;
+        if (args.length > 0 && args.length == 1){
+            try {
+                port_str = args[0];
+                port_int = Integer.parseInt(port_str);
+                inputOk = true;
+            } catch(NumberFormatException nfe) {
+                System.err.println(RED + "Only one argument for the port in integer format is accepted." + RESET);
+            }
+        }
 
-        String dispacher_endpoint = System.getenv("UNIFMU_DISPATCHER_ENDPOINT");
+        while (!inputOk) {
+            System.out.println(BACKGROUNDGREEN + "Input the port for remote proxy FMU:" + RESET);
+            port_str = new BufferedReader(new InputStreamReader(System.in)).readLine();
+            try {
+                port_int = Integer.parseInt(port_str);
+                inputOk = true;
+            } catch(NumberFormatException nfe) {
+                System.err.println(RED + "Only integers accepted." + RESET);
+            }
+        }
+        Toml toml = new Toml().read(new File("endpoint.toml"));
+        String proxy_ip_address = toml.getString("ip");
+
+
+        String dispatcher_endpoint = "tcp://" + proxy_ip_address + ":" + port_str;
+        System.out.println(YELLOW + "Dispatcher endpoint received:" + BOLD + BACKGROUNDGREEN + dispatcher_endpoint + RESET);
 
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect(dispacher_endpoint);
+            socket.connect(dispatcher_endpoint);
+            System.out.println(YELLOW + "Socket connected successfully." + RESET);
 
-            socket.send(Fmi2Messages.Fmi2EmptyReturn.newBuilder().build().toByteArray(), 0);
+            socket.send(
+                UnifmuHandshake.HandshakeReply
+                    .newBuilder()
+                    .setStatus(UnifmuHandshake.HandshakeStatus.OK)
+                    .build()
+                    .toByteArray(),
+                0
+            );
 
             Message reply;
             // Java compiler does not know that reply is always initialized after switch
@@ -31,6 +78,14 @@ public class Backend {
                 var command = Fmi2Messages.Fmi2Command.parseFrom(message);
 
                 switch (command.getCommandCase()) {
+
+                    case FMI2INSTANTIATE: {
+                        model = new Model();
+                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
+                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(0))
+                                .build();                        
+                    }
+                        break;
 
                     case FMI2SETREAL: {
                         var c = command.getFmi2SetReal();

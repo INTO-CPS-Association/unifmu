@@ -10,6 +10,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 bytes = "*"
+colored = "3.0.0"
 libc = "*"
 num_enum = "*"
 prost = "*"
@@ -17,6 +18,8 @@ serde = {version = "1.0.127", features = ["derive"]}
 subprocess = "*"
 tokio = {version = "*", features = ["rt"]}
 toml = "*"
+tracing = "0.1"
+tracing-subscriber = "0.3"
 url = "*"
 zeromq = {git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
   "tokio-runtime",

@@ -24,5 +24,6 @@ toml = "*"
 
 [dev-dependencies]
 assert_cmd = "*"
+duct = "0.13.7"
 predicates = "*"
-fmi = "*"
+tokio = {version = "*", features = ["full"]}

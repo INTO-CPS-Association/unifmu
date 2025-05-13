@@ -2,11 +2,12 @@
 using System.IO;
 using System;
 using Fmi2Messages;
+using UnifmuHandshake;
 using System.Collections.Generic;
 using NetMQ.Sockets;
 using Google.Protobuf;
 using NetMQ;
-
+using Tomlyn;
 
 namespace Launch
 {
@@ -16,22 +17,54 @@ namespace Launch
 
         public static void Main(string[] args)
         {
+            string RESET = "\x1b[0m";
+            string RED = "\u001B[31m";
+            string YELLOW = "\u001B[33m";
+            string BOLD = "\x1b[0;1m";
+            string BACKGROUNDGREEN = "\u001B[42m";
             var references_to_attr = new Dictionary<uint, string>();
-            var model = new Model();
+            Model model = null;
 
-            string dispatcher_endpoint = System.Environment.GetEnvironmentVariable("UNIFMU_DISPATCHER_ENDPOINT");
-            if (dispatcher_endpoint == null)
-            {
-                Console.Error.WriteLine("Environment variable 'UNIFMU_DISPATCHER_ENDPOINT' is not set in the current enviornment.");
-                Environment.Exit(-1);
+            bool inputOk = false;
+            var port_str = "";
+            int port_int = 0;
+
+            if (args.Length > 1 && args.Length == 2){
+                try {
+                    port_str = args[1];
+                    port_int = Int32.Parse(port_str);
+                    inputOk = true;
+                } catch(Exception e) {
+                    Console.Error.WriteLine(RED + "Only one argument for the port in integer format is accepted." + RESET);
+                }
             }
 
+            while (!inputOk) {
+                Console.WriteLine(BACKGROUNDGREEN + "Input the port for remote proxy FMU:" + RESET);
+                port_str = Console.ReadLine();
+                try {
+                    port_int = Int32.Parse(port_str);
+                    inputOk = true;
+                } catch(Exception e2) {
+                    Console.Error.WriteLine(RED + "Only integers accepted." + RESET);
+                }
+            }
+
+            var toml_str = File.ReadAllText(@"endpoint.toml");
+            var toml = Toml.ToModel(toml_str);
+            string proxy_ip_address = (string)toml["ip"]!;
+
+            string dispatcher_endpoint = "tcp://" + proxy_ip_address + ":" + port_str;
+            Console.WriteLine(YELLOW + "Dispatcher endpoint received:" + BOLD + BACKGROUNDGREEN + dispatcher_endpoint + RESET);
 
             var socket = new RequestSocket();
             socket.Connect(dispatcher_endpoint);
+            Console.WriteLine(YELLOW + "Socket connected successfully." + RESET);
 
 
-            IMessage message = new Fmi2EmptyReturn();
+            IMessage message = new HandshakeReply{
+                Status = HandshakeStatus.Ok
+            };
 
 
             socket.SendFrame(message.ToByteArray(), false);
@@ -46,6 +79,7 @@ namespace Launch
 
                     case Fmi2Command.CommandOneofCase.Fmi2Instantiate:
                         {
+                            model = new Model();
                             var result = new Fmi2EmptyReturn();
                             message = result;
                         }

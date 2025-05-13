@@ -52,6 +52,10 @@ lazy_static! {
                 "auto_generated/fmi2_messages_pb2.py",
                 "schemas/fmi2_messages_pb2.py"
             ),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
+            ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi2/README.md", "README.md"),
         ],
@@ -63,34 +67,47 @@ lazy_static! {
                 "auto_generated/fmi3_messages_pb2.py",
                 "schemas/fmi3_messages_pb2.py"
             ),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
+            ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),
         ],
     };
     static ref CSHARPASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
-            ("csharp/backend.cs", "backend.cs"),
-            ("csharp/model.cs", "model.cs"),
+            ("csharp/fmi2/backend.cs", "backend.cs"),
+            ("csharp/fmi2/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            ("csharp/fmi3/backend.cs", "backend.cs"),
+            ("csharp/fmi3/model.cs", "model.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
         ],
     };
     static ref JAVAASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/main/java/Backend.java",
+                "java/fmi2/src/main/java/Backend.java",
                 "src/main/java/Backend.java"
             ),
-            ("java/src/main/java/Model.java", "src/main/java/Model.java"),
+            ("java/fmi2/src/main/java/Model.java", "src/main/java/Model.java"),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
@@ -108,13 +125,38 @@ lazy_static! {
                 "auto_generated/Fmi2Messages.java",
                 "src/main/java/Fmi2Messages.java"
             ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
+            ),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            (
+                "java/fmi3/src/main/java/Backend.java",
+                "src/main/java/Backend.java"
+            ),
+            ("java/fmi3/src/main/java/Model.java", "src/main/java/Model.java"),
+            ("java/build.gradle", "build.gradle"),
+            ("java/gradlew", "gradlew"),
+            (
+                "java/gradle/wrapper/gradle-wrapper.jar",
+                "gradle/wrapper/gradle-wrapper.jar"
+            ),
+            (
+                "java/gradle/wrapper/gradle-wrapper.properties",
+                "gradle/wrapper/gradle-wrapper.properties"
+            ),
+            ("java/gradlew.bat", "gradlew.bat"),
+            ("java/launch.toml", "launch.toml"),
+            ("java/README.md", "README.md"),
+            (
+                "auto_generated/Fmi3Messages.java",
+                "src/main/java/Fmi3Messages.java"
+            ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
+            ),
         ],
     };
     static ref PYTHONASSETSREMOTE: LanguageAssets = LanguageAssets {
@@ -125,6 +167,10 @@ lazy_static! {
             (
                 "auto_generated/fmi2_messages_pb2.py",
                 "schemas/fmi2_messages_pb2.py"
+            ),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi2/README.md", "README.md"),
@@ -137,21 +183,10 @@ lazy_static! {
                 "auto_generated/fmi3_messages_pb2.py",
                 "schemas/fmi3_messages_pb2.py"
             ),
-            ("python/launch.toml", "launch.toml"),
-            ("python/fmi3/README.md", "README.md"),
-        ],
-    };
-
-    static ref PYTHONASSETSPROXY: LanguageAssets = LanguageAssets {
-        fmi2_resources: vec![
-            ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi2/backend_proxy.py", "backend.py"),
-            ("python/launch.toml", "launch.toml"),
-            ("python/fmi2/README.md", "README.md"),
-        ],
-        fmi3_resources: vec![
-            ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi3/backend_proxy.py", "backend.py"),
+            (
+                "auto_generated/unifmu_handshake_pb2.py",
+                "schemas/unifmu_handshake_pb2.py"
+            ),
             ("python/launch.toml", "launch.toml"),
             ("python/fmi3/README.md", "README.md"),
         ],
@@ -160,10 +195,10 @@ lazy_static! {
     static ref JAVAASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/main/java/BackendPrivate.java",
+                "java/fmi2/src/main/java/BackendPrivate.java",
                 "src/main/java/Backend.java"
             ),
-            ("java/src/main/java/Model.java", "src/main/java/Model.java"),
+            ("java/fmi2/src/main/java/Model.java", "src/main/java/Model.java"),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
@@ -181,21 +216,17 @@ lazy_static! {
                 "auto_generated/Fmi2Messages.java",
                 "src/main/java/Fmi2Messages.java"
             ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
+            ),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
-        ],
-    };
-    static ref JAVAASSETSPROXY: LanguageAssets = LanguageAssets {
-        fmi2_resources: vec![
             (
-                "java/src/main/java/BackendProxy.java",
+                "java/fmi3/src/main/java/BackendPrivate.java",
                 "src/main/java/Backend.java"
             ),
+            ("java/fmi3/src/main/java/Model.java", "src/main/java/Model.java"),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
@@ -209,50 +240,48 @@ lazy_static! {
             ("java/gradlew.bat", "gradlew.bat"),
             ("java/launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
-        ],
-        fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            (
+                "auto_generated/Fmi3Messages.java",
+                "src/main/java/Fmi3Messages.java"
+            ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
+            ),
         ],
     };
 
     static ref CSHARPASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
-            ("csharp/backend_private.cs", "backend.cs"),
-            ("csharp/model.cs", "model.cs"),
+            ("csharp/fmi2/backend_private.cs", "backend.cs"),
+            ("csharp/fmi2/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
             ("csharp/launch.toml", "launch.toml"),
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            ("csharp/fmi3/backend_private.cs", "backend.cs"),
+            ("csharp/fmi3/model.cs", "model.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
         ],
     };
 
-    static ref CSHARPASSETSPROXY: LanguageAssets = LanguageAssets {
-        fmi2_resources: vec![
-            ("csharp/backend_proxy.cs", "backend.cs"),
-            ("csharp/model.csproj", "model.csproj"),
-            ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
-            ("csharp/launch.toml", "launch.toml"),
-            ("csharp/README.md", "README.md"),
-        ],
-        fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
-        ],
-    };
+    static ref ASSETSPROXY: Vec<(&'static str, &'static str)> = vec![
+        ("proxy/launch.toml", "launch.toml"),
+        ("proxy/README.md", "README.md"),
+    ];
 
     static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
@@ -349,7 +378,7 @@ pub fn generate(
         }
     };
 
-    for p in vec![&bin_macos, &bin_win, &bin_linux] {
+    for p in [&bin_macos, &bin_win, &bin_linux] {
         std::fs::create_dir_all(p.parent().unwrap()).unwrap();
     }
 
@@ -478,10 +507,10 @@ pub fn generate(
                 tmpdir.path(),
                 outpath,
             );
-            let mut options = CopyOptions::default();
-            options.copy_inside = true;
-            options.content_only = true;
-            options.overwrite = true;
+            let options = CopyOptions::new()
+                .copy_inside(true)
+                .content_only(true)
+                .overwrite(true);
             fs_extra::dir::move_dir(tmpdir, outpath, &options).unwrap();
             Ok(())
         }
@@ -505,8 +534,8 @@ pub fn generate_distributed(
     let output_string = outpath.to_str();
     let proxy_string : &str = "_proxy";
     let private_string : &str = "_private";
-    let output_proxy_string = output_string.clone().unwrap();
-    let output_private_string = output_string.clone().unwrap();
+    let output_proxy_string = output_string.unwrap();
+    let output_private_string = output_string.unwrap();
 
     let output_proxy_string = format!("{}{}",output_proxy_string,proxy_string);
     let output_private_string = format!("{}{}",output_private_string,private_string);
@@ -570,7 +599,7 @@ pub fn generate_distributed(
         }
     };
 
-    for p in vec![&bin_macos, &bin_win, &bin_linux] {
+    for p in [&bin_macos, &bin_win, &bin_linux] {
         std::fs::create_dir_all(p.parent().unwrap()).unwrap();
     }
 
@@ -611,11 +640,8 @@ pub fn generate_distributed(
 
     // copy language specific files to 'resources' directory
 
-    let copy_to_resources_proxy =|assets: &LanguageAssets| {
-        let assets_all = match fmu_version {
-            FmiFmuVersion::FMI2 => assets.fmi2_resources.to_owned(),
-            FmiFmuVersion::FMI3 => assets.fmi3_resources.to_owned(),
-        };
+    let copy_to_resources_proxy =|assets: &Vec<(&'static str, &'static str)>| {
+        let assets_all = assets.to_owned();
 
         match fmu_version {
             FmiFmuVersion::FMI2 => {
@@ -680,8 +706,7 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else {
                 copy_to_resources(&PYTHONASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&PYTHONASSETSPROXY);
+            }
         }
 
         Language::CSharp => {
@@ -689,8 +714,7 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else{
                 copy_to_resources(&CSHARPASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&CSHARPASSETSPROXY);
+            }
         }
 
         Language::Java => {
@@ -698,10 +722,11 @@ pub fn generate_distributed(
                 copy_to_resources(&ASSETSREMOTEFMU);
             } else {
                 copy_to_resources(&JAVAASSETSREMOTE);
-            }            
-            copy_to_resources_proxy(&JAVAASSETSPROXY);
+            }
         }
     };
+
+    copy_to_resources_proxy(&ASSETSPROXY);
 
     // Settings for the proxy connection
     fs::write(dst_endpoint_file, toml).expect("Could not write to endpoint.toml file!");
@@ -712,10 +737,12 @@ pub fn generate_distributed(
         tmpdir_private.path(),
         outpath_private,
     );
-    let mut options = CopyOptions::default();
-    options.copy_inside = true;
-    options.content_only = true;
-    options.overwrite = true;
+    
+    let options = CopyOptions::new()
+        .copy_inside(true)
+        .content_only(true)
+        .overwrite(true);
+
     fs_extra::dir::move_dir(tmpdir_private, outpath_private, &options).unwrap();
 
     match zipped {

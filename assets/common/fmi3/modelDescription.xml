@@ -73,9 +73,36 @@
 	</Binary>
 	<Binary name="binary_c" valueReference="38" variability="discrete" causality="output" initial="calculated" />
 
+	<Float32 name="float32_tunable_parameter" valueReference="100" variability="tunable" causality="parameter" start="0.0" />
+	<Float64 name="float64_tunable_parameter" valueReference="101" variability="tunable" causality="parameter" start="0.0" />
+	<Int8 name="int8_tunable_parameter" valueReference="102" variability="tunable" causality="parameter" start="0" />
+	<UInt8 name="uint8_tunable_parameter" valueReference="103" variability="tunable" causality="parameter" start="0" />
+	<Int16 name="int16_tunable_parameter" valueReference="104" variability="tunable" causality="parameter" start="0" />
+	<UInt16 name="uint16_tunable_parameter" valueReference="105" variability="tunable" causality="parameter" start="0" />
+	<Int32 name="int32_tunable_parameter" valueReference="106" variability="tunable" causality="parameter" start="0" />
+	<UInt32 name="uint32_tunable_parameter" valueReference="107" variability="tunable" causality="parameter" start="0" />
+	<Int64 name="int64_tunable_parameter" valueReference="108" variability="tunable" causality="parameter" start="0" />
+	<UInt64 name="uint64_tunable_parameter" valueReference="109" variability="tunable" causality="parameter" start="0" />
+	<Boolean name="boolean_tunable_parameter" valueReference="110" variability="tunable" causality="parameter" start="false" />
+	<String name="string_tunable_parameter" valueReference="111" variability="tunable" causality="parameter">
+		<Start value="" />
+	</String>
+	<Binary name="binary_tunable_parameter" valueReference="112" variability="tunable" causality="parameter">
+		<Start value="00" />
+	</Binary>
+	<UInt64 name="uint64_tunable_structural_parameter" valueReference="113" variability="tunable" causality="structuralParameter" start="5" />
+	<Float32 name="float32_vector_using_tunable_structural_parameter" valueReference="114" variability="tunable" causality="parameter" start="0.1 0.2 0.3 0.4 0.5">
+		<Dimension valueReference="113"/>
+	</Float32>
+
 	<Clock name="clock_a" valueReference="1001" causality="input" intervalVariability="constant" intervalDecimal="1.0"/>
 	<Clock name="clock_b" valueReference="1002" causality="input" intervalVariability="triggered"/>
 	<Clock name="clock_c" valueReference="1003" causality="output" intervalVariability="triggered" clocks="1001 1002"/>
+
+	<Int32 name="clocked_variable_a" valueReference="1100" variability="discrete" causality="input" start="0" clocks="1003"/>
+	<Int32 name="clocked_variable_b" valueReference="1101" variability="discrete" causality="input" start="0" clocks="1003"/>
+	<Int32 name="clocked_variable_c" valueReference="1102" variability="discrete" causality="output" initial="exact" start="0" clocks="1003"/>
+
 
   </ModelVariables>
   <ModelStructure>
@@ -93,6 +120,7 @@
 	<Output valueReference="35" dependencies="33 34" />
 	<Output valueReference="38" dependencies="36 37" />
   	<Output valueReference="1003" dependencies="1001 1002"/>
+	<Output valueReference="1102" dependencies="1003"/>
 	<InitialUnknown valueReference="2" dependencies="" />
 	<InitialUnknown valueReference="5" dependencies="" />
 	<InitialUnknown valueReference="8" dependencies="" />

@@ -44,10 +44,6 @@ if __name__ == "__main__":
                     unzipDirectory=unzipdir,
                     modelIdentifier=model_description.coSimulation.modelIdentifier,
                     instanceName='instance1')
-    
-    # initialize
-    fmu.instantiate() ## Done here since unifmu is not sending the 'Fmi2Instantiate' message
-
 
     input_ok = False
     if len(sys.argv) == 2:
@@ -96,6 +92,7 @@ if __name__ == "__main__":
         # ================= FMI2 =================
 
         if group == "Fmi2Instantiate":
+            fmu.instantiate()
             result = Fmi2EmptyReturn()
             #fmu.instantiate() ## Done above (zmq never sending instantiate)
         elif group == "Fmi2DoStep":

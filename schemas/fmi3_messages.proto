@@ -86,6 +86,10 @@ message Fmi3DeserializeFmuState {
 
 message Fmi3UpdateDiscreteStates {}
 
+message Fmi3EnterConfigurationMode {}
+
+message Fmi3ExitConfigurationMode {}
+
 // ----------------------- FMI3 Getters ----------------------
 
 
@@ -137,7 +141,7 @@ message Fmi3GetString {
   repeated uint32 value_references = 1;
 }
 
-message FmiGetBinary {
+message Fmi3GetBinary {
   repeated uint32 value_references = 1;
 }
 
@@ -318,7 +322,7 @@ message Fmi3GetStringReturn {
   repeated string values = 2;
 }
 
-message FmiGetBinaryReturn {
+message Fmi3GetBinaryReturn {
   Fmi3Status status = 1;
   repeated bytes values = 2;
 }
@@ -363,7 +367,7 @@ message Fmi3UpdateDiscreteStatesReturn {
 enum Fmi3IntervalQualifier {
   FMI3_INTERVALNOTYETKNOWN = 0;
   FMI3_INTERVALUNCHANGED=1;
-  FMI3_INTEVALCHANGED=2;
+  FMI3_INTERVALCHANGED=2;
 }
 
 message Fmi3GetIntervalDecimal {
@@ -376,7 +380,57 @@ message Fmi3GetIntervalDecimalReturn {
   repeated int32 qualifiers = 3;
 }
 
+message Fmi3GetIntervalFraction {
+  repeated uint32 value_references = 1;
+}
 
+message Fmi3GetIntervalFractionReturn {
+  Fmi3Status status = 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+  repeated int32 qualifiers = 4;
+}
+
+message Fmi3GetShiftDecimal {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3GetShiftDecimalReturn {
+  Fmi3Status status = 1;
+  repeated double shifts = 2;
+}
+
+message Fmi3GetShiftFraction {
+  repeated uint32 value_references = 1;
+}
+
+message Fmi3GetShiftFractionReturn {
+  Fmi3Status status = 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+}
+
+message Fmi3SetIntervalDecimal {
+  repeated uint32 value_references= 1;
+  repeated double intervals = 2;
+}
+
+message Fmi3SetIntervalFraction {
+  repeated uint32 value_references= 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+}
+
+message Fmi3SetShiftDecimal {
+  repeated uint32 value_references= 1;
+  repeated double shifts = 2;
+}
+
+message Fmi3SetShiftFraction {
+  repeated uint32 value_references= 1;
+  repeated uint64 counters = 2;
+  repeated uint64 resolutions = 3;
+}
 
 // ----------------------- FMI Command Wrapper ----------------------
 
@@ -407,7 +461,7 @@ message Fmi3Command {
     Fmi3GetUInt64 Fmi3GetUInt64 = 22;
     Fmi3GetBoolean Fmi3GetBoolean = 23;
     Fmi3GetString Fmi3GetString = 24;
-    FmiGetBinary FmiGetBinary = 25;
+    Fmi3GetBinary Fmi3GetBinary = 25;
     Fmi3GetDirectionalDerivative Fmi3GetDirectionalDerivative = 26;
     Fmi3GetAdjointDerivative Fmi3GetAdjointDerivative = 27;
     Fmi3GetOutputDerivatives Fmi3GetOutputDerivatives = 28;
@@ -426,11 +480,20 @@ message Fmi3Command {
     Fmi3SetBinary Fmi3SetBinary = 41;
     Fmi3SerializeFmuState Fmi3SerializeFmuState = 42;
     Fmi3DeserializeFmuState Fmi3DeserializeFmuState = 43;
-	Fmi3GetClock Fmi3GetClock = 44;
-	Fmi3SetClock Fmi3SetClock = 45;
-	Fmi3GetIntervalDecimal Fmi3GetIntervalDecimal = 46;
-	Fmi3EnterStepMode Fmi3EnterStepMode = 47;
-	Fmi3EnterEventMode Fmi3EnterEventMode = 48;
-	Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
+	  Fmi3GetClock Fmi3GetClock = 44;
+	  Fmi3SetClock Fmi3SetClock = 45;
+	  Fmi3GetIntervalDecimal Fmi3GetIntervalDecimal = 46;
+	  Fmi3EnterStepMode Fmi3EnterStepMode = 47;
+	  Fmi3EnterEventMode Fmi3EnterEventMode = 48;
+	  Fmi3UpdateDiscreteStates Fmi3UpdateDiscreteStates = 49;
+    Fmi3EnterConfigurationMode Fmi3EnterConfigurationMode = 50;
+    Fmi3ExitConfigurationMode Fmi3ExitConfigurationMode = 51;
+    Fmi3GetIntervalFraction Fmi3GetIntervalFraction = 52;
+    Fmi3GetShiftDecimal Fmi3GetShiftDecimal = 53;
+    Fmi3GetShiftFraction Fmi3GetShiftFraction = 54;
+    Fmi3SetIntervalDecimal Fmi3SetIntervalDecimal = 55;
+    Fmi3SetIntervalFraction Fmi3SetIntervalFraction = 56;
+    Fmi3SetShiftDecimal Fmi3SetShiftDecimal = 57;
+    Fmi3SetShiftFraction Fmi3SetShiftFraction = 58;
   }
 }

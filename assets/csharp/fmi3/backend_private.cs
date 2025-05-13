@@ -2,6 +2,7 @@
 using System.IO;
 using System;
 using Fmi2Messages;
+using UnifmuHandshake;
 using System.Collections.Generic;
 using NetMQ.Sockets;
 using Google.Protobuf;
@@ -18,13 +19,11 @@ namespace Launch
         {
             string RESET = "\x1b[0m";
             string RED = "\u001B[31m";
-            string GREEN = "\u001B[32m";
             string YELLOW = "\u001B[33m";
             string BOLD = "\x1b[0;1m";
             string BACKGROUNDGREEN = "\u001B[42m";
-            string BACKGROUNDYELLOW = "\u001B[43m";
             var references_to_attr = new Dictionary<uint, string>();
-            var model = new Model();
+            Model model = null;
 
             bool inputOk = false;
             var port_str = "";
@@ -63,7 +62,9 @@ namespace Launch
             Console.WriteLine(YELLOW + "Socket connected successfully." + RESET);
 
 
-            IMessage message = new Fmi2EmptyReturn();
+            IMessage message = new HandshakeReply{
+                Status = HandshakeStatus.Ok
+            };
 
 
             socket.SendFrame(message.ToByteArray(), false);
@@ -78,6 +79,7 @@ namespace Launch
 
                     case Fmi2Command.CommandOneofCase.Fmi2Instantiate:
                         {
+                            model = new Model();
                             var result = new Fmi2EmptyReturn();
                             message = result;
                         }

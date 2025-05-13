@@ -147,18 +147,16 @@ unifmu generate-distributed python model_distributed
 The command generates a _placeholder FMU_ suffixed with _\_proxy_ and a _placeholder folder_ suffixed with _\_private_ in the specific language.
 The proxy FMU differs from the FMU created with the `generate` command as it does not contain the model file and its dependencies.
 For example the trees below show the placeholder FMU and folder generated when using the `generate-distributed` command with python as the language:
-```python
+```
 📦model_distributed_proxy
  ┣ 📂binaries
  ┣ 📂resources
- ┃ ┣ 📜backend.py
  ┃ ┣ 📜launch.toml
  ┃ ┣ 📜README.md
- ┃ ┗ 📜requirements.txt
  ┗ 📜modelDescription.xml
 ```
 
-whereas its fellow private folder contains the model file, the dependencies, and a toml file for the connection with the proxy FMU, as follows (**NOTE: This is not an FMU**):
+whereas its fellow private folder contains the model file, the dependencies, and the `endpoint.toml` file for the connection with the proxy FMU, as follows (**NOTE: This is not an FMU**):
 ```python
 📦model_distributed_private
  ┣ 📂schemas
@@ -256,7 +254,7 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3FreeInstance                    | ✓         |       |
 | fmi3EnterInitializationMode         | ✓         |       |
 | fmi3ExitInitializationMode          | ✓         |       |
-| fmi3EnterEventMode                  | x         |       |
+| fmi3EnterEventMode                  | ✓         |       |
 | fmi3Terminate                       | ✓         |       |
 | fmi3Reset                           | ✓         |       |
 | fmi3GetFloat32                      | ✓         |       |
@@ -286,7 +284,7 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3SetBoolean                      | ✓         |       |
 | fmi3SetString                       | ✓         |       |
 | fmi3SetBinary                       | ✓         |       |
-| fmi3SetClock                        | x         |       |
+| fmi3SetClock                        | ✓         |       |
 | fmi3GetNumberOfVariableDependencies | x         |       |
 | fmi3GetVariableDependencies         | x         |       |
 | fmi3GetFMUState                     | ✓         |       |
@@ -297,18 +295,18 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3DeserializeFMUState             | ✓         |       |
 | fmi3GetDirectionalDerivative        | x         |       |
 | fmi3GetAdjointDerivative            | x         |       |
-| fmi3EnterConfigurationMode          | x         |       |
-| fmi3ExitConfigurationMode           | x         |       |
-| fmi3GetIntervalDecimal              | x         |       |
-| fmi3GetIntervalFraction             | x         |       |
-| fmi3GetShiftDecimal                 | x         |       |
-| fmi3GetShiftFraction                | x         |       |
-| fmi3SetIntervalDecimal              | x         |       |
-| fmi3SetIntervalFraction             | x         |       |
-| fmi3SetShiftDecimal                 | x         |       |
-| fmi3SetShiftFraction                | x         |       |
+| fmi3EnterConfigurationMode          | ✓         |       |
+| fmi3ExitConfigurationMode           | ✓         |       |
+| fmi3GetIntervalDecimal              | ✓         |       |
+| fmi3GetIntervalFraction             | ✓         |       |
+| fmi3GetShiftDecimal                 | ✓         |       |
+| fmi3GetShiftFraction                | ✓         |       |
+| fmi3SetIntervalDecimal              | ✓         |       |
+| fmi3SetIntervalFraction             | ✓         |       |
+| fmi3SetShiftDecimal                 | ✓         |       |
+| fmi3SetShiftFraction                | ✓         |       |
 | fmi3EvaluateDiscreteStates          | x         |       |
-| fmi3UpdateDiscreteStates            | x         |       |
+| fmi3UpdateDiscreteStates            | ✓         |       |
 | fmi3EnterContinuousTimeMode         | x         |       |
 | fmi3CompletedIntegratorStep         | x         |       |
 | fmi3SetTime                         | x         |       |
@@ -319,9 +317,9 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3GetNominalsOfContinuousStates   | x         |       |
 | fmi3GetNumberOfEventIndicators      | x         |       |
 | fmi3GetNumberOfContinuousStates     | x         |       |
-| fmi3EnterStepMode                   | x         |       |
+| fmi3EnterStepMode                   | ✓         |       |
 | fmi3GetOutputDerivatives            | x         |       |
-| fmi3DoStep                          | x         |       |
+| fmi3DoStep                          | ✓         |       |
 | fmi3ActivateModelPartition          | x         |       |
 
 ## Building and deployment
@@ -334,13 +332,12 @@ Building for local machine (with Windows as the example, and PowerShell commands
 1. Make sure you have the following installed on your computer:
    - a [C-compiler and linker](https://visualstudio.microsoft.com/vs/features/cplusplus/)
    - [rust](https://www.rust-lang.org/tools/install)
-   - [Protocol Buffers v27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3). **Note: If you download a different version, you will have to update the build scripts and the dependencies of all backends.**.  **For Linux users:** be sure to have the *bin* file of protobuf in your path, e.g., `export PATH=/path/to/protobuf/protoc-27.3-linux-x86_64/bin:$PATH`
+   - [Protocol Buffers v27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3). **Note: If you download a different version, you will have to update the build scripts and the dependencies of all backends.**.  **For Linux users:** be sure to have the *bin* folder of protobuf in your path, e.g., `export PATH=/path/to/protobuf/protoc-27.3-linux-x86_64/bin/:$PATH`
    
 .
    - For testing:
-     - [Python](https://www.python.org/) along with the packages [zmq](https://pypi.org/project/zmq/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/). The packages [colorama](https://pypi.org/project/colorama/), [coloredlogs](https://pypi.org/project/coloredlogs/), and [toml](https://pypi.org/project/toml/) are also required for distributed FMUs.
+     - [Python](https://www.python.org/) (no older than **version 3.8**) along with the packages [pyzmq](https://pypi.org/project/pyzmq/), [FMPy](https://pypi.org/project/FMPy/) and [protobuf 5.27.3](https://pypi.org/project/protobuf/5.27.3/). The packages [colorama](https://pypi.org/project/colorama/), [coloredlogs](https://pypi.org/project/coloredlogs/), and [toml](https://pypi.org/project/toml/) are also required for distributed FMUs.
      - [Java](https://openjdk.org/) (no higher than **version 17**) that's compatible with [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model) to test the generated FMU.
-     - [LLVM](https://releases.llvm.org/download.html) and set the corresponding `LIBCLANG_PATH` environment variable that is used by the `fmi` crate, to load and interact with FMUs. See [installation instructions](https://rust-lang.github.io/rust-bindgen/requirements.html#installing-clang).
      - [.NET SDK (for C#)](https://dotnet.microsoft.com/en-us/download).
 
 2. Clone the `unifmu` repository.
@@ -362,7 +359,7 @@ Building for local machine (with Windows as the example, and PowerShell commands
       ```
    2. Generate the protobuf schemas for python, csharp, and java backends:
       ```powershell
-      protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out assets/auto_generated fmi2_messages.proto fmi3_messages.proto
+      protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out=assets/auto_generated fmi2_messages.proto fmi3_messages.proto unifmu_handshake.proto
       ```
 7. Run the integration tests: `cargo test`
    1. If the tests fail, it may be because you do not have the runtime dependencies for each backend, as they are all tested. Install any runtime dependencies needed for each backend. Check the readme files in each backend. See the  [Language specific documentation and backend development](#language-specific-documentation-and-backend-development) section for more information.

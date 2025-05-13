@@ -57,9 +57,6 @@ if __name__ == "__main__":
                     unzipDirectory=unzipdir,
                     modelIdentifier=model_description.coSimulation.modelIdentifier,
                     instanceName='instance1')
-    
-    
-
 
     input_ok = False
     if len(sys.argv) == 2:

@@ -16,6 +16,10 @@ from schemas.fmi2_messages_pb2 import (
     Fmi2GetBooleanReturn,
     Fmi2GetStringReturn,
 )
+from schemas.unifmu_handshake_pb2 import (
+    HandshakeStatus,
+    HandshakeReply,
+)
 from model import Model
 
 logging.basicConfig(level=logging.DEBUG)
@@ -26,7 +30,6 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 BOLD = '\033[1m'
 
 if __name__ == "__main__":
-    model = Model()
     input_ok = False
     if len(sys.argv) == 2:
         try:
@@ -58,8 +61,9 @@ if __name__ == "__main__":
     logger.info(f"Socket connected successfully.")
 
     # send handshake
-    state = Fmi2EmptyReturn().SerializeToString()
-    socket.send(state)
+    handshake = HandshakeReply()
+    handshake.status = HandshakeStatus.OK
+    socket.send(handshake.SerializeToString())
 
     # dispatch commands to model
     command = Fmi2Command()
@@ -74,6 +78,7 @@ if __name__ == "__main__":
         # ================= FMI2 =================
 
         if group == "Fmi2Instantiate":
+            model = Model()
             result = Fmi2EmptyReturn()
         elif group == "Fmi2DoStep":
             result = Fmi2StatusReturn()
