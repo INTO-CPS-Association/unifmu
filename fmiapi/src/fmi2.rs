@@ -12,7 +12,7 @@ use libc::size_t;
 
 
 use url::Url;
-use tracing::{error, warn};
+use tracing::{info, error, warn};
 use tracing_subscriber;
 
 use std::{
@@ -176,7 +176,7 @@ impl Drop for Fmi2Slave {
         };
 
         match self.dispatcher.send(&cmd) {
-            Ok(_) => (),
+            Ok(_) => {info!("Send free instance message to shut down backend");},
             Err(error) => error!(
                 "Freeing instance failed with error: {:?}.", error
             ),
@@ -1377,8 +1377,15 @@ pub extern "C" fn fmi2FreeFMUstate(
 
 /// Copies the state of a slave into a buffer provided by the environment
 ///
-/// Oddly, the length of the buffer is also provided,
-/// as i would expect the environment to have enquired about the state size by calling fmi2SerializedFMUstateSize.
+/// # Parameters 
+/// - `slave`: A reference to the FMU slave instance
+/// - `state`: A reference to the state of the FMU
+/// - `data`: A pointer to the buffer where the state will be copied
+/// - `size`: The size of the buffer
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the FMU state is successfully serialized and stored.
+/// - `Fmi2Status::Error`: If an error occurs during the serialization or if invalid pointers are provided.
 #[no_mangle]
 /// We assume that the buffer is sufficiently large
 pub extern "C" fn fmi2SerializeFMUstate(
@@ -1451,6 +1458,16 @@ pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
     }
     Fmi2Status::Ok
 }
+
+/// Retrieves the size of the serialized state of the FMU
+///
+/// # Parameters
+/// - `slave`: A reference to the FMU slave instance
+/// - `state`: A reference to the state of the FMU
+/// - `size`: A reference to the size of the serialized state
+///
+/// # Returns
+/// - `Fmi2Status::Ok`: If the operation succeeds and the size of the serialized state is successfully retrieved.
 
 #[no_mangle]
 pub extern "C" fn fmi2SerializedFMUstateSize(

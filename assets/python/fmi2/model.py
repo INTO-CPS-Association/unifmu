@@ -3,6 +3,7 @@ import pickle
 
 class Model:
     def __init__(self) -> None:
+
         self.real_a = 0.0
         self.real_b = 0.0
         self.integer_a = 0
@@ -27,7 +28,7 @@ class Model:
             11: "string_c",
         }
 
-        self._update_outputs()
+        self.fmi2Reset()
 
     # ================= FMI2 =================
 
@@ -54,6 +55,16 @@ class Model:
         return Fmi2Status.ok
 
     def fmi2Reset(self):
+        self.real_a = 0.0
+        self.real_b = 0.0
+        self.integer_a = 0
+        self.integer_b = 0
+        self.boolean_a = False
+        self.boolean_b = False
+        self.string_a = ""
+        self.string_b = ""
+        self._update_outputs()
+
         return Fmi2Status.ok
 
     def fmi2SerializeFmuState(self):
@@ -61,12 +72,16 @@ class Model:
             (
                 self.real_a,
                 self.real_b,
+                self.real_c,
                 self.integer_a,
                 self.integer_b,
+                self.integer_c,
                 self.boolean_a,
                 self.boolean_b,
+                self.boolean_c,
                 self.string_a,
                 self.string_b,
+                self.string_c,
             )
         )
         return Fmi2Status.ok, bytes
@@ -75,22 +90,29 @@ class Model:
         (
             real_a,
             real_b,
+            real_c,
             integer_a,
             integer_b,
+            integer_c,
             boolean_a,
             boolean_b,
+            boolean_c,
             string_a,
             string_b,
+            string_c,
         ) = pickle.loads(bytes)
         self.real_a = real_a
         self.real_b = real_b
+        self.real_c = real_c
         self.integer_a = integer_a
         self.integer_b = integer_b
+        self.integer_c = integer_c
         self.boolean_a = boolean_a
         self.boolean_b = boolean_b
+        self.boolean_c = boolean_c
         self.string_a = string_a
         self.string_b = string_b
-        self._update_outputs()
+        self.string_c = string_c
 
         return Fmi2Status.ok
 
