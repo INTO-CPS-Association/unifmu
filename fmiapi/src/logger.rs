@@ -8,17 +8,46 @@ use crate::fmi2_types::{
 
 use std::{
     ffi::CStr,
+    fmt::{Debug, Display},
+    error::Error,
     sync::{
         atomic::{AtomicU64, Ordering},
         LazyLock
     }
 };
 
-use tracing::{error, span, warn, Level, Subscriber};
+use tracing::{field::{Field, Visit}, span, Event, Level, Subscriber};
 use tracing_subscriber::{
-    fmt, layer::Layered, prelude::*, registry::{self, SpanRef}, reload::{self, Handle}, Layer, Registry
+    fmt,
+    layer::{Context, Layered},
+    prelude::*,
+    registry::{LookupSpan, SpanRef},
+    reload::{self, Handle},
+    Layer,
+    Registry
 };
 
+/// Initializes the tracing subscriber that forms the basis of the
+/// logger module.
+/// 
+/// When this idempotetnt function is called the lazy static containing the
+/// global subscriber for the logger module is evalueted and set as the
+/// tracing subscriber. This also happens as part of all other public functions
+/// of the logger module, but this one is special insofar as it is the only
+/// thing it does. While the base global subscriber doesn't have any of the FMU
+/// callbacks (and therefore won't be able to send logging to the importer), it
+/// does have a `fmt` layer if the fmiapi is compiled with the `fmt_logging`
+/// flag. Thus, this should be called as early as possible in the rust code to
+/// ensure that any tracing event that can't be send to the importer through a
+/// callback for whatever reason, can atleast be send to the terminal for
+/// debugging.
+/// 
+/// Returns `Err(LoggerError::SubscriberAlreadySet)` if a global subscriber for
+/// tracing was set elsewhere. This does not mean that this function was
+/// already called, but instead that rust code elsewhere already initialized
+/// a subscriber and set it as the global subscriber. This could happen if
+/// other rust code uses this API directly (instead of through the C ABI
+/// boundary) and implements and sets its own tracing subscriber.
 pub fn initialize() -> LoggerResult<()> {
     match &*FMU_LOGGER_RELOAD_HANDLE {
         Err(_) => Err(LoggerError::SubscriberAlreadySet),
@@ -26,6 +55,27 @@ pub fn initialize() -> LoggerResult<()> {
     }
 }
 
+/// Adds a FMI2 logging callback function to the logger module.
+/// 
+/// Calling this function also initializes the global tracing subscriber if
+/// it hasn't already been initialized (see [initialize] for further
+/// explanation).
+/// 
+/// # Parameters
+/// - `callback`: A C function pointer to the FMUs logging callback function.
+/// - `component_environment`: A raw pointer to the FMI2 ComponentEnvironment
+///   for the FMU.
+/// - `enabled`: A boolean designating whether or not the resulting FMU logging
+///   layer should emit any logging through the callback. This can later be
+///   changed with calls to [update_enabled_for_callback].
+/// 
+/// # Returns
+/// - `Ok(u64)`: An Ok result containing the uid of the resulting FMU logging
+///   layer. This is needed to modify or remove the layer through the other
+///   functions of this module.
+/// - `Err(LoggerError)`: If for whatever reason the callback can't be added, 
+///   an Err result containing the LoggerError describing the fault
+///   is returned.
 pub fn add_callback(
     callback: Fmi2CallbackLogger,
     component_environment: *const ComponentEnvironment,
@@ -35,7 +85,7 @@ pub fn add_callback(
 
     (*FMU_LOGGER_RELOAD_HANDLE)
         .as_ref()
-        .map_err(|_| LoggerError::SubscriberAlreadySet)?
+        .map_err(|e| e.clone())?
         .modify(|layer_vector| {
             layer_vector.push(
                 FmuLayer::new(
@@ -51,66 +101,6 @@ pub fn add_callback(
     Ok(logger_layer_id)
 }
 
-pub fn add_name_to_callback(
-    logger_uid: u64,
-    instance_name: &str
-) -> LoggerResult<()> {
-    modify_callback(
-        logger_uid,
-        |layer| layer.set_instance_name(instance_name)
-    )
-}
-
-pub fn update_enabled_for_callback(
-    logger_uid: u64,
-    enabled: bool
-) -> LoggerResult<()> {
-    modify_callback(
-        logger_uid,
-        |layer| layer.enabled = enabled
-    )
-}
-
-pub fn set_categories_for_callback(
-    logger_uid: u64,
-    mut categories: Vec<Fmi2LogCategory>
-) -> LoggerResult<()> {
-    modify_callback(
-        logger_uid,
-        |layer| layer.set_categories(&mut categories)
-    )
-}
-
-pub fn clear_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
-    modify_callback(
-        logger_uid,
-        |layer| layer.clear_categories()
-    )
-}
-
-pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
-    let mut layer_found = false;
-
-    (*FMU_LOGGER_RELOAD_HANDLE)
-        .as_ref()
-        .map_err(|_| LoggerError::SubscriberAlreadySet)?
-        .modify(|layer_vector| {
-            if let Some(index) = layer_vector.iter().position(
-                |layer| layer.logger_uid == logger_uid
-            ) {
-                layer_found = true;
-                layer_vector.swap_remove(index);
-            };
-        })
-        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
-
-    if !layer_found {
-        Err(LoggerError::LoggerLayerNotFound)
-    } else {
-        Ok(())
-    }
-}
-
 fn modify_callback(
     logger_uid: u64,
     modification_closure: impl FnOnce(&mut FmuLayer)
@@ -119,7 +109,7 @@ fn modify_callback(
 
     (*FMU_LOGGER_RELOAD_HANDLE)
         .as_ref()
-        .map_err(|_| LoggerError::SubscriberAlreadySet)?
+        .map_err(|e| e.clone())?
         .modify(|layer_vector| {
             for layer in layer_vector {
                 if layer.logger_uid == logger_uid {
@@ -132,21 +122,159 @@ fn modify_callback(
         .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
 
     if !layer_found {
-        Err(LoggerError::LoggerLayerNotFound)
+        Err(LoggerError::LoggerLayerNotFound(logger_uid))
     } else {
         Ok(())
     }
 }
 
+/// Removes a FMI2 logging callback function from the logger module.
+/// 
+/// Calling this function also initializes the global tracing subscriber if
+/// it hasn't already been initialized (see [initialize] for further
+/// explanation).
+/// 
+/// Returns an Err if no FMU logging layer with the given `logger_uid` is
+/// found, or there is a problem with the structure of the global tracing
+/// subscriber.
+/// 
+/// # Parameters
+/// - `logger_uid`: The uid of the FMU logging layer containing the callback
+///   to be removed.
+pub fn remove_callback(logger_uid: u64) -> LoggerResult<()> {
+    let mut layer_found = false;
+
+    (*FMU_LOGGER_RELOAD_HANDLE)
+        .as_ref()
+        .map_err(|e| e.clone())?
+        .modify(|layer_vector| {
+            if let Some(index) = layer_vector.iter().position(
+                |layer| layer.logger_uid == logger_uid
+            ) {
+                layer_found = true;
+                layer_vector.swap_remove(index);
+            };
+        })
+        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
+
+    if !layer_found {
+        Err(LoggerError::LoggerLayerNotFound(logger_uid))
+    } else {
+        Ok(())
+    }
+}
+
+/// Adds an FMU instance name to a FMU logging layer containing a callback.
+/// 
+/// Calling this function also initializes the global tracing subscriber if
+/// it hasn't already been initialized (see [initialize] for further
+/// explanation).
+/// 
+/// Returns an Err if no FMU logging layer with the given `logger_uid` is
+/// found, or there is a problem with the structure of the global tracing
+/// subscriber.
+/// 
+/// # Parameters
+/// - `logger_uid`: The uid of the FMU logging layer to set the name for.
+pub fn add_name_to_callback(
+    logger_uid: u64,
+    instance_name: &str
+) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| layer.set_instance_name(instance_name)
+    )
+}
+
+/// Sets the `enabled` parameter of a FMU logging layer containing a callback,
+/// determining whether or not that layer should emit any logging through the
+/// callback.
+/// 
+/// Calling this function also initializes the global tracing subscriber if
+/// it hasn't already been initialized (see [initialize] for further
+/// explanation).
+/// 
+/// Returns an Err if no FMU logging layer with the given `logger_uid` is
+/// found, or there is a problem with the structure of the global tracing
+/// subscriber.
+/// 
+/// # Parameters
+/// - `logger_uid`: The uid of the FMU logging layer containing the callback.
+/// - `enabled`: A boolean designating whether or not the layer should emit
+///   any logging.
+pub fn update_enabled_for_callback(
+    logger_uid: u64,
+    enabled: bool
+) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| layer.enabled = enabled
+    )
+}
+
+/// Sets the logCategories for a FMU logging layer containing a callback.
+/// 
+/// Calling this function also initializes the global tracing subscriber if
+/// it hasn't already been initialized (see [initialize] for further
+/// explanation).
+/// 
+/// Returns an Err if no FMU logging layer with the given `logger_uid` is
+/// found, or there is a problem with the structure of the global tracing
+/// subscriber.
+/// 
+/// # Parameters
+/// - `logger_uid`: The uid of the FMU logging layer to set categories for.
+pub fn set_categories_for_callback(
+    logger_uid: u64,
+    mut categories: Vec<Fmi2LogCategory>
+) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| layer.set_categories(&mut categories)
+    )
+}
+
+/// Sets the logCategories of a FMU logging layer containing a callback.
+/// 
+/// Calling this function also initializes the global tracing subscriber if
+/// it hasn't already been initialized (see [initialize] for further
+/// explanation).
+/// 
+/// Returns an Err if no FMU logging layer with the given `logger_uid` is
+/// found, or there is a problem with the structure of the global tracing
+/// subscriber.
+/// 
+/// # Parameters
+/// - `logger_uid`: The uid of the FMU logging layer to clear the categories of.
+pub fn clear_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| layer.clear_categories()
+    )
+}
+
 pub type LoggerResult<T> = Result<T, LoggerError>;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum LoggerError {
     SubscriberAlreadySet,
     FmuLayerVectorMissing,
     MaxLoggersExceeded,
-    LoggerLayerNotFound
+    LoggerLayerNotFound(u64)
 }
+
+impl Display for LoggerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LoggerError::SubscriberAlreadySet => write!(f, "the global tracing subscriber was already set"),
+            LoggerError::FmuLayerVectorMissing => write!(f, "the vector containing the FMU logger layers is missing"),
+            LoggerError::MaxLoggersExceeded => write!(f, "the maximum number of FMU logger layers (2^64-1) was exceeded"),
+            LoggerError::LoggerLayerNotFound(luid) => write!(f, "no FMU logger layer with logger_uid {} was found", luid)
+        }
+    }
+}
+
+impl Error for LoggerError {}
 
 /// ID is just a simple counter under the assumption that users won't run more
 /// than 2^64 instances of one FMU in one simulation. 
@@ -215,17 +343,29 @@ impl FmuLayer{
         }
     }
 
+    /// Sets the instance name that is to be passed to the callback on logging
+    /// any event.
     pub fn set_instance_name(&mut self, instance_name: &str) {
         let mut instance_name_bytes = String::from(instance_name).into_bytes();
         instance_name_bytes.push(0);
         self.instance_name_bytes = Some(instance_name_bytes);
     }
 
+    /// Sets the logging categories that the FmuLayer will log events for.
+    /// 
+    /// If any categories are set, the FmuLayer will only emit events for
+    /// which the value of the `category` field is equal to one of these set
+    /// categories. (Events without an explicit `category` field defaults to
+    /// `LogAll`).
     pub fn set_categories(&mut self, categories: &mut Vec<Fmi2LogCategory>) {
         self.clear_categories();
         self.categories.append(categories);
     }
 
+    /// Clears the logging categories for the FmuLayer, indicating that any
+    /// event no matter the presence or value of its `category` field will be
+    /// logged (assuming that the event is meant for this FmuLayer and the
+    /// FmuLayer is enabled).
     pub fn clear_categories(&mut self) {
         self.categories.clear();
     }
@@ -236,7 +376,7 @@ impl FmuLayer{
         visitor.luid.is_some_and(|luid| luid == self.logger_uid)
     }
 
-    fn interested_in_parent_of_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>>(
+    fn interested_in_parent_of_span<S: Subscriber + for<'lookup> LookupSpan<'lookup>>(
         &self,
         span: &SpanRef<'_, S>
     ) -> bool {
@@ -246,7 +386,7 @@ impl FmuLayer{
             )
     }
 
-    fn interested_in_span<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>>(
+    fn interested_in_span<S: Subscriber + for<'lookup> LookupSpan<'lookup>>(
         &self,
         span: &SpanRef<'_, S>
     ) -> bool {
@@ -257,41 +397,50 @@ impl FmuLayer{
             )
     }
 
-    fn interested_in_event<S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>>(
+    fn interested_in_event<S: Subscriber + for<'lookup> LookupSpan<'lookup>>(
         &self,
-        event: &tracing::Event<'_>,
-        ctx: &tracing_subscriber::layer::Context<'_, S>
+        event: &Event<'_>,
+        ctx: &Context<'_, S>
     ) -> bool {
         ctx.event_span(event)
             .is_some_and(|span| self.interested_in_span(&span))
     }
 
+    /// The FmuLayer is interested in a category if it is contained in the
+    /// FmuLayer's `categories` vector OR if the `categories` vector is empty.
     fn interested_in_category(&self, category: &Fmi2LogCategory) -> bool {
         self.categories.is_empty() || self.categories.contains(category)
     }
 }
 
-impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>> Layer<S> for FmuLayer{
+impl <S: Subscriber + for<'lookup> LookupSpan<'lookup>> Layer<S> for FmuLayer{
+    /// Notifies this layer that a new span was constructed with the given
+    /// `Attributes` and `Id`.
+    /// 
+    /// If the FmuLayer would be interested in the contents of a span it will
+    /// mark it, so that it will be recognised as interesting for the spans
+    /// lifetime.
     fn on_new_span(
         &self,
         attrs: &span::Attributes<'_>,
         id: &span::Id,
-        ctx: tracing_subscriber::layer::Context<'_, S>
+        ctx: Context<'_, S>
     ) {
         if let Some(span) = ctx.span(id) {
             if self.interested_in_parent_of_span(&span)
             || self.logger_uid_in_attributes(attrs)
             {
-                span.extensions_mut().insert(EnabledForLayer{ logger_uid: self.logger_uid });
+                span.extensions_mut().insert(
+                    EnabledForLayer{ logger_uid: self.logger_uid }
+                );
             }
         }
-      
     }
 
     fn on_event(
         &self,
-        _event: &tracing::Event<'_>,
-        _ctx: tracing_subscriber::layer::Context<'_, S>
+        _event: &Event<'_>,
+        _ctx: Context<'_, S>
     ) {
         if !(self.enabled && self.interested_in_event(_event, &_ctx)) {
             return
@@ -319,7 +468,9 @@ impl <S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'loo
             let mut message_bytes = message.into_bytes();
             message_bytes.push(0);
 
-            let instance_name = CStr::from_bytes_until_nul(&instance_name_bytes)
+            let instance_name = CStr::from_bytes_until_nul(
+                &instance_name_bytes
+            )
                 .unwrap_or_default()
                 .as_ptr();
 
@@ -361,19 +512,19 @@ impl FmuSpanVisitor{
     }
 }
 
-impl tracing::field::Visit for FmuSpanVisitor{
+impl Visit for FmuSpanVisitor{
     #[allow(unused_variables)]
     fn record_debug(
         &mut self,
-        field: &tracing::field::Field,
-        value: &dyn std::fmt::Debug
+        field: &Field,
+        value: &dyn Debug
     ) {
-        // Disable debug (and all methods not explicitly defined).
+        // Disables debug (and all "record" methods not explicitly defined).
     }
 
     fn record_u64(
         &mut self,
-        field: &tracing::field::Field,
+        field: &Field,
         value: u64
     ) {
         if field.name() == "luid" {
@@ -394,11 +545,11 @@ impl FmuEventVisitor{
     }
 }
 
-impl tracing::field::Visit for FmuEventVisitor{
+impl Visit for FmuEventVisitor{
     fn record_debug(
         &mut self,
-        field: &tracing::field::Field,
-        value: &dyn std::fmt::Debug
+        field: &Field,
+        value: &dyn Debug
     ) {
         match field.name() {
             "category" => {
@@ -438,7 +589,7 @@ impl tracing::field::Visit for FmuEventVisitor{
         }
     }
 
-    fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
+    fn record_i64(&mut self, field: &Field, value: i64) {
         if field.name() == "status" {
             if let Ok(status) = Fmi2Status::try_from(value as i32) {
                 self.status = Some(status);
