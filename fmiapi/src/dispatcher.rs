@@ -1,5 +1,7 @@
 use std::{
+    error::Error,
     ffi::OsString,
+    fmt::Display,
     path::Path
 };
 
@@ -247,13 +249,38 @@ pub type DispatcherResult<T> = Result<T, DispatcherError>;
 pub enum DispatcherError {
     DecodeError(prost::DecodeError),
     EnumDecodeError(prost::UnknownEnumValue),
-    EncodeError,
     SocketError,
     SubprocessError,
     ConcurrencyError,
-    Timeout,
     BackendImplementationError,
 }
+
+impl Display for DispatcherError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::DecodeError(prost_error) => {
+                write!(f, "protobuf error: {}", prost_error)
+            }
+            Self::EnumDecodeError(prost_error) => {
+                write!(f, "protobuf error: {}", prost_error)
+            }
+            Self::SocketError => {
+                write!(f, "ZeroMQ socket error")
+            }
+            Self::SubprocessError => {
+                write!(f, "backend subprocess error")
+            }
+            Self::ConcurrencyError => {
+                write!(f, "error in concurrency runtime")
+            }
+            Self::BackendImplementationError => {
+                write!(f, "backend implementation error")
+            }
+        }
+    }
+}
+
+impl Error for DispatcherError {}
 
 /// Represents the communication socket with the backend process.
 /// 
