@@ -290,9 +290,9 @@ fn new_logger_id() -> LoggerResult<u64> {
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "fmt_logging")] {
-        const ENABLE_FMT_LOGGER: bool = true;
+        pub const ENABLE_FMT_LOGGER: bool = true;
     } else {
-        const ENABLE_FMT_LOGGER: bool = false;
+        pub const ENABLE_FMT_LOGGER: bool = false;
     }
 }
 
