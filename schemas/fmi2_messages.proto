@@ -170,6 +170,15 @@ message Fmi2SerializeFmuStateReturn {
   bytes state = 2;
 }
 
+// -------------- UniFMU specific Callback messages -----------------
+message Fmi2CallbackContinue {}
+
+message Fmi2LogReturn {
+  Fmi2Status status = 1;
+  string category = 2;
+  string log_message = 3;
+}
+
 // ----------------------- FMI Command Wrapper ----------------------
 
 message Fmi2Command {
@@ -210,8 +219,37 @@ message Fmi2Command {
     Fmi2CancelStep Fmi2CancelStep = 21;
 
     // UniFMU Common
+    Fmi2CallbackContinue Fmi2CallbackContinue = 22;
 
     Fmi2SerializeFmuState Fmi2SerializeFmuState = 63;
     Fmi2DeserializeFmuState Fmi2DeserializeFmuState = 64;
+  }
+}
+
+// ---------------------- FMI Return Wrapper ------------------------
+
+message Fmi2Return {
+  oneof return_message {
+    Fmi2EmptyReturn Fmi2EmptyReturn = 1;
+
+    Fmi2StatusReturn Fmi2StatusReturn = 2;
+
+    Fmi2FreeInstanceReturn Fmi2FreeInstanceReturn = 3;
+
+    Fmi2GetRealReturn Fmi2GetRealReturn = 4;
+
+    Fmi2GetIntegerReturn Fmi2GetIntegerReturn = 5;
+
+    Fmi2GetBooleanReturn Fmi2GetBooleanReturn = 6;
+
+    Fmi2GetStringReturn Fmi2GetStringReturn = 7;
+
+    Fmi2GetRealOutputDerivativesReturn Fmi2GetRealOutputDerivativesReturn = 8;
+
+    Fmi2GetDirectionalDerivativesReturn Fmi2GetDirectionalDerivativesReturn = 9;
+
+    Fmi2SerializeFmuStateReturn Fmi2SerializeFmuStateReturn = 10;
+
+    Fmi2LogReturn Fmi2LogReturn = 11;
   }
 }

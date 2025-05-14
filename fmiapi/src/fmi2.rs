@@ -4,8 +4,14 @@
 #![allow(dead_code)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
-use crate::dispatcher::{Dispatch, Dispatcher};
-use crate::fmi2_messages::{self, Fmi2Command, fmi2_command::Command};
+use crate::dispatcher::{Dispatch, Dispatcher, DispatcherError};
+use crate::fmi2_messages::{
+    self,
+    Fmi2Command,
+    fmi2_command::Command,
+    Fmi2Return,
+    fmi2_return
+};
 use crate::fmi2_types::{
     Fmi2Real,
     Fmi2Integer,
@@ -21,11 +27,14 @@ use crate::spawn::spawn_slave;
 use libc::size_t;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use prost::Message;
 use url::Url;
 use tracing::{error, info, warn, error_span};
 
 use std::{
+    error::Error,
     ffi::{CStr, CString, NulError},
+    fmt::Display,
     os::raw::{c_char, c_uint},
     path::Path,
     slice::{from_raw_parts, from_raw_parts_mut},
@@ -107,6 +116,250 @@ impl Fmi2Slave {
             logger_uid
         }
     }
+ 
+    pub fn dispatch<R: Message>(
+        &mut self,
+        command: &impl Message,
+        return_matcher: fn(&mut Self, fmi2_return::ReturnMessage) -> Fmi2SlaveResult<R>
+    ) -> Fmi2SlaveResult<R> {
+        let return_message = self.dispatcher
+            .send_and_recv::<_, Fmi2Return>(command)?
+            .return_message
+            .ok_or(Fmi2SlaveError::ReturnError)?;
+
+        return_matcher(
+            self,
+            return_message
+        )            
+    }
+
+    fn handle_log_return<R: Message>(
+        &mut self,
+        log_return: fmi2_messages::Fmi2LogReturn,
+        return_matcher: fn(&mut Self, fmi2_return::ReturnMessage) -> Fmi2SlaveResult<R>
+    ) -> Fmi2SlaveResult<R> {
+        if logger::ENABLE_FMT_LOGGER {
+            // If fmt logging is enabled the event level is determined by the Fmi2Status for easier glancable logs.
+            match log_return.status { 
+                0 | 5 => {
+                    info!(
+                        category = %log_return.category,
+                        status = log_return.status,
+                        message = log_return.log_message
+                    );
+                }
+                1 | 2 => {
+                    warn!(
+                        category = %log_return.category,
+                        status = log_return.status,
+                        message = log_return.log_message
+                    );
+                }
+                3 | 4 | _ => {
+                    error!(
+                        category = %log_return.category,
+                        status = log_return.status,
+                        message = log_return.log_message
+                    );
+                }
+            }
+        } else {
+            // If not, then we skip the comparison as the event level isn't used by the logger callback when an explicit status is set.
+            error!(
+                category = %log_return.category,
+                status = log_return.status,
+                message = log_return.log_message
+            );
+        }
+
+        let cmd = Fmi2Command {
+            command: Some(Command::Fmi2CallbackContinue(
+                fmi2_messages::Fmi2CallbackContinue {}
+            )),
+        };
+
+        self.dispatch::<R>(&cmd, return_matcher)
+    }
+
+    pub fn empty_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2EmptyReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::empty_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2EmptyReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn status_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2StatusReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::status_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2StatusReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn free_instance_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2FreeInstanceReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::free_instance_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2FreeInstanceReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn get_real_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetRealReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::get_real_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2GetRealReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn get_integer_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetIntegerReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::get_integer_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2GetIntegerReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn get_boolean_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetBooleanReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::get_boolean_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2GetBooleanReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn get_string_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetStringReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::get_string_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2GetStringReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn get_real_output_derivates_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetRealOutputDerivativesReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::get_real_output_derivates_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2GetRealOutputDerivativesReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn get_directional_derivatives_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetDirectionalDerivativesReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::get_directional_derivatives_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2GetDirectionalDerivativesReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
+
+    pub fn serialize_fmu_state_return_matcher(
+        &mut self,
+        return_message: fmi2_return::ReturnMessage
+    ) -> Fmi2SlaveResult<fmi2_messages::Fmi2SerializeFmuStateReturn> {
+        match return_message {
+            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+                self.handle_log_return(
+                    inner_message,
+                    Self::serialize_fmu_state_return_matcher
+                )
+            }
+            fmi2_return::ReturnMessage::Fmi2SerializeFmuStateReturn(inner_message) => {
+                Ok(inner_message)
+            }
+            _ => Err(Fmi2SlaveError::ReturnError)
+        }
+    }
 }
 
 /// Sends the fmi3FreeInstance message to the backend when the slave is dropped.
@@ -128,6 +381,35 @@ impl Drop for Fmi2Slave {
         if let Err(error) = logger::remove_callback(self.logger_uid) {
             error!("Couldn't remove logger callback from tracing subscriber: {:?}.", error);
         };
+    }
+}
+
+type Fmi2SlaveResult<T> = Result<T, Fmi2SlaveError>;
+
+#[derive(Debug)]
+pub enum Fmi2SlaveError {
+    DispatchError(DispatcherError),
+    ReturnError
+}
+
+impl Display for Fmi2SlaveError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::DispatchError(dispatcher_error) => {
+                write!(f, "dispatch error: {}", dispatcher_error)
+            }
+            Self::ReturnError => {
+                write!(f, "unknown return message from backend")
+            }
+        }
+    }
+}
+
+impl Error for Fmi2SlaveError {}
+
+impl From<DispatcherError> for Fmi2SlaveError {
+    fn from(value: DispatcherError) -> Self {
+        Self::DispatchError(value)
     }
 }
 
@@ -391,7 +673,10 @@ pub unsafe extern "C" fn fmi2Instantiate(
         )),
     };
 
-    match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2EmptyReturn>(&cmd) {
+    match slave.dispatch::<fmi2_messages::Fmi2EmptyReturn>(
+        &cmd,
+        Fmi2Slave::empty_return_matcher
+    ) {
         Err(error) => {
             error!(
                 category = %Fmi2LogCategory::LogStatusError,
@@ -545,8 +830,10 @@ pub extern "C" fn fmi2SetupExperiment(
     };
 
     slave
-        .dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+        .dispatch::<fmi2_messages::Fmi2StatusReturn>(
+            &cmd,
+            Fmi2Slave::status_return_matcher
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -570,8 +857,10 @@ pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Stat
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -595,8 +884,10 @@ pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Statu
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -620,8 +911,10 @@ pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -645,8 +938,10 @@ pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -680,8 +975,10 @@ pub extern "C" fn fmi2DoStep(
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    match slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
     {
         Ok(status) => match status {
@@ -714,8 +1011,10 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -773,9 +1072,10 @@ pub unsafe extern "C" fn fmi2GetReal(
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2GetRealReturn>(&cmd)
-    {
+    match slave.dispatch::<fmi2_messages::Fmi2GetRealReturn>(
+        &cmd,
+        Fmi2Slave::get_real_return_matcher
+    ) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values)
@@ -846,9 +1146,10 @@ pub unsafe extern "C" fn fmi2GetInteger(
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2GetIntegerReturn>(&cmd)
-    {
+    match slave.dispatch::<fmi2_messages::Fmi2GetIntegerReturn>(
+        &cmd,
+        Fmi2Slave::get_integer_return_matcher
+    ) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values)
@@ -919,9 +1220,10 @@ pub unsafe extern "C" fn fmi2GetBoolean(
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2GetBooleanReturn>(&cmd)
-    {
+    match slave.dispatch::<fmi2_messages::Fmi2GetBooleanReturn>(
+        &cmd,
+        Fmi2Slave::get_boolean_return_matcher
+    ) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let values: Vec<i32> = result.values
@@ -1005,9 +1307,10 @@ pub unsafe extern "C" fn fmi2GetString(
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2GetStringReturn>(&cmd)
-    {
+    match slave.dispatch::<fmi2_messages::Fmi2GetStringReturn>(
+        &cmd,
+        Fmi2Slave::get_string_return_matcher
+    ) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let conversion_result: Result<Vec<CString>, NulError> = result
@@ -1108,8 +1411,10 @@ pub unsafe extern "C" fn fmi2SetReal(
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1166,8 +1471,10 @@ pub unsafe extern "C" fn fmi2SetInteger(
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1232,8 +1539,10 @@ pub unsafe extern "C" fn fmi2SetBoolean(
         )),
     };
     
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1302,8 +1611,10 @@ pub unsafe extern "C" fn fmi2SetString(
                 )),
             };
         
-            slave.dispatcher
-                .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+            slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+                &cmd,
+                Fmi2Slave::status_return_matcher
+            )
                 .map(|status| status.into())
                 .unwrap_or_else(|error| {
                     error!(
@@ -1398,9 +1709,10 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2GetDirectionalDerivativesReturn>(&cmd)
-    {
+    match slave.dispatch::<fmi2_messages::Fmi2GetDirectionalDerivativesReturn>(
+        &cmd,
+        Fmi2Slave::get_directional_derivatives_return_matcher
+    ) {
         Ok(result) => {
             if !result.values.is_empty() {
                 direction_unknown.copy_from_slice(&result.values);
@@ -1480,8 +1792,10 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
         )),
     };
 
-    slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd)
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+    )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1543,9 +1857,10 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
         )),
     };
 
-    match slave.dispatcher
-        .send_and_recv::<_, fmi2_messages::Fmi2GetRealOutputDerivativesReturn>(&cmd)
-    {
+    match slave.dispatch::<fmi2_messages::Fmi2GetRealOutputDerivativesReturn>(
+        &cmd,
+        Fmi2Slave::get_real_output_derivates_return_matcher
+    ) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values)
@@ -1615,7 +1930,12 @@ pub extern "C" fn fmi2SetFMUstate(
         )),
     };
     
-    unsafe { (*slave).dispatcher.send_and_recv::<_, fmi2_messages::Fmi2StatusReturn>(&cmd) }
+    unsafe {
+        (*slave).dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        &cmd,
+        Fmi2Slave::status_return_matcher
+        )
+    }
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1667,7 +1987,10 @@ pub extern "C" fn fmi2GetFMUstate(
 
     let slave = unsafe { &mut *slave };
 
-    match slave.dispatcher.send_and_recv::<_, fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) {
+    match slave.dispatch::<fmi2_messages::Fmi2SerializeFmuStateReturn>(
+        &cmd,
+        Fmi2Slave::serialize_fmu_state_return_matcher
+    ) {
         Ok(result) => {
             unsafe {
                 match (*state).as_mut() {

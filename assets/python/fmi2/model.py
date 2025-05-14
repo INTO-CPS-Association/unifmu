@@ -2,7 +2,8 @@ import pickle
 
 
 class Model:
-    def __init__(self) -> None:
+    def __init__(self, _log_callback) -> None:
+        self._log_callback = _log_callback # Removing this line will break logging
 
         self.real_a = 0.0
         self.real_b = 0.0
@@ -139,6 +140,44 @@ class Model:
 
     def fmi2SetString(self, references, values):
         return self._set_value(references, values)
+    
+    # ================= Logging =================
+
+    """ UniFMU logging function
+
+    Call this function whenever something should be logged.
+    This will send a message thourgh the UniFMU layer to the importer if the
+    importer has enabled logging and is interested in the given logging category.
+
+    Keyword arguments:
+    message  -- The message to log.
+    status   -- The Fmi2Status that the program is expected to return when log() is
+                called. For example, if the log() call is simply informing of normal
+                operation, it would expect to return Fmi2Status.ok, while if the log()
+                call is informing of an error it would expect to return Fmi2Status.error.
+    category -- The logging category. Used by the UniFMU layer to dertermine whether or
+                not a message should be send to the importer. A category must be defined
+                in the modelDescription.xml to be valid an visible to the importer, but
+                can otherwise be any string. A number of categories are predefined by the
+                FMI standard and included by default in UniFMU:
+                - logStatusWarning
+                - logStatusDiscard
+                - logStatusError
+                - logStatusFatal
+                - logStatusPending
+                - logAll
+    """
+    def log(self, message, status, category = "logAll"):
+        # Feel free to expand on the functionality of the function.
+        # The model will be informed of whether or not to output logging and
+        # what categories to log through a call to fmi2SetDebugLogging().
+        # The UniFMU layer already handles filtering of messages so that
+        # the FMU importer only receives logging events that is interested in,
+        # but if you want to filter before sending the events to the UniFMU 
+        # layer to save on message bandwidth, feel free to do so.
+        
+        # Removing the line below will break logging.
+        self._log_callback(status, category, message)
 
     # ================= Helpers =================
 
