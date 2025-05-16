@@ -673,7 +673,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2EmptyReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::empty_return_matcher
     ) {
@@ -743,6 +743,8 @@ pub extern "C" fn fmi2SetDebugLogging(
         return Fmi2Status::Error;
     }
 
+    let mut string_categories: Vec<String> = Vec::new();
+
     if n_categories != 0 {
         match unsafe { from_raw_parts(categories, n_categories) }
             .iter()
@@ -769,6 +771,10 @@ pub extern "C" fn fmi2SetDebugLogging(
                 return Fmi2Status::Error;
             }
             Ok(categories) => {
+                string_categories = categories.iter()
+                    .map(|category| category.to_string())
+                    .collect();
+
                 if let Err(error) = logger::set_categories_for_callback(slave.logger_uid, categories) {
                     error!(
                         category = %Fmi2LogCategory::LogStatusError,
@@ -786,7 +792,27 @@ pub extern "C" fn fmi2SetDebugLogging(
             return Fmi2Status::Error;
     }
 
-    Fmi2Status::Ok
+    let cmd = Fmi2Command {
+        command: Some(Command::Fmi2SetDebugLogging(
+            fmi2_messages::Fmi2SetDebugLogging {
+                categories: string_categories,
+                logging_on
+            }
+        )),
+    };
+
+    slave.dispatch(
+            &cmd,
+            Fmi2Slave::status_return_matcher
+        )
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!(
+                category = %Fmi2LogCategory::LogStatusError,
+                "Fmi2SetDebugLogging failed with error: {:?}.", error
+            );
+            Fmi2Status::Error
+        })
 }
 
 #[no_mangle]
@@ -829,8 +855,7 @@ pub extern "C" fn fmi2SetupExperiment(
         )),
     };
 
-    slave
-        .dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
             &cmd,
             Fmi2Slave::status_return_matcher
         )
@@ -857,10 +882,10 @@ pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Stat
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -884,10 +909,10 @@ pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Statu
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -911,10 +936,10 @@ pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -938,10 +963,10 @@ pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -975,10 +1000,10 @@ pub extern "C" fn fmi2DoStep(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
     {
         Ok(status) => match status {
@@ -1011,10 +1036,10 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1072,7 +1097,7 @@ pub unsafe extern "C" fn fmi2GetReal(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2GetRealReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::get_real_return_matcher
     ) {
@@ -1146,7 +1171,7 @@ pub unsafe extern "C" fn fmi2GetInteger(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2GetIntegerReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::get_integer_return_matcher
     ) {
@@ -1220,7 +1245,7 @@ pub unsafe extern "C" fn fmi2GetBoolean(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2GetBooleanReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::get_boolean_return_matcher
     ) {
@@ -1307,7 +1332,7 @@ pub unsafe extern "C" fn fmi2GetString(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2GetStringReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::get_string_return_matcher
     ) {
@@ -1411,7 +1436,7 @@ pub unsafe extern "C" fn fmi2SetReal(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
     )
@@ -1471,7 +1496,7 @@ pub unsafe extern "C" fn fmi2SetInteger(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
     )
@@ -1539,10 +1564,10 @@ pub unsafe extern "C" fn fmi2SetBoolean(
         )),
     };
     
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1611,10 +1636,10 @@ pub unsafe extern "C" fn fmi2SetString(
                 )),
             };
         
-            slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+            slave.dispatch(
                 &cmd,
                 Fmi2Slave::status_return_matcher
-            )
+                )
                 .map(|status| status.into())
                 .unwrap_or_else(|error| {
                     error!(
@@ -1709,7 +1734,7 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2GetDirectionalDerivativesReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::get_directional_derivatives_return_matcher
     ) {
@@ -1792,10 +1817,10 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(
+    slave.dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
-    )
+        )
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!(
@@ -1857,7 +1882,7 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
         )),
     };
 
-    match slave.dispatch::<fmi2_messages::Fmi2GetRealOutputDerivativesReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::get_real_output_derivates_return_matcher
     ) {
@@ -1931,7 +1956,7 @@ pub extern "C" fn fmi2SetFMUstate(
     };
     
     unsafe {
-        (*slave).dispatch::<fmi2_messages::Fmi2StatusReturn>(
+        (*slave).dispatch(
         &cmd,
         Fmi2Slave::status_return_matcher
         )
@@ -1987,7 +2012,7 @@ pub extern "C" fn fmi2GetFMUstate(
 
     let slave = unsafe { &mut *slave };
 
-    match slave.dispatch::<fmi2_messages::Fmi2SerializeFmuStateReturn>(
+    match slave.dispatch(
         &cmd,
         Fmi2Slave::serialize_fmu_state_return_matcher
     ) {
