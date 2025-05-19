@@ -197,6 +197,78 @@ public class Model
         this.string_c = string_a + string_b;
     }
 
+    /// <summary>UniFMU logging function
+    /// <para>
+    /// Call this function whenever something should be logged.
+    /// This will send a message thourgh the UniFMU layer to
+    /// the importer if the importer has enabled logging and
+    /// is interested in the given logging category.
+    /// </para>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Both status and category have default values, but they
+    /// should be explicitly set in most cases.
+    /// </para>
+    /// <para>
+    /// The status should always reflect the *expected* return
+    /// value of the current operation. For example if the
+    /// current operation is progressing as it should and the
+    /// call to Log() is notifying of normal operation then the
+    /// status parameter should be set to Fmi2Status.Fmi2Ok as
+    /// we would currently expect the operation to return this
+    /// state. As a further example, if the call to Log() is
+    /// made when an error is encountered then we would expect
+    /// to return an Fmi2Status.Fmi2Error to the importer, and
+    /// therefore the state parameter should also be set to
+    /// Fmi2Status.Fmi2Error.
+    /// </para>
+    /// <para>
+    /// The value of the category parameter is used by the
+    /// UniFMU API layer to decide whether or not to actually
+    /// send the message to the FMU importer. The importer
+    /// can designate which categories that is interested in
+    /// and if it does so, the UniFMU API layer only forwards
+    /// messages with such interesting categories.
+    /// The categories can be any string, and must be defined
+    /// in modelDescription.xml to be valid an visible to the
+    /// importer. A number of categories are predefined by
+    /// the FMI2 standard and included in the 
+    /// modelDescription.xml by default:
+    /// <list type="bullet">
+    /// <item>
+    /// <description>logStatusWarning</description>
+    /// </item>
+    /// <item>
+    /// <description>logStatusDiscard</description>
+    /// </item>
+    /// <item>
+    /// <description>logStatusError</description>
+    /// </item>
+    /// <item>
+    /// <description>logStatusFatal</description>
+    /// </item>
+    /// <item>
+    /// <description>logStatusPending</description>
+    /// </item>
+    /// <item>
+    /// <description>logAll</description>
+    /// </item>
+    /// </list>
+    /// The importer calls Fmi2SetDebugLogging() to specify
+    /// which categories it is interested in and whether or not
+    /// logging should even be enabled. You can use this to
+    /// expand the Log() function to pre-filter the messages
+    /// if you want to reduce the amount of messages exchanged
+    /// between this model and the UniFMU API layer. (It is
+    /// advised to read the FMI2 standard, specifically the
+    /// sections on logging beforehand.)
+    /// </para>
+    /// </remarks>
+    /// <param name="message">the message to be logged
+    /// </param>
+    /// <param name="status">the Fmi2Status that the FMU expects to next return (default: Fmi2Status.Fmi2Ok)</param>
+    /// <param name="category">the logging category that this log event falls under</param>
     private void Log(String message, Fmi2Status status = Fmi2Status.Fmi2Ok, String category = "logAll") {
         this.log_callback(status, category, message);
     }
