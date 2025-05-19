@@ -186,13 +186,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2EmptyReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::empty_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2EmptyReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Empty(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -204,13 +204,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2StatusReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::status_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2StatusReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Status(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -222,13 +222,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2FreeInstanceReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::free_instance_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2FreeInstanceReturn(inner_message) => {
+            fmi2_return::ReturnMessage::FreeInstance(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -240,13 +240,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetRealReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::get_real_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2GetRealReturn(inner_message) => {
+            fmi2_return::ReturnMessage::GetReal(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -258,13 +258,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetIntegerReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::get_integer_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2GetIntegerReturn(inner_message) => {
+            fmi2_return::ReturnMessage::GetInteger(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -276,13 +276,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetBooleanReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::get_boolean_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2GetBooleanReturn(inner_message) => {
+            fmi2_return::ReturnMessage::GetBoolean(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -294,13 +294,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetStringReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::get_string_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2GetStringReturn(inner_message) => {
+            fmi2_return::ReturnMessage::GetString(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -312,13 +312,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetRealOutputDerivativesReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::get_real_output_derivates_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2GetRealOutputDerivativesReturn(inner_message) => {
+            fmi2_return::ReturnMessage::GetRealOutputDerivatives(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -330,13 +330,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2GetDirectionalDerivativesReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::get_directional_derivatives_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2GetDirectionalDerivativesReturn(inner_message) => {
+            fmi2_return::ReturnMessage::GetDirectionalDerivatives(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)
@@ -348,13 +348,13 @@ impl Fmi2Slave {
         return_message: fmi2_return::ReturnMessage
     ) -> Fmi2SlaveResult<fmi2_messages::Fmi2SerializeFmuStateReturn> {
         match return_message {
-            fmi2_return::ReturnMessage::Fmi2LogReturn(inner_message) => {
+            fmi2_return::ReturnMessage::Log(inner_message) => {
                 self.handle_log_return(
                     inner_message,
                     Self::serialize_fmu_state_return_matcher
                 )
             }
-            fmi2_return::ReturnMessage::Fmi2SerializeFmuStateReturn(inner_message) => {
+            fmi2_return::ReturnMessage::SerializeFmuState(inner_message) => {
                 Ok(inner_message)
             }
             _ => Err(Fmi2SlaveError::ReturnError)

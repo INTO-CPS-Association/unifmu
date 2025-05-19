@@ -230,26 +230,26 @@ message Fmi2Command {
 
 message Fmi2Return {
   oneof return_message {
-    Fmi2EmptyReturn Fmi2EmptyReturn = 1;
+    Fmi2EmptyReturn empty = 1;
 
-    Fmi2StatusReturn Fmi2StatusReturn = 2;
+    Fmi2StatusReturn status = 2;
 
-    Fmi2FreeInstanceReturn Fmi2FreeInstanceReturn = 3;
+    Fmi2FreeInstanceReturn free_instance = 3;
 
-    Fmi2GetRealReturn Fmi2GetRealReturn = 4;
+    Fmi2GetRealReturn get_real = 4;
 
-    Fmi2GetIntegerReturn Fmi2GetIntegerReturn = 5;
+    Fmi2GetIntegerReturn get_integer = 5;
 
-    Fmi2GetBooleanReturn Fmi2GetBooleanReturn = 6;
+    Fmi2GetBooleanReturn get_boolean = 6;
 
-    Fmi2GetStringReturn Fmi2GetStringReturn = 7;
+    Fmi2GetStringReturn get_string = 7;
 
-    Fmi2GetRealOutputDerivativesReturn Fmi2GetRealOutputDerivativesReturn = 8;
+    Fmi2GetRealOutputDerivativesReturn get_real_output_derivatives = 8;
 
-    Fmi2GetDirectionalDerivativesReturn Fmi2GetDirectionalDerivativesReturn = 9;
+    Fmi2GetDirectionalDerivativesReturn get_directional_deviratives = 9;
 
-    Fmi2SerializeFmuStateReturn Fmi2SerializeFmuStateReturn = 10;
+    Fmi2SerializeFmuStateReturn serialize_fmu_state = 10;
 
-    Fmi2LogReturn Fmi2LogReturn = 11;
+    Fmi2LogReturn log = 11;
   }
 }

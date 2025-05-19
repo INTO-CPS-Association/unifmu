@@ -40,10 +40,11 @@ if __name__ == "__main__":
 
     socket.connect(dispatcher_endpoint)
 
+    def send_reply(reply):
+        socket.send(reply.SerializeToString())
+
     # send handshake
-    handshake = HandshakeReply()
-    handshake.status = HandshakeStatus.OK
-    socket.send(handshake.SerializeToString())
+    send_reply(HandshakeReply(status=HandshakeStatus.OK))
 
     def recv_command():
         msg = socket.recv()
@@ -55,13 +56,10 @@ if __name__ == "__main__":
             getattr(command, command.WhichOneof("command"))
         )
 
-    def send_reply(reply):
-        socket.send(reply.SerializeToString())
-
     def status_reply(status):
         send_reply(
             Fmi2Return(
-                Fmi2StatusReturn=Fmi2StatusReturn(
+                status=Fmi2StatusReturn(
                     status=status
                 )
             )            
@@ -70,7 +68,7 @@ if __name__ == "__main__":
     def log_callback(status, category, message):
         send_reply(
             Fmi2Return(
-                Fmi2LogReturn=Fmi2LogReturn(
+                log=Fmi2LogReturn(
                     status=status,
                     category=category,
                     log_message=message
@@ -98,7 +96,7 @@ if __name__ == "__main__":
                 model = Model(_log_callback=log_callback)
                 send_reply(
                     Fmi2Return(
-                        Fmi2EmptyReturn=Fmi2EmptyReturn()
+                        empty=Fmi2EmptyReturn()
                     )
                 )
 
@@ -134,7 +132,7 @@ if __name__ == "__main__":
             case "Fmi2FreeInstance":
                 send_reply(
                     Fmi2Return(
-                        Fmi2FreeInstanceReturn=Fmi2FreeInstanceReturn()
+                        free_instance=Fmi2FreeInstanceReturn()
                     )
                 )
                 logger.info(f"Fmi2FreeInstance received, shutting down")
@@ -150,7 +148,7 @@ if __name__ == "__main__":
                 status, state = model.fmi2SerializeFmuState()
                 send_reply(
                     Fmi2Return(
-                        Fmi2SerializeFmuStateReturn=Fmi2SerializeFmuStateReturn(
+                        serialize_fmu_state=Fmi2SerializeFmuStateReturn(
                             status=status,
                             state=state
                         )
@@ -164,7 +162,7 @@ if __name__ == "__main__":
                 status, values = model.fmi2GetReal(data.references)
                 send_reply(
                     Fmi2Return(
-                        Fmi2GetRealReturn=Fmi2GetRealReturn(
+                        get_real=Fmi2GetRealReturn(
                             status=status,
                             values=values
                         )
@@ -175,7 +173,7 @@ if __name__ == "__main__":
                 status, values = model.fmi2GetInteger(data.references)
                 send_reply(
                     Fmi2Return(
-                        Fmi2GetIntegerReturn=Fmi2GetIntegerReturn(
+                        get_integer=Fmi2GetIntegerReturn(
                             status=status,
                             values=values
                         )
@@ -186,7 +184,7 @@ if __name__ == "__main__":
                 status, values = model.fmi2GetBoolean(data.references)
                 send_reply(
                     Fmi2Return(
-                        Fmi2GetBooleanReturn=Fmi2GetBooleanReturn(
+                        get_boolean=Fmi2GetBooleanReturn(
                             status=status,
                             values=values
                         )
@@ -197,7 +195,7 @@ if __name__ == "__main__":
                 status, values = model.fmi2GetString(data.references)
                 send_reply(
                     Fmi2Return(
-                        Fmi2GetStringReturn=Fmi2GetStringReturn(
+                        get_string=Fmi2GetStringReturn(
                             status=status,
                             values=values
                         )

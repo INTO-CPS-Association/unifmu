@@ -11,10 +11,14 @@ using NetMQ;
 
 namespace Launch
 {
+    delegate Fmi2Command RecvCommand();
+
+    delegate void SendReply(IMessage reply);
+
+    delegate void SendStatusReply(Fmi2Status status);
+
     class Program
     {
-
-
         public static void Main(string[] args)
         {
             var references_to_attr = new Dictionary<uint, string>();
@@ -27,210 +31,143 @@ namespace Launch
                 Environment.Exit(-1);
             }
 
-
             var socket = new RequestSocket();
             socket.Connect(dispatcher_endpoint);
 
+            SendReply sendReply = reply => socket.SendFrame(reply.ToByteArray(), false);
 
-            IMessage message = new HandshakeReply{
-                Status = HandshakeStatus.Ok
-            };
+            sendReply(new HandshakeReply{Status = HandshakeStatus.Ok});
 
+            RecvCommand recvCommand = () => Fmi2Command.Parser.ParseFrom(socket.ReceiveFrameBytes());
 
-            socket.SendFrame(message.ToByteArray(), false);
-            Fmi2Command command;
+            SendStatusReply sendStatusReply = status => sendReply(
+                new Fmi2Return{Status = new Fmi2StatusReturn{Status = status}}
+            );
 
             while (true)
             {
-                command = Fmi2Command.Parser.ParseFrom(socket.ReceiveFrameBytes());
+                Fmi2Command command = recvCommand();
 
                 switch (command.CommandCase)
                 {
-
                     case Fmi2Command.CommandOneofCase.Fmi2Instantiate:
-                        {
-                            model = new Model();
-                            var result = new Fmi2EmptyReturn();
-                            message = result;
-                        }
+                        model = new Model();
+                        sendReply(new Fmi2Return{Empty = new Fmi2EmptyReturn()});
                         break;
+
                     case Fmi2Command.CommandOneofCase.Fmi2SetupExperiment:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2SetupExperiment(
-                                 command.Fmi2SetupExperiment.StartTime,
-                                 command.Fmi2SetupExperiment.HasStopTime ? command.Fmi2SetupExperiment.StopTime : null,
-                                 command.Fmi2SetupExperiment.HasTolerance ? command.Fmi2SetupExperiment.Tolerance : null
-                             );
-                            message = result;
-                        }
+                        sendStatusReply(model.Fmi2SetupExperiment(
+                            command.Fmi2SetupExperiment.StartTime,
+                            command.Fmi2SetupExperiment.HasStopTime ? command.Fmi2SetupExperiment.StopTime : null,
+                            command.Fmi2SetupExperiment.HasTolerance ? command.Fmi2SetupExperiment.Tolerance : null
+                        ));
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2EnterInitializationMode:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2EnterInitializationMode();
-                            message = result;
-                        }
-
+                        sendStatusReply(model.Fmi2EnterInitializationMode());
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2ExitInitializationMode:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2ExitInitializationMode();
-                            message = result;
-                        }
+                        sendStatusReply(model.Fmi2ExitInitializationMode());
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2DoStep:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2DoStep(command.Fmi2DoStep.CurrentTime, command.Fmi2DoStep.StepSize, command.Fmi2DoStep.NoSetFmuStatePriorToCurrentPoint);
-                            message = result;
-                        }
-
+                        sendStatusReply(model.Fmi2DoStep(command.Fmi2DoStep.CurrentTime, command.Fmi2DoStep.StepSize, command.Fmi2DoStep.NoSetFmuStatePriorToCurrentPoint));
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2SetReal:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2SetReal(command.Fmi2SetReal.References, command.Fmi2SetReal.Values);
-                            message = result;
-                        }
+                        sendStatusReply(model.Fmi2SetReal(command.Fmi2SetReal.References, command.Fmi2SetReal.Values));
                         break;
 
 
                     case Fmi2Command.CommandOneofCase.Fmi2SetInteger:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2SetInteger(
-                                command.Fmi2SetInteger.References,
-                                command.Fmi2SetInteger.Values);
-                            message = result;
-
-                        }
+                        sendStatusReply(model.Fmi2SetInteger(
+                            command.Fmi2SetInteger.References,
+                            command.Fmi2SetInteger.Values
+                        ));
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2SetBoolean:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2SetBoolean(
-                                command.Fmi2SetBoolean.References,
-                                command.Fmi2SetBoolean.Values
-                            );
-                            message = result;
-
-
-                        }
+                        sendStatusReply(model.Fmi2SetBoolean(
+                            command.Fmi2SetBoolean.References,
+                            command.Fmi2SetBoolean.Values
+                        ));
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2SetString:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2SetString(command.Fmi2SetString.References, command.Fmi2SetString.Values);
-                            message = result;
-                        }
+                        sendStatusReply(model.Fmi2SetString(command.Fmi2SetString.References, command.Fmi2SetString.Values));
                         break;
-
 
                     case Fmi2Command.CommandOneofCase.Fmi2GetReal:
                         {
-                            var result = new Fmi2GetRealReturn();
-                            (var status, var values) = model.Fmi2GetReal(command.Fmi2GetReal.References);
-                            result.Values.AddRange(values);
-                            result.Status = status;
-                            message = result;
+                            Fmi2Return result = new Fmi2Return{GetReal = new Fmi2GetRealReturn()};
+                            (Fmi2Status status, var values) = model.Fmi2GetReal(command.Fmi2GetReal.References);
+                            result.GetReal.Values.AddRange(values);
+                            result.GetReal.Status = status;
+                            sendReply(result);
                         }
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2GetInteger:
                         {
-                            var result = new Fmi2GetIntegerReturn();
-                            (var status, var values) = model.Fmi2GetInteger(command.Fmi2GetInteger.References);
-                            result.Values.AddRange(values);
-                            result.Status = status;
-                            message = result;
-
+                            Fmi2Return result = new Fmi2Return{GetInteger = new Fmi2GetIntegerReturn()};
+                            (Fmi2Status status, var values) = model.Fmi2GetInteger(command.Fmi2GetInteger.References);
+                            result.GetInteger.Values.AddRange(values);
+                            result.GetInteger.Status = status;
+                            sendReply(result);
                         }
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2GetBoolean:
                         {
-                            var result = new Fmi2GetBooleanReturn();
-                            (var status, var values) = model.Fmi2GetBoolean(command.Fmi2GetBoolean.References);
-                            result.Values.AddRange(values);
-                            result.Status = status;
-                            message = result;
-
+                            Fmi2Return result = new Fmi2Return{GetBoolean = new Fmi2GetBooleanReturn()};
+                            (Fmi2Status status, var values) = model.Fmi2GetBoolean(command.Fmi2GetBoolean.References);
+                            result.GetBoolean.Values.AddRange(values);
+                            result.GetBoolean.Status = status;
+                            sendReply(result);
                         }
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2GetString:
                         {
-                            var result = new Fmi2GetStringReturn();
-                            (var status, var values) = model.Fmi2GetString(command.Fmi2GetString.References);
-                            result.Values.AddRange(values);
-                            result.Status = status;
-                            message = result;
-
+                            Fmi2Return result = new Fmi2Return{GetString = new Fmi2GetStringReturn()};
+                            (Fmi2Status status, var values) = model.Fmi2GetString(command.Fmi2GetString.References);
+                            result.GetString.Values.AddRange(values);
+                            result.GetString.Status = status;
+                            sendReply(result);
                         }
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2CancelStep:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2CancelStep();
-                            message = result;
-
-                        }
-
+                        sendStatusReply(model.Fmi2CancelStep());
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2Reset:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2Reset();
-                            message = result;
-
-                        }
-
+                        sendStatusReply(model.Fmi2Reset());
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2Terminate:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2Terminate();
-                            message = result;
-                        }
+                        sendStatusReply(model.Fmi2Terminate());
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2SerializeFmuState:
                         {
-                            var result = new Fmi2SerializeFmuStateReturn();
-                            (var status, var state) = model.Fmi2SerializeFmuState();
-                            result.Status = status;
-                            result.State = ByteString.CopyFrom(state);
-                            message = result;
+                            Fmi2Return result = new Fmi2Return{SerializeFmuState = new Fmi2SerializeFmuStateReturn()};
+                            (Fmi2Status status, var state) = model.Fmi2SerializeFmuState();
+                            result.SerializeFmuState.Status = status;
+                            result.SerializeFmuState.State = ByteString.CopyFrom(state);
+                            sendReply(result);
                         }
                         break;
-                    case Fmi2Command.CommandOneofCase.Fmi2DeserializeFmuState:
-                        {
-                            var result = new Fmi2StatusReturn();
-                            result.Status = model.Fmi2DeserializeFmuState(command.Fmi2DeserializeFmuState.State.ToByteArray());
-                            message = result;
-                        }
 
+                    case Fmi2Command.CommandOneofCase.Fmi2DeserializeFmuState:
+                        sendStatusReply(model.Fmi2DeserializeFmuState(command.Fmi2DeserializeFmuState.State.ToByteArray()));
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2FreeInstance:
-                        {
-                            Console.WriteLine("received fmi2FreeInstance, exiting with status code 0");
-                            Environment.Exit(0);
-                        }
-
-
+                        sendReply(new Fmi2Return{FreeInstance = new Fmi2FreeInstanceReturn()});
+                        Console.WriteLine("received fmi2FreeInstance, exiting with status code 0");
+                        Environment.Exit(0);
                         break;
 
                     default:
@@ -238,11 +175,7 @@ namespace Launch
                         Environment.Exit(-1);
                         break;
                 }
-
-
-                socket.SendFrame(message.ToByteArray(), false);
             }
-
         }
     }
 }
