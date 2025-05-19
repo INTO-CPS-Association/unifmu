@@ -44,6 +44,25 @@ namespace Launch
                 new Fmi2Return{Status = new Fmi2StatusReturn{Status = status}}
             );
 
+            LogCallback logCallback = (status, category, message) => {
+                sendReply(new Fmi2Return{Log = new Fmi2LogReturn{
+                    Status = status,
+                    Category = category,
+                    LogMessage = message
+                }});
+
+                Fmi2Command command = recvCommand();
+
+                switch (command.CommandCase)
+                {
+                    case Fmi2Command.CommandOneofCase.Fmi2CallbackContinue:
+                        break;
+                    default:
+                        HandleUnexpectedCommand(command);
+                        break;
+                }
+            };
+
             while (true)
             {
                 Fmi2Command command = recvCommand();
@@ -51,7 +70,7 @@ namespace Launch
                 switch (command.CommandCase)
                 {
                     case Fmi2Command.CommandOneofCase.Fmi2Instantiate:
-                        model = new Model();
+                        model = new Model(logCallback);
                         sendReply(new Fmi2Return{Empty = new Fmi2EmptyReturn()});
                         break;
 
@@ -171,11 +190,15 @@ namespace Launch
                         break;
 
                     default:
-                        Console.Error.WriteLine("unrecognized command {0}, exiting with status code -1", command.CommandCase);
-                        Environment.Exit(-1);
+                        HandleUnexpectedCommand(command);
                         break;
                 }
             }
+        }
+
+        private static void HandleUnexpectedCommand(Fmi2Command command) {
+            Console.Error.WriteLine("unexpected command {0}, exiting with status code -1", command.CommandCase);
+            Environment.Exit(-1);
         }
     }
 }

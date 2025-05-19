@@ -6,6 +6,8 @@ using System.Reflection;
 using System.Linq;
 using Fmi2Messages;
 
+public delegate void LogCallback(Fmi2Status status, String category, String message);
+
 public class Model
 {
     public double real_a { get; set; }
@@ -22,25 +24,28 @@ public class Model
     public string string_c { get; set; }
 
     private Dictionary<uint, PropertyInfo> reference_to_attributes = new Dictionary<uint, PropertyInfo>();
+    private LogCallback log_callback { get; set; }
 
 
-    public Model()
+    public Model(LogCallback log_callback)
     {
+        this.log_callback = log_callback;
+
         this.reference_to_attributes = new Dictionary<uint, PropertyInfo>
-    {
-      { 0, this.GetType().GetProperty("real_a") },
-      { 1, this.GetType().GetProperty("real_b") },
-      { 2, this.GetType().GetProperty("real_c") },
-      { 3, this.GetType().GetProperty("integer_a") },
-      { 4, this.GetType().GetProperty("integer_b") },
-      { 5, this.GetType().GetProperty("integer_c") },
-      { 6, this.GetType().GetProperty("boolean_a") },
-      { 7, this.GetType().GetProperty("boolean_b") },
-      { 8, this.GetType().GetProperty("boolean_c") },
-      { 9, this.GetType().GetProperty("string_a") },
-      { 10, this.GetType().GetProperty("string_b") },
-      { 11, this.GetType().GetProperty("string_c") },
-    };
+            {
+              { 0, this.GetType().GetProperty("real_a") },
+              { 1, this.GetType().GetProperty("real_b") },
+              { 2, this.GetType().GetProperty("real_c") },
+              { 3, this.GetType().GetProperty("integer_a") },
+              { 4, this.GetType().GetProperty("integer_b") },
+              { 5, this.GetType().GetProperty("integer_c") },
+              { 6, this.GetType().GetProperty("boolean_a") },
+              { 7, this.GetType().GetProperty("boolean_b") },
+              { 8, this.GetType().GetProperty("boolean_c") },
+              { 9, this.GetType().GetProperty("string_a") },
+              { 10, this.GetType().GetProperty("string_b") },
+              { 11, this.GetType().GetProperty("string_c") },
+            };
 
     Fmi2Reset();
     }
@@ -190,6 +195,10 @@ public class Model
         this.integer_c = integer_a + integer_b;
         this.boolean_c = boolean_a || boolean_b;
         this.string_c = string_a + string_b;
+    }
+
+    private void Log(String message, Fmi2Status status = Fmi2Status.Fmi2Ok, String category = "logAll") {
+        this.log_callback(status, category, message);
     }
 
     private Fmi2Status SetValueReflection<T>(IEnumerable<uint> references, IEnumerable<T> values)
