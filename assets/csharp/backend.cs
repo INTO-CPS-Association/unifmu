@@ -91,11 +91,18 @@ namespace Launch
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2DoStep:
-                        sendStatusReply(model.Fmi2DoStep(command.Fmi2DoStep.CurrentTime, command.Fmi2DoStep.StepSize, command.Fmi2DoStep.NoSetFmuStatePriorToCurrentPoint));
+                        sendStatusReply(model.Fmi2DoStep(
+                            command.Fmi2DoStep.CurrentTime,
+                            command.Fmi2DoStep.StepSize,
+                            command.Fmi2DoStep.NoSetFmuStatePriorToCurrentPoint
+                        ));
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2SetReal:
-                        sendStatusReply(model.Fmi2SetReal(command.Fmi2SetReal.References, command.Fmi2SetReal.Values));
+                        sendStatusReply(model.Fmi2SetReal(
+                            command.Fmi2SetReal.References,
+                            command.Fmi2SetReal.Values
+                        ));
                         break;
 
 
@@ -114,7 +121,10 @@ namespace Launch
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2SetString:
-                        sendStatusReply(model.Fmi2SetString(command.Fmi2SetString.References, command.Fmi2SetString.Values));
+                        sendStatusReply(model.Fmi2SetString(
+                            command.Fmi2SetString.References,
+                            command.Fmi2SetString.Values
+                        ));
                         break;
 
                     case Fmi2Command.CommandOneofCase.Fmi2GetReal:
