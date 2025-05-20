@@ -2,6 +2,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -28,8 +29,8 @@ public class Model implements Serializable {
     private transient ArrayList<Field> references_to_attributes;
 
     public Model() throws Exception {
-
         super();
+
         this.references_to_attributes = new ArrayList<Field>();
         this.references_to_attributes.add(this.getClass().getField("real_a"));
         this.references_to_attributes.add(this.getClass().getField("real_b"));
@@ -45,6 +46,10 @@ public class Model implements Serializable {
         this.references_to_attributes.add(this.getClass().getField("string_c"));
 
         fmi2Reset();
+    }
+
+    public void log(String message, Fmi2Status status, String category) {
+        Backend.loggingCallback(status, category, message);
     }
 
     public Fmi2Status fmi2DoStep(double current_time, double step_size, boolean noStepPrior) {

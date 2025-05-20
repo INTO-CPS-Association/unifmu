@@ -1,6 +1,3 @@
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -9,34 +6,68 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
-interface ThrowableSupplier<R, E extends Throwable> {
-    R get() throws E;
-}
-
 public class Backend {
 
-    static ThrowableSupplier<Fmi2Messages.Fmi2Command, InvalidProtocolBufferException> commandReceiver(ZMQ.Socket socket) {
-        return () -> Fmi2Messages.Fmi2Command.parseFrom(socket.recv());
+    static ZMQ.Socket socket;
+
+    static Fmi2Messages.Fmi2Command recvCommand() throws InvalidProtocolBufferException {
+        return Fmi2Messages.Fmi2Command.parseFrom(socket.recv());
     }
 
-    static Consumer<Message> replySender(ZMQ.Socket socket) {
-        return reply -> socket.send(reply.toByteArray(), 0);
+    static void sendReply(Message reply) {
+        socket.send(reply.toByteArray(), 0);
     }
 
-    static Consumer<Model.Fmi2Status> statusReplySender(Consumer<Message> sendReply) {
-        return status -> {
-            sendReply.accept(
-                Fmi2Messages.Fmi2Return
-                    .newBuilder()
-                    .setStatus(
-                        Fmi2Messages.Fmi2StatusReturn
-                            .newBuilder()
-                            .setStatus(Fmi2Messages.Fmi2Status.forNumber(status.ordinal()))
-                            .build()
-                    )
-                    .build()
-            );
-        };
+    static void sendStatusReply(Model.Fmi2Status status) {
+        sendReply(
+            Fmi2Messages.Fmi2Return
+                .newBuilder()
+                .setStatus(
+                    Fmi2Messages.Fmi2StatusReturn
+                        .newBuilder()
+                        .setStatus(
+                            Fmi2Messages.Fmi2Status
+                                .forNumber(status.ordinal())
+                        )
+                        .build()
+                )
+                .build()
+        );
+    }
+
+    public static void loggingCallback(Model.Fmi2Status status, String category, String message) {
+        sendReply(
+            Fmi2Messages.Fmi2Return
+                .newBuilder()
+                .setLog(
+                    Fmi2Messages.Fmi2LogReturn
+                        .newBuilder()
+                        .setStatus(
+                            Fmi2Messages.Fmi2Status
+                                .forNumber(status.ordinal())
+                        )
+                        .setCategory(category)
+                        .setLogMessage(message)
+                        .build()
+                )
+                .build()
+        );
+
+        try {
+            Fmi2Messages.Fmi2Command command = recvCommand();
+
+            switch (command.getCommandCase()) {
+                case FMI2CALLBACKCONTINUE:
+                    break;
+                default:
+                    System.out.println("Unexpected command received after replying with a logging message.");
+                    System.exit(1);
+            }
+        }
+        catch(Exception e) {
+            System.out.println("A fatal error occured while parsing expected continue command from UniFMU API layer.");
+            System.exit(1);
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -47,30 +78,24 @@ public class Backend {
         String dispacher_endpoint = System.getenv("UNIFMU_DISPATCHER_ENDPOINT");
 
         try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+            socket = context.createSocket(SocketType.REQ);
             socket.connect(dispacher_endpoint);
 
-            Consumer<Message> sendReply = replySender(socket);
-
-            sendReply.accept(
+            sendReply(
                 UnifmuHandshake.HandshakeReply
                     .newBuilder()
                     .setStatus(UnifmuHandshake.HandshakeStatus.OK)
                     .build()
             );
 
-            ThrowableSupplier<Fmi2Messages.Fmi2Command, InvalidProtocolBufferException> recvCommand = commandReceiver(socket);
-
-            Consumer<Model.Fmi2Status> sendStatusReply = statusReplySender(sendReply);
-
             while (true) {
-                Fmi2Messages.Fmi2Command command = recvCommand.get();
+                Fmi2Messages.Fmi2Command command = recvCommand();
 
                 switch (command.getCommandCase()) {        
                     
                     case FMI2INSTANTIATE:
                         model = new Model();
-                        sendReply.accept(
+                        sendReply(
                             Fmi2Messages.Fmi2Return
                                 .newBuilder()
                                 .setEmpty(
@@ -84,7 +109,7 @@ public class Backend {
 
                     case FMI2SETREAL: {
                         var c = command.getFmi2SetReal();
-                        sendStatusReply.accept(
+                        sendStatusReply(
                             model.fmi2SetReal(
                                 c.getReferencesList(),
                                 c.getValuesList()
@@ -95,7 +120,7 @@ public class Backend {
 
                     case FMI2SETINTEGER: {
                         var c = command.getFmi2SetInteger();
-                        sendStatusReply.accept(
+                        sendStatusReply(
                             model.fmi2SetInteger(
                                 c.getReferencesList(),
                                 c.getValuesList()
@@ -106,7 +131,7 @@ public class Backend {
 
                     case FMI2SETBOOLEAN: {
                         var c = command.getFmi2SetBoolean();
-                        sendStatusReply.accept(
+                        sendStatusReply(
                             model.fmi2SetBoolean(
                                 c.getReferencesList(),
                                 c.getValuesList()
@@ -117,7 +142,7 @@ public class Backend {
 
                     case FMI2SETSTRING: {
                         var c = command.getFmi2SetString();
-                        sendStatusReply.accept(
+                        sendStatusReply(
                             model.fmi2SetString(
                                 c.getReferencesList(),
                                 c.getValuesList()
@@ -131,7 +156,7 @@ public class Backend {
                             command.getFmi2GetReal()
                                 .getReferencesList()
                         );
-                        sendReply.accept(
+                        sendReply(
                             Fmi2Messages.Fmi2Return
                                 .newBuilder()
                                 .setGetReal(
@@ -154,7 +179,7 @@ public class Backend {
                             command.getFmi2GetInteger()
                                 .getReferencesList()
                         );
-                        sendReply.accept(
+                        sendReply(
                             Fmi2Messages.Fmi2Return
                                 .newBuilder()
                                 .setGetInteger(
@@ -177,7 +202,7 @@ public class Backend {
                             command.getFmi2GetBoolean()
                                 .getReferencesList()
                         );
-                        sendReply.accept(
+                        sendReply(
                             Fmi2Messages.Fmi2Return
                                 .newBuilder()
                                 .setGetBoolean(
@@ -200,7 +225,7 @@ public class Backend {
                             command.getFmi2GetString()
                                 .getReferencesList()
                         );
-                        sendReply.accept(
+                        sendReply(
                             Fmi2Messages.Fmi2Return
                                 .newBuilder()
                                 .setGetString(
@@ -220,7 +245,7 @@ public class Backend {
 
                     case FMI2DOSTEP: {
                         var c = command.getFmi2DoStep();
-                        sendStatusReply.accept(
+                        sendStatusReply(
                             model.fmi2DoStep(
                                 c.getCurrentTime(),
                                 c.getStepSize(),
@@ -232,7 +257,7 @@ public class Backend {
 
                     case FMI2SETUPEXPERIMENT: {
                         var c = command.getFmi2SetupExperiment();
-                        sendStatusReply.accept(
+                        sendStatusReply(
                             model.fmi2SetupExperiment(
                                 c.getStartTime(),
                                 c.hasStopTime() ? c.getStopTime() : null,
@@ -243,31 +268,31 @@ public class Backend {
                     }
 
                     case FMI2ENTERINITIALIZATIONMODE:
-                        sendStatusReply.accept(model.fmi2EnterInitializationMode());
+                        sendStatusReply(model.fmi2EnterInitializationMode());
                         break;
 
                     case FMI2EXITINITIALIZATIONMODE:
-                        sendStatusReply.accept(model.fmi2ExitInitializationMode());
+                        sendStatusReply(model.fmi2ExitInitializationMode());
                         break;
 
                     case FMI2FREEINSTANCE:
                         System.exit(0);
 
                     case FMI2RESET:
-                        sendStatusReply.accept(model.fmi2Reset());
+                        sendStatusReply(model.fmi2Reset());
                         break;
 
                     case FMI2TERMINATE:
-                        sendStatusReply.accept(model.fmi2Terminate());
+                        sendStatusReply(model.fmi2Terminate());
                         break;
 
                     case FMI2CANCELSTEP:
-                        sendStatusReply.accept(model.fmi2CancelStep());
+                        sendStatusReply(model.fmi2CancelStep());
                         break;
 
                     case FMI2SERIALIZEFMUSTATE: {
                         var res = model.fmi2SerializeFmuState();
-                        sendReply.accept(
+                        sendReply(
                             Fmi2Messages.Fmi2Return
                                 .newBuilder()
                                 .setSerializeFmuState(
@@ -286,7 +311,7 @@ public class Backend {
                     }
 
                     case FMI2DESERIALIZEFMUSTATE:
-                        sendStatusReply.accept(
+                        sendStatusReply(
                             model.fmi2DeserializeFmuState(
                                 command.getFmi2DeserializeFmuState()
                                     .getState()
