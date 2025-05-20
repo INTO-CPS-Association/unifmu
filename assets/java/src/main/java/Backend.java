@@ -1,11 +1,43 @@
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
+interface ThrowableSupplier<R, E extends Throwable> {
+    R get() throws E;
+}
+
 public class Backend {
+
+    static ThrowableSupplier<Fmi2Messages.Fmi2Command, InvalidProtocolBufferException> commandReceiver(ZMQ.Socket socket) {
+        return () -> Fmi2Messages.Fmi2Command.parseFrom(socket.recv());
+    }
+
+    static Consumer<Message> replySender(ZMQ.Socket socket) {
+        return reply -> socket.send(reply.toByteArray(), 0);
+    }
+
+    static Consumer<Model.Fmi2Status> statusReplySender(Consumer<Message> sendReply) {
+        return status -> {
+            sendReply.accept(
+                Fmi2Messages.Fmi2Return
+                    .newBuilder()
+                    .setStatus(
+                        Fmi2Messages.Fmi2StatusReturn
+                            .newBuilder()
+                            .setStatus(Fmi2Messages.Fmi2Status.forNumber(status.ordinal()))
+                            .build()
+                    )
+                    .build()
+            );
+        };
+    }
 
     public static void main(String[] args) throws Exception {
         System.out.println("starting FMU");
@@ -18,188 +50,249 @@ public class Backend {
             ZMQ.Socket socket = context.createSocket(SocketType.REQ);
             socket.connect(dispacher_endpoint);
 
-            socket.send(
+            Consumer<Message> sendReply = replySender(socket);
+
+            sendReply.accept(
                 UnifmuHandshake.HandshakeReply
                     .newBuilder()
                     .setStatus(UnifmuHandshake.HandshakeStatus.OK)
                     .build()
-                    .toByteArray(),
-                0
             );
 
-            Message reply;
-            // Java compiler does not know that reply is always initialized after switch
-            // case, so we assign it a dummy value
-            reply = Fmi2Messages.Fmi2StatusReturn.newBuilder().build();
+            ThrowableSupplier<Fmi2Messages.Fmi2Command, InvalidProtocolBufferException> recvCommand = commandReceiver(socket);
+
+            Consumer<Model.Fmi2Status> sendStatusReply = statusReplySender(sendReply);
 
             while (true) {
-                byte[] message = socket.recv();
+                Fmi2Messages.Fmi2Command command = recvCommand.get();
 
-                var command = Fmi2Messages.Fmi2Command.parseFrom(message);
                 switch (command.getCommandCase()) {        
                     
-                    case FMI2INSTANTIATE: {
+                    case FMI2INSTANTIATE:
                         model = new Model();
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(0))
-                                .build();                        
-                    }
+                        sendReply.accept(
+                            Fmi2Messages.Fmi2Return
+                                .newBuilder()
+                                .setEmpty(
+                                    Fmi2Messages.Fmi2EmptyReturn
+                                        .newBuilder()
+                                        .build()
+                                )
+                                .build()
+                        );
                         break;
 
                     case FMI2SETREAL: {
                         var c = command.getFmi2SetReal();
-                        var res = model.fmi2SetReal(c.getReferencesList(), c.getValuesList());
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                        sendStatusReply.accept(
+                            model.fmi2SetReal(
+                                c.getReferencesList(),
+                                c.getValuesList()
+                            )
+                        );
                         break;
+                    }
 
                     case FMI2SETINTEGER: {
                         var c = command.getFmi2SetInteger();
-                        var res = model.fmi2SetInteger(c.getReferencesList(), c.getValuesList());
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                        sendStatusReply.accept(
+                            model.fmi2SetInteger(
+                                c.getReferencesList(),
+                                c.getValuesList()
+                            )
+                        );
                         break;
+                    }
 
                     case FMI2SETBOOLEAN: {
                         var c = command.getFmi2SetBoolean();
-                        var res = model.fmi2SetBoolean(c.getReferencesList(), c.getValuesList());
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                        sendStatusReply.accept(
+                            model.fmi2SetBoolean(
+                                c.getReferencesList(),
+                                c.getValuesList()
+                            )
+                        );
                         break;
+                    }
 
                     case FMI2SETSTRING: {
                         var c = command.getFmi2SetString();
-                        var res = model.fmi2SetString(c.getReferencesList(), c.getValuesList());
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                        sendStatusReply.accept(
+                            model.fmi2SetString(
+                                c.getReferencesList(),
+                                c.getValuesList()
+                            )
+                        );
                         break;
+                    }
 
                     case FMI2GETREAL: {
-                        var c = command.getFmi2GetReal();
-                        var res = model.fmi2GetReal(c.getReferencesList());
-                        reply = Fmi2Messages.Fmi2GetRealReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.status.ordinal()))
-                                .addAllValues(res.values)
-                                .build();
-                    }
+                        var res = model.fmi2GetReal(
+                            command.getFmi2GetReal()
+                                .getReferencesList()
+                        );
+                        sendReply.accept(
+                            Fmi2Messages.Fmi2Return
+                                .newBuilder()
+                                .setGetReal(
+                                    Fmi2Messages.Fmi2GetRealReturn
+                                        .newBuilder()
+                                        .setStatus(
+                                            Fmi2Messages.Fmi2Status
+                                                .forNumber(res.status.ordinal())
+                                        )
+                                        .addAllValues(res.values)
+                                        .build()
+                                )
+                                .build()
+                        );
                         break;
+                    }
 
                     case FMI2GETINTEGER: {
-                        var c = command.getFmi2GetInteger();
-                        var res = model.fmi2GetInteger(c.getReferencesList());
-                        reply = Fmi2Messages.Fmi2GetIntegerReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.status.ordinal()))
-                                .addAllValues(res.values)
-                                .build();
-                    }
+                        var res = model.fmi2GetInteger(
+                            command.getFmi2GetInteger()
+                                .getReferencesList()
+                        );
+                        sendReply.accept(
+                            Fmi2Messages.Fmi2Return
+                                .newBuilder()
+                                .setGetInteger(
+                                    Fmi2Messages.Fmi2GetIntegerReturn
+                                        .newBuilder()
+                                        .setStatus(
+                                            Fmi2Messages.Fmi2Status
+                                                .forNumber(res.status.ordinal())
+                                        )
+                                        .addAllValues(res.values)
+                                        .build()
+                                )
+                                .build()
+                        );
                         break;
+                    }
 
                     case FMI2GETBOOLEAN: {
-                        var c = command.getFmi2GetBoolean();
-                        var res = model.fmi2GetBoolean(c.getReferencesList());
-                        reply = Fmi2Messages.Fmi2GetBooleanReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.status.ordinal()))
-                                .addAllValues(res.values)
-                                .build();
-                    }
+                        var res = model.fmi2GetBoolean(
+                            command.getFmi2GetBoolean()
+                                .getReferencesList()
+                        );
+                        sendReply.accept(
+                            Fmi2Messages.Fmi2Return
+                                .newBuilder()
+                                .setGetBoolean(
+                                    Fmi2Messages.Fmi2GetBooleanReturn
+                                        .newBuilder()
+                                        .setStatus(
+                                            Fmi2Messages.Fmi2Status
+                                                .forNumber(res.status.ordinal())
+                                        )
+                                        .addAllValues(res.values)
+                                        .build()
+                                )
+                                .build()
+                        );
                         break;
+                    }
 
                     case FMI2GETSTRING: {
-                        var c = command.getFmi2GetString();
-                        var res = model.fmi2GetString(c.getReferencesList());
-                        reply = Fmi2Messages.Fmi2GetStringReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.status.ordinal()))
-                                .addAllValues(res.values)
-                                .build();
-                    }
+                        var res = model.fmi2GetString(
+                            command.getFmi2GetString()
+                                .getReferencesList()
+                        );
+                        sendReply.accept(
+                            Fmi2Messages.Fmi2Return
+                                .newBuilder()
+                                .setGetString(
+                                    Fmi2Messages.Fmi2GetStringReturn
+                                        .newBuilder()
+                                        .setStatus(
+                                            Fmi2Messages.Fmi2Status
+                                                .forNumber(res.status.ordinal())
+                                        )
+                                        .addAllValues(res.values)
+                                        .build()
+                                )
+                                .build()
+                        );
                         break;
+                    }
 
                     case FMI2DOSTEP: {
                         var c = command.getFmi2DoStep();
-                        var res = model.fmi2DoStep(c.getCurrentTime(), c.getStepSize(), c.getNoSetFmuStatePriorToCurrentPoint());
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                        sendStatusReply.accept(
+                            model.fmi2DoStep(
+                                c.getCurrentTime(),
+                                c.getStepSize(),
+                                c.getNoSetFmuStatePriorToCurrentPoint()
+                            )
+                        );
                         break;
+                    }
 
                     case FMI2SETUPEXPERIMENT: {
                         var c = command.getFmi2SetupExperiment();
-                        var res = model.fmi2SetupExperiment(c.getStartTime(), c.hasStopTime() ? c.getStopTime() : null,
-                                c.hasTolerance() ? c.getTolerance() : null);
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
+                        sendStatusReply.accept(
+                            model.fmi2SetupExperiment(
+                                c.getStartTime(),
+                                c.hasStopTime() ? c.getStopTime() : null,
+                                c.hasTolerance() ? c.getTolerance() : null
+                            )
+                        );
+                        break;
                     }
+
+                    case FMI2ENTERINITIALIZATIONMODE:
+                        sendStatusReply.accept(model.fmi2EnterInitializationMode());
                         break;
 
-                    case FMI2ENTERINITIALIZATIONMODE: {
-                        var res = model.fmi2EnterInitializationMode();
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
-                        break;
-
-                    case FMI2EXITINITIALIZATIONMODE: {
-                        var res = model.fmi2EnterInitializationMode();
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                    case FMI2EXITINITIALIZATIONMODE:
+                        sendStatusReply.accept(model.fmi2ExitInitializationMode());
                         break;
 
                     case FMI2FREEINSTANCE:
                         System.exit(0);
 
-                    case FMI2RESET: {
-                        var res = model.fmi2Reset();
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                    case FMI2RESET:
+                        sendStatusReply.accept(model.fmi2Reset());
                         break;
 
-                    case FMI2TERMINATE: {
-                        var res = model.fmi2Terminate();
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                    case FMI2TERMINATE:
+                        sendStatusReply.accept(model.fmi2Terminate());
                         break;
 
-                    case FMI2CANCELSTEP: {
-                        var res = model.fmi2CancelStep();
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
-                    }
+                    case FMI2CANCELSTEP:
+                        sendStatusReply.accept(model.fmi2CancelStep());
                         break;
 
                     case FMI2SERIALIZEFMUSTATE: {
                         var res = model.fmi2SerializeFmuState();
-                        reply = Fmi2Messages.Fmi2SerializeFmuStateReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.status.ordinal()))
-                                .setState(ByteString.copyFrom(res.bytes))
-                                .build();
-                    }
+                        sendReply.accept(
+                            Fmi2Messages.Fmi2Return
+                                .newBuilder()
+                                .setSerializeFmuState(
+                                    Fmi2Messages.Fmi2SerializeFmuStateReturn
+                                        .newBuilder()
+                                        .setStatus(
+                                            Fmi2Messages.Fmi2Status
+                                                .forNumber(res.status.ordinal())
+                                        )
+                                        .setState(ByteString.copyFrom(res.bytes))
+                                        .build()
+                                )
+                                .build()
+                        );
                         break;
-
-                    case FMI2DESERIALIZEFMUSTATE: {
-                        var c = command.getFmi2DeserializeFmuState();
-                        var res = model.fmi2DeserializeFmuState(c.getState().toByteArray());
-                        reply = Fmi2Messages.Fmi2StatusReturn.newBuilder()
-                                .setStatus(Fmi2Messages.Fmi2Status.forNumber(res.ordinal()))
-                                .build();
                     }
+
+                    case FMI2DESERIALIZEFMUSTATE:
+                        sendStatusReply.accept(
+                            model.fmi2DeserializeFmuState(
+                                command.getFmi2DeserializeFmuState()
+                                    .getState()
+                                    .toByteArray()
+                            )
+                        );
                         break;
 
                     case FMI2SETDEBUGLOGGING:
@@ -210,13 +303,8 @@ public class Backend {
 
                     default:
                         break;
-
                 }
-
-                socket.send(reply.toByteArray(), 0);
-
             }
         }
-
     }
 }
