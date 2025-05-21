@@ -320,8 +320,16 @@ public class Backend {
                         );
                         break;
 
-                    case FMI2SETDEBUGLOGGING:
+                    case FMI2SETDEBUGLOGGING: {
+                        var c = command.getFmi2SetDebugLogging();
+                        sendStatusReply(
+                            model.fmi2SetDebugLogging(
+                                c.getCategoriesList(),
+                                c.getLoggingOn()
+                            )
+                        );
                         break;
+                    }
 
                     case COMMAND_NOT_SET:
                         break;
