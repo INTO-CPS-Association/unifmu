@@ -102,10 +102,14 @@ lazy_static! {
     static ref JAVAASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/main/java/Backend.java",
+                "java/src/main/java/LocalBackend.java",
                 "src/main/java/Backend.java"
             ),
             ("java/src/main/java/Model.java", "src/main/java/Model.java"),
+            (
+                "java/src/main/java/AbstractBackend.java",
+                "src/main/java/AbstractBackend.java"
+            ),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
@@ -172,10 +176,14 @@ lazy_static! {
     static ref JAVAASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/main/java/BackendPrivate.java",
+                "java/src/main/java/RemoteBackend.java",
                 "src/main/java/Backend.java"
             ),
             ("java/src/main/java/Model.java", "src/main/java/Model.java"),
+            (
+                "java/src/main/java/AbstractBackend.java",
+                "src/main/java/AbstractBackend.java"
+            ),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
