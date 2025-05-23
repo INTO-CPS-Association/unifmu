@@ -80,7 +80,8 @@ lazy_static! {
     };
     static ref CSHARPASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
-            ("csharp/backend.cs", "backend.cs"),
+            ("csharp/backend_local_head.cs", "backend_head.cs"),
+            ("csharp/backend_body.cs", "backend_body.cs"),
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
@@ -217,7 +218,8 @@ lazy_static! {
 
     static ref CSHARPASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
-            ("csharp/backend_private.cs", "backend.cs"),
+            ("csharp/backend_remote_head.cs", "backend_head.cs"),
+            ("csharp/backend_body.cs", "backend_body.cs"),
             ("csharp/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
