@@ -49,6 +49,7 @@ lazy_static! {
     static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
+            ("python/fmi2/main_local.py", "main.py"),
             ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
             (
@@ -144,7 +145,8 @@ lazy_static! {
     static ref PYTHONASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi2/backend_remote.py", "backend.py"),
+            ("python/fmi2/main_remote.py", "main.py"),
+            ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
             (
                 "auto_generated/fmi2_messages_pb2.py",

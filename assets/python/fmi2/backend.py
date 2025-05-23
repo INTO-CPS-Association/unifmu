@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 import zmq
 
@@ -22,32 +21,22 @@ from schemas.unifmu_handshake_pb2 import (
 )
 from model import Model
 
-def unknown_command(command_group):
-    logger.error(f"unrecognized command '{command_group}' received, shutting down")
-    sys.exit(-1)
-
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
-if __name__ == "__main__":
+class Backend:
+    def __init__(self):
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REQ)
     
-    # initializing message queue
-    context = zmq.Context()
-    socket = context.socket(zmq.REQ)
+    def connect_to_endpoint(self, endpoint):
+        self.socket.connect(endpoint)
 
-    dispatcher_endpoint = os.environ["UNIFMU_DISPATCHER_ENDPOINT"]
-    logger.info(f"dispatcher endpoint received: {dispatcher_endpoint}")
-
-    socket.connect(dispatcher_endpoint)
-
-    def send_reply(reply):
-        socket.send(reply.SerializeToString())
-
-    # send handshake
-    send_reply(HandshakeReply(status=HandshakeStatus.OK))
-
-    def recv_command():
-        msg = socket.recv()
+    def send_reply(self, reply):
+        self.socket.send(reply.SerializeToString())
+    
+    def recv_command(self):
+        msg = self.socket.recv()
         command = Fmi2Command()
         command.ParseFromString(msg)
 
@@ -55,9 +44,9 @@ if __name__ == "__main__":
             command.WhichOneof("command"),
             getattr(command, command.WhichOneof("command"))
         )
-
-    def status_reply(status):
-        send_reply(
+    
+    def status_reply(self, status):
+        self.send_reply(
             Fmi2Return(
                 status=Fmi2StatusReturn(
                     status=status
@@ -65,8 +54,8 @@ if __name__ == "__main__":
             )            
         )
 
-    def log_callback(status, category, message):
-        send_reply(
+    def log_callback(self, status, category, message):
+        self.send_reply(
             Fmi2Return(
                 log=Fmi2LogReturn(
                     status=status,
@@ -76,143 +65,148 @@ if __name__ == "__main__":
             )
         )
 
-        (command_group, _) = recv_command()
+        (command_group, _) = self.recv_command()
 
         match command_group:
             case "Fmi2CallbackContinue":
                 return
             case _:
-                unknown_command(command_group)
+                self.unknown_command(command_group)
 
-    # dispatch commands to model
-    while True:
+    def handshake(self):
+        self.send_reply(HandshakeReply(status=HandshakeStatus.OK))
 
-        group, data = recv_command()
+    def command_reply_loop(self):
+        while True:
 
-        # ================= FMI2 =================
+            group, data = self.recv_command()
         
-        match group:
-            case "Fmi2Instantiate":
-                model = Model(_log_callback=log_callback)
-                send_reply(
-                    Fmi2Return(
-                        empty=Fmi2EmptyReturn()
-                    )
-                )
-
-            case "Fmi2DoStep":
-                status_reply(
-                    model.fmi2DoStep(
-                        data.current_time,
-                        data.step_size,
-                        data.no_set_fmu_state_prior_to_current_point
-                    )
-                )
-
-            case "Fmi2SetDebugLogging":
-                status_reply(
-                    model.fmi2SetDebugLogging(
-                        data.categories, data.logging_on
-                    )
-                )
-
-            case "Fmi2SetupExperiment":
-                status_reply(
-                    model.fmi2SetupExperiment(
-                        data.start_time, data.stop_time, data.tolerance
-                    )
-                )
-
-            case "Fmi2EnterInitializationMode":
-                status_reply(model.fmi2EnterInitializationMode())
-
-            case "Fmi2ExitInitializationMode":
-                status_reply(model.fmi2ExitInitializationMode())
-
-            case "Fmi2FreeInstance":
-                send_reply(
-                    Fmi2Return(
-                        free_instance=Fmi2FreeInstanceReturn()
-                    )
-                )
-                logger.info(f"Fmi2FreeInstance received, shutting down")
-                sys.exit(0)
-
-            case "Fmi2Terminate":
-                status_reply(model.fmi2Terminate())
-
-            case "Fmi2Reset":
-                status_reply(model.fmi2Reset())
-
-            case "Fmi2SerializeFmuState":
-                status, state = model.fmi2SerializeFmuState()
-                send_reply(
-                    Fmi2Return(
-                        serialize_fmu_state=Fmi2SerializeFmuStateReturn(
-                            status=status,
-                            state=state
+            match group:
+                case "Fmi2Instantiate":
+                    model = Model(_log_callback=self.log_callback)
+                    self.send_reply(
+                        Fmi2Return(
+                            empty=Fmi2EmptyReturn()
                         )
-                    )            
-                )
+                    )
 
-            case "Fmi2DeserializeFmuState":
-                status_reply(model.fmi2DeserializeFmuState(data.state))
-
-            case "Fmi2GetReal":
-                status, values = model.fmi2GetReal(data.references)
-                send_reply(
-                    Fmi2Return(
-                        get_real=Fmi2GetRealReturn(
-                            status=status,
-                            values=values
+                case "Fmi2DoStep":
+                    self.status_reply(
+                        model.fmi2DoStep(
+                            data.current_time,
+                            data.step_size,
+                            data.no_set_fmu_state_prior_to_current_point
                         )
-                    )            
-                )
+                    )
 
-            case "Fmi2GetInteger":
-                status, values = model.fmi2GetInteger(data.references)
-                send_reply(
-                    Fmi2Return(
-                        get_integer=Fmi2GetIntegerReturn(
-                            status=status,
-                            values=values
+                case "Fmi2SetDebugLogging":
+                    self.status_reply(
+                        model.fmi2SetDebugLogging(
+                            data.categories, data.logging_on
                         )
-                    )            
-                )
+                    )
 
-            case "Fmi2GetBoolean":
-                status, values = model.fmi2GetBoolean(data.references)
-                send_reply(
-                    Fmi2Return(
-                        get_boolean=Fmi2GetBooleanReturn(
-                            status=status,
-                            values=values
+                case "Fmi2SetupExperiment":
+                    self.status_reply(
+                        model.fmi2SetupExperiment(
+                            data.start_time, data.stop_time, data.tolerance
                         )
-                    )            
-                )
+                    )
 
-            case "Fmi2GetString":
-                status, values = model.fmi2GetString(data.references)
-                send_reply(
-                    Fmi2Return(
-                        get_string=Fmi2GetStringReturn(
-                            status=status,
-                            values=values
+                case "Fmi2EnterInitializationMode":
+                    self.status_reply(model.fmi2EnterInitializationMode())
+
+                case "Fmi2ExitInitializationMode":
+                    self.status_reply(model.fmi2ExitInitializationMode())
+
+                case "Fmi2FreeInstance":
+                    self.send_reply(
+                        Fmi2Return(
+                            free_instance=Fmi2FreeInstanceReturn()
                         )
-                    )            
-                )
+                    )
+                    logger.info(f"Fmi2FreeInstance received, shutting down")
+                    sys.exit(0)
 
-            case "Fmi2SetReal":
-                status_reply(model.fmi2SetReal(data.references, data.values))
+                case "Fmi2Terminate":
+                    self.status_reply(model.fmi2Terminate())
 
-            case "Fmi2SetInteger":
-                status_reply(model.fmi2SetInteger(data.references, data.values))
+                case "Fmi2Reset":
+                    self.status_reply(model.fmi2Reset())
 
-            case "Fmi2SetBoolean":
-                status_reply(model.fmi2SetBoolean(data.references, data.values))
+                case "Fmi2SerializeFmuState":
+                    status, state = model.fmi2SerializeFmuState()
+                    self.send_reply(
+                        Fmi2Return(
+                            serialize_fmu_state=Fmi2SerializeFmuStateReturn(
+                                status=status,
+                                state=state
+                            )
+                        )            
+                    )
 
-            case "Fmi2SetString":
-                status_reply(model.fmi2SetString(data.references, data.values))
+                case "Fmi2DeserializeFmuState":
+                    self.status_reply(model.fmi2DeserializeFmuState(data.state))
 
-            case _:
-                unknown_command(group)
+                case "Fmi2GetReal":
+                    status, values = model.fmi2GetReal(data.references)
+                    self.send_reply(
+                        Fmi2Return(
+                            get_real=Fmi2GetRealReturn(
+                                status=status,
+                                values=values
+                            )
+                        )            
+                    )
+
+                case "Fmi2GetInteger":
+                    status, values = model.fmi2GetInteger(data.references)
+                    self.send_reply(
+                        Fmi2Return(
+                            get_integer=Fmi2GetIntegerReturn(
+                                status=status,
+                                values=values
+                            )
+                        )            
+                    )
+
+                case "Fmi2GetBoolean":
+                    status, values = model.fmi2GetBoolean(data.references)
+                    self.send_reply(
+                        Fmi2Return(
+                            get_boolean=Fmi2GetBooleanReturn(
+                                status=status,
+                                values=values
+                            )
+                        )            
+                    )
+
+                case "Fmi2GetString":
+                    status, values = model.fmi2GetString(data.references)
+                    self.send_reply(
+                        Fmi2Return(
+                            get_string=Fmi2GetStringReturn(
+                                status=status,
+                                values=values
+                            )
+                        )            
+                    )
+
+                case "Fmi2SetReal":
+                    self.status_reply(model.fmi2SetReal(data.references, data.values))
+
+                case "Fmi2SetInteger":
+                    self.status_reply(model.fmi2SetInteger(data.references, data.values))
+
+                case "Fmi2SetBoolean":
+                    self.status_reply(model.fmi2SetBoolean(data.references, data.values))
+
+                case "Fmi2SetString":
+                    self.status_reply(model.fmi2SetString(data.references, data.values))
+
+                case _:
+                    self.unknown_command(group)
+    
+    def unknown_command(self, command_group):
+        logger.error(f"unrecognized command '{command_group}' received, shutting down")
+        sys.exit(-1)

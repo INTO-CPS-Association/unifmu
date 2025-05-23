@@ -1,6 +1,5 @@
 import pickle
 
-
 class Model:
     def __init__(self, _log_callback) -> None:
         self._log_callback = _log_callback # Removing this line will break logging
