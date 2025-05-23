@@ -246,7 +246,7 @@ message Fmi2Return {
 
     Fmi2GetRealOutputDerivativesReturn get_real_output_derivatives = 8;
 
-    Fmi2GetDirectionalDerivativesReturn get_directional_deviratives = 9;
+    Fmi2GetDirectionalDerivativesReturn get_directional_derivatives = 9;
 
     Fmi2SerializeFmuStateReturn serialize_fmu_state = 10;
 
