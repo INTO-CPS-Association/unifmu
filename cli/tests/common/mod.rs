@@ -1517,7 +1517,7 @@ pub trait RemoteBackend: DistributedFileStructure {
     fn get_remote_command(&self, port: String) -> duct::Expression {
         let backend_process_cmd = match self.language() {
             FmuBackendImplementationLanguage::CSharp => duct::cmd!(
-                "dotnet", "run", "backend.cs", port
+                "dotnet", "run", "backend_head.cs", port
             ),
             FmuBackendImplementationLanguage::Java => {
                 let args_list = format!("--args='{port}'");
@@ -1538,7 +1538,7 @@ pub trait RemoteBackend: DistributedFileStructure {
                     _other => "python3"
                 };
                 duct::cmd!(
-                    python_interpreter_binary_name, "backend.py", port
+                    python_interpreter_binary_name, "main.py", port
                 )
             }
         };
