@@ -50,6 +50,7 @@ lazy_static! {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
             ("python/fmi2/main_local.py", "main.py"),
+            ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
             (
@@ -146,6 +147,7 @@ lazy_static! {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
             ("python/fmi2/main_remote.py", "main.py"),
+            ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
             (
@@ -249,7 +251,9 @@ lazy_static! {
     static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
-            ("common/fmi2/backend_remote_FMU.py", "backend.py"),
+            ("python/fmi2/main_blackbox.py", "main.py"),
+            ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
+            ("python/fmi2/blackbox_backend.py", "blackbox_backend.py"),
             (
                 "auto_generated/fmi2_messages_pb2.py",
                 "schemas/fmi2_messages_pb2.py"
