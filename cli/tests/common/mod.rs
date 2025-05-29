@@ -541,7 +541,7 @@ impl BreakableFmu for LocalFmu {
 
     fn do_step_function_line_number(&self) -> u64 {
         match self.language() {
-            FmuBackendImplementationLanguage::CSharp => 50,
+            FmuBackendImplementationLanguage::CSharp => 55,
             FmuBackendImplementationLanguage::Java => 51,
             FmuBackendImplementationLanguage::Python => {
                 match self.version() {
