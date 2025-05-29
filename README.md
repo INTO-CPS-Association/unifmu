@@ -254,7 +254,7 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3FreeInstance                    | ✓         |       |
 | fmi3EnterInitializationMode         | ✓         |       |
 | fmi3ExitInitializationMode          | ✓         |       |
-| fmi3EnterEventMode                  | x         |       |
+| fmi3EnterEventMode                  | ✓         |       |
 | fmi3Terminate                       | ✓         |       |
 | fmi3Reset                           | ✓         |       |
 | fmi3GetFloat32                      | ✓         |       |
@@ -284,7 +284,7 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3SetBoolean                      | ✓         |       |
 | fmi3SetString                       | ✓         |       |
 | fmi3SetBinary                       | ✓         |       |
-| fmi3SetClock                        | x         |       |
+| fmi3SetClock                        | ✓         |       |
 | fmi3GetNumberOfVariableDependencies | x         |       |
 | fmi3GetVariableDependencies         | x         |       |
 | fmi3GetFMUState                     | ✓         |       |
@@ -295,18 +295,18 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3DeserializeFMUState             | ✓         |       |
 | fmi3GetDirectionalDerivative        | x         |       |
 | fmi3GetAdjointDerivative            | x         |       |
-| fmi3EnterConfigurationMode          | x         |       |
-| fmi3ExitConfigurationMode           | x         |       |
-| fmi3GetIntervalDecimal              | x         |       |
-| fmi3GetIntervalFraction             | x         |       |
-| fmi3GetShiftDecimal                 | x         |       |
-| fmi3GetShiftFraction                | x         |       |
-| fmi3SetIntervalDecimal              | x         |       |
-| fmi3SetIntervalFraction             | x         |       |
-| fmi3SetShiftDecimal                 | x         |       |
-| fmi3SetShiftFraction                | x         |       |
+| fmi3EnterConfigurationMode          | ✓         |       |
+| fmi3ExitConfigurationMode           | ✓         |       |
+| fmi3GetIntervalDecimal              | ✓         |       |
+| fmi3GetIntervalFraction             | ✓         |       |
+| fmi3GetShiftDecimal                 | ✓         |       |
+| fmi3GetShiftFraction                | ✓         |       |
+| fmi3SetIntervalDecimal              | ✓         |       |
+| fmi3SetIntervalFraction             | ✓         |       |
+| fmi3SetShiftDecimal                 | ✓         |       |
+| fmi3SetShiftFraction                | ✓         |       |
 | fmi3EvaluateDiscreteStates          | x         |       |
-| fmi3UpdateDiscreteStates            | x         |       |
+| fmi3UpdateDiscreteStates            | ✓         |       |
 | fmi3EnterContinuousTimeMode         | x         |       |
 | fmi3CompletedIntegratorStep         | x         |       |
 | fmi3SetTime                         | x         |       |
@@ -317,9 +317,9 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi3GetNominalsOfContinuousStates   | x         |       |
 | fmi3GetNumberOfEventIndicators      | x         |       |
 | fmi3GetNumberOfContinuousStates     | x         |       |
-| fmi3EnterStepMode                   | x         |       |
+| fmi3EnterStepMode                   | ✓         |       |
 | fmi3GetOutputDerivatives            | x         |       |
-| fmi3DoStep                          | x         |       |
+| fmi3DoStep                          | ✓         |       |
 | fmi3ActivateModelPartition          | x         |       |
 
 ## Building and deployment

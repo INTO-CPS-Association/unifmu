@@ -23,10 +23,13 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetUInt64Return,
     Fmi3GetBooleanReturn,
     Fmi3GetStringReturn,
-    FmiGetBinaryReturn,
+    Fmi3GetBinaryReturn,
     Fmi3GetClockReturn,
     Fmi3GetIntervalDecimalReturn,
     Fmi3UpdateDiscreteStatesReturn,
+    Fmi3GetIntervalFractionReturn,
+    Fmi3GetShiftDecimalReturn,
+    Fmi3GetShiftFractionReturn,
 )
 from schemas.unifmu_handshake_pb2 import (
     HandshakeStatus,
@@ -64,7 +67,6 @@ if __name__ == "__main__":
         data = getattr(command, command.WhichOneof("command"))
 
         logger.info(f"Command: {command}")
-        #print('Command:\n' + repr(command))
 
         # ================= FMI3 =================
         if group == "Fmi3InstantiateModelExchange":
@@ -110,9 +112,9 @@ if __name__ == "__main__":
         elif group == "Fmi3ExitInitializationMode":
             result = Fmi3StatusReturn()
             result.status = model.fmi3ExitInitializationMode()
-        elif group == "Fmi3FreeInstance":
+        elif group == "Fmi3FreeInstance":            
             result = Fmi3FreeInstanceReturn()
-            logger.info(f"Fmi3FreeInstance received, shutting down")
+            logger.info(f"Fmi3FreeInstance received, shutting down")        
             sys.exit(0)
         elif group == "Fmi3Terminate":
             result = Fmi3StatusReturn()
@@ -124,8 +126,14 @@ if __name__ == "__main__":
             result = Fmi3SerializeFmuStateReturn()
             (result.status, result.state) = model.fmi3SerializeFmuState()
         elif group == "Fmi3DeserializeFmuState":
-            result = Fmi3StatusReturn
+            result = Fmi3StatusReturn()
             result.status = model.fmi3DeserializeFmuState(data.state)
+        elif group == "Fmi3EnterConfigurationMode":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3EnterConfigurationMode()
+        elif group == "Fmi3ExitConfigurationMode":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3ExitConfigurationMode()
         elif group == "Fmi3GetFloat32":
             result = Fmi3GetFloat32Return()
             result.status, result.values[:] = model.fmi3GetFloat32(data.value_references)
@@ -162,8 +170,8 @@ if __name__ == "__main__":
         elif group == "Fmi3GetString":
             result = Fmi3GetStringReturn()
             result.status, result.values[:] = model.fmi3GetString(data.value_references)
-        elif group == "FmiGetBinary":
-            result = FmiGetBinaryReturn()
+        elif group == "Fmi3GetBinary":
+            result = Fmi3GetBinaryReturn()
             result.status, result.values[:] = model.fmi3GetBinary(data.value_references)
         elif group == "Fmi3GetClock":
             result = Fmi3GetClockReturn()
@@ -175,6 +183,33 @@ if __name__ == "__main__":
                 result.intervals[:],
                 result.qualifiers[:]
             ) = model.fmi3GetIntervalDecimal(
+                data.value_references
+            )
+        elif group == "Fmi3GetIntervalFraction":
+            result = Fmi3GetIntervalFractionReturn()
+            (
+                result.status,
+                result.counters[:],
+                result.resolutions[:],
+                result.qualifiers[:]
+            ) = model.fmi3GetIntervalFraction(
+                data.value_references
+            )
+        elif group == "Fmi3GetShiftDecimal":
+            result = Fmi3GetShiftDecimalReturn()
+            (
+                result.status,
+                result.shifts[:],
+            ) = model.fmi3GetShiftDecimal(
+                data.value_references
+            )
+        elif group == "Fmi3GetShiftFraction":
+            result = Fmi3GetShiftFractionReturn()
+            (
+                result.status,
+                result.counters[:],
+                result.resolutions[:],
+            ) = model.fmi3GetShiftFraction(
                 data.value_references
             )
         elif group == "Fmi3SetFloat32":
@@ -215,10 +250,22 @@ if __name__ == "__main__":
             result.status = model.fmi3SetString(data.value_references, data.values)
         elif group == "Fmi3SetBinary":
             result = Fmi3StatusReturn()
-            result.status = model.fmi3SetBinary(data.value_references, data.values)
+            result.status = model.fmi3SetBinary(data.value_references, data.value_sizes, data.values)
         elif group == "Fmi3SetClock":
             result = Fmi3StatusReturn()
             result.status = model.fmi3SetClock(data.value_references, data.values)
+        elif group == "Fmi3SetIntervalDecimal":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetIntervalDecimal(data.value_references, data.intervals)
+        elif group == "Fmi3SetIntervalFraction":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetIntervalFraction(data.value_references, data.counters, data.resolutions)
+        elif group == "Fmi3SetShiftDecimal":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetShiftDecimal(data.value_references, data.shifts)
+        elif group == "Fmi3SetShiftFraction":
+            result = Fmi3StatusReturn()
+            result.status = model.fmi3SetShiftFraction(data.value_references, data.counters, data.resolutions)
         elif group == "Fmi3UpdateDiscreteStates":
             result = Fmi3UpdateDiscreteStatesReturn()
             (
@@ -234,7 +281,6 @@ if __name__ == "__main__":
             logger.error(f"unrecognized command '{group}' received, shutting down")
             sys.exit(-1)
 
-        #print('Result:\n' + repr(result))
         logger.info(f"Result: {result}")
         state = result.SerializeToString()
         socket.send(state)

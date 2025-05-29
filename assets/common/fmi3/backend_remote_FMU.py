@@ -28,7 +28,7 @@ from schemas.fmi3_messages_pb2 import (
     Fmi3GetUInt64Return,
     Fmi3GetBooleanReturn,
     Fmi3GetStringReturn,
-    FmiGetBinaryReturn,
+    Fmi3GetBinaryReturn,
     Fmi3GetClockReturn,
     Fmi3GetIntervalDecimalReturn,
     Fmi3UpdateDiscreteStatesReturn,

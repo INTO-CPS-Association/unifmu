@@ -95,11 +95,16 @@ lazy_static! {
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            ("csharp/fmi3/backend.cs", "backend.cs"),
+            ("csharp/fmi3/model.cs", "model.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
         ],
     };
     static ref JAVAASSETS: LanguageAssets = LanguageAssets {
@@ -136,11 +141,32 @@ lazy_static! {
             ),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            (
+                "java/fmi3/src/main/java/Backend.java",
+                "src/main/java/Backend.java"
+            ),
+            ("java/fmi3/src/main/java/Model.java", "src/main/java/Model.java"),
+            ("java/build.gradle", "build.gradle"),
+            ("java/gradlew", "gradlew"),
+            (
+                "java/gradle/wrapper/gradle-wrapper.jar",
+                "gradle/wrapper/gradle-wrapper.jar"
+            ),
+            (
+                "java/gradle/wrapper/gradle-wrapper.properties",
+                "gradle/wrapper/gradle-wrapper.properties"
+            ),
+            ("java/gradlew.bat", "gradlew.bat"),
+            ("java/launch.toml", "launch.toml"),
+            ("java/README.md", "README.md"),
+            (
+                "auto_generated/Fmi3Messages.java",
+                "src/main/java/Fmi3Messages.java"
+            ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
+            ),
         ],
     };
     static ref PYTHONASSETSREMOTE: LanguageAssets = LanguageAssets {
@@ -212,11 +238,32 @@ lazy_static! {
             ),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            (
+                "java/fmi3/src/main/java/BackendPrivate.java",
+                "src/main/java/Backend.java"
+            ),
+            ("java/fmi3/src/main/java/Model.java", "src/main/java/Model.java"),
+            ("java/build.gradle", "build.gradle"),
+            ("java/gradlew", "gradlew"),
+            (
+                "java/gradle/wrapper/gradle-wrapper.jar",
+                "gradle/wrapper/gradle-wrapper.jar"
+            ),
+            (
+                "java/gradle/wrapper/gradle-wrapper.properties",
+                "gradle/wrapper/gradle-wrapper.properties"
+            ),
+            ("java/gradlew.bat", "gradlew.bat"),
+            ("java/launch.toml", "launch.toml"),
+            ("java/README.md", "README.md"),
+            (
+                "auto_generated/Fmi3Messages.java",
+                "src/main/java/Fmi3Messages.java"
+            ),
+            (
+                "auto_generated/UnifmuHandshake.java",
+                "src/main/java/UnifmuHandshake.java"
+            ),
         ],
     };
 
@@ -235,11 +282,16 @@ lazy_static! {
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("docker/Dockerfile_csharp", "Dockerfile"),
-            ("docker/deploy_csharp.py", "deploy.py"),
-            ("docker/docker-compose.yml", "docker-compose.yml"),
-            ("docker/launch_csharp.toml", "launch.toml"),
-            ("docker/README.md", "README_DOCKER.md"),
+            ("csharp/fmi3/backend_private.cs", "backend.cs"),
+            ("csharp/fmi3/model.cs", "model.cs"),
+            ("csharp/model.csproj", "model.csproj"),
+            ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
+            (
+                "auto_generated/UnifmuHandshake.cs",
+                "schemas/UnifmuHandshake.cs"
+            ),
+            ("csharp/launch.toml", "launch.toml"),
+            ("csharp/README.md", "README.md"),
         ],
     };
 

@@ -6,7 +6,8 @@ use std::{
     path::{Path, PathBuf},
     slice::{from_raw_parts, from_raw_parts_mut},
     str::Utf8Error,
-    sync::LazyLock
+    sync::LazyLock,
+    fmt // For handling binaries
 };
 
 use libc::{c_char, size_t};
@@ -1379,59 +1380,77 @@ pub unsafe extern "C" fn fmi3GetString(
 }
 
 #[no_mangle]
-pub extern "C" fn fmi3GetBinary(
+pub unsafe extern "C" fn fmi3GetBinary(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    value_sizes: *const size_t,
+    value_sizes: *mut size_t,
     values: *mut *const u8,
     n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetBinary is not implemented by UNIFMU.");
-    Fmi3Status::Error
-
-    // Partially implemented: only the privious corresponding dispatcher
-    // function wasn't implemented.
-
-    /*
+    
     let value_references =
         unsafe { from_raw_parts(value_references, n_value_references) }.to_owned();
-    let values_v = unsafe { from_raw_parts(values, n_values) };
-    let value_sizes = unsafe { from_raw_parts(value_sizes, n_values) };
-
-    let values_v: Vec<Vec<u8>> = values_v
-        .iter()
-        .zip(value_sizes.iter())
-        .map(|(v, s)| unsafe { from_raw_parts(*v, *s).to_vec() })
-        .collect();
 
     let cmd = Fmi3Command {
-        command: Some(Command::??(
-            fmi3_messages::?? { ?? }
+        command: Some(Command::Fmi3GetBinary(
+            fmi3_messages::Fmi3GetBinary { value_references }
         )),
     };
 
     match instance.dispatcher
-        .send_and_recv::<_, ??>(&cmd)
-        .map(|result| {
-            todo!()
-        })
+        .send_and_recv::<_, fmi3_messages::Fmi3GetBinaryReturn>(&cmd)
     {
-        Ok((s, v)) => match v {
-            Some(vs) => unsafe {
-                for (idx, v) in vs.iter().enumerate() {
-                    std::ptr::write(values.offset(idx as isize), v.as_ptr());
+        Ok(result) => {
+            if !result.values.is_empty() {
+                let compatible_value_sizes: Vec<size_t> = result.
+                values
+                .clone()
+                .iter()
+                .map(|v| {v.len() as size_t})
+                .collect();
+
+                value_sizes.copy_from_nonoverlapping(compatible_value_sizes.as_ptr(), n_values);
+
+                unsafe {
+                    for (idx, value) in result.values.clone().iter().enumerate() {
+                        let len = value.len();
+                
+                        if len == 0 {
+                            // Store NULL pointer for empty data
+                            std::ptr::write(values.add(idx), std::ptr::null());
+                            continue;
+                        }
+                
+                        // Allocate memory for each binary array
+                        let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+                        let data_ptr = std::alloc::alloc(layout) as *mut u8;
+                
+                        if data_ptr.is_null() {
+                            panic!("Memory allocation for binary data failed");
+                        }
+                
+                        // Copy data to allocated memory
+                        std::ptr::copy_nonoverlapping(value.as_ptr(), data_ptr, len);
+                
+                        // Store the pointer in `values`
+                        std::ptr::write(values.add(idx), data_ptr);
+                    }
                 }
-                s
-            },
-            None => s,
-        },
+
+            };           
+            
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+                })
+        }
         Err(error) => {
-            error!("fmi3GetBinary failed with error: {:?}.", error);
+            error!("Fmi3GetBinary failed with error: {:?}.", error);
             Fmi3Status::Error
         }
-    }
-    */
+    }    
 }
 
 /// # Safety
@@ -1584,13 +1603,62 @@ pub extern "C" fn fmi3GetIntervalFraction(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    interval_counters: *const u64,
-	resolution: *mut u64,
-	qualifier: *mut Fmi3IntervalQualifier,
+    counters: *mut u64,
+	resolutions: *mut u64,
+	//qualifiers: *mut Fmi3IntervalQualifier,
+    qualifiers: *mut i32,
     n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetIntervalFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let counters_out = unsafe {
+        from_raw_parts_mut(counters, n_value_references)
+    };
+
+    let resolutions_out = unsafe {
+        from_raw_parts_mut(resolutions, n_value_references)
+    };
+
+    let qualifiers_out = unsafe {
+        from_raw_parts_mut(qualifiers, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetIntervalFraction(
+            fmi3_messages::Fmi3GetIntervalFraction { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetIntervalFractionReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.counters.is_empty() {
+                counters_out.copy_from_slice(&result.counters);
+            };
+
+            if !result.resolutions.is_empty() {
+                resolutions_out.copy_from_slice(&result.resolutions);
+            };
+
+            if !result.qualifiers.is_empty() {
+                qualifiers_out.copy_from_slice(&result.qualifiers);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetIntervalFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
 
 #[no_mangle]
@@ -1598,10 +1666,42 @@ pub extern "C" fn fmi3GetShiftDecimal(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    shifts: *const f64,
+    shifts: *mut f64,
 ) -> Fmi3Status {
-    error!("fmi3GetShiftDecimal is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let shifts_out = unsafe {
+        from_raw_parts_mut(shifts, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetShiftDecimal(
+            fmi3_messages::Fmi3GetShiftDecimal { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetShiftDecimalReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.shifts.is_empty() {
+                shifts_out.copy_from_slice(&result.shifts);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetShiftDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
+
 }
 
 #[no_mangle]
@@ -1609,11 +1709,51 @@ pub extern "C" fn fmi3GetShiftFraction(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    counters: *const u64,
-	resolutions: *const u64,
+    counters: *mut u64,
+	resolutions: *mut u64,
 ) -> Fmi3Status {
-    error!("fmi3GetShiftFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references)
+    }.to_owned();
+
+    let counters_out = unsafe {
+        from_raw_parts_mut(counters, n_value_references)
+    };
+
+    let resolutions_out = unsafe {
+        from_raw_parts_mut(resolutions, n_value_references)
+    };
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3GetShiftFraction(
+            fmi3_messages::Fmi3GetShiftFraction { value_references }
+        )),
+    };
+
+    match instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3GetShiftFractionReturn>(&cmd)
+    {
+        Ok(result) => {
+            if !result.counters.is_empty() {
+                counters_out.copy_from_slice(&result.counters);
+            };
+
+            if !result.resolutions.is_empty() {
+                resolutions_out.copy_from_slice(&result.resolutions);
+            };
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("Unknown status returned from backend.");
+                    Fmi3Status::Fatal
+            })
+        }
+        Err(error) => {
+            error!("fmi3GetShiftFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
 
 #[no_mangle]
@@ -1621,10 +1761,34 @@ pub extern "C" fn fmi3SetIntervalDecimal(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    intervals: *mut f64,
+    intervals: *const f64,
 ) -> Fmi3Status {
-    error!("fmi3SetIntervalDecimal is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let intervals = unsafe {
+        from_raw_parts(intervals, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetIntervalDecimal(
+            fmi3_messages::Fmi3SetIntervalDecimal {
+                value_references,
+                intervals,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetIntervalDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
+
 }
 
 #[no_mangle]
@@ -1632,11 +1796,39 @@ pub extern "C" fn fmi3SetIntervalFraction(
     instance: &mut Fmi3Slave,
     value_references: *const u32,
     n_value_references: size_t,
-    interval_counters: *const u64,
-	resolutions: *mut u64,
+    counters: *const u64,
+	resolutions: *const u64,
 ) -> Fmi3Status {
-    error!("fmi3SetIntervalFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let counters = unsafe {
+        from_raw_parts(counters, n_value_references)
+    }.to_owned();
+
+    let resolutions = unsafe {
+        from_raw_parts(resolutions, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetIntervalFraction(
+            fmi3_messages::Fmi3SetIntervalFraction {
+                value_references,
+                counters,
+                resolutions,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetIntervalFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1646,8 +1838,31 @@ pub extern "C" fn fmi3SetShiftDecimal(
     n_value_references: size_t,
     shifts: *const f64,
 ) -> Fmi3Status {
-    error!("fmi3SetShiftDecimal is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let shifts = unsafe {
+        from_raw_parts(shifts, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetShiftDecimal(
+            fmi3_messages::Fmi3SetShiftDecimal {
+                value_references,
+                shifts,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetShiftDecimal failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -1658,8 +1873,36 @@ pub extern "C" fn fmi3SetShiftFraction(
     counters: *const u64,
 	resolutions: *const u64,
 ) -> Fmi3Status {
-    error!("fmi3SetShiftFraction is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    let value_references = unsafe {
+        from_raw_parts(value_references, n_value_references) 
+    }.to_owned();
+
+    let counters = unsafe {
+        from_raw_parts(counters, n_value_references)
+    }.to_owned();
+
+    let resolutions = unsafe {
+        from_raw_parts(resolutions, n_value_references)
+    }.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SetShiftFraction(
+            fmi3_messages::Fmi3SetShiftFraction {
+                value_references,
+                counters,
+                resolutions,
+            }
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetShiftFraction failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -2646,40 +2889,41 @@ pub unsafe extern "C" fn fmi3SetBinary(
     value_references: *const u32,
     n_value_references: size_t,
     value_sizes: *const size_t,
-    values: *const u8,
+    values: *const *const u8, // Updated
     n_values: size_t,
 ) -> Fmi3Status {
-    // Convert raw pointers to Rust slices
+
     let value_references = unsafe {
         std::slice::from_raw_parts(value_references, n_value_references)
     }
         .to_owned();
 
     let sizes = unsafe {
-        std::slice::from_raw_parts(value_sizes, n_values)
+        std::slice::from_raw_parts(value_sizes, n_value_references)
     };
 
-    // Create a vector of slices for the binary values
-    let mut binary_values: Vec<&[u8]> = Vec::with_capacity(n_value_references);
+    // Create a vector of slices for the binary values (with enough space for the amount of internal values)
+    let mut binary_values: Vec<&[u8]> = Vec::with_capacity(n_values);
 
-    // Use an offset to correctly slice the values based on sizes
-    let mut offset = 0;
-    for &size in sizes {
-        let value_slice = unsafe {
-            std::slice::from_raw_parts(values.add(offset), size)
-        };
-        binary_values.push(value_slice);
-        offset += size;
+    for i in 0..n_value_references {
+        let data_ptr = values.add(i).read();
+        let size = value_sizes.add(i).read();
+        // Ensure the pointer is not null
+        if !data_ptr.is_null() && size > 0 {
+            // Read the binary data into a slice
+            let value_slice = std::slice::from_raw_parts(data_ptr, size);
+            binary_values.push(value_slice);
+        }
     }
 
     let value_sizes = sizes
         .iter()
-        .map(|&size| size as u64)
+        .map(|&size| {size as u64})
         .collect();
 
     let values = binary_values
         .iter()
-        .map(|&v| v.to_vec())
+        .map(|&v| {v.to_vec()})
         .collect();
 
     // Ensure the instance pointer is valid
@@ -2788,61 +3032,178 @@ pub extern "C" fn fmi3GetVariableDependencies(
 
 #[no_mangle]
 pub extern "C" fn fmi3GetFMUState(
-    instance: &mut Fmi3Slave,
-    state: &mut Option<SlaveState>,
+    instance: *mut Fmi3Slave,
+    state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3GetFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+
+    if state.is_null() {
+        error!("fmi3GetFMUstate called with state pointing to null!");
+        return Fmi3Status::Error;
+    }
+
+    if instance.is_null() {
+        error!("fmi3GetFMUstate called with instance pointing to null!");
+        return Fmi3Status::Error;
+    }
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3SerializeFmuState(
+            fmi3_messages::Fmi3SerializeFmuState {}
+        )),
+    };
+
+    let instance = unsafe { &mut *instance };
+
+    match instance.dispatcher.send_and_recv::<_, fmi3_messages::Fmi3SerializeFmuStateReturn>(&cmd) {
+        Ok(result) => {
+            unsafe {
+                match (*state).as_mut() {
+                    Some(state_ptr) => {
+                        let state = &mut *state_ptr;
+                        state.bytes = result.state;
+                    }
+                    None => {
+                        let new_state = Box::new(SlaveState::new(&result.state));
+                        *state = Box::into_raw(new_state);
+                    }
+                }
+            }
+
+            Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    error!("fmi3GetFMUstate: Unknown status ({:?}) returned from backend.", result.status);
+                    Fmi3Status::Fatal
+                })
+        }
+        Err(error) => {
+            error!("fmi3GetFMUstate failed with error: {:?}.", error);
+            Fmi3Status::Error
+        }
+    }
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SetFMUState(
-	instance: &mut Fmi3Slave,
-	state: &SlaveState,
+	instance: *mut Fmi3Slave,
+	state: *const SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3SetFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    if instance.is_null() {
+        error!("fmi3SetFMUstate called with instance pointing to null!");
+        return Fmi3Status::Error;
+    }
+    if state.is_null() {
+        error!("fmi3SetFMUstate called with state pointing to null!");
+        return Fmi3Status::Error;
+    }
+    let state_ref = unsafe { &*state };
+    let state_bytes = state_ref.bytes.to_owned();
+
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3DeserializeFmuState(
+            fmi3_messages::Fmi3DeserializeFmuState {
+                state: state_bytes,
+            }
+        )),
+    };
+    unsafe { (*instance).dispatcher.send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd) }
+        .map(|status| status.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3SetFMUstate failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3FreeFMUState(
-    instance: &mut Fmi3Slave,
-    state: Option<Box<SlaveState>>,
+    instance: *mut Fmi3Slave,
+    state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3FreeFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    if state.is_null(){
+        warn!("fmi3FreeFMUstate called with state pointing to null!");
+        return Fmi3Status::OK;
+    }
+
+    if instance.is_null(){
+        warn!("fmi3FreeFMUstate called with instance pointing to null!");
+        return Fmi3Status::OK;
+    }
+
+    unsafe {
+        let state_ptr = *state;
+
+        if state_ptr.is_null() {
+            warn!("fmi3FreeFMUstate called with state pointing to null!");
+            return Fmi3Status::OK;
+        }
+
+        drop(Box::from_raw(state_ptr)); 
+        *state = std::ptr::null_mut(); // Setting the state to null
+
+    }
+
+    Fmi3Status::OK
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SerializedFMUStateSize(
-    instance: &mut Fmi3Slave,
-    state: Option<Box<SlaveState>>,
-	size: *const size_t,
+    instance: &Fmi3Slave,
+    state: &SlaveState,
+	size: &mut size_t,
 ) -> Fmi3Status {
-    error!("fmi3SerializedFMUStateSize is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    *size = state.bytes.len();
+    Fmi3Status::OK
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SerializeFMUState(
-    instance: &mut Fmi3Slave,
-    state: Option<Box<SlaveState>>,
-	serialized_state: *const u8,
+    instance: &Fmi3Slave,
+    state: &SlaveState,
+	serialized_state: *mut u8,
 	size: size_t,
 ) -> Fmi3Status {
-    error!("fmi3SerializeFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    let serialized_state_len = state.bytes.len();
+
+    if serialized_state_len > size {
+        error!("Error while calling fmi3SerializeFMUstate: FMUstate too big to be contained in given byte vector.");
+        return Fmi3Status::Error;
+    }
+
+    unsafe { std::ptr::copy(
+        state.bytes.as_ptr(),
+        serialized_state.cast(),
+        serialized_state_len
+    ) };
+
+    Fmi3Status::OK
 }
 
 #[no_mangle]
-pub extern "C" fn fmi3DeserializeFMUState(
+pub unsafe extern "C" fn fmi3DeserializeFMUState(
     instance: &mut Fmi3Slave,
 	serialized_state: *const u8,
 	size: size_t,
-	state: &SlaveState,
+	state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-    error!("fmi3DeserializeFMUState is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
+
+    if state.is_null() {
+        error!("fmi3DeSerializeFMUstate called with state pointing to null!");
+        return Fmi3Status::Error;
+    }
+
+    unsafe {
+        if (*state).is_null() {
+            // If null allocate the new state and set the pointer to it
+            let new_state = Box::new(SlaveState::new(serialized_state));
+            *state = Box::into_raw(new_state);
+        } else {
+            // If not null overwrite the state
+            let state_ptr = *state;
+            let state = &mut *state_ptr;
+            state.bytes = serialized_state.to_owned();
+        }
+    }
+    Fmi3Status::OK
 }
 
 #[no_mangle]
@@ -2881,16 +3242,42 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    // error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
+    // Fmi3Status::Error
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3EnterConfigurationMode(
+            fmi3_messages::Fmi3EnterConfigurationMode {}
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3EnterConfigurationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    // error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
+    // Fmi3Status::Error
+    let cmd = Fmi3Command {
+        command: Some(Command::Fmi3ExitConfigurationMode(
+            fmi3_messages::Fmi3ExitConfigurationMode {}
+        )),
+    };
+
+    instance.dispatcher
+        .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
+        .map(|s| s.into())
+        .unwrap_or_else(|error| {
+            error!("fmi3ExitConfigurationMode failed with error: {:?}.", error);
+            Fmi3Status::Error
+        })
 }
 
 #[no_mangle]
@@ -2935,7 +3322,7 @@ pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
         .send_and_recv::<_, fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|s| s.into())
         .unwrap_or_else(|error| {
-            error!("Error while resetting instance: {:?}.", error);
+            error!("fmi3Reset failed with error: {:?}.", error);
             Fmi3Status::Error
         })
 }
