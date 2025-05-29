@@ -255,7 +255,7 @@ pub fn vdm_check(fmu: impl BasicFmu) {
 }
 
 /// The UNIFMU backend languages supported by default by the project.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum FmuBackendImplementationLanguage {
     CSharp,
     Java,
@@ -286,6 +286,23 @@ impl FmuBackendImplementationLanguage {
             FmuBackendImplementationLanguage::Python => "model.py"
         }
     }
+}
+
+fn gradle_command_base() -> (String, String) {
+    return match std::env::consts::OS {
+        "windows" => (
+            String::from("powershell.exe"),
+            String::from("./gradlew.bat")
+        ),
+        "macos" => (
+            String::from("zsh"),
+            String::from("./gradlew")
+        ),
+        _other => (
+            String::from("sh"),
+            String::from("gradlew")
+        )
+    };
 }
 
 /// The major versions of FMI supported by UNIFMU.
@@ -390,6 +407,8 @@ impl BasicFmu for LocalFmu {
 
         this.generate_fmu_files();
 
+        this.post_generation_setup();
+
         this
     }
 
@@ -422,6 +441,8 @@ impl BasicFmu for LocalFmu {
         };
 
         this.generate_fmu_files();
+
+        this.post_generation_setup();
 
         this
     }
@@ -579,6 +600,14 @@ impl Clone for LocalFmu {
             language: self.language().clone(),
             version: self.version().clone(),
         }
+    }
+}
+
+impl PostGenerationSetup for LocalFmu {
+    fn backend_path(&self) -> PathBuf {
+        self.directory()
+            .join(self.name())
+            .join("resources")
     }
 }
 
@@ -768,6 +797,8 @@ impl BasicFmu for DistributedFmu {
 
         this.generate_fmu_files();
 
+        this.post_generation_setup();
+
         this
     }
 
@@ -800,6 +831,8 @@ impl BasicFmu for DistributedFmu {
         };
 
         this.generate_fmu_files();
+
+        this.post_generation_setup();
 
         this
     }
@@ -911,6 +944,12 @@ impl BasicFmu for DistributedFmu {
     fn persist_directory(mut self) {
         self.directory = self.directory.persist();
         println!("Persisted FMU in directory: {:?}", self.directory());
+    }
+}
+
+impl PostGenerationSetup for DistributedFmu {
+    fn backend_path(&self) -> PathBuf {
+        self.backend_directory_path()
     }
 }
 
@@ -1201,9 +1240,9 @@ impl BasicFmu for BlackboxDistributedFmu {
     fn cmd_args(&self) -> Vec<String> {
         // While this passes the backend language to the UniFMU
         // generate-distributed command this currently doesn't do anything as
-        // all black-box containing (Uni)FMUs use a python interface in the remote backend
-        // which then runs the contained black-box (whose implementation we
-        // don't know or care about).
+        // all black-box containing (Uni)FMUs use a python interface in the
+        // remote backend which then runs the contained black-box (whose
+        // implementation we don't know or care about).
         // The language is passed because it is less brittle than hardcoding
         // a dummy value.
         let mut args = vec![
@@ -1342,7 +1381,7 @@ pub trait BasicFmu {
         language: FmuBackendImplementationLanguage
     ) -> Self;
 
-    /// Generate a wholly new FMU using the UNIFMU CLI in the a persistent
+    /// Generate a wholly new FMU using the UNIFMU CLI in a persistent
     /// directory.
     /// 
     /// If a new FMU is needed `get_clone()` should be called instead unless
@@ -1429,6 +1468,40 @@ pub trait BasicFmu {
     fn new_tmp_dir() -> TempDir {
         TempDir::new()
             .expect("Couldn't create temporary Fmu directory.")
+    }
+}
+
+/// Behaviour for FMUs that can be reconfigured after generation
+/// by the UNIFMU CLI.
+/// 
+/// Currently this is all non-zipped FMUs.
+pub trait PostGenerationSetup: BasicFmu {
+    fn backend_path(&self) -> PathBuf;
+    
+    /// Code to run after the fmu files have been generated, but before it
+    /// is considered a valid, testable fmu.
+    fn post_generation_setup(&self) {
+        match self.language() {
+            FmuBackendImplementationLanguage::Java => self.java_setup(),
+            _ => {}
+        }
+    }
+
+    /// Compiles the Java using gradle to reduce test execution time.
+    fn java_setup(&self) {
+        let (
+            shell_command,
+            gradle_file
+        ) = gradle_command_base();
+
+        let gradle_build_command = duct::cmd!(
+            shell_command, gradle_file, "compileJava", "--build-cache"
+        );
+
+        let gradle_build_command = gradle_build_command.dir(self.backend_path());
+
+        gradle_build_command.run()
+            .expect("Should be able to prebuild Javabased FMU");
     }
 }
 
@@ -1527,7 +1600,7 @@ pub trait RemoteBackend: DistributedFileStructure {
                     _other => ("sh", "gradlew")
                 };
                 duct::cmd!(
-                    shell_command, gradle_file, "run", args_list
+                    shell_command, gradle_file, "run", args_list, "--build-cache"
                 )
             },
             FmuBackendImplementationLanguage::Python => {
