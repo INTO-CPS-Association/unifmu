@@ -60,7 +60,7 @@ lazy_static! {
                 "schemas/unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
-            ("python/fmi2/README.md", "README.md"),
+            ("python/README.md", "README.md"),
         ],
         fmi3_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
@@ -75,7 +75,7 @@ lazy_static! {
                 "schemas/unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
-            ("python/fmi3/README.md", "README.md"),
+            ("python/README.md", "README.md"),
         ],
     };
     static ref CSHARPASSETS: LanguageAssets = LanguageAssets {
@@ -176,7 +176,7 @@ lazy_static! {
                 "schemas/unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
-            ("python/fmi2/README.md", "README.md"),
+            ("python/README.md", "README.md"),
         ],
         fmi3_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
@@ -191,7 +191,7 @@ lazy_static! {
                 "schemas/unifmu_handshake_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
-            ("python/fmi3/README.md", "README.md"),
+            ("python/README.md", "README.md"),
         ],
     };
 
@@ -295,7 +295,7 @@ lazy_static! {
                 "schemas/fmi2_messages_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
-            ("python/fmi2/README.md", "README.md"),
+            ("python/README.md", "README.md"),
             (
                 "auto_generated/unifmu_handshake_pb2.py",
                 "schemas/unifmu_handshake_pb2.py"
@@ -309,7 +309,7 @@ lazy_static! {
                 "schemas/fmi3_messages_pb2.py"
             ),
             ("python/launch.toml", "launch.toml"),
-            ("python/fmi3/README.md", "README.md"),
+            ("python/README.md", "README.md"),
             (
                 "auto_generated/unifmu_handshake_pb2.py",
                 "schemas/unifmu_handshake_pb2.py"

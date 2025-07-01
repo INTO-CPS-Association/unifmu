@@ -160,11 +160,12 @@ class Model:
             110: "boolean_tunable_parameter",
             111: "string_tunable_parameter",
             112: "binary_tunable_parameter",
-            113: "uint64_tunable_structural_parameter",
+            114: "float32_vector_using_tunable_structural_parameter",
         }
 
         self.tunable_structural_parameters = {
-            114: "float32_vector_using_tunable_structural_parameter",
+            113: "uint64_tunable_structural_parameter",
+            
         }
 
         self.all_references = {**self.tunable_structural_parameters,
@@ -247,7 +248,10 @@ class Model:
         return Fmi3Status.ok
     
     def fmi3EnterConfigurationMode(self):
-        self.state = FMIState.FMIConfigurationModeState if self.state == FMIState.FMIInstantiatedState else FMIState.FMIReconfigurationModeState
+        if len(self.tunable_structural_parameters)>0:
+            self.state = FMIState.FMIConfigurationModeState if self.state == FMIState.FMIInstantiatedState else FMIState.FMIReconfigurationModeState
+        else:
+            return Fmi3Status.error
         return Fmi3Status.ok
 
     def fmi3ExitConfigurationMode(self):
@@ -669,24 +673,23 @@ class Model:
     # ================= Helpers =================
 
     def _set_value(self, references, values):
-        if (self.state == FMIState.FMIConfigurationModeState or self.state == FMIState.FMIReconfigurationModeState):
-            for r, v in zip(references, values):
-                if (r in self.clocked_variables) or (r in self.reference_to_attribute):
-                    return Fmi3Status.error 
-                setattr(self, self.all_references[r], v)
-        elif (self.state == FMIState.FMIEventModeState):
-            for r, v in zip(references, values):
-                if (r in self.reference_to_attribute) or (r in self.tunable_structural_parameters):
-                    return Fmi3Status.error 
-                setattr(self, self.all_references[r], v)
-        elif (self.state == FMIState.FMIInitializationModeState):
-            for r, v in zip(references, values):
-                setattr(self, self.all_references[r], v)
-        else:
-            for r, v in zip(references, values):
-                if ((self.event_mode_used) and (r in self.all_parameters)) or (r in self.clocked_variables):
-                    return Fmi3Status.error              
-                setattr(self, self.reference_to_attribute[r], v)
+        for r, v in zip(references, values):
+            if (r in self.clocked_variables or r in self.tunable_parameters):
+                if (self.state == FMIState.FMIEventModeState or self.state == FMIState.FMIInitializationModeState):
+                    pass
+                else:
+                    return Fmi3Status.error
+            elif (r in self.tunable_structural_parameters):
+                if (self.state == FMIState.FMIConfigurationModeState or self.state == FMIState.FMIReconfigurationModeState or self.state == FMIState.FMIInitializationModeState):
+                    pass
+                else:
+                    return Fmi3Status.error
+            elif (r in self.parameters):
+                if (self.state == FMIState.FMIInitializationModeState):
+                    pass
+                else:
+                    return Fmi3Status.error
+            setattr(self, self.all_references[r], v)
         return Fmi3Status.ok
 
     def _get_value(self, references):
