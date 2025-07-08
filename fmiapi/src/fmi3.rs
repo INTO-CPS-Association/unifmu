@@ -2,7 +2,9 @@
 #![allow(unused_variables)]
 
 use std::{
+    error::Error,
     ffi::{c_void, CStr, CString, NulError},
+    fmt::Display,
     path::{Path, PathBuf},
     slice::{from_raw_parts, from_raw_parts_mut},
     str::Utf8Error,
@@ -129,12 +131,57 @@ impl SlaveState {
 
 type Fmi3SlaveType = Box<Fmi3Slave>;
 
-fn c2s(c: *const c_char) -> Result<String, Utf8Error> {
+fn c2s(c: Fmi3String) -> Result<String, StringConversionError> {
     unsafe {
-        CStr::from_ptr(c)
-            .to_str()
-            .map(|result| result.to_owned())
-            
+        c.as_ref()
+            .ok_or(StringConversionError::NullError)
+            .map(|c_pointer| CStr::from_ptr(c_pointer))
+            .and_then(|c_str| 
+                c_str.to_str()
+                    .map_err(StringConversionError::from)
+            )
+            .map(|r_str| r_str.to_string())
+    }
+}
+
+fn c2non_empty_s(c: Fmi3String) -> Result<String, StringConversionError> {
+    c2s(c).and_then(|s|
+        if !s.is_empty() {
+            Ok(s)
+        } else {
+            Err(StringConversionError::EmptyError)
+        }
+    )
+}
+
+#[derive(Debug)]
+pub enum StringConversionError {
+    Utf8ConversionError(Utf8Error),
+    NullError,
+    EmptyError
+}
+
+impl Display for StringConversionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Utf8ConversionError(utf8_error) => {
+                write!(f, "utf-8 error: {}", utf8_error)
+            }
+            Self::NullError => {
+                write!(f, "string pointer was null pointer")
+            }
+            Self::EmptyError => {
+                write!(f, "string is empty")
+            }
+        }
+    }
+}
+
+impl Error for StringConversionError {}
+
+impl From<Utf8Error> for StringConversionError {
+    fn from(value: Utf8Error) -> Self {
+        Self::Utf8ConversionError(value)
     }
 }
 
@@ -221,10 +268,10 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         return None;
     }
 
-    let instance_name = match c2s(instance_name) {
-        Ok(string) => string,
+    let instance_name = match c2non_empty_s(instance_name) {
+        Ok(name) => name,
         Err(error) => {
-            error!("Could not convert instance_name to String: {:?}", error);
+            error!("could not parse instance_name: {}", error);
             return None;
         }
     };
@@ -232,7 +279,7 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     let instantiation_token = match c2s(instantiation_token) {
         Ok(string) => string,
         Err(error) => {
-            error!("Could not convert instantiation_token to String: {:?}", error);
+            error!("could not convert instantiation_token to String: {}", error);
             return None;
         }
     };
@@ -245,19 +292,11 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     }
     .to_owned();
 
-    let resource_path_str = unsafe {
-        match resource_path.as_ref() {
-            Some(b) => match CStr::from_ptr(b).to_str() {
-                Ok(s) => s.to_string(),
-                Err(e) => {
-                    error!("resource path was not valid utf-8");
-                    return None;
-                },
-            },
-            None => {
-                error!("resourcePath was null");
-                return None
-            },
+    let resource_path_str = match c2non_empty_s(resource_path) {
+        Ok(path_string) => path_string,
+        Err(error) => {
+            error!("could not parse resource_path: {}", error);
+            return None;
         }
     };
 
