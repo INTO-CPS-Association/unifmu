@@ -6,18 +6,41 @@ use std::{
     path::{Path, PathBuf},
     slice::{from_raw_parts, from_raw_parts_mut},
     str::Utf8Error,
-    sync::LazyLock,
-    fmt // For handling binaries
+    sync::LazyLock
 };
 
 use libc::{c_char, size_t};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use url::Url;
 use tracing::{error, warn};
 use tracing_subscriber;
 
 use crate::dispatcher::{Dispatch, Dispatcher};
 use crate::fmi3_messages::{self, Fmi3Command, fmi3_command::Command};
+use crate::fmi3_types::{
+    Fmi3Float32,
+    Fmi3Float64,
+    Fmi3Int8,
+    Fmi3UInt8,
+    Fmi3Int16,
+    Fmi3UInt16,
+    Fmi3Int32,
+    Fmi3UInt32,
+    Fmi3Int64,
+    Fmi3UInt64,
+    Fmi3Boolean,
+    Fmi3String,
+    Fmi3Byte,
+    Fmi3Binary,
+    Fmi3Clock,
+    Fmi3Status,
+    Fmi3IntervalQualifier,
+    Fmi3InstanceEnvironment,
+    Fmi3ValueReference,
+    Fmi3DependencyKind,
+    Fmi3LogMessageCallback,
+    Fmi3IntermediateUpdateCallback,
+    UnsupportedCallback
+};
 use crate::spawn::spawn_slave;
 
 /// One shot function that sets up logging.
@@ -30,29 +53,19 @@ use crate::spawn::spawn_slave;
 /// wrong (most probably that the global logger was already set somewhere else).
 static ENABLE_LOGGING: LazyLock<Result<(), Fmi3Status>> = LazyLock::new(|| {
     if tracing_subscriber::fmt::try_init().is_err() {
-        return Err(Fmi3Status::Fatal);
+        return Err(Fmi3Status::Fmi3Fatal);
     }
     Ok(())
 });
 
-#[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
-pub enum Fmi3Status {
-    OK = 0,
-    Warning = 1,
-    Discard = 2,
-    Error = 3,
-    Fatal = 4,
-}
-
 impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
     fn from(src: fmi3_messages::Fmi3StatusReturn) -> Self {
         match src.status() {
-            fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
-            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
-            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,
-            fmi3_messages::Fmi3Status::Fmi3Error => Self::Error,
-            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fatal,
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::Fmi3OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Fmi3Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Fmi3Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Fmi3Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fmi3Fatal,
         }
     }
 }
@@ -60,32 +73,13 @@ impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
 impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
     fn from(s: fmi3_messages::Fmi3Status) -> Self {
         match s {
-            fmi3_messages::Fmi3Status::Fmi3Ok => Self::OK,
-            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Warning,
-            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Discard,
-            fmi3_messages::Fmi3Status::Fmi3Error => Self::Error,
-            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fatal,
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::Fmi3OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Fmi3Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Fmi3Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Fmi3Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fmi3Fatal,
         }
     }
-}
-
-#[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
-pub enum Fmi3DependencyKind {
-	Independent = 0,
-	Constant = 1,
-	Fixed = 2,
-	Tunable = 3,
-	Discrete = 4,
-	Dependent = 5,
-}
-
-#[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
-pub enum Fmi3IntervalQualifier {
-    IntervalNotYetKnown = 0,
-    IntervalUnchanged = 1,
-    IntervalChanged = 2,
 }
 
 pub struct Fmi3Slave {
@@ -156,23 +150,23 @@ pub extern "C" fn fmi3GetVersion() -> *const c_char {
 #[no_mangle]
 pub extern "C" fn fmi3SetDebugLogging(
     instance: &mut Fmi3Slave,
-    logging_on: i32,
+    logging_on: Fmi3Boolean,
     n_categories: size_t,
-    categories: *const *const c_char
+    categories: *const Fmi3String
 ) -> Fmi3Status {
     error!("fmi3SetDebugLogging is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3InstantiateModelExchange(
-    instance_name: *const c_char,
-    instantiation_token: *const c_char,
-    resource_path: *const c_char,
-    visible: i32,
-    logging_on: i32,
-    instance_environment: *const c_void,
-    log_message: *const c_void,
+    instance_name: Fmi3String,
+    instantiation_token: Fmi3String,
+    resource_path: Fmi3String,
+    visible: Fmi3Boolean,
+    logging_on: Fmi3Boolean,
+    instance_environment: Fmi3InstanceEnvironment,
+    log_message: Fmi3LogMessageCallback,
 ) -> Option<Fmi3SlaveType> {
     if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
@@ -209,18 +203,18 @@ pub extern "C" fn fmi3InstantiateModelExchange(
 ///   space. See the safety documentation of [`pointer::offset`].
 #[no_mangle]
 pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
-    instance_name: *const c_char,
-    instantiation_token: *const c_char,
-    resource_path: *const c_char,
-    visible: bool,
-    logging_on: bool,
-    event_mode_used: bool,
-    early_return_allowed: bool,
-    required_intermediate_variables: *const u32,
+    instance_name: Fmi3String,
+    instantiation_token: Fmi3String,
+    resource_path: Fmi3String,
+    visible: Fmi3Boolean,
+    logging_on: Fmi3Boolean,
+    event_mode_used: Fmi3Boolean,
+    early_return_allowed: Fmi3Boolean,
+    required_intermediate_variables: *const Fmi3ValueReference,
     n_required_intermediate_variables: size_t,
-    instance_environment: *const c_void,
-    log_message: *const c_void,
-    intermediate_update: *const c_void,
+    instance_environment: Fmi3InstanceEnvironment,
+    log_message: Fmi3LogMessageCallback,
+    intermediate_update: Fmi3IntermediateUpdateCallback,
 ) -> Option<Fmi3SlaveType> {
     if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
@@ -356,16 +350,16 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
 
 #[no_mangle]
 pub extern "C" fn fmi3InstantiateScheduledExecution(
-    instance_name: *const c_char,
-    instantiation_token: *const c_char,
-    resource_path: *const c_char,
-    visible: i32,
-    logging_on: i32,
-    instance_environment: *const c_void,
-    log_message: *const c_void,
-    clock_update: *const c_void,
-    lock_preemption: *const c_void,
-    unlock_preemption: *const c_void,
+    instance_name: Fmi3String,
+    instantiation_token: Fmi3String,
+    resource_path: Fmi3String,
+    visible: Fmi3Boolean,
+    logging_on: Fmi3Boolean,
+    instance_environment: Fmi3InstanceEnvironment,
+    log_message: Fmi3LogMessageCallback,
+    clock_update: UnsupportedCallback,
+    lock_preemption: UnsupportedCallback,
+    unlock_preemption: UnsupportedCallback,
 ) -> Option<Fmi3SlaveType> {
     if (*ENABLE_LOGGING).is_err() {
         error!("Tried to set already set global tracing subscriber.");
@@ -383,13 +377,13 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3DoStep(
     instance: &mut Fmi3Slave,
-    current_communication_point: f64,
-    communication_step_size: f64,
-    no_set_fmu_state_prior_to_current_point: bool,
-    event_handling_needed: *mut bool,
-    terminate_simulation: *mut bool,
-    early_return: *mut bool,
-    last_successful_time: *mut f64,
+    current_communication_point: Fmi3Float64,
+    communication_step_size: Fmi3Float64,
+    no_set_fmu_state_prior_to_current_point: Fmi3Boolean,
+    event_handling_needed: *mut Fmi3Boolean,
+    terminate_simulation: *mut Fmi3Boolean,
+    early_return: *mut Fmi3Boolean,
+    last_successful_time: *mut Fmi3Float64,
 ) -> Fmi3Status {
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3DoStep(
@@ -429,12 +423,12 @@ pub unsafe extern "C" fn fmi3DoStep(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3DoStep failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -442,11 +436,11 @@ pub unsafe extern "C" fn fmi3DoStep(
 #[no_mangle]
 pub extern "C" fn fmi3EnterInitializationMode(
     instance: &mut Fmi3Slave,
-    tolerance_defined: bool,
-    tolerance: f64,
-    start_time: f64,
-    stop_time_defined: bool,
-    stop_time: f64,
+    tolerance_defined: Fmi3Boolean,
+    tolerance: Fmi3Float64,
+    start_time: Fmi3Float64,
+    stop_time_defined: Fmi3Boolean,
+    stop_time: Fmi3Float64,
 ) -> Fmi3Status {
     let tolerance = {
         if tolerance_defined {
@@ -480,7 +474,7 @@ pub extern "C" fn fmi3EnterInitializationMode(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3EnterInitializationMode failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -497,7 +491,7 @@ pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3St
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3ExitInitializationMode failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -514,7 +508,7 @@ pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3EnterEventMode failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -531,7 +525,7 @@ pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3EnterStepMode failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -562,9 +556,9 @@ pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetFloat32(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut f32,
+    values: *mut Fmi3Float32,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -592,12 +586,12 @@ pub unsafe extern "C" fn fmi3GetFloat32(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetFloat32 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -629,9 +623,9 @@ pub unsafe extern "C" fn fmi3GetFloat32(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetFloat64(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut f64,
+    values: *mut Fmi3Float64,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -659,12 +653,12 @@ pub unsafe extern "C" fn fmi3GetFloat64(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetFloat64 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -696,9 +690,9 @@ pub unsafe extern "C" fn fmi3GetFloat64(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetInt8(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut i8,
+    values: *mut Fmi3Int8,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -731,12 +725,12 @@ pub unsafe extern "C" fn fmi3GetInt8(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetInt8 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -768,9 +762,9 @@ pub unsafe extern "C" fn fmi3GetInt8(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetUInt8(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut u8,
+    values: *mut Fmi3UInt8,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -803,12 +797,12 @@ pub unsafe extern "C" fn fmi3GetUInt8(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetUInt8 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -840,9 +834,9 @@ pub unsafe extern "C" fn fmi3GetUInt8(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetInt16(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut i16,
+    values: *mut Fmi3Int16,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -875,12 +869,12 @@ pub unsafe extern "C" fn fmi3GetInt16(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetInt16 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -912,9 +906,9 @@ pub unsafe extern "C" fn fmi3GetInt16(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetUInt16(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut u16,
+    values: *mut Fmi3UInt16,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -947,12 +941,12 @@ pub unsafe extern "C" fn fmi3GetUInt16(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetUInt16 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -984,9 +978,9 @@ pub unsafe extern "C" fn fmi3GetUInt16(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetInt32(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut i32,
+    values: *mut Fmi3Int32,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -1014,12 +1008,12 @@ pub unsafe extern "C" fn fmi3GetInt32(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetInt32 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1051,9 +1045,9 @@ pub unsafe extern "C" fn fmi3GetInt32(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetUInt32(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut u32,
+    values: *mut Fmi3UInt32,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -1081,12 +1075,12 @@ pub unsafe extern "C" fn fmi3GetUInt32(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetUInt32 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1118,9 +1112,9 @@ pub unsafe extern "C" fn fmi3GetUInt32(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetInt64(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut i64,
+    values: *mut Fmi3Int64,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -1148,12 +1142,12 @@ pub unsafe extern "C" fn fmi3GetInt64(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetInt64 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1185,9 +1179,9 @@ pub unsafe extern "C" fn fmi3GetInt64(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetUInt64(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut u64,
+    values: *mut Fmi3UInt64,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -1215,12 +1209,12 @@ pub unsafe extern "C" fn fmi3GetUInt64(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetUInt64 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1252,9 +1246,9 @@ pub unsafe extern "C" fn fmi3GetUInt64(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetBoolean(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut bool,
+    values: *mut Fmi3Boolean,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -1282,12 +1276,12 @@ pub unsafe extern "C" fn fmi3GetBoolean(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetBoolean failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1319,9 +1313,9 @@ pub unsafe extern "C" fn fmi3GetBoolean(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetString(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut *const c_char,
+    values: *mut Fmi3String,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -1351,7 +1345,7 @@ pub unsafe extern "C" fn fmi3GetString(
                     },
                     Err(e) =>  {
                         error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
-                        return Fmi3Status::Fatal;
+                        return Fmi3Status::Fmi3Fatal;
                     }
                 }
                 
@@ -1369,12 +1363,12 @@ pub unsafe extern "C" fn fmi3GetString(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetString failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1382,10 +1376,10 @@ pub unsafe extern "C" fn fmi3GetString(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetBinary(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
     value_sizes: *mut size_t,
-    values: *mut *const u8,
+    values: *mut Fmi3Binary,
     n_values: size_t,
 ) -> Fmi3Status {
     
@@ -1443,12 +1437,12 @@ pub unsafe extern "C" fn fmi3GetBinary(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
                 })
         }
         Err(error) => {
             error!("Fmi3GetBinary failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }    
 }
@@ -1480,9 +1474,9 @@ pub unsafe extern "C" fn fmi3GetBinary(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetClock(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *mut bool,
+    values: *mut Fmi3Clock,
 ) -> Fmi3Status {
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references)
@@ -1510,12 +1504,12 @@ pub unsafe extern "C" fn fmi3GetClock(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetClock failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1550,10 +1544,10 @@ pub unsafe extern "C" fn fmi3GetClock(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3GetIntervalDecimal(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    intervals: *mut f64,
-	qualifiers: *mut i32,
+    intervals: *mut Fmi3Float64,
+	qualifiers: *mut Fmi3IntervalQualifier,
 ) -> Fmi3Status {
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references)
@@ -1582,18 +1576,25 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
             };
 
             if !result.qualifiers.is_empty() {
-                qualifiers_out.copy_from_slice(&result.qualifiers);
+                let Ok(qualifiers) = result.qualifiers.into_iter()
+                    .map(Fmi3IntervalQualifier::try_from)
+                    .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
+                else {
+                    error!("Unknown interval qualifier returned from backend.");
+                    return Fmi3Status::Fmi3Fatal
+                };
+                qualifiers_out.copy_from_slice(qualifiers.as_slice());
             };
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetIntervalDecimal failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1601,12 +1602,11 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
 #[no_mangle]
 pub extern "C" fn fmi3GetIntervalFraction(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    counters: *mut u64,
-	resolutions: *mut u64,
-	//qualifiers: *mut Fmi3IntervalQualifier,
-    qualifiers: *mut i32,
+    counters: *mut Fmi3UInt64,
+	resolutions: *mut Fmi3UInt64,
+    qualifiers: *mut Fmi3IntervalQualifier,
     n_values: size_t,
 ) -> Fmi3Status {
 
@@ -1645,18 +1645,25 @@ pub extern "C" fn fmi3GetIntervalFraction(
             };
 
             if !result.qualifiers.is_empty() {
-                qualifiers_out.copy_from_slice(&result.qualifiers);
+                let Ok(qualifiers) = result.qualifiers.into_iter()
+                    .map(Fmi3IntervalQualifier::try_from)
+                    .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
+                else {
+                    error!("Unknown interval qualifier returned from backend.");
+                    return Fmi3Status::Fmi3Fatal
+                };
+                qualifiers_out.copy_from_slice(qualifiers.as_slice());
             };
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetIntervalFraction failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1664,9 +1671,9 @@ pub extern "C" fn fmi3GetIntervalFraction(
 #[no_mangle]
 pub extern "C" fn fmi3GetShiftDecimal(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    shifts: *mut f64,
+    shifts: *mut Fmi3Float64,
 ) -> Fmi3Status {
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references)
@@ -1693,12 +1700,12 @@ pub extern "C" fn fmi3GetShiftDecimal(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetShiftDecimal failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 
@@ -1707,10 +1714,10 @@ pub extern "C" fn fmi3GetShiftDecimal(
 #[no_mangle]
 pub extern "C" fn fmi3GetShiftFraction(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    counters: *mut u64,
-	resolutions: *mut u64,
+    counters: *mut Fmi3UInt64,
+	resolutions: *mut Fmi3UInt64,
 ) -> Fmi3Status {
 
     let value_references = unsafe {
@@ -1746,12 +1753,12 @@ pub extern "C" fn fmi3GetShiftFraction(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
             error!("fmi3GetShiftFraction failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1759,9 +1766,9 @@ pub extern "C" fn fmi3GetShiftFraction(
 #[no_mangle]
 pub extern "C" fn fmi3SetIntervalDecimal(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    intervals: *const f64,
+    intervals: *const Fmi3Float64,
 ) -> Fmi3Status {
 
     let value_references = unsafe {
@@ -1786,7 +1793,7 @@ pub extern "C" fn fmi3SetIntervalDecimal(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetIntervalDecimal failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 
 }
@@ -1794,10 +1801,10 @@ pub extern "C" fn fmi3SetIntervalDecimal(
 #[no_mangle]
 pub extern "C" fn fmi3SetIntervalFraction(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    counters: *const u64,
-	resolutions: *const u64,
+    counters: *const Fmi3UInt64,
+	resolutions: *const Fmi3UInt64,
 ) -> Fmi3Status {
 
     let value_references = unsafe {
@@ -1827,16 +1834,16 @@ pub extern "C" fn fmi3SetIntervalFraction(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetIntervalFraction failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SetShiftDecimal(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    shifts: *const f64,
+    shifts: *const Fmi3Float64,
 ) -> Fmi3Status {
 
     let value_references = unsafe {
@@ -1861,17 +1868,17 @@ pub extern "C" fn fmi3SetShiftDecimal(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetShiftDecimal failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SetShiftFraction(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    counters: *const u64,
-	resolutions: *const u64,
+    counters: *const Fmi3UInt64,
+	resolutions: *const Fmi3UInt64,
 ) -> Fmi3Status {
 
     let value_references = unsafe {
@@ -1901,7 +1908,7 @@ pub extern "C" fn fmi3SetShiftFraction(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetShiftFraction failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -1910,7 +1917,7 @@ pub extern "C" fn fmi3EvaluateDiscreteStates(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
     error!("fmi3EvaluateDiscreteStates is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 /// # Safety
@@ -1922,12 +1929,12 @@ pub extern "C" fn fmi3EvaluateDiscreteStates(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
     instance: &mut Fmi3Slave,
-	discrete_states_need_update: *mut bool,
-	terminate_simulation: *mut bool,
-	nominals_continuous_states_changed: *mut bool,
-	values_continuous_states_changed: *mut bool,
-	next_event_time_defined: *mut bool,
-	next_event_time: *mut f64,
+	discrete_states_need_update: *mut Fmi3Boolean,
+	terminate_simulation: *mut Fmi3Boolean,
+	nominals_continuous_states_changed: *mut Fmi3Boolean,
+	values_continuous_states_changed: *mut Fmi3Boolean,
+	next_event_time_defined: *mut Fmi3Boolean,
+	next_event_time: *mut Fmi3Float64,
 ) -> Fmi3Status {
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3UpdateDiscreteStates(
@@ -1977,12 +1984,12 @@ pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("Unknown status returned from backend.");
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
                 })
         }
         Err(error) => {
             error!("fmi3UpdateDiscreteStates failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -1992,77 +1999,77 @@ pub extern "C" fn fmi3EnterContinuousTimeMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
     error!("fmi3EnterContinuousTimeMode is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3CompletedIntegratorStep(
     instance: &mut Fmi3Slave,
-	no_set_fmu_state_prior_to_current_point: i32,
-	enter_event_mode: *const i32,
-	terminate_simulation: *const i32,
+	no_set_fmu_state_prior_to_current_point: Fmi3Boolean,
+	enter_event_mode: *const Fmi3Boolean,
+	terminate_simulation: *const Fmi3Boolean,
 ) -> Fmi3Status {
     error!("fmi3CompletedIntegratorStep is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SetTime(
     instance: &mut Fmi3Slave,
-	time: f64,
+	time: Fmi3Float64,
 ) -> Fmi3Status {
     error!("fmi3SetTime is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SetContinuousStates(
     instance: &mut Fmi3Slave,
-	continuous_states: *const f64,
+	continuous_states: *const Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
     error!("fmi3SetContinuousStates is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetContinuousStateDerivatives(
     instance: &mut Fmi3Slave,
-	derivatives: *const f64,
+	derivatives: *mut Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetContinuousStateDerivatives is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetEventIndicators(
     instance: &mut Fmi3Slave,
-	event_indicators: *const f64,
+	event_indicators: *mut Fmi3Float64,
 	n_event_indicators: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetEventIndicators is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetContinuousStates(
     instance: &mut Fmi3Slave,
-	continuous_states: *const f64,
+	continuous_states: *mut Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetContinuousStates is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetNominalsOfContinuousStates(
     instance: &mut Fmi3Slave,
-	nominals: *const f64,
+	nominals: *mut Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetNominalsOfContinuousStates is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
@@ -2071,7 +2078,7 @@ pub extern "C" fn fmi3GetNumberOfEventIndicators(
 	n_event_indicators: *const size_t,
 ) -> Fmi3Status {
     error!("fmi3GetNumberOfEventIndicators is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
@@ -2080,30 +2087,30 @@ pub extern "C" fn fmi3GetNumberOfContinuousStates(
 	n_continuous_states: *const size_t,
 ) -> Fmi3Status {
     error!("fmi3GetNumberOfContinuousStates is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetOutputDerivatives(
     instance: &mut Fmi3Slave,
-	value_references: *const u32,
+	value_references: *const Fmi3ValueReference,
 	n_value_references: size_t,
-	orders: *const i32,
-	values: *const f64,
+	orders: *const Fmi3Int32,
+	values: *mut Fmi3Float64,
 	n_values: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetOutputDerivatives is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3ActivateModelPartition(
     instance: &mut Fmi3Slave,
-	value_reference: u32,
-	activation_time: f64,
+	value_reference: Fmi3ValueReference,
+	activation_time: Fmi3Float64,
 ) -> Fmi3Status {
     error!("fmi3ActivateModelPartition is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 /// # Safety
@@ -2133,9 +2140,9 @@ pub extern "C" fn fmi3ActivateModelPartition(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetFloat32(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const f32,
+    values: *const Fmi3Float32,
     n_values: size_t,
 ) -> Fmi3Status{
     let value_references = unsafe {
@@ -2160,7 +2167,7 @@ pub unsafe extern "C" fn fmi3SetFloat32(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetFloat32 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2191,9 +2198,9 @@ pub unsafe extern "C" fn fmi3SetFloat32(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetFloat64(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const f64,
+    values: *const Fmi3Float64,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2220,7 +2227,7 @@ pub unsafe extern "C" fn fmi3SetFloat64(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetFloat64 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2251,9 +2258,9 @@ pub unsafe extern "C" fn fmi3SetFloat64(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetInt8(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const i8,
+    values: *const Fmi3Int8,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2282,7 +2289,7 @@ pub unsafe extern "C" fn fmi3SetInt8(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetInt8 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2313,9 +2320,9 @@ pub unsafe extern "C" fn fmi3SetInt8(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetUInt8(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const u8,
+    values: *const Fmi3UInt8,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2344,7 +2351,7 @@ pub unsafe extern "C" fn fmi3SetUInt8(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetUInt8 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2375,9 +2382,9 @@ pub unsafe extern "C" fn fmi3SetUInt8(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetInt16(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const i16,
+    values: *const Fmi3Int16,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2406,7 +2413,7 @@ pub unsafe extern "C" fn fmi3SetInt16(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetInt16 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2437,9 +2444,9 @@ pub unsafe extern "C" fn fmi3SetInt16(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetUInt16(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const u16,
+    values: *const Fmi3UInt16,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2468,7 +2475,7 @@ pub unsafe extern "C" fn fmi3SetUInt16(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetUInt16 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2499,9 +2506,9 @@ pub unsafe extern "C" fn fmi3SetUInt16(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetInt32(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const i32,
+    values: *const Fmi3Int32,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2526,7 +2533,7 @@ pub unsafe extern "C" fn fmi3SetInt32(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetInt32 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2557,9 +2564,9 @@ pub unsafe extern "C" fn fmi3SetInt32(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetUInt32(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const u32,
+    values: *const Fmi3UInt32,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2584,7 +2591,7 @@ pub unsafe extern "C" fn fmi3SetUInt32(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetUInt32 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2615,9 +2622,9 @@ pub unsafe extern "C" fn fmi3SetUInt32(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetInt64(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const i64,
+    values: *const Fmi3Int64,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2642,7 +2649,7 @@ pub unsafe extern "C" fn fmi3SetInt64(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetInt64 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2673,9 +2680,9 @@ pub unsafe extern "C" fn fmi3SetInt64(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetUInt64(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const u64,
+    values: *const Fmi3UInt64,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2700,7 +2707,7 @@ pub unsafe extern "C" fn fmi3SetUInt64(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetUInt64 failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2731,9 +2738,9 @@ pub unsafe extern "C" fn fmi3SetUInt64(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetBoolean(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const bool,
+    values: *const Fmi3Boolean,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2758,7 +2765,7 @@ pub unsafe extern "C" fn fmi3SetBoolean(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetBoolean failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2789,9 +2796,9 @@ pub unsafe extern "C" fn fmi3SetBoolean(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetString(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const *const c_char,
+    values: *const Fmi3String,
     n_values: size_t,
 ) -> Fmi3Status {
     let value_references = unsafe {
@@ -2826,13 +2833,13 @@ pub unsafe extern "C" fn fmi3SetString(
                 .map(|status| status.into())
                 .unwrap_or_else(|error| {
                     error!("fmi3SetString failed with error: {:?}.", error);
-                    Fmi3Status::Error
+                    Fmi3Status::Fmi3Error
                 })
         },
 
         Err(conversion_error) => {
             error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -2886,10 +2893,10 @@ pub unsafe extern "C" fn fmi3SetString(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetBinary(
     instance: *mut c_void,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
     value_sizes: *const size_t,
-    values: *const *const u8, // Updated
+    values: *const Fmi3Binary, // Updated
     n_values: size_t,
 ) -> Fmi3Status {
 
@@ -2945,7 +2952,7 @@ pub unsafe extern "C" fn fmi3SetBinary(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetBinary failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -2976,9 +2983,9 @@ pub unsafe extern "C" fn fmi3SetBinary(
 #[no_mangle]
 pub unsafe extern "C" fn fmi3SetClock(
     instance: &mut Fmi3Slave,
-    value_references: *const u32,
+    value_references: *const Fmi3ValueReference,
     n_value_references: size_t,
-    values: *const bool,
+    values: *const Fmi3Clock,
 ) -> Fmi3Status {
 	let value_references = unsafe {
         from_raw_parts(value_references, n_value_references)
@@ -3002,32 +3009,32 @@ pub unsafe extern "C" fn fmi3SetClock(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetClock failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetNumberOfVariableDependencies(
     instance: &mut Fmi3Slave,
-    value_reference: *const i32,
+    value_reference: *const Fmi3ValueReference,
     n_dependencies: *const size_t,
 ) -> Fmi3Status {
     error!("fmi3GetNumberOfVariableDependencies is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetVariableDependencies(
     instance: &mut Fmi3Slave,
-    dependent: *const i32,
+    dependent: *const Fmi3ValueReference,
     element_indices_of_dependent: *const size_t,
-	independents: *const i32,
+	independents: *const Fmi3ValueReference,
 	element_indices_of_independents: *const size_t,
-	dependency_kinds: *const Fmi3DependencyKind,
+	dependency_kinds: *mut Fmi3DependencyKind,
 	n_dependencies: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetVariableDependencies is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
@@ -3038,12 +3045,12 @@ pub extern "C" fn fmi3GetFMUState(
 
     if state.is_null() {
         error!("fmi3GetFMUstate called with state pointing to null!");
-        return Fmi3Status::Error;
+        return Fmi3Status::Fmi3Error;
     }
 
     if instance.is_null() {
         error!("fmi3GetFMUstate called with instance pointing to null!");
-        return Fmi3Status::Error;
+        return Fmi3Status::Fmi3Error;
     }
 
     let cmd = Fmi3Command {
@@ -3072,12 +3079,12 @@ pub extern "C" fn fmi3GetFMUState(
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     error!("fmi3GetFMUstate: Unknown status ({:?}) returned from backend.", result.status);
-                    Fmi3Status::Fatal
+                    Fmi3Status::Fmi3Fatal
                 })
         }
         Err(error) => {
             error!("fmi3GetFMUstate failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         }
     }
 }
@@ -3089,11 +3096,11 @@ pub extern "C" fn fmi3SetFMUState(
 ) -> Fmi3Status {
     if instance.is_null() {
         error!("fmi3SetFMUstate called with instance pointing to null!");
-        return Fmi3Status::Error;
+        return Fmi3Status::Fmi3Error;
     }
     if state.is_null() {
         error!("fmi3SetFMUstate called with state pointing to null!");
-        return Fmi3Status::Error;
+        return Fmi3Status::Fmi3Error;
     }
     let state_ref = unsafe { &*state };
     let state_bytes = state_ref.bytes.to_owned();
@@ -3109,7 +3116,7 @@ pub extern "C" fn fmi3SetFMUState(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             error!("fmi3SetFMUstate failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -3120,12 +3127,12 @@ pub extern "C" fn fmi3FreeFMUState(
 ) -> Fmi3Status {
     if state.is_null(){
         warn!("fmi3FreeFMUstate called with state pointing to null!");
-        return Fmi3Status::OK;
+        return Fmi3Status::Fmi3OK;
     }
 
     if instance.is_null(){
         warn!("fmi3FreeFMUstate called with instance pointing to null!");
-        return Fmi3Status::OK;
+        return Fmi3Status::Fmi3OK;
     }
 
     unsafe {
@@ -3133,7 +3140,7 @@ pub extern "C" fn fmi3FreeFMUState(
 
         if state_ptr.is_null() {
             warn!("fmi3FreeFMUstate called with state pointing to null!");
-            return Fmi3Status::OK;
+            return Fmi3Status::Fmi3OK;
         }
 
         drop(Box::from_raw(state_ptr)); 
@@ -3141,7 +3148,7 @@ pub extern "C" fn fmi3FreeFMUState(
 
     }
 
-    Fmi3Status::OK
+    Fmi3Status::Fmi3OK
 }
 
 #[no_mangle]
@@ -3151,21 +3158,21 @@ pub extern "C" fn fmi3SerializedFMUStateSize(
 	size: &mut size_t,
 ) -> Fmi3Status {
     *size = state.bytes.len();
-    Fmi3Status::OK
+    Fmi3Status::Fmi3OK
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3SerializeFMUState(
     instance: &Fmi3Slave,
     state: &SlaveState,
-	serialized_state: *mut u8,
+	serialized_state: *mut Fmi3Byte,
 	size: size_t,
 ) -> Fmi3Status {
     let serialized_state_len = state.bytes.len();
 
     if serialized_state_len > size {
         error!("Error while calling fmi3SerializeFMUstate: FMUstate too big to be contained in given byte vector.");
-        return Fmi3Status::Error;
+        return Fmi3Status::Fmi3Error;
     }
 
     unsafe { std::ptr::copy(
@@ -3174,13 +3181,13 @@ pub extern "C" fn fmi3SerializeFMUState(
         serialized_state_len
     ) };
 
-    Fmi3Status::OK
+    Fmi3Status::Fmi3OK
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn fmi3DeserializeFMUState(
     instance: &mut Fmi3Slave,
-	serialized_state: *const u8,
+	serialized_state: *const Fmi3Byte,
 	size: size_t,
 	state: *mut *mut SlaveState,
 ) -> Fmi3Status {
@@ -3188,7 +3195,7 @@ pub unsafe extern "C" fn fmi3DeserializeFMUState(
 
     if state.is_null() {
         error!("fmi3DeSerializeFMUstate called with state pointing to null!");
-        return Fmi3Status::Error;
+        return Fmi3Status::Fmi3Error;
     }
 
     unsafe {
@@ -3203,39 +3210,39 @@ pub unsafe extern "C" fn fmi3DeserializeFMUState(
             state.bytes = serialized_state.to_owned();
         }
     }
-    Fmi3Status::OK
+    Fmi3Status::Fmi3OK
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetDirectionalDerivative(
     instance: &mut Fmi3Slave,
-	unknowns: *const u32,
+	unknowns: *const Fmi3ValueReference,
 	n_unknowns: size_t,
-	knowns: *const u32,
+	knowns: *const Fmi3ValueReference,
 	n_knowns: size_t,
-	delta_knowns: *const f64,
+	delta_knowns: *const Fmi3Float64,
 	n_delta_knowns: size_t,
-	delta_unknowns: *const f64,
+	delta_unknowns: *const Fmi3Float64,
 	n_delta_unknowns: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetDirectionalDerivative is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
 pub extern "C" fn fmi3GetAdjointDerivative(
     instance: &mut Fmi3Slave,
-	unknowns: *const u32,
+	unknowns: *const Fmi3ValueReference,
 	n_unknowns: size_t,
-	knowns: *const u32,
+	knowns: *const Fmi3ValueReference,
 	n_knowns: size_t,
-	delta_unknowns: *const f64,
+	delta_unknowns: *const Fmi3Float64,
 	n_delta_unknowns: size_t,
-	delta_knowns: *const f64,
+	delta_knowns: *const Fmi3Float64,
 	n_delta_knowns: size_t,
 ) -> Fmi3Status {
     error!("fmi3GetAdjointDerivative is not implemented by UNIFMU.");
-    Fmi3Status::Error
+    Fmi3Status::Fmi3Error
 }
 
 #[no_mangle]
@@ -3243,7 +3250,7 @@ pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
     // error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
-    // Fmi3Status::Error
+    // Fmi3Status::Fmi3Error
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3EnterConfigurationMode(
             fmi3_messages::Fmi3EnterConfigurationMode {}
@@ -3255,7 +3262,7 @@ pub extern "C" fn fmi3EnterConfigurationMode(
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             error!("fmi3EnterConfigurationMode failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -3264,7 +3271,7 @@ pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
     // error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
-    // Fmi3Status::Error
+    // Fmi3Status::Fmi3Error
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3ExitConfigurationMode(
             fmi3_messages::Fmi3ExitConfigurationMode {}
@@ -3276,7 +3283,7 @@ pub extern "C" fn fmi3ExitConfigurationMode(
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             error!("fmi3ExitConfigurationMode failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -3293,7 +3300,7 @@ pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             error!("Termination failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
 
@@ -3323,6 +3330,6 @@ pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             error!("fmi3Reset failed with error: {:?}.", error);
-            Fmi3Status::Error
+            Fmi3Status::Fmi3Error
         })
 }
