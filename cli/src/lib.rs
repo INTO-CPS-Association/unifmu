@@ -49,7 +49,7 @@ lazy_static! {
     static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi2/main_local.py", "main.py"),
+            ("python/main_local.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
@@ -83,8 +83,8 @@ lazy_static! {
     static ref CSHARPASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("csharp/backend_local_head.cs", "backend_head.cs"),
-            ("csharp/backend_body.cs", "backend_body.cs"),
-            ("csharp/model.cs", "model.cs"),
+            ("csharp/fmi2/backend_body.cs", "backend_body.cs"),
+            ("csharp/fmi2/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
             (
@@ -97,7 +97,7 @@ lazy_static! {
         fmi3_resources: vec![
             ("csharp/fmi3/backend.cs", "backend.cs"),
             ("csharp/fmi3/model.cs", "model.cs"),
-            ("csharp/model.csproj", "model.csproj"),
+            ("csharp/fmi3/model.csproj", "model.csproj"),
             ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
             (
                 "auto_generated/UnifmuHandshake.cs",
@@ -110,12 +110,15 @@ lazy_static! {
     static ref JAVAASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/main/java/LocalBackend.java",
+                "java/src/common/java/LocalBackend.java",
                 "src/main/java/Backend.java"
             ),
-            ("java/src/main/java/Model.java", "src/main/java/Model.java"),
             (
-                "java/src/main/java/AbstractBackend.java",
+                "java/src/fmi2/java/Model.java",
+                "src/main/java/Model.java"
+            ),
+            (
+                "java/src/fmi2/java/AbstractBackend.java",
                 "src/main/java/AbstractBackend.java"
             ),
             ("java/build.gradle", "build.gradle"),
@@ -172,7 +175,7 @@ lazy_static! {
     static ref PYTHONASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi2/main_remote.py", "main.py"),
+            ("python/main_remote.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi2/backend.py", "backend.py"),
             ("python/fmi2/model.py", "model.py"),
@@ -207,12 +210,15 @@ lazy_static! {
     static ref JAVAASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/main/java/RemoteBackend.java",
+                "java/src/common/java/RemoteBackend.java",
                 "src/main/java/Backend.java"
             ),
-            ("java/src/main/java/Model.java", "src/main/java/Model.java"),
             (
-                "java/src/main/java/AbstractBackend.java",
+                "java/src/fmi2/java/Model.java",
+                "src/main/java/Model.java"
+            ),
+            (
+                "java/src/fmi2/java/AbstractBackend.java",
                 "src/main/java/AbstractBackend.java"
             ),
             ("java/build.gradle", "build.gradle"),
@@ -239,10 +245,10 @@ lazy_static! {
         ],
         fmi3_resources: vec![
             (
-                "java/fmi3/src/main/java/BackendPrivate.java",
+                "java/src/fmi3/java/BackendPrivate.java",
                 "src/main/java/Backend.java"
             ),
-            ("java/fmi3/src/main/java/Model.java", "src/main/java/Model.java"),
+            ("java/src/fmi3/java/Model.java", "src/main/java/Model.java"),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
@@ -270,8 +276,8 @@ lazy_static! {
     static ref CSHARPASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("csharp/backend_remote_head.cs", "backend_head.cs"),
-            ("csharp/backend_body.cs", "backend_body.cs"),
-            ("csharp/model.cs", "model.cs"),
+            ("csharp/fmi2/backend_body.cs", "backend_body.cs"),
+            ("csharp/fmi2/model.cs", "model.cs"),
             ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi2Messages.cs", "schemas/Fmi2Messages.cs"),
             (
@@ -284,7 +290,7 @@ lazy_static! {
         fmi3_resources: vec![
             ("csharp/fmi3/backend_private.cs", "backend.cs"),
             ("csharp/fmi3/model.cs", "model.cs"),
-            ("csharp/model.csproj", "model.csproj"),
+            ("csharp/fmi3/model.csproj", "model.csproj"),
             ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
             (
                 "auto_generated/UnifmuHandshake.cs",
@@ -303,7 +309,7 @@ lazy_static! {
     static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi2/main_blackbox.py", "main.py"),
+            ("python/main_blackbox.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi2/blackbox_backend.py", "blackbox_backend.py"),
             (
