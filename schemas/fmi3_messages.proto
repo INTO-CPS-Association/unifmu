@@ -521,7 +521,7 @@ message Fmi3Return {
     Fmi3GetBinaryReturn get_binary = 17;
     Fmi3GetDirectionalDerivativeReturn get_directional_derivative = 18;
     Fmi3GetAdjointDerivativeReturn get_adjoint_derivative = 19;
-    Fmi3GetOutputDerivativesReturn get_output_derivative = 20;
+    Fmi3GetOutputDerivativesReturn get_output_derivatives = 20;
     Fmi3SerializeFmuStateReturn serialize_fmu_state = 21;
     Fmi3GetClockReturn get_clock = 22;
     Fmi3UpdateDiscreteStatesReturn update_discrete_states = 23;

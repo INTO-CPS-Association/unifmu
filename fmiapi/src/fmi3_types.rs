@@ -1,6 +1,13 @@
-use std::{ffi::{c_char}};
+use std::{
+    error::Error,
+    ffi::{CStr, c_char},
+    fmt::Display,
+    str::Utf8Error
+};
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+
+use crate::fmi3_messages;
 
 pub type Fmi3Float32 = f32;
 pub type Fmi3Float64 = f64;
@@ -27,6 +34,30 @@ pub enum Fmi3Status {
     Fmi3Discard = 2,
     Fmi3Error = 3,
     Fmi3Fatal = 4,
+}
+
+impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
+    fn from(src: fmi3_messages::Fmi3StatusReturn) -> Self {
+        match src.status() {
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::Fmi3OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Fmi3Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Fmi3Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Fmi3Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fmi3Fatal,
+        }
+    }
+}
+
+impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
+    fn from(s: fmi3_messages::Fmi3Status) -> Self {
+        match s {
+            fmi3_messages::Fmi3Status::Fmi3Ok => Self::Fmi3OK,
+            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Fmi3Warning,
+            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Fmi3Discard,
+            fmi3_messages::Fmi3Status::Fmi3Error => Self::Fmi3Error,
+            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fmi3Fatal,
+        }
+    }
 }
 
 #[repr(i32)]
@@ -106,3 +137,59 @@ pub type Fmi3IntermediateUpdateCallback = unsafe extern "C" fn(
 /// Callbacks of this type are part of the FMI3 API that is not supported by
 /// UniFMU.
 pub type UnsupportedCallback = unsafe extern "C" fn(...);
+
+// ---------------------- Helper Functions ------------------------
+
+pub fn c2s(c: Fmi3String) -> Result<String, StringConversionError> {
+    unsafe {
+        c.as_ref()
+            .ok_or(StringConversionError::NullError)
+            .map(|c_pointer| CStr::from_ptr(c_pointer))
+            .and_then(|c_str| 
+                c_str.to_str()
+                    .map_err(StringConversionError::from)
+            )
+            .map(|r_str| r_str.to_string())
+    }
+}
+
+pub fn c2non_empty_s(c: Fmi3String) -> Result<String, StringConversionError> {
+    c2s(c).and_then(|s|
+        if !s.is_empty() {
+            Ok(s)
+        } else {
+            Err(StringConversionError::EmptyError)
+        }
+    )
+}
+
+#[derive(Debug)]
+pub enum StringConversionError {
+    Utf8ConversionError(Utf8Error),
+    NullError,
+    EmptyError
+}
+
+impl Display for StringConversionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Utf8ConversionError(utf8_error) => {
+                write!(f, "utf-8 error: {}", utf8_error)
+            }
+            Self::NullError => {
+                write!(f, "string pointer was null pointer")
+            }
+            Self::EmptyError => {
+                write!(f, "string is empty")
+            }
+        }
+    }
+}
+
+impl Error for StringConversionError {}
+
+impl From<Utf8Error> for StringConversionError {
+    fn from(value: Utf8Error) -> Self {
+        Self::Utf8ConversionError(value)
+    }
+}
