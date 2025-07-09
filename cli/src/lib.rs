@@ -66,6 +66,8 @@ lazy_static! {
         ],
         fmi3_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
+            ("python/main_local.py", "main.py"),
+            ("python/fmi3/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi3/backend.py", "backend.py"),
             ("python/fmi3/model.py", "model.py"),
             (
@@ -192,7 +194,9 @@ lazy_static! {
         ],
         fmi3_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
-            ("python/fmi3/backend_remote.py", "backend.py"),
+            ("python/main_remote.py", "main.py"),
+            ("python/fmi3/abstract_backend.py", "abstract_backend.py"),
+            ("python/fmi3/backend.py", "backend.py"),
             ("python/fmi3/model.py", "model.py"),
             (
                 "auto_generated/fmi3_messages_pb2.py",
