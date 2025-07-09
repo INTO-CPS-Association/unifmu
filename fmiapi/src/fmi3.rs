@@ -14,7 +14,6 @@ use url::Url;
 use tracing::{error, warn};
 use tracing_subscriber;
 
-use crate::dispatcher::Dispatch;
 use crate::fmi3_messages::{
     self,
     Fmi3Command,
