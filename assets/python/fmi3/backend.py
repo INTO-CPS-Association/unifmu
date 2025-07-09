@@ -233,7 +233,7 @@ class Backend(AbstractBackend):
 
                 case "Fmi3GetUInt32":
                     status, values = model.fmi3GetUInt32(
-                        data.value_reference
+                        data.value_references
                     )
                     self.send_reply(
                         Fmi3Return(
