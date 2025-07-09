@@ -497,3 +497,37 @@ message Fmi3Command {
     Fmi3SetShiftFraction Fmi3SetShiftFraction = 58;
   }
 }
+
+// ---------------------- FMI Return Wrapper ------------------------
+
+message Fmi3Return {
+  oneof return_message {
+    Fmi3EmptyReturn empty = 1;
+    Fmi3StatusReturn status = 2;
+    Fmi3DoStepReturn do_step = 3;
+    Fmi3FreeInstanceReturn free_instance = 4;
+    Fmi3GetFloat32Return get_float_32 = 5;
+    Fmi3GetFloat64Return get_float_64 = 6;
+    Fmi3GetInt8Return get_int_8 = 7;
+    Fmi3GetUInt8Return get_u_int_8 = 8;
+    Fmi3GetInt16Return get_int_16 = 9;
+    Fmi3GetUInt16Return get_u_int_16 = 10;
+    Fmi3GetInt32Return get_int_32 = 11;
+    Fmi3GetUInt32Return get_u_int_32 = 12;
+    Fmi3GetInt64Return get_int_64 = 13;
+    Fmi3GetUInt64Return get_u_int_64 = 14;
+    Fmi3GetBooleanReturn get_boolean = 15;
+    Fmi3GetStringReturn get_string = 16;
+    Fmi3GetBinaryReturn get_binary = 17;
+    Fmi3GetDirectionalDerivativeReturn get_directional_derivative = 18;
+    Fmi3GetAdjointDerivativeReturn get_adjoint_derivative = 19;
+    Fmi3GetOutputDerivativesReturn get_output_derivative = 20;
+    Fmi3SerializeFmuStateReturn serialize_fmu_state = 21;
+    Fmi3GetClockReturn get_clock = 22;
+    Fmi3UpdateDiscreteStatesReturn update_discrete_states = 23;
+    Fmi3GetIntervalDecimalReturn get_interval_decimal = 24;
+    Fmi3GetIntervalFractionReturn get_interval_fraction = 25;
+    Fmi3GetShiftDecimalReturn get_shift_decimal = 26;
+    Fmi3GetShiftFractionReturn get_shift_fraction = 27;
+  }
+}
