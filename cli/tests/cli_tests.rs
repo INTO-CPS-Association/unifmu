@@ -40,7 +40,7 @@ fn test_vdm_check_csharp_fmi2_local() {
 }
 
 #[test]
-#[parallel]
+#[serial]
 fn test_vdm_check_java_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
@@ -51,7 +51,7 @@ fn test_vdm_check_java_fmi2_local() {
 }
 
 #[test]
-#[serial]
+#[parallel]
 fn test_vdm_check_python_fmi2_local() {
     let fmu = LocalFmu::get_clone(
         &FmiVersion::Fmi2, 
