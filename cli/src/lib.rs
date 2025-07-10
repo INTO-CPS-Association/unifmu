@@ -329,7 +329,9 @@ lazy_static! {
         ],
         fmi3_resources: vec![
             ("python/requirements.txt", "requirements.txt"),
-            ("common/fmi3/backend_remote_FMU.py", "backend.py"),
+            ("python/main_blackbox.py", "main.py"),
+            ("python/fmi3/abstract_backend.py", "abstract_backend.py"),
+            ("python/fmi3/blackbox_backend.py", "blackbox_backend.py"),
             (
                 "auto_generated/fmi3_messages_pb2.py",
                 "schemas/fmi3_messages_pb2.py"
