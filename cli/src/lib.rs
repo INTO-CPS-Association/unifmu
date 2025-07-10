@@ -95,9 +95,10 @@ lazy_static! {
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("csharp/fmi3/backend.cs", "backend.cs"),
+            ("csharp/backend_local_head.cs", "backend_head.cs"),
+            ("csharp/fmi3/backend_body.cs", "backend_body.cs"),
             ("csharp/fmi3/model.cs", "model.cs"),
-            ("csharp/fmi3/model.csproj", "model.csproj"),
+            ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
             (
                 "auto_generated/UnifmuHandshake.cs",
@@ -290,9 +291,10 @@ lazy_static! {
             ("csharp/README.md", "README.md"),
         ],
         fmi3_resources: vec![
-            ("csharp/fmi3/backend_private.cs", "backend.cs"),
+            ("csharp/backend_remote_head.cs", "backend_head.cs"),
+            ("csharp/fmi3/backend_body.cs", "backend_body.cs"),
             ("csharp/fmi3/model.cs", "model.cs"),
-            ("csharp/fmi3/model.csproj", "model.csproj"),
+            ("csharp/model.csproj", "model.csproj"),
             ("auto_generated/Fmi3Messages.cs", "schemas/Fmi3Messages.cs"),
             (
                 "auto_generated/UnifmuHandshake.cs",
