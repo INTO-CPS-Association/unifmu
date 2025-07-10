@@ -28,3 +28,4 @@ duct = "0.13.7"
 predicates = "*"
 serial_test = "3.2.0"
 tokio = {version = "*", features = ["full"]}
+unifmu_macros = {path = "../unifmu_macros", version = "*"}
