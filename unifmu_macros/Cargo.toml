@@ -1,0 +1,9 @@
+[package]
+edition = "2021"
+name = "unifmu_macros"
+version = "0.0.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]

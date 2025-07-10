@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
 
-members = ["fmiapi", "cli"]
+members = ["fmiapi", "cli", "unifmu_macros"]
