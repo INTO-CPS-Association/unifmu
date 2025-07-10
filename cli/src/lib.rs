@@ -1,9 +1,7 @@
 use clap::ValueEnum;
 use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
-use log::info;
-use log::error;
-use log::warn;
+use log::{error, info};
 use rust_embed::RustEmbed;
 use std::{fs::File, path::{Path, PathBuf}};
 use tempfile::TempDir;
@@ -426,7 +424,6 @@ pub fn generate(
                                 destination_folder_path.display(),
                                 io_error
                             );
-                            ()
                         })?;
 
                     let destination_path = destination_folder_path
@@ -448,7 +445,6 @@ pub fn generate(
                             destination_path.display(),
                             io_error
                         );
-                        ()
                     })
                 }
             }
@@ -663,7 +659,6 @@ pub fn generate_distributed(
                                 destination_folder_path.display(),
                                 io_error
                             );
-                            ()
                         })?;
 
                     let destination_path = destination_folder_path
@@ -679,7 +674,6 @@ pub fn generate_distributed(
                             destination_path.display(),
                             io_error
                         );
-                        ()
                     })
                 }
             }

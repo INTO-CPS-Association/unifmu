@@ -1,7 +1,7 @@
 // Type definitions for parameters in functions crossing the ABI boundary
 // betweeen C and Rust.
 
-use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int, CStr}, fmt::{Debug, Display}};
+use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int}, fmt::{Debug, Display}};
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 

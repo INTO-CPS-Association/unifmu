@@ -1,4 +1,5 @@
-/// Contains common functions for the test suite.
+//! Contains common functions for the test suite.
+#![allow(dead_code)]
 
 use std::{
     ffi::OsString,
@@ -289,7 +290,7 @@ impl FmuBackendImplementationLanguage {
 }
 
 fn gradle_command_base() -> (String, String) {
-    return match std::env::consts::OS {
+    match std::env::consts::OS {
         "windows" => (
             String::from("powershell.exe"),
             String::from("./gradlew.bat")
@@ -302,7 +303,7 @@ fn gradle_command_base() -> (String, String) {
             String::from("sh"),
             String::from("gradlew")
         )
-    };
+    }
 }
 
 /// The major versions of FMI supported by UNIFMU.
@@ -1165,9 +1166,9 @@ impl ZippedTestableFmu for ZippedDistributedFmu {
 
 impl BasicFmu for BlackboxDistributedFmu {
     fn new(
-        name: String,
-        version: FmiVersion,
-        language: FmuBackendImplementationLanguage
+        _name: String,
+        _version: FmiVersion,
+        _language: FmuBackendImplementationLanguage
     ) -> Self {
         todo!("Use new_persistent until implemented");
     }
@@ -1481,9 +1482,8 @@ pub trait PostGenerationSetup: BasicFmu {
     /// Code to run after the fmu files have been generated, but before it
     /// is considered a valid, testable fmu.
     fn post_generation_setup(&self) {
-        match self.language() {
-            FmuBackendImplementationLanguage::Java => self.java_setup(),
-            _ => {}
+        if self.language() == &FmuBackendImplementationLanguage::Java {
+            self.java_setup()
         }
     }
 
@@ -1558,11 +1558,11 @@ pub trait ZippedTestableFmu: BasicFmu {
 /// distributed FMUs
 pub trait DistributedFileStructure: BasicFmu {
     fn proxy_directory_name(&self) -> String {
-        Self::append_proxy_marker(&self.name())
+        Self::append_proxy_marker(self.name())
     }
 
     fn backend_directory_name(&self) -> String {
-        Self::append_backend_marker(&self.name())
+        Self::append_backend_marker(self.name())
     }
 
     fn proxy_directory_path(&self) -> PathBuf {
