@@ -16,6 +16,20 @@ impl FmiVersion {
             FmiVersion::Fmi3 => std::string::String::from("fmi3")
         }
     }
+
+    pub fn type_path(&self) -> proc_macro2::TokenStream {
+        let ident_string = match self {
+            FmiVersion::Fmi2 => "Fmi2",
+            FmiVersion::Fmi3 => "Fmi3"
+        };
+
+        let path_segment = syn::PathSegment {
+            ident: syn::Ident::new(ident_string, proc_macro2::Span::call_site()),
+            arguments: syn::PathArguments::None
+        };
+
+        quote::quote! {common::FmiVersion::#path_segment}
+    }
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -35,6 +49,28 @@ impl ProgrammingLanguage {
             ProgrammingLanguage::Python => std::string::String::from("python")
         }
     }
+
+    pub fn type_path(&self) -> proc_macro2::TokenStream {
+        let ident_string = match self {
+            ProgrammingLanguage::CSharp => "CSharp",
+            ProgrammingLanguage::Java => "Java",
+            ProgrammingLanguage::Python => "Python"
+        };
+
+        let path_segment = syn::PathSegment {
+            ident: syn::Ident::new(ident_string, proc_macro2::Span::call_site()),
+            arguments: syn::PathArguments::None
+        };
+
+        quote::quote! {common::FmuBackendImplementationLanguage::#path_segment}
+    }
+
+    pub fn processing_attribute(&self) -> syn::Attribute {
+        match self {
+            ProgrammingLanguage::Java => syn::parse_quote!{#[serial]},
+            _ => syn::parse_quote!{#[parallel]}
+        }
+    }
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -50,6 +86,13 @@ impl FmuPackaging {
         match self {
             FmuPackaging::BareDirectory => std::string::String::from("bare_directory"),
             FmuPackaging::Zipped => std::string::String::from("zipped")
+        }
+    }
+
+    pub fn struct_type_part(&self) -> std::string::String {
+        match self {
+            FmuPackaging::BareDirectory => std::string::String::from(""),
+            FmuPackaging::Zipped => std::string::String::from("Zipped")
         }
     }
 }
@@ -71,6 +114,14 @@ impl FmuBackend {
             FmuBackend::Local => std::string::String::from("local")
         }
     }
+
+    pub fn struct_type_part(&self) -> std::string::String {
+        match self {
+            FmuBackend::Blackbox => std::string::String::from("BlackboxDistributed"),
+            FmuBackend::Distributed => std::string::String::from("Distributed"),
+            FmuBackend::Local => std::string::String::from("Local")
+        }
+    }
 }
 
 struct FmuVariant {
@@ -89,6 +140,34 @@ impl FmuVariant {
             self.packaging.function_suffix_part(),
             self.backend.function_suffix_part()
         )
+    }
+
+    pub fn struct_type(&self) -> proc_macro2::TokenStream {
+        let struct_path_segment = syn::PathSegment {
+            ident: syn::Ident::new(
+                &std::format!(
+                    "{}{}Fmu",
+                    self.packaging.struct_type_part(),
+                    self.backend.struct_type_part()
+                ),
+                proc_macro2::Span::call_site()
+            ),
+            arguments: syn::PathArguments::None
+        };
+
+        quote::quote! {common::#struct_path_segment}
+    }
+
+    pub fn version_type(&self) -> proc_macro2::TokenStream {
+        self.version.type_path()
+    }
+
+    pub fn language_type(&self) -> proc_macro2::TokenStream {
+        self.language.type_path()
+    }
+
+    pub fn extra_attribute(&self) -> syn::Attribute {
+        self.language.processing_attribute()
     }
 }
 
@@ -119,6 +198,67 @@ impl FmuPossibilities {
             blackbox: true,
             distributed: true,
             local: true
+        }
+    }
+
+    pub fn with_all_disabled() -> Self {
+        FmuPossibilities {
+            fmi2: false,
+            fmi3: false,
+            csharp: false,
+            java: false,
+            python: false,
+            bare_directory: false,
+            zipped: false,
+            blackbox: false,
+            distributed: false,
+            local: false
+        }
+    }
+
+    pub fn enable_possibility(&mut self, possibility_name: &str) -> Result<(),()> {
+        self.update_possibility(possibility_name, true)
+    }
+
+    pub fn disable_possibility(&mut self, possibility_name: &str) -> Result<(),()> {
+        self.update_possibility(possibility_name, false)
+    }
+
+    pub fn update_possibility(&mut self, possibility_name: &str, new_value: bool) -> Result<(),()> {
+        match possibility_name {
+            "fmi2" => self.fmi2 = new_value,
+            "fmi3" => self.fmi3 = new_value,
+            "csharp" => self.csharp = new_value,
+            "jave" => self.java = new_value,
+            "python" => self.python = new_value,
+            "bare_directory" => self.bare_directory = new_value,
+            "zipped" => self.zipped = new_value,
+            "blackbox" => self.blackbox = new_value,
+            "distributed" => self.distributed = new_value,
+            "local" => self.local = new_value,
+            _ => return std::result::Result::Err(())
+        }
+        std::result::Result::Ok(())
+    }
+
+    pub fn enable_all_fully_disabled_possibility_groups(&mut self) {
+        if !self.fmi2 && !self.fmi3 {
+            self.fmi2 = true;
+            self.fmi3 = true;
+        }
+        if !self.csharp && !self.java && !self.python {
+            self.csharp = true;
+            self.java = true;
+            self.python = true;
+        }
+        if !self.bare_directory && !self.zipped {
+            self.bare_directory = true;
+            self.zipped = true;
+        }
+        if !self.blackbox && !self.distributed && !self.local {
+            self.blackbox = true;
+            self.distributed = true;
+            self.local = true;
         }
     }
 
@@ -158,7 +298,7 @@ impl FmuPossibilities {
                                 || packaging != FmuPackaging::BareDirectory
                             )
                         {
-                            // Blackbox FMU's must be python based and not zipped.
+                            // Blackbox FMUs must be python based and not zipped.
                             continue;
                         }
 
@@ -174,37 +314,139 @@ impl FmuPossibilities {
     }
 }
 
+impl syn::parse::Parse for FmuPossibilities {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        if input.peek(syn::Ident) {
+            let initial_identity: syn::Ident = input.parse()?;
+            let _: syn::Token![:] = input.parse()?;
+        
+            match initial_identity.to_string().as_str() {
+                "include" => {
+                    let mut fmu_possibilities = FmuPossibilities::with_all_disabled();
+
+                    while !input.is_empty() {
+                        let included: syn::Ident = input.parse()?;
+
+                        fmu_possibilities.enable_possibility(&included.to_string())
+                            .map_err(|_| syn::Error::new(
+                                included.span(),
+                                "the excluded possibility is not recognized"
+                            ))?;
+
+                        if input.peek(syn::Token![,]) {
+                            let _: syn::Token![,] = input.parse()?;
+                        }
+                    }
+                    fmu_possibilities.enable_all_fully_disabled_possibility_groups();
+
+                    std::result::Result::Ok(fmu_possibilities)
+                }
+                "exclude" => {
+                    let mut fmu_possibilities = FmuPossibilities::with_all_enabled();
+
+                    while !input.is_empty() {
+                        let excluded: syn::Ident = input.parse()?;
+
+                        fmu_possibilities.disable_possibility(&excluded.to_string())
+                            .map_err(|_| syn::Error::new(
+                                excluded.span(),
+                                "the excluded possibility is not recognized"
+                            ))?;
+
+                        if input.peek(syn::Token![,]) {
+                            let _: syn::Token![,] = input.parse()?;
+                        }
+                    }
+                    std::result::Result::Ok(fmu_possibilities)
+                }
+                _ => {
+                    std::result::Result::Err(syn::Error::new(
+                        initial_identity.span(),
+                        "first attribute must be either 'include' or 'exclude'"
+                    ))
+                }
+            }
+        } else {
+            std::result::Result::Ok(FmuPossibilities::with_all_enabled())
+        }
+    }
+}
+
 #[proc_macro_attribute]
 pub fn for_each_fmu(
-    _attr: proc_macro::TokenStream,
+    attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream
 ) -> proc_macro::TokenStream {
     let original_function = syn::parse_macro_input!(item as syn::ItemFn);
+    let possibilities = syn::parse_macro_input!(attr as FmuPossibilities);
 
-    let functions = FmuPossibilities::with_all_enabled()
+    let marker_ident = syn::Ident::new(
+        "WildFmu",
+        proc_macro2::Span::call_site()
+    );
+
+    let functions = possibilities
         .get_variations()
         .into_iter()
-        .map(|variation| {
-            let function_clone = original_function.clone();
+        .map(|variant| {
+            let mut function_clone = original_function.clone();
+
+            let mut new_attrs: Vec<syn::Attribute> = Vec::with_capacity(function_clone.attrs.capacity() + 1);
+            new_attrs.append(&mut function_clone.attrs);
+            new_attrs.push(variant.extra_attribute());
+
+            let variant_struct = variant.struct_type();
+            let variant_version = variant.version_type();
+            let variant_language = variant.language_type();
+
+            let new_block = syn::Block {
+                brace_token: function_clone.block.brace_token,
+                stmts: function_clone.block.stmts.iter()
+                    .map(|stmt| {
+                        if let syn::Stmt::Local(local_stmt) = stmt {
+                            if let std::option::Option::Some(local_init) = &local_stmt.init {
+                                if let syn::Expr::Struct(struct_expr) = local_init.expr.as_ref() {
+                                    if struct_expr.path.is_ident(&marker_ident) {
+                                        let variable_pattern = &local_stmt.pat;
+                                        let new_stmt: syn::Stmt = syn::parse(
+                                            quote::quote! {
+                                                let #variable_pattern = #variant_struct::get_clone(
+                                                    &#variant_version,
+                                                    &#variant_language
+                                                );
+                                            }.into()
+                                        ).expect("macro should be able to expand DummyFmu into actual Fmu variant");
+                                        return new_stmt
+                                    }
+                                }
+                            }
+                        };
+                        stmt.to_owned()
+                    })
+                    .collect()
+            };
 
             syn::ItemFn {
+                attrs: new_attrs,
                 sig: syn::Signature {
                     ident: syn::Ident::new(
                         &std::format!(
                             "{}{}",
                             function_clone.sig.ident,
-                            variation.function_suffix()
+                            variant.function_suffix()
                         ), 
                         function_clone.sig.ident.span()
                     ),
                     ..function_clone.sig
                 },
+                block: std::boxed::Box::new(new_block),
                 ..function_clone
             }
         });
 
     let expanded = quote::quote! {
         #(#functions)*
+
     };
 
     proc_macro::TokenStream::from(expanded)
