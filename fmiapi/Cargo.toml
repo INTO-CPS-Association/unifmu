@@ -9,22 +9,19 @@ version = "0.12.0"
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-bytes = "*"
-colored = "3.0.0"
-libc = "*"
-num_enum = "*"
-prost = "*"
-serde = {version = "1.0.127", features = ["derive"]}
-subprocess = "*"
-tokio = {version = "*", features = ["rt"]}
-toml = "*"
+bytes = "1"
+colored = "3"
+libc = "0.2"
+num_enum = "0.7"
+prost = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+subprocess = "0.2"
+tokio = { version = "1", features = ["rt"] }
+toml = "0.9"
 tracing = "0.1"
 tracing-subscriber = "0.3"
-url = "*"
-zeromq = {git = "https://github.com/zeromq/zmq.rs.git", default-features = false, features = [
-  "tokio-runtime",
-  "tcp-transport",
-]}
+url = "2.5"
+zeromq = { version = "0.4", default-features = false, features = ["tokio-runtime", "tcp-transport"] }
 
 [build-dependencies]
-prost-build = "0.8.0"
+prost-build = "0.13"
