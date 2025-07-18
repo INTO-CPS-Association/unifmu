@@ -1,6 +1,210 @@
 // --------------------- Macros for use in rust tests -------------------------
 extern crate proc_macro;
 
+/// Replaces the decorated test function with duplicates for each variation of
+/// FMU that the UniFMU tool can generate.
+/// 
+/// Each duplicate will have a unique function name based on the FMU variation,
+/// all instances of WildFmu{} in the duplicate will be replaced with a call to
+/// get_clone() for the relevant Fmu struct, and extra attribute macros will be
+/// added to the duplicate if needed for proper test execution.
+/// 
+/// Adding either the "include:" or "exclude:" attribute to the macro, followed
+/// by a comma seperated list of traits, will limit the duplicates to
+/// variations with or without those traits respectively.
+/// 
+/// For example decorating a function with the "include:" attribute
+/// ```
+/// [for_each_fmu(include: fmi2, python, bare_directory)]
+/// [test]
+/// some_function() {
+///     let _dummy_fmu = WildFmu{};
+/// }
+/// ```
+/// will expand it to
+/// ```
+/// [test]
+/// [parallel]
+/// some_function_fmi2_python_bare_directory_local() {
+///     let _dummy_fmu = BasicFmu::get_clone(
+///         FmiVersion::Fmi2,
+///         FmuBackendImplementationLanguage::Python,
+///     );
+/// }
+/// 
+/// [test]
+/// [parallel]
+/// some_function_fmi2_python_bare_directory_distributed() {
+///     let _dummy_fmu = DistributedFmu::get_clone(
+///         FmiVersion::Fmi2,
+///         FmuBackendImplementationLanguage::Python,
+///     );
+/// }
+/// 
+/// [test]
+/// [parallel]
+/// some_function_fmi2_python_bare_directory_blackbox() {
+///     let _dummy_fmu = BlackboxDistributedFmu::get_clone(
+///         FmiVersion::Fmi2,
+///         FmuBackendImplementationLanguage::Python,
+///     );
+/// }
+/// ```
+/// 
+/// while decorating the same function with the "exclude:" attribute
+/// ```
+/// [for_each_fmu(exclude: fmi2, python, bare_directory)]
+/// [test]
+/// some_function() {
+///     let _dummy_fmu = WildFmu{};
+/// }
+/// ```
+/// will expand it to
+/// ```
+/// [test]
+/// [parallel]
+/// some_function_fmi3_csharp_zipped_local() {
+///     let _dummy_fmu = BasicFmu::get_clone(
+///         FmiVersion::Fmi3,
+///         FmuBackendImplementationLanguage::CSharp,
+///     );
+/// }
+/// 
+/// [test]
+/// [parallel]
+/// some_function_fmi3_csharp_zipped_distributed() {
+///     let _dummy_fmu = DistributedFmu::get_clone(
+///         FmiVersion::Fmi3,
+///         FmuBackendImplementationLanguage::CSharp,
+///     );
+/// }
+/// 
+/// [test]
+/// [serial]
+/// some_function_fmi3_java_zipped_local() {
+///     let _dummy_fmu = BasicFmu::get_clone(
+///         FmiVersion::Fmi3,
+///         FmuBackendImplementationLanguage::Java,
+///     );
+/// }
+/// 
+/// [test]
+/// [serial]
+/// some_function_fmi3_java_zipped_distributed() {
+///     let _dummy_fmu = DistributedFmu::get_clone(
+///         FmiVersion::Fmi3,
+///         FmuBackendImplementationLanguage::Java,
+///     );
+/// }
+/// ```
+/// 
+/// Note that functions for non-existing variations (like a FMI3, Java based,
+/// zipped, blackbox FMU) will not be generated.
+/// 
+/// The possible traits are:
+///  - fmi2
+///  - fmi3
+///  - csharp
+///  - java
+///  - python
+///  - bare_directory
+///  - zipped
+///  - local
+///  - distributed
+///  - blackbox
+#[proc_macro_attribute]
+pub fn for_each_fmu(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream
+) -> proc_macro::TokenStream {
+    let original_function = syn::parse_macro_input!(item as syn::ItemFn);
+    let possibilities = syn::parse_macro_input!(attr as FmuPossibilities);
+
+    let marker_ident = syn::Ident::new(
+        "WildFmu",
+        proc_macro2::Span::call_site()
+    );
+
+    // Generate the duplicate functions
+    let functions = possibilities
+        .get_variations()
+        .into_iter()
+        .map(|variant| {
+            let mut function_clone = original_function.clone();
+
+            // Ensure that all other attribute macros present on the original
+            // function are included on each duplicate function, along with
+            // any  variation dependent extra attributes.
+            let mut new_attrs: Vec<syn::Attribute> = Vec::with_capacity(
+                function_clone.attrs.capacity() + 1
+            );
+            new_attrs.append(&mut function_clone.attrs);
+            new_attrs.push(variant.extra_attribute());
+
+            let variant_struct = variant.struct_type();
+            let variant_version = variant.version_type();
+            let variant_language = variant.language_type();
+
+            // Replace each instance of assigning a WildFmu{} to a new variable
+            // with assigning the result of a call to the correct version of
+            // get_clone() with the the FMU variations FMI version and
+            // programming language.
+            let new_block = syn::Block {
+                brace_token: function_clone.block.brace_token,
+                stmts: function_clone.block.stmts.iter()
+                    .map(|stmt| {
+                        if let syn::Stmt::Local(local_stmt) = stmt {
+                            if let std::option::Option::Some(local_init) = &local_stmt.init {
+                                if let syn::Expr::Struct(struct_expr) = local_init.expr.as_ref() {
+                                    if struct_expr.path.is_ident(&marker_ident) {
+                                        let variable_pattern = &local_stmt.pat;
+                                        let new_stmt: syn::Stmt = syn::parse(
+                                            quote::quote! {
+                                                let #variable_pattern = #variant_struct::get_clone(
+                                                    &#variant_version,
+                                                    &#variant_language
+                                                );
+                                            }.into()
+                                        ).expect("macro should be able to expand DummyFmu into actual Fmu variant");
+                                        return new_stmt
+                                    }
+                                }
+                            }
+                        };
+                        stmt.to_owned()
+                    })
+                    .collect()
+            };
+
+            // Assemble the new duplicate function from the new identity (name),
+            // the new function body, the new attributes, and everything else
+            // from the original function.
+            syn::ItemFn {
+                attrs: new_attrs,
+                sig: syn::Signature {
+                    ident: syn::Ident::new(
+                        &std::format!(
+                            "{}{}",
+                            function_clone.sig.ident,
+                            variant.function_suffix()
+                        ), 
+                        function_clone.sig.ident.span()
+                    ),
+                    ..function_clone.sig
+                },
+                block: std::boxed::Box::new(new_block),
+                ..function_clone
+            }
+        });
+
+    let expanded = quote::quote! {
+        #(#functions)*
+
+    };
+
+    proc_macro::TokenStream::from(expanded)
+}
+
 #[derive(PartialEq, Clone, Copy)]
 enum FmiVersion {
     Fmi2,
@@ -371,84 +575,3 @@ impl syn::parse::Parse for FmuPossibilities {
         }
     }
 }
-
-#[proc_macro_attribute]
-pub fn for_each_fmu(
-    attr: proc_macro::TokenStream,
-    item: proc_macro::TokenStream
-) -> proc_macro::TokenStream {
-    let original_function = syn::parse_macro_input!(item as syn::ItemFn);
-    let possibilities = syn::parse_macro_input!(attr as FmuPossibilities);
-
-    let marker_ident = syn::Ident::new(
-        "WildFmu",
-        proc_macro2::Span::call_site()
-    );
-
-    let functions = possibilities
-        .get_variations()
-        .into_iter()
-        .map(|variant| {
-            let mut function_clone = original_function.clone();
-
-            let mut new_attrs: Vec<syn::Attribute> = Vec::with_capacity(function_clone.attrs.capacity() + 1);
-            new_attrs.append(&mut function_clone.attrs);
-            new_attrs.push(variant.extra_attribute());
-
-            let variant_struct = variant.struct_type();
-            let variant_version = variant.version_type();
-            let variant_language = variant.language_type();
-
-            let new_block = syn::Block {
-                brace_token: function_clone.block.brace_token,
-                stmts: function_clone.block.stmts.iter()
-                    .map(|stmt| {
-                        if let syn::Stmt::Local(local_stmt) = stmt {
-                            if let std::option::Option::Some(local_init) = &local_stmt.init {
-                                if let syn::Expr::Struct(struct_expr) = local_init.expr.as_ref() {
-                                    if struct_expr.path.is_ident(&marker_ident) {
-                                        let variable_pattern = &local_stmt.pat;
-                                        let new_stmt: syn::Stmt = syn::parse(
-                                            quote::quote! {
-                                                let #variable_pattern = #variant_struct::get_clone(
-                                                    &#variant_version,
-                                                    &#variant_language
-                                                );
-                                            }.into()
-                                        ).expect("macro should be able to expand DummyFmu into actual Fmu variant");
-                                        return new_stmt
-                                    }
-                                }
-                            }
-                        };
-                        stmt.to_owned()
-                    })
-                    .collect()
-            };
-
-            syn::ItemFn {
-                attrs: new_attrs,
-                sig: syn::Signature {
-                    ident: syn::Ident::new(
-                        &std::format!(
-                            "{}{}",
-                            function_clone.sig.ident,
-                            variant.function_suffix()
-                        ), 
-                        function_clone.sig.ident.span()
-                    ),
-                    ..function_clone.sig
-                },
-                block: std::boxed::Box::new(new_block),
-                ..function_clone
-            }
-        });
-
-    let expanded = quote::quote! {
-        #(#functions)*
-
-    };
-
-    proc_macro::TokenStream::from(expanded)
-}
-
