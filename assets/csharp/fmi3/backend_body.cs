@@ -22,15 +22,15 @@ namespace Launch
             socket.SendFrame(reply.ToByteArray(), false);
         }
 
-        private static Fmi2Command RecvCommand()
+        private static Fmi3Command RecvCommand()
         {
-            return Fmi2Command.Parser.ParseFrom(socket.ReceiveFrameBytes());
+            return Fmi3Command.Parser.ParseFrom(socket.ReceiveFrameBytes());
         }
 
         private static void SendStatusReply(Fmi3Status status)
         {
             SendReply(
-                new Fmi2Return{
+                new Fmi3Return{
                     Status = new Fmi3StatusReturn{Status = status}
                 }
             );
@@ -52,6 +52,11 @@ namespace Launch
                 switch (command.CommandCase)
                 {
                     case Fmi3Command.CommandOneofCase.Fmi3InstantiateCoSimulation:
+                        uint[] req_int_vars_array = new uint[command.Fmi3InstantiateCoSimulation.RequiredIntermediateVariables.Count];
+                        command.Fmi3InstantiateCoSimulation.RequiredIntermediateVariables.CopyTo(req_int_vars_array, 0);
+                        List<uint> req_int_vars = new();
+                        req_int_vars.AddRange(req_int_vars_array);
+
                         model = new Model(
                             command.Fmi3InstantiateCoSimulation.InstanceName,
                             command.Fmi3InstantiateCoSimulation.InstantiationToken,
@@ -60,8 +65,9 @@ namespace Launch
                             command.Fmi3InstantiateCoSimulation.LoggingOn,
                             command.Fmi3InstantiateCoSimulation.EventModeUsed,
                             command.Fmi3InstantiateCoSimulation.EarlyReturnAllowed,
-                            command.Fmi3InstantiateCoSimulation.RequiredIntermediateVariables.ToList()
+                            req_int_vars
                         );
+
                         SendReply(new Fmi3Return{Empty = new Fmi3EmptyReturn()});
                         break;
 
@@ -170,7 +176,7 @@ namespace Launch
                         SendStatusReply(
                             model.Fmi3SetUInt8(
                                 command.Fmi3SetUInt8.ValueReferences,
-                                command.Fmi3SetUInt8.values
+                                command.Fmi3SetUInt8.Values
                             )
                         );
                         break;
@@ -179,7 +185,7 @@ namespace Launch
                         SendStatusReply(
                             model.Fmi3SetInt16(
                                 command.Fmi3SetInt16.ValueReferences,
-                                command.Fmi3SetInt16.values
+                                command.Fmi3SetInt16.Values
                             )
                         );
                         break;
@@ -306,7 +312,7 @@ namespace Launch
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetFloat32:
                         {
-                            Fmi3Result result = new Fmi3Result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetFloat32 = new Fmi3GetFloat32Return()
                             };
                             (var status, var values) = model.Fmi3GetFloat32(
@@ -320,7 +326,7 @@ namespace Launch
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetFloat64:
                         {
-                            Fmi3Result result = new Fmi3Result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetFloat64 = new Fmi3GetFloat64Return()
                             };
                             (var status, var values) = model.Fmi3GetFloat64(
@@ -334,7 +340,7 @@ namespace Launch
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetInt8:
                         {
-                            Fmi3Result result = new Fmi3Result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetInt8 = new Fmi3GetInt8Return()
                             };
                             (var status, var values) = model.Fmi3GetInt8(
@@ -342,13 +348,13 @@ namespace Launch
                             );
                             result.GetInt8.Values.AddRange(values);
                             result.GetInt8.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetUInt8:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetUInt8 = new Fmi3GetUInt8Return()
                             };
                             (var status, var values) = model.Fmi3GetUInt8(
@@ -356,13 +362,13 @@ namespace Launch
                             );
                             result.GetUInt8.Values.AddRange(values);
                             result.GetUInt8.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetInt16:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetInt16 = new Fmi3GetInt16Return()
                             };
                             (var status, var values) = model.Fmi3GetInt16(
@@ -370,13 +376,13 @@ namespace Launch
                             );
                             result.GetInt16.Values.AddRange(values);
                             result.GetInt16.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetUInt16:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetUInt16 = new Fmi3GetUInt16Return()
                             };
                             (var status, var values) = model.Fmi3GetUInt16(
@@ -384,13 +390,13 @@ namespace Launch
                             );
                             result.GetUInt16.Values.AddRange(values);
                             result.GetUInt16.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetInt32:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetInt32 = new Fmi3GetInt32Return()
                             };
                             (var status, var values) = model.Fmi3GetInt32(
@@ -398,13 +404,13 @@ namespace Launch
                             );
                             result.GetInt32.Values.AddRange(values);
                             result.GetInt32.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetUInt32:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetUInt32 = new Fmi3GetUInt32Return()
                             };
                             (var status, var values) = model.Fmi3GetUInt32(
@@ -412,13 +418,13 @@ namespace Launch
                             );
                             result.GetUInt32.Values.AddRange(values);
                             result.GetUInt32.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetInt64:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetInt64 = new Fmi3GetInt64Return()
                             };
                             (var status, var values) = model.Fmi3GetInt64(
@@ -426,13 +432,13 @@ namespace Launch
                             );
                             result.GetInt64.Values.AddRange(values);
                             result.GetInt64.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetUInt64:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetUInt64 = new Fmi3GetUInt64Return()
                             };
                             (var status, var values) = model.Fmi3GetUInt64(
@@ -440,13 +446,13 @@ namespace Launch
                             );
                             result.GetUInt64.Values.AddRange(values);
                             result.GetUInt64.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetBoolean:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetBoolean = new Fmi3GetBooleanReturn()
                             };
                             (var status, var values) = model.Fmi3GetBoolean(
@@ -454,13 +460,13 @@ namespace Launch
                             );
                             result.GetBoolean.Values.AddRange(values);
                             result.GetBoolean.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetBinary:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetBinary = new Fmi3GetBinaryReturn()
                             };
                             (var status, var values) = model.Fmi3GetBinary(
@@ -468,13 +474,13 @@ namespace Launch
                             );
                             result.GetBinary.Values.AddRange(ConvertToByteStringList(values));
                             result.GetBinary.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetClock:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetClock = new Fmi3GetClockReturn()
                             };
                             (var status, var values) = model.Fmi3GetClock(
@@ -482,13 +488,13 @@ namespace Launch
                             );
                             result.GetClock.Values.AddRange(values);
                             result.GetClock.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3GetString:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetString = new Fmi3GetStringReturn()
                             };
                             (var status, var values) = model.Fmi3GetString(
@@ -496,7 +502,7 @@ namespace Launch
                             );
                             result.GetString.Values.AddRange(values);
                             result.GetString.Status = status;
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
@@ -509,13 +515,13 @@ namespace Launch
                             ) = model.Fmi3GetIntervalDecimal(
                                 command.Fmi3GetIntervalDecimal.ValueReferences
                             );
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetIntervalDecimal = new Fmi3GetIntervalDecimalReturn()
                             };
                             result.GetIntervalDecimal.Status = status;
                             result.GetIntervalDecimal.Intervals.AddRange(intervals);
                             result.GetIntervalDecimal.Qualifiers.AddRange(qualifiers);
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
@@ -529,14 +535,14 @@ namespace Launch
                             ) = model.Fmi3GetIntervalFraction(
                                 command.Fmi3GetIntervalFraction.ValueReferences
                             );
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetIntervalFraction = new Fmi3GetIntervalFractionReturn()
                             };
                             result.GetIntervalFraction.Status = status;
                             result.GetIntervalFraction.Counters.AddRange(counters);
                             result.GetIntervalFraction.Resolutions.AddRange(resolutions);
                             result.GetIntervalFraction.Qualifiers.AddRange(qualifiers);
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
@@ -545,12 +551,12 @@ namespace Launch
                             (var status, var shifts) = model.Fmi3GetShiftDecimal(
                                 command.Fmi3GetShiftDecimal.ValueReferences
                             );
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetShiftDecimal = new Fmi3GetShiftDecimalReturn()
                             };
                             result.GetShiftDecimal.Status = status;
                             result.GetShiftDecimal.Shifts.AddRange(shifts);
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
@@ -563,13 +569,13 @@ namespace Launch
                             ) = model.Fmi3GetShiftFraction(
                                 command.Fmi3GetShiftFraction.ValueReferences
                             );
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 GetShiftFraction = new Fmi3GetShiftFractionReturn()
                             };
                             result.GetShiftFraction.Status = status;
                             result.GetShiftFraction.Counters.AddRange(counters);
                             result.GetShiftFraction.Resolutions.AddRange(resolutions);
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
@@ -584,13 +590,13 @@ namespace Launch
 
                     case Fmi3Command.CommandOneofCase.Fmi3SerializeFmuState:
                         {
-                            fmi3result result = new fmi3result {
+                            Fmi3Return result = new Fmi3Return {
                                 SerializeFmuState = new Fmi3SerializeFmuStateReturn()
                             };
                             (var status, var state) = model.Fmi3SerializeFmuState();
                             result.SerializeFmuState.Status = status;
                             result.SerializeFmuState.State = ByteString.CopyFrom(state);
-                            sendreply(result);
+                            SendReply(result);
                         }
                         break;
 
@@ -616,7 +622,7 @@ namespace Launch
             }
         }
 
-        private static void HandleUnexpectedCommand(Fmi2Command command)
+        private static void HandleUnexpectedCommand(Fmi3Command command)
         {
             Console.Error.WriteLine(
                 "unexpected command {0}, exiting with status code -1",
