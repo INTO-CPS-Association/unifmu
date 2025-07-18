@@ -146,10 +146,17 @@ lazy_static! {
         ],
         fmi3_resources: vec![
             (
-                "java/fmi3/src/main/java/Backend.java",
+                "java/src/common/java/LocalBackend.java",
                 "src/main/java/Backend.java"
             ),
-            ("java/fmi3/src/main/java/Model.java", "src/main/java/Model.java"),
+            (
+                "java/src/fmi3/java/Model.java",
+                "src/main/java/Model.java"
+            ),
+            (
+                "java/src/fmi3/java/AbstractBackend.java",
+                "src/main/java/AbstractBackend.java"
+            ),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
@@ -247,11 +254,19 @@ lazy_static! {
             ),
         ],
         fmi3_resources: vec![
+            
             (
-                "java/src/fmi3/java/BackendPrivate.java",
+                "java/src/common/java/RemoteBackend.java",
                 "src/main/java/Backend.java"
             ),
-            ("java/src/fmi3/java/Model.java", "src/main/java/Model.java"),
+            (
+                "java/src/fmi3/java/Model.java",
+                "src/main/java/Model.java"
+            ),
+            (
+                "java/src/fmi3/java/AbstractBackend.java",
+                "src/main/java/AbstractBackend.java"
+            ),
             ("java/build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (

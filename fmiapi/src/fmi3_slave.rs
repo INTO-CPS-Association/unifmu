@@ -39,7 +39,9 @@ impl Fmi3Slave {
         let return_message = self.dispatcher
             .send_and_recv::<_, Fmi3Return>(command)?
             .return_message
-            .ok_or(Fmi3SlaveError::ReturnError)?;
+            .ok_or(Fmi3SlaveError::ReturnError(
+                "Reply from backend didn't contain nested return message".to_string()
+            ))?;
 
         return_matcher(
             self,
@@ -55,7 +57,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::Empty(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -67,7 +71,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::Status(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -79,7 +85,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::DoStep(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -91,7 +99,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::FreeInstance(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -103,7 +113,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetFloat32(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -115,7 +127,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetFloat64(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -127,7 +141,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetInt8(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -139,7 +155,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetUInt8(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -151,7 +169,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetInt16(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -163,7 +183,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetUInt16(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -175,7 +197,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetInt32(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -187,7 +211,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetUInt32(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -199,7 +225,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetInt64(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -211,7 +239,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetUInt64(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -223,7 +253,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetBoolean(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -235,7 +267,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetString(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -247,7 +281,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetBinary(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -259,7 +295,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetDirectionalDerivative(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -271,7 +309,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetAdjointDerivative(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -283,7 +323,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetOutputDerivatives(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -295,7 +337,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::SerializeFmuState(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -307,7 +351,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetClock(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -319,7 +365,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::UpdateDiscreteStates(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -331,7 +379,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetIntervalDecimal(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -343,7 +393,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetIntervalFraction(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -355,7 +407,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetShiftDecimal(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 
@@ -367,7 +421,9 @@ impl Fmi3Slave {
             fmi3_return::ReturnMessage::GetShiftFraction(inner_message) => {
                 Ok(inner_message)
             }
-            _ => Err(Fmi3SlaveError::ReturnError)
+            _ => Err(Fmi3SlaveError::ReturnError(
+                format!("Unexpected return message: {:?}", return_message)
+            ))
         }
     }
 }
@@ -395,7 +451,7 @@ pub type Fmi3SlaveResult<T> = Result<T, Fmi3SlaveError>;
 #[derive(Debug)]
 pub enum Fmi3SlaveError {
     DispatchError(DispatcherError),
-    ReturnError
+    ReturnError(String)
 }
 
 impl Display for Fmi3SlaveError {
@@ -404,8 +460,8 @@ impl Display for Fmi3SlaveError {
             Self::DispatchError(dispatcher_error) => {
                 write!(f, "dispatch error: {}", dispatcher_error)
             }
-            Self::ReturnError => {
-                write!(f, "unknown return message from backend")
+            Self::ReturnError(fault_message) => {
+                write!(f, "return error: {}", fault_message)
             }
         }
     }

@@ -263,7 +263,7 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     ) {
         Err(error) => {
             error!(
-                "Instantiation of fmi3 slave '{}' failed with error {:?}.",
+                "Instantiation of fmi3 slave '{}' failed with error [{}].",
                 instance_name,
                 error
             );
