@@ -287,6 +287,14 @@ impl FmuBackendImplementationLanguage {
             FmuBackendImplementationLanguage::Python => "model.py"
         }
     }
+
+    pub fn pretty_str(&self) -> &str {
+        match self {
+            FmuBackendImplementationLanguage::CSharp => "C#",
+            FmuBackendImplementationLanguage::Java => "Java",
+            FmuBackendImplementationLanguage::Python => "Python"
+        }
+    }
 }
 
 fn gradle_command_base() -> (String, String) {
@@ -453,8 +461,14 @@ impl BasicFmu for LocalFmu {
         language: &FmuBackendImplementationLanguage
     ) -> LocalFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (*CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (*JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::CSharp => match version {
+                FmiVersion::Fmi2 => (*CSHARP_FMI2).clone(),
+                FmiVersion::Fmi3 => (*CSHARP_FMI3).clone()
+            },
+            FmuBackendImplementationLanguage::Java => match version {
+                FmiVersion::Fmi2 => (*JAVA_FMI2).clone(),
+                FmiVersion::Fmi3 => (*JAVA_FMI3).clone()
+            },
             FmuBackendImplementationLanguage::Python => match version {
                 FmiVersion::Fmi2 => (*PYTHON_FMI2).clone(),
                 FmiVersion::Fmi3 => (*PYTHON_FMI3).clone()
@@ -563,8 +577,18 @@ impl BreakableFmu for LocalFmu {
 
     fn do_step_function_line_number(&self) -> u64 {
         match self.language() {
-            FmuBackendImplementationLanguage::CSharp => 55,
-            FmuBackendImplementationLanguage::Java => 94,
+            FmuBackendImplementationLanguage::CSharp => {
+                match self.version() {
+                    FmiVersion::Fmi2 => 55,
+                    FmiVersion::Fmi3 => 228
+                }
+            },
+            FmuBackendImplementationLanguage::Java => {
+                match self.version() {
+                    FmiVersion::Fmi2 => 94,
+                    FmiVersion::Fmi3 => todo!("FIND LINENUMBER FOR JAVA DO_STEP FUNCTION")
+                }
+            },
             FmuBackendImplementationLanguage::Python => {
                 match self.version() {
                     FmiVersion::Fmi2 => 38,
@@ -703,8 +727,14 @@ impl BasicFmu for ZippedLocalFmu {
         language: &FmuBackendImplementationLanguage
     ) -> ZippedLocalFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (*ZIPPED_CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (*ZIPPED_JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::CSharp => match version {
+                FmiVersion::Fmi2 => (*ZIPPED_CSHARP_FMI2).clone(),
+                FmiVersion::Fmi3 => (*ZIPPED_CSHARP_FMI3).clone()
+            },
+            FmuBackendImplementationLanguage::Java => match version {
+                FmiVersion::Fmi2 => (*ZIPPED_JAVA_FMI2).clone(),
+                FmiVersion::Fmi3 => (*ZIPPED_JAVA_FMI3).clone()
+            },
             FmuBackendImplementationLanguage::Python => match version {
                 FmiVersion::Fmi2 => (*ZIPPED_PYTHON_FMI2).clone(),
                 FmiVersion::Fmi3 => (*ZIPPED_PYTHON_FMI3).clone()
@@ -843,8 +873,14 @@ impl BasicFmu for DistributedFmu {
         language: &FmuBackendImplementationLanguage
     ) -> DistributedFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (*DISTRIBUTED_CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (*DISTRIBUTED_JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::CSharp => match version {
+                FmiVersion::Fmi2 => (*DISTRIBUTED_CSHARP_FMI2).clone(),
+                FmiVersion::Fmi3 => (*DISTRIBUTED_CSHARP_FMI3).clone()
+            },
+            FmuBackendImplementationLanguage::Java => match version {
+                FmiVersion::Fmi2 => (*DISTRIBUTED_JAVA_FMI2).clone(),
+                FmiVersion::Fmi3 => (*DISTRIBUTED_JAVA_FMI3).clone()
+            },
             FmuBackendImplementationLanguage::Python => match version {
                 FmiVersion::Fmi2 => (*DISTRIBUTED_PYTHON_FMI2).clone(),
                 FmiVersion::Fmi3 => (*DISTRIBUTED_PYTHON_FMI3).clone()
@@ -1049,8 +1085,14 @@ impl BasicFmu for ZippedDistributedFmu {
         language: &FmuBackendImplementationLanguage
     ) -> ZippedDistributedFmu {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (*ZIPPED_DISTRIBUTED_CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (*ZIPPED_DISTRIBUTED_JAVA_FMI2).clone(),
+            FmuBackendImplementationLanguage::CSharp => match version {
+                FmiVersion::Fmi2 => (*ZIPPED_DISTRIBUTED_CSHARP_FMI2).clone(),
+                FmiVersion::Fmi3 => (*ZIPPED_DISTRIBUTED_CSHARP_FMI3).clone()
+            },
+            FmuBackendImplementationLanguage::Java => match version {
+                FmiVersion::Fmi2 => (*ZIPPED_DISTRIBUTED_JAVA_FMI2).clone(),
+                FmiVersion::Fmi3 => (*ZIPPED_DISTRIBUTED_JAVA_FMI3).clone()
+            },
             FmuBackendImplementationLanguage::Python => match version {
                 FmiVersion::Fmi2 => (*ZIPPED_DISTRIBUTED_PYTHON_FMI2).clone(),
                 FmiVersion::Fmi3 => (*ZIPPED_DISTRIBUTED_PYTHON_FMI3).clone()
@@ -1179,6 +1221,15 @@ impl BasicFmu for BlackboxDistributedFmu {
         language: FmuBackendImplementationLanguage,
         container_directory_name: &str
     ) -> Self {
+        if language == FmuBackendImplementationLanguage::CSharp
+        || language == FmuBackendImplementationLanguage::Java
+        {
+            panic!(
+                "UniFMU cannot/does not generate blackbox backends based on {}; there is no need to write tests for this case.",
+                language.pretty_str()
+            );
+        }
+
         let container_directory_path = std::env::current_dir()
             .expect("Should be able to get current directory")
             .join(PERSITENTLY_CREATED_UNIFMUS_DIRECTORY)
@@ -1229,12 +1280,14 @@ impl BasicFmu for BlackboxDistributedFmu {
         language: &FmuBackendImplementationLanguage
     ) -> Self {
         match language {
-            FmuBackendImplementationLanguage::CSharp => (*BLACKBOX_DISTRIBUTED_CSHARP_FMI2).clone(),
-            FmuBackendImplementationLanguage::Java => (*BLACKBOX_DISTRIBUTED_JAVA_FMI2).clone(),
             FmuBackendImplementationLanguage::Python => match version {
                 FmiVersion::Fmi2 => (*BLACKBOX_DISTRIBUTED_PYTHON_FMI2).clone(),
                 FmiVersion::Fmi3 => (*BLACKBOX_DISTRIBUTED_PYTHON_FMI3).clone()
-            }
+            },
+            _ => panic!(
+                "UniFMU cannot/does not generate blackbox backends based on {}; there is no need to write tests for this case.",
+                language.pretty_str()
+            ),
         }
     }
 
@@ -1714,6 +1767,24 @@ static PYTHON_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
     )
 });
 
+static CSHARP_FMI3: LazyLock<LocalFmu> = LazyLock::new(|| {
+    LocalFmu::new_persistent(
+        String::from("csharp_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_csharp_fmi3",
+    )
+});
+
+static JAVA_FMI3: LazyLock<LocalFmu> = LazyLock::new(|| {
+    LocalFmu::new_persistent(
+        String::from("java_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Java,
+        "PROMETHEAN_java_fmi3",
+    )
+});
+
 static PYTHON_FMI3: LazyLock<LocalFmu> = LazyLock::new(|| {
     LocalFmu::new_persistent(
         String::from("python_fmi3"),
@@ -1747,6 +1818,24 @@ static ZIPPED_PYTHON_FMI2: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
         FmiVersion::Fmi2,
         FmuBackendImplementationLanguage::Python,
         "PROMETHEAN_zipped_python_fmi2",
+    )
+});
+
+static ZIPPED_CSHARP_FMI3: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
+    ZippedLocalFmu::new_persistent(
+        String::from("zipped_csharp_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_zipped_csharp_fmi3",
+    )
+});
+
+static ZIPPED_JAVA_FMI3: LazyLock<ZippedLocalFmu> = LazyLock::new(|| {
+    ZippedLocalFmu::new_persistent(
+        String::from("zipped_java_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Java,
+        "PROMETHEAN_zipped_java_fmi3",
     )
 });
 
@@ -1786,6 +1875,24 @@ static DISTRIBUTED_PYTHON_FMI2: LazyLock<DistributedFmu> = LazyLock::new(|| {
     )
 });
 
+static DISTRIBUTED_CSHARP_FMI3: LazyLock<DistributedFmu> = LazyLock::new(|| {
+    DistributedFmu::new_persistent(
+        String::from("distributed_csharp_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_distributed_csharp_fmi3",
+    )
+});
+
+static DISTRIBUTED_JAVA_FMI3: LazyLock<DistributedFmu> = LazyLock::new(|| {
+    DistributedFmu::new_persistent(
+        String::from("distributed_java_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Java,
+        "PROMETHEAN_distributed_java_fmi3",
+    )
+});
+
 static DISTRIBUTED_PYTHON_FMI3: LazyLock<DistributedFmu> = LazyLock::new(|| {
     DistributedFmu::new_persistent(
         String::from("distributed_python_fmi3"),
@@ -1822,30 +1929,30 @@ static ZIPPED_DISTRIBUTED_PYTHON_FMI2: LazyLock<ZippedDistributedFmu> = LazyLock
     )
 });
 
+static ZIPPED_DISTRIBUTED_CSHARP_FMI3: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
+    ZippedDistributedFmu::new_persistent(
+        String::from("zipped_distributed_csharp_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::CSharp,
+        "PROMETHEAN_zipped_distributed_csharp_fmi3",
+    )
+});
+
+static ZIPPED_DISTRIBUTED_JAVA_FMI3: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
+    ZippedDistributedFmu::new_persistent(
+        String::from("zipped_distributed_java_fmi3"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Java,
+        "PROMETHEAN_zipped_distributed_java_fmi3",
+    )
+});
+
 static ZIPPED_DISTRIBUTED_PYTHON_FMI3: LazyLock<ZippedDistributedFmu> = LazyLock::new(|| {
     ZippedDistributedFmu::new_persistent(
         String::from("zipped_distributed_python_fmi3"),
         FmiVersion::Fmi3,
         FmuBackendImplementationLanguage::Python,
         "PROMETHEAN_zipped_distributed_python_fmi3",
-    )
-});
-
-static BLACKBOX_DISTRIBUTED_CSHARP_FMI2: LazyLock<BlackboxDistributedFmu> = LazyLock::new(|| {
-    BlackboxDistributedFmu::new_persistent(
-        String::from("blackbox_distributed_csharp_fmi2"),
-        FmiVersion::Fmi2,
-        FmuBackendImplementationLanguage::CSharp,
-        "PROMETHEAN_blackbox_distributed_csharp_fmi2",
-    )
-});
-
-static BLACKBOX_DISTRIBUTED_JAVA_FMI2: LazyLock<BlackboxDistributedFmu> = LazyLock::new(|| {
-    BlackboxDistributedFmu::new_persistent(
-        String::from("blackbox_distributed_java_fmi2"),
-        FmiVersion::Fmi2,
-        FmuBackendImplementationLanguage::Java,
-        "PROMETHEAN_blackbox_distributed_java_fmi2",
     )
 });
 

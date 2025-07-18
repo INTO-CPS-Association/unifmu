@@ -148,7 +148,7 @@ fn test_unexpected_exit_in_handshake() {
 
 #[for_each_fmu(include: fmi3, local, bare_directory)]
 #[test]
-#[should_panic(expected = "PYTHON TEST FAILED - fmi3_instantiate - instantiation: Failed to instantiate model")]
+#[should_panic(expected = "PYTHON TEST FAILED - fmi3_instantiate - instantiation: Failed to instantiate FMU")]
 fn test_unexpected_exit_in_handshake() {
     let fmu = WildFmu{};
 
@@ -170,7 +170,7 @@ fn test_unexpected_exit_during_command() {
 
 #[for_each_fmu(include: fmi3, local, bare_directory)]
 #[test]
-#[should_panic(expected = "PYTHON TEST FAILED - fmi3_simulate: fmi2DoStep failed with status 3 (error).")]
+#[should_panic(expected = "PYTHON TEST FAILED - fmi3_simulate: fmi3DoStep failed with status 3 (error).")]
 fn test_unexpected_exit_during_command() {
     let fmu = WildFmu{};
 
