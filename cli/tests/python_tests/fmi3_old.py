@@ -2,7 +2,7 @@
 
 import os
 from ctypes import *
-from typing import Tuple, Sequence, List, Iterable
+from typing import Tuple, Sequence, List
 
 from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, FMICallException, printLogMessage
@@ -25,8 +25,9 @@ fmi3UInt64              = c_uint64
 fmi3Boolean             = c_bool
 fmi3Char                = c_char
 fmi3String              = c_char_p
-fmi3Byte                = c_uint8
-fmi3Binary              = POINTER(fmi3Byte)
+fmi3Byte                = c_char
+#fmi3Binary              = c_char_p
+fmi3Binary              = POINTER(c_uint8) # Updated to support binaries as uint8_t*
 fmi3Clock               = c_bool
 
 # values for fmi3Boolean
@@ -541,10 +542,10 @@ class _FMU3(_FMU):
         if stopTime is None:
             stopTime = 0.0
 
-        self.fmi3EnterInitializationMode(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
+        return self.fmi3EnterInitializationMode(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime) # Updated to return fmi3Status
 
     def exitInitializationMode(self):
-        self.fmi3ExitInitializationMode(self.component)
+        return self.fmi3ExitInitializationMode(self.component) # Updated to return fmi3Status
 
     # Clock related functions
 
@@ -737,21 +738,26 @@ class _FMU3(_FMU):
         self.fmi3GetString(self.component, vr, len(vr), value, nValues)
         return list(map(lambda b: b.decode('utf-8'), value))
 
-    def getBinary(self, vr: Iterable[int], nValues: int = None) -> Iterable[bytes]:
+    def getBinary(self, vr, nValues=None): # Updated to support fmi3Binary as uint8_t*
         if nValues is None:
             nValues = len(vr)
-        vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3Binary * nValues)()
-        size = (c_size_t * nValues)()
-        self.fmi3GetBinary(self.component, vr, len(vr), size, value, nValues)
+        nValueReferences = len(vr)
+        vr = (fmi3ValueReference * nValueReferences)(*vr)
+        value = (fmi3Binary * nValueReferences)()
+        size = (c_size_t * nValueReferences)()
+        self.fmi3GetBinary(self.component, vr, nValueReferences, size, value, nValues)
         values = []
-        for i, pointer in enumerate(value):
+        for i in range(len(value)):
+            pointer = value[i]
+            s = size[i]
             if pointer:
-                data = cast(pointer, POINTER(c_uint8 * size[i]))
-                values.append(bytes(data.contents))
+                data = cast(pointer, POINTER(c_uint8 * s)) 
+                data_array = bytes(data.contents)
+                values.append(data_array)
             else:
-                values.append(None)
+                print(f"getBinary error with: Pointer {i} is NULL")
         return values
+
 
     def getClock(self, vr, nValues=None):
         if nValues is None:
@@ -822,14 +828,18 @@ class _FMU3(_FMU):
         values = (fmi3String * len(values))(*values)
         self.fmi3SetString(self.component, vr, len(vr), values, len(values))
 
-    def setBinary(self, vr: Iterable[int], values: Iterable[bytes]):
-        vr = (fmi3ValueReference * len(vr))(*vr)
-        values_ = (fmi3Binary * len(values))()
+    def setBinary(self, vr, values): # Updated to support fmi3Binary as uint8_t*
+        size_list = [1 if isinstance(arr, (int,c_uint8)) else len(arr) for arr in values]
+        nValues = sum(size_list)
+        nValueReferences = len(vr)
+        vr = (fmi3ValueReference * nValueReferences)(*vr)
+        size = (c_size_t * nValueReferences)(*size_list)
+        values_ = (fmi3Binary * nValueReferences)()
         for i, v in enumerate(values):
-            b = (c_uint8 * len(v)).from_buffer(bytearray(v))
-            values_[i] = b
-        size = (c_size_t * len(values))(*[len(v) for v in values])
-        self.fmi3SetBinary(self.component, vr, len(vr), size, values_, len(values))
+            if isinstance(v, (c_uint8)):
+                v = (c_uint8 * 1)(v.value)
+            values_[i] = cast(v,fmi3Binary)
+        self.fmi3SetBinary(self.component, vr, nValueReferences, size, values_, nValues)
 
     def setClock(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
@@ -838,18 +848,18 @@ class _FMU3(_FMU):
 
     # Getting and setting the internal FMU state
 
-    def getFMUState(self) -> fmi3FMUState:
+    def getFMUState(self):
         state = fmi3FMUState()
         self.fmi3GetFMUState(self.component, byref(state))
         return state
 
-    def setFMUState(self, state: fmi3FMUState):
+    def setFMUState(self, state):
         self.fmi3SetFMUState(self.component, state)
 
-    def freeFMUState(self, state: fmi3FMUState):
+    def freeFMUState(self, state):
         self.fmi3FreeFMUState(self.component, byref(state))
 
-    def serializeFMUState(self, state: fmi3FMUState) -> bytes:
+    def serializeFMUState(self, state):
         """ Serialize an FMU state
 
         Parameters:
@@ -862,10 +872,10 @@ class _FMU3(_FMU):
         size = c_size_t()
         self.fmi3SerializedFMUStateSize(self.component, state, byref(size))
         serializedState = create_string_buffer(size.value)
-        self.fmi3SerializeFMUState(self.component, state, cast(serializedState, POINTER(fmi3Byte)), size)
+        self.fmi3SerializeFMUState(self.component, state, serializedState, size)
         return serializedState.raw
 
-    def deserializeFMUState(self, serializedState: bytes, state: fmi3FMUState = None):
+    def deserializeFMUState(self, serializedState, state=None):
         """ De-serialize an FMU state
 
         Parameters:
@@ -875,7 +885,7 @@ class _FMU3(_FMU):
         if state is None:
             state = fmi3FMUState()
         buffer = create_string_buffer(serializedState, size=len(serializedState))
-        self.fmi3DeserializeFMUState(self.component, cast(buffer, POINTER(fmi3Byte)), len(buffer), byref(state))
+        self.fmi3DeserializeFMUState(self.component, buffer, len(buffer), byref(state))
         return state
 
     # Getting partial derivatives
@@ -1000,6 +1010,8 @@ class FMU3Model(_FMU3):
 
     def getNominalsOfContinuousStates(self, nominals, nContinuousStates):
         return self.fmi3GetNominalsOfContinuousStates(self.component, nominals, nContinuousStates)
+    
+    
 
 
 class FMU3Slave(_FMU3):

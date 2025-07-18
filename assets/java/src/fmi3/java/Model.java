@@ -209,10 +209,10 @@ public class Model implements Serializable {
         this.tunable_parameters.add(this.getClass().getField("boolean_tunable_parameter"));
         this.tunable_parameters.add(this.getClass().getField("string_tunable_parameter"));
         this.tunable_parameters.add(this.getClass().getField("binary_tunable_parameter"));
-        this.tunable_parameters.add(this.getClass().getField("uint64_tunable_structural_parameter"));
+        this.tunable_parameters.add(this.getClass().getField("float32_vector_using_tunable_structural_parameter"));
 
-        this.tunable_structural_parameters = new ArrayList<Field>();
-        this.tunable_structural_parameters.add(this.getClass().getField("float32_vector_using_tunable_structural_parameter"));
+        this.tunable_structural_parameters = new ArrayList<Field>();        
+        this.tunable_structural_parameters.add(this.getClass().getField("uint64_tunable_structural_parameter"));
        
         // Map of indexes to attributes (based on ModelDescription.xml)
         this.map_to_attributes = new HashMap<>();
@@ -230,10 +230,11 @@ public class Model implements Serializable {
         for (int i=1100;i<=1102;i++){
             clocked_variables_indexes.add(i);
         }
-        for (int i=100;i<=113;i++){
+        for (int i=100;i<=112;i++){
             tunable_parameters_indexes.add(i);
         }
-        tunable_structural_parameters_indexes.add(114);
+        tunable_parameters_indexes.add(114);
+        tunable_structural_parameters_indexes.add(113);
         for (int j = 0; j < references_to_attributes_indexes.size(); j++) {
             this.map_to_attributes.put(references_to_attributes_indexes.get(j), references_to_attributes.get(j));
         }
@@ -566,11 +567,15 @@ public class Model implements Serializable {
     }
     
     public Fmi3Status fmi3EnterConfigurationMode(){
-        if (this.state == FMIState.FMIInstantiatedState){
-            this.state = FMIState.FMIConfigurationModeState;
-        } else{
-            this.state = FMIState.FMIReconfigurationModeState;
-        }
+        if (this.tunable_structural_parameters.size() > 0) {
+            if (this.state == FMIState.FMIInstantiatedState){
+                this.state = FMIState.FMIConfigurationModeState;
+            } else{
+                this.state = FMIState.FMIReconfigurationModeState;
+            }
+        } else {
+            return Fmi3Status.Error;
+        }        
         return Fmi3Status.OK;
     }
 
@@ -798,23 +803,23 @@ public class Model implements Serializable {
             var field = (T) this.map_to_attributes.get(r);
             var v = i2.next();
 
-            if (this.state == FMIState.FMIConfigurationModeState || this.state == FMIState.FMIReconfigurationModeState){
-                if ((this.clocked_variables.contains(field)) || (this.references_to_attributes.contains(field))){
-                    return Fmi3Status.Error;
-                }                    
-            }
-            else if (this.state == FMIState.FMIEventModeState){
-                if ((this.references_to_attributes.contains(field)) || (this.tunable_structural_parameters.contains(field))){
+            if ((this.clocked_variables.contains(field)) || (this.tunable_parameters.contains(field))){
+                if (this.state == FMIState.FMIEventModeState || this.state == FMIState.FMIInitializationModeState){
+                } else {
                     return Fmi3Status.Error;
                 }
-            }
-            else if (this.state == FMIState.FMIInitializationModeState){
-    
-            }
-            else{
-                if ((this.event_mode_used) && ((this.all_parameters.contains(field)) || (this.clocked_variables.contains(field)))){
+            } else if(this.tunable_structural_parameters.contains(field)){
+                if (this.state == FMIState.FMIConfigurationModeState || this.state == FMIState.FMIReconfigurationModeState){
+                }else {
                     return Fmi3Status.Error;
                 }
+
+            } else if(this.parameters.contains(field)){
+                if (this.state == FMIState.FMIInitializationModeState){
+                }else{
+                    return Fmi3Status.Error;
+                }
+
             }
 
             this.map_to_attributes.get(r).set(this, v);            

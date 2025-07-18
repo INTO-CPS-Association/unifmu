@@ -53,7 +53,7 @@ The current responsible for the tool maintenance is [Claudio Gomes](https://clag
 To display the synopsis use the `--help` flag.
 
 ```
-unifmu 0.0.11
+unifmu 0.12.0
 
 Implement Functional Mock-up units (FMUs) in various source languages.
 
@@ -111,7 +111,8 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┃ ┃ ┗ 📜unifmu.dll
  ┣ 📂resources
  ┃ ┣ 📂schemas
- ┃ ┃ ┗ 📜fmi2_messages_pb2.py
+ ┃ ┃ ┃ 📜fmi2_messages_pb2.py
+ ┃ ┃ ┗ 📜unifmu_handshake_pb2.py
  ┃ ┣ 📜backend.py
  ┃ ┣ 📜launch.toml
  ┃ ┣ 📜model.py
@@ -152,7 +153,7 @@ For example the trees below show the placeholder FMU and folder generated when u
  ┣ 📂binaries
  ┣ 📂resources
  ┃ ┣ 📜launch.toml
- ┃ ┣ 📜README.md
+ ┃ ┗ 📜README.md
  ┗ 📜modelDescription.xml
 ```
 
@@ -160,7 +161,8 @@ whereas its fellow private folder contains the model file, the dependencies, and
 ```python
 📦model_distributed_private
  ┣ 📂schemas
- ┃ ┗ 📜fmi2_messages_pb2.py
+ ┃ ┃ 📜fmi2_messages_pb2.py
+ ┃ ┗ 📜unifmu_handshake_pb2.py
  ┣ 📜backend.py
  ┣ 📜model.py
  ┣ 📜launch.toml

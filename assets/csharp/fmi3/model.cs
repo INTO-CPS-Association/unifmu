@@ -194,12 +194,13 @@ public class Model
             { 110, type.GetProperty("boolean_tunable_parameter") },
             { 111, type.GetProperty("string_tunable_parameter") },
             { 112, type.GetProperty("binary_tunable_parameter") },
-            { 113, type.GetProperty("uint64_tunable_structural_parameter") },
+            { 114, type.GetProperty("float32_vector_using_tunable_structural_parameter") },
+            
         };
 
         this.tunable_structural_parameters = new Dictionary<uint, PropertyInfo>
         {
-            { 114, type.GetProperty("float32_vector_using_tunable_structural_parameter") },
+            { 113, type.GetProperty("uint64_tunable_structural_parameter") },
         };
 
         this.all_references = new Dictionary<uint, PropertyInfo>();
@@ -275,11 +276,16 @@ public class Model
     }
     
     public Fmi3Status Fmi3EnterConfigurationMode(){
-        if (this.state == FMIState.FMIInstantiatedState){
-            this.state = FMIState.FMIConfigurationModeState;
-        } else{
-            this.state = FMIState.FMIReconfigurationModeState;
+        if (this.tunable_structural_parameters.Count > 0) {
+            if (this.state == FMIState.FMIInstantiatedState){
+                this.state = FMIState.FMIConfigurationModeState;
+            } else{
+                this.state = FMIState.FMIReconfigurationModeState;
+            }
         }
+        else {
+            return Fmi3Status.Fmi3Error;
+        }      
         return Fmi3Status.Fmi3Ok;
     }
 
@@ -783,37 +789,24 @@ public class Model
     }
 
     public Fmi3Status SetValueReflection<T>(IEnumerable<uint> references, IEnumerable<T> values)
-    {
-        if ((state == FMIState.FMIConfigurationModeState) || (state == FMIState.FMIReconfigurationModeState))
-        {
-            foreach (var r in references)
-            {
-                if (clocked_variables.ContainsKey(r) || reference_to_attributes.ContainsKey(r))
+    {   
+        foreach (var (r, v) in references.Zip(values)){
+            if (clocked_variables.ContainsKey(r) || tunable_parameters.ContainsKey(r)) {
+                if (state == FMIState.FMIEventModeState || state == FMIState.FMIInitializationModeState){
+                }else{
                     return Fmi3Status.Fmi3Error;
-            }
-        }
-        else if (state == FMIState.FMIEventModeState)
-        {
-            foreach (var r in references)
-            {
-                if (reference_to_attributes.ContainsKey(r) || tunable_structural_parameters.ContainsKey(r))
+                }
+            } else if (tunable_structural_parameters.ContainsKey(r)) {
+                if ((state == FMIState.FMIConfigurationModeState) || (state == FMIState.FMIReconfigurationModeState)){
+                }else{
                     return Fmi3Status.Fmi3Error;
-            }
-        }
-        else if (state == FMIState.FMIInitializationModeState)
-        {
-            
-        }
-        else{
-            foreach (var r in references)
-            {
-                if ((event_mode_used && all_parameters.ContainsKey(r)) || clocked_variables.ContainsKey(r))
+                }
+            } else if (parameters.ContainsKey(r)) {
+                if (state == FMIState.FMIInitializationModeState){
+                }else{
                     return Fmi3Status.Fmi3Error;
+                }
             }
-        }
-
-        foreach (var (r, v) in references.Zip(values))
-        {
             this.all_references[r].SetValue(this, (object)v);
         }
 
@@ -822,6 +815,7 @@ public class Model
 
     public (Fmi3Status, IEnumerable<T>) GetValueReflection<T>(IEnumerable<uint> references)
     {
+        var values = new List<T>(references.Count());
         foreach (var r in references)
         {
             if (clocked_variables.ContainsKey(r))
@@ -829,15 +823,8 @@ public class Model
                 if (!(state.HasFlag(FMIState.FMIEventModeState) || state.HasFlag(FMIState.FMIInitializationModeState)))
                     return (Fmi3Status.Fmi3Error, null);
             }
-        }
-
-        var values = new List<T>(references.Count());
-
-        foreach (var r in references)
-        {
             values.Add((T)this.all_references[r].GetValue(this));
         }
-
         return (Fmi3Status.Fmi3Ok, values);
     }
 

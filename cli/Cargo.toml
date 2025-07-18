@@ -2,30 +2,30 @@
 authors = ["Christian Legaard <clegaard@outlook.com>"]
 edition = "2021"
 name = "unifmu"
-version = "0.0.11"
+version = "0.12.0"
 
 [dependencies]
-clap = { version = "4.5.3", features = ["derive"] }
-dlopen = "*"
-dlopen_derive = "*"
-env_logger = "*"
-fs_extra = "*"
-lazy_static = "*"
-libc = "*"
-log = "*"
-num_enum = "*"
-rust-embed = "6.0.0"
-tempfile = "*"
-url = "*"
-walkdir = "*"
-zip = { version = "*", default-features = false, features = ["deflate"] }
-serde = {version = "1.0.127", features = ["derive"]}
-toml = "*"
+clap = { version = "4.5", features = ["derive"] }
+dlopen = "0.1"
+dlopen_derive = "0.1"
+env_logger = "0.11"
+fs_extra = "1"
+lazy_static = "1.5"
+libc = "0.2"
+log = "0.4"
+num_enum = "0.7"
+rust-embed = "6"
+tempfile = "3"
+url = "2.5"
+walkdir = "2"
+zip = { version = "4", default-features = false, features = ["deflate"] }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.9"
 
 [dev-dependencies]
-assert_cmd = "*"
-duct = "0.13.7"
-predicates = "*"
-serial_test = "3.2.0"
-tokio = {version = "*", features = ["full"]}
-unifmu_macros = {path = "../unifmu_macros", version = "*"}
+assert_cmd = "2"
+duct = "0.13"
+predicates = "3"
+serial_test = "3"
+tokio = { version = "1", features = ["full"] }
+unifmu_macros = { path = "../unifmu_macros", version = "*" }

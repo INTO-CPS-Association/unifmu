@@ -322,16 +322,11 @@ if __name__ == "__main__":
     # Entering in configuration mode
     fmu.enterConfigurationMode()
     uint64_tunable_structural_parameter = fmu.getUInt64([vrs["uint64_tunable_structural_parameter"]])[0]
-    boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
     assert uint64_tunable_structural_parameter == 5
-    assert boolean_tunable_parameter == False
 
     fmu.setUInt64([vrs["uint64_tunable_structural_parameter"]],[6])
-    fmu.setBoolean([vrs["boolean_tunable_parameter"]],[True])
     uint64_tunable_structural_parameter = fmu.getUInt64([vrs["uint64_tunable_structural_parameter"]])[0]
-    boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
     assert uint64_tunable_structural_parameter == 6
-    assert boolean_tunable_parameter == True
     # Exiting configuration mode
     fmu.exitConfigurationMode()
 
@@ -492,6 +487,14 @@ if __name__ == "__main__":
     clocked_variable_c = fmu.getInt32([vrs["clocked_variable_c"]])[0]
     print(f'clocked_variable_c: {clocked_variable_c}')
     assert clocked_variable_c == 3
+
+    # Check the update of tunable parameters
+    boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
+    assert boolean_tunable_parameter == False
+
+    fmu.setBoolean([vrs["boolean_tunable_parameter"]],[True])
+    boolean_tunable_parameter = fmu.getBoolean([vrs["boolean_tunable_parameter"]])[0]
+    assert boolean_tunable_parameter == True
 
     fmu.enterStepMode()
 
