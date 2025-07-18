@@ -1,5 +1,6 @@
-// --------------------- Macros for use in rust tests -------------------------
 extern crate proc_macro;
+
+// --------------------- Macros for use in rust tests -------------------------
 
 /// Replaces the decorated test function with duplicates for each variation of
 /// FMU that the UniFMU tool can generate.
@@ -15,35 +16,35 @@ extern crate proc_macro;
 /// 
 /// For example decorating a function with the "include:" attribute
 /// ```
-/// [for_each_fmu(include: fmi2, python, bare_directory)]
-/// [test]
-/// some_function() {
+/// #[unifmu_macros::for_each_fmu(include: fmi2, python, bare_directory)]
+/// #[test]
+/// fn some_function() {
 ///     let _dummy_fmu = WildFmu{};
 /// }
 /// ```
 /// will expand it to
 /// ```
-/// [test]
-/// [parallel]
-/// some_function_fmi2_python_bare_directory_local() {
+/// #[test]
+/// #[serial_test::parallel]
+/// fn some_function_fmi2_python_bare_directory_local() {
 ///     let _dummy_fmu = BasicFmu::get_clone(
 ///         FmiVersion::Fmi2,
 ///         FmuBackendImplementationLanguage::Python,
 ///     );
 /// }
 /// 
-/// [test]
-/// [parallel]
-/// some_function_fmi2_python_bare_directory_distributed() {
+/// #[test]
+/// #[serial_test::parallel]
+/// fn some_function_fmi2_python_bare_directory_distributed() {
 ///     let _dummy_fmu = DistributedFmu::get_clone(
 ///         FmiVersion::Fmi2,
 ///         FmuBackendImplementationLanguage::Python,
 ///     );
 /// }
 /// 
-/// [test]
-/// [parallel]
-/// some_function_fmi2_python_bare_directory_blackbox() {
+/// #[test]
+/// #[serial_test::parallel]
+/// fn some_function_fmi2_python_bare_directory_blackbox() {
 ///     let _dummy_fmu = BlackboxDistributedFmu::get_clone(
 ///         FmiVersion::Fmi2,
 ///         FmuBackendImplementationLanguage::Python,
@@ -53,44 +54,44 @@ extern crate proc_macro;
 /// 
 /// while decorating the same function with the "exclude:" attribute
 /// ```
-/// [for_each_fmu(exclude: fmi2, python, bare_directory)]
-/// [test]
-/// some_function() {
+/// #[unifmu_macros::for_each_fmu(exclude: fmi2, python, bare_directory)]
+/// #[test]
+/// fn some_function() {
 ///     let _dummy_fmu = WildFmu{};
 /// }
 /// ```
 /// will expand it to
 /// ```
-/// [test]
-/// [parallel]
-/// some_function_fmi3_csharp_zipped_local() {
+/// #[test]
+/// #[serial_test::parallel]
+/// fn some_function_fmi3_csharp_zipped_local() {
 ///     let _dummy_fmu = BasicFmu::get_clone(
 ///         FmiVersion::Fmi3,
 ///         FmuBackendImplementationLanguage::CSharp,
 ///     );
 /// }
 /// 
-/// [test]
-/// [parallel]
-/// some_function_fmi3_csharp_zipped_distributed() {
+/// #[test]
+/// #[serial_test::parallel]
+/// fn some_function_fmi3_csharp_zipped_distributed() {
 ///     let _dummy_fmu = DistributedFmu::get_clone(
 ///         FmiVersion::Fmi3,
 ///         FmuBackendImplementationLanguage::CSharp,
 ///     );
 /// }
 /// 
-/// [test]
-/// [serial]
-/// some_function_fmi3_java_zipped_local() {
+/// #[test]
+/// #[serial_test::serial]
+/// fn some_function_fmi3_java_zipped_local() {
 ///     let _dummy_fmu = BasicFmu::get_clone(
 ///         FmiVersion::Fmi3,
 ///         FmuBackendImplementationLanguage::Java,
 ///     );
 /// }
 /// 
-/// [test]
-/// [serial]
-/// some_function_fmi3_java_zipped_distributed() {
+/// #[test]
+/// #[serial_test::serial]
+/// fn some_function_fmi3_java_zipped_distributed() {
 ///     let _dummy_fmu = DistributedFmu::get_clone(
 ///         FmiVersion::Fmi3,
 ///         FmuBackendImplementationLanguage::Java,
@@ -271,8 +272,8 @@ impl ProgrammingLanguage {
 
     pub fn processing_attribute(&self) -> syn::Attribute {
         match self {
-            ProgrammingLanguage::Java => syn::parse_quote!{#[serial]},
-            _ => syn::parse_quote!{#[parallel]}
+            ProgrammingLanguage::Java => syn::parse_quote!{#[serial_test::serial]},
+            _ => syn::parse_quote!{#[serial_test::parallel]}
         }
     }
 }

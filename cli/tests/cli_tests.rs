@@ -21,8 +21,6 @@ use common::{
     BreakableFmu
 };
 
-use serial_test::{serial, parallel};
-
 #[for_each_fmu]
 #[test]
 fn test_vdm_check() {
