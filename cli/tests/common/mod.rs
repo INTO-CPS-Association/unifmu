@@ -586,7 +586,7 @@ impl BreakableFmu for LocalFmu {
             FmuBackendImplementationLanguage::Java => {
                 match self.version() {
                     FmiVersion::Fmi2 => 94,
-                    FmiVersion::Fmi3 => todo!("FIND LINENUMBER FOR JAVA DO_STEP FUNCTION")
+                    FmiVersion::Fmi3 => 268
                 }
             },
             FmuBackendImplementationLanguage::Python => {
