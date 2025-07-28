@@ -61,7 +61,7 @@ pub type Fmi2String = *const Fmi2Char;
 pub type Fmi2Byte = c_char;
 
 #[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi2Status {
     Ok = 0,
     Warning = 1,
@@ -115,7 +115,7 @@ pub type Fmi2CallbackLogger = unsafe extern "C" fn(
 );
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub enum Fmi2LogCategory {
     LogEvents,
     LogSingularLinearSystems,

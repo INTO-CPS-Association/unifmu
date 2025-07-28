@@ -732,16 +732,7 @@ pub extern "C" fn fmi2SetDebugLogging(
         }
     };
 
-    if let Err(error) = logger::update_enabled_for_callback(
-        slave.logger_uid,
-        logging_on
-    ) {
-        error!(
-            category = %Fmi2LogCategory::LogStatusError,
-            "couldn't update enabled state of logger callback: {:?}", error
-        );
-        return Fmi2Status::Error;
-    }
+    let mut fmi_layer_status = Fmi2Status::Ok;
 
     let mut string_categories: Vec<String> = Vec::new();
 
@@ -775,21 +766,41 @@ pub extern "C" fn fmi2SetDebugLogging(
                     .map(|category| category.to_string())
                     .collect();
 
-                if let Err(error) = logger::set_categories_for_callback(slave.logger_uid, categories) {
-                    error!(
-                        category = %Fmi2LogCategory::LogStatusError,
-                        "couldn't set new categories for logger callback: {:?}", error
-                    );
-                    return Fmi2Status::Error;
+                match if logging_on {
+                    logger::allow_categories_for_callback(slave.logger_uid, categories)
+                } else {
+                    logger::refuse_categories_for_callback(slave.logger_uid, categories)
+                } {
+                    Err(error @ logger::LoggerError::CategoriesAlreadyListed(_)) => {
+                        error!(
+                            category = %Fmi2LogCategory::LogStatusWarning,
+                            "superfluous categories: {}", error
+                        );
+                        fmi_layer_status = Fmi2Status::Warning;
+                    }
+                    Err(other_error) => {
+                        error!(
+                            category = %Fmi2LogCategory::LogStatusError,
+                            "couldn't update categories for logger callback: {:?}", other_error
+                        );
+                        return Fmi2Status::Error;
+                    }
+                    Ok(_) => {}
                 }
             }
         }
-    } else if let Err(error) = logger::clear_categories_for_callback(slave.logger_uid) {
-            error!(
-                category = %Fmi2LogCategory::LogStatusError,
-                "couldn't clear categories for logger callback: {:?}", error
-            );
-            return Fmi2Status::Error;
+    } else if let Err(error) =
+        if logging_on {
+            logger::allow_all_categories_for_callback(slave.logger_uid) 
+        } else {
+            logger::refuse_all_categories_for_callback(slave.logger_uid) 
+        }
+    {
+        error!(
+            category = %Fmi2LogCategory::LogStatusError,
+            "couldn't update categories for logger callback: {:?}", error
+        );
+        return Fmi2Status::Error;
     }
 
     let cmd = Fmi2Command {
@@ -801,7 +812,7 @@ pub extern "C" fn fmi2SetDebugLogging(
         )),
     };
 
-    slave.dispatch(
+    let backend_status = slave.dispatch(
             &cmd,
             Fmi2Slave::status_return_matcher
         )
@@ -812,7 +823,13 @@ pub extern "C" fn fmi2SetDebugLogging(
                 "Fmi2SetDebugLogging failed with error: {:?}.", error
             );
             Fmi2Status::Error
-        })
+        });
+
+    if fmi_layer_status > backend_status {
+        fmi_layer_status
+    } else {
+        backend_status
+    }
 }
 
 #[no_mangle]

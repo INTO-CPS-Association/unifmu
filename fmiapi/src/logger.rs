@@ -128,6 +128,34 @@ fn modify_callback(
     }
 }
 
+fn modify_callback_with_result(
+    logger_uid: u64,
+    modification_closure: impl FnOnce(&mut FmuLayer) -> LoggerResult<()>
+) -> LoggerResult<()> {
+    let mut layer_found = false;
+    let mut modification_result = Ok(());
+
+    (*FMU_LOGGER_RELOAD_HANDLE)
+        .as_ref()
+        .map_err(|e| e.clone())?
+        .modify(|layer_vector| {
+            for layer in layer_vector {
+                if layer.logger_uid == logger_uid {
+                    layer_found = true;
+                    modification_result = modification_closure(layer);
+                    break
+                }
+            }
+        })
+        .map_err(|_| LoggerError::FmuLayerVectorMissing)?;
+
+    if !layer_found {
+        Err(LoggerError::LoggerLayerNotFound(logger_uid))
+    } else {
+        modification_result
+    }
+}
+
 /// Removes a FMI2 logging callback function from the logger module.
 /// 
 /// Calling this function also initializes the global tracing subscriber if
@@ -186,6 +214,81 @@ pub fn add_name_to_callback(
     )
 }
 
+pub fn allow_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| {
+            layer.category_filter = CategoryFilter::new_blacklist()
+        }
+    )
+}
+
+pub fn refuse_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
+    modify_callback(
+        logger_uid,
+        |layer| {
+            layer.category_filter = CategoryFilter::new_whitelist()
+        }
+    )
+}
+
+pub fn allow_categories_for_callback(
+    logger_uid: u64,
+    mut categories: Vec<Fmi2LogCategory>
+) -> LoggerResult<()> {
+    modify_callback_with_result(
+        logger_uid,
+        |layer| {
+            let already_listed_categories: Vec<Fmi2LogCategory> = categories.into_iter()
+                .filter_map(|category| {
+                    if let Err(category) = layer.category_filter
+                        .whitelist_category(category)
+                    {
+                        Some(category)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            if already_listed_categories.is_empty() {
+                Ok(())
+            } else {
+                Err(LoggerError::CategoriesAlreadyListed(already_listed_categories))
+            }
+        }
+    )
+}
+
+pub fn refuse_categories_for_callback(
+    logger_uid: u64,
+    mut categories: Vec<Fmi2LogCategory>
+) -> LoggerResult<()> {
+    modify_callback_with_result(
+        logger_uid,
+        |layer| {
+            let already_listed_categories: Vec<Fmi2LogCategory> = categories.into_iter()
+                .filter_map(|category| {
+                    if let Err(category) = layer.category_filter
+                        .blacklist_category(category)
+                    {
+                        Some(category)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            
+            if already_listed_categories.is_empty() {
+                Ok(())
+            } else {
+                Err(LoggerError::CategoriesAlreadyListed(already_listed_categories))
+            }
+        }
+    )
+}
+
+/*
 /// Sets the `enabled` parameter of a FMU logging layer containing a callback,
 /// determining whether or not that layer should emit any logging through the
 /// callback.
@@ -252,6 +355,7 @@ pub fn clear_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
         |layer| layer.clear_categories()
     )
 }
+*/
 
 pub type LoggerResult<T> = Result<T, LoggerError>;
 
@@ -260,16 +364,43 @@ pub enum LoggerError {
     SubscriberAlreadySet,
     FmuLayerVectorMissing,
     MaxLoggersExceeded,
-    LoggerLayerNotFound(u64)
+    LoggerLayerNotFound(u64),
+    CategoriesAlreadyListed(Vec<Fmi2LogCategory>)
 }
 
 impl Display for LoggerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LoggerError::SubscriberAlreadySet => write!(f, "the global tracing subscriber was already set"),
-            LoggerError::FmuLayerVectorMissing => write!(f, "the vector containing the FMU logger layers is missing"),
-            LoggerError::MaxLoggersExceeded => write!(f, "the maximum number of FMU logger layers (2^64-1) was exceeded"),
-            LoggerError::LoggerLayerNotFound(luid) => write!(f, "no FMU logger layer with logger_uid {} was found", luid)
+            LoggerError::SubscriberAlreadySet => write!(
+                f, "the global tracing subscriber was already set"
+            ),
+            LoggerError::FmuLayerVectorMissing => write!(
+                f, "the vector containing the FMU logger layers is missing"
+            ),
+            LoggerError::MaxLoggersExceeded => write!(
+                f, "the maximum number of FMU logger layers (2^64-1) was exceeded"
+            ),
+            LoggerError::LoggerLayerNotFound(luid) => write!(
+                f, "no FMU logger layer with logger_uid {} was found", luid
+            ),
+            LoggerError::CategoriesAlreadyListed(categories) => {
+                write!(
+                    f,
+                    "the categories {}were already listed in the logging filter",
+                    categories.into_iter()
+                        .map(|category| format!("{category}"))
+                        .reduce(
+                            |folded, next_string| {
+                                format!("{folded}, {next_string}")
+                            }
+                        ).map_or(
+                            String::from(""),
+                            |categories_string| {
+                                format!("[{categories_string}] ")
+                            }
+                        )
+                )
+            }
         }
     }
 }
@@ -317,12 +448,69 @@ struct EnabledForLayer {
     logger_uid: u64
 }
 
+enum CategoryFilter {
+    Blacklist(Vec<Fmi2LogCategory>),
+    Whitelist(Vec<Fmi2LogCategory>)
+}
+
+impl CategoryFilter {
+    pub fn new_blacklist() -> Self {
+        CategoryFilter::Blacklist(Vec::<Fmi2LogCategory>::with_capacity(16))
+    }
+
+    pub fn new_whitelist() -> Self {
+        CategoryFilter::Whitelist(Vec::<Fmi2LogCategory>::with_capacity(16))
+    }
+
+    pub fn blacklist_category(&mut self, category: Fmi2LogCategory) -> Result<(), Fmi2LogCategory> {
+        if let CategoryFilter::Blacklist(categories) = self {
+            if !categories.contains(&category) {
+                categories.push(category);
+                return Ok(()) 
+            }
+        }
+        return Err(category)
+    }
+
+    pub fn whitelist_category(&mut self, category: Fmi2LogCategory) -> Result<(), Fmi2LogCategory> {
+        if let CategoryFilter::Whitelist(categories) = self {
+            if !categories.contains(&category) {
+                categories.push(category);
+                return Ok(())
+            }
+        }
+        return Err(category)
+    }
+
+    pub fn allows(&self, category: &Fmi2LogCategory) -> bool {
+        match self {
+            CategoryFilter::Blacklist(categories) => {
+                !categories.contains(category)
+            }
+            CategoryFilter::Whitelist(categories) => {
+                categories.contains(category)
+            }
+        }
+    }
+
+    pub fn all_categories_refused(&self) -> bool {
+        match self {
+            CategoryFilter::Blacklist(_) => {
+                false
+            }
+            CategoryFilter::Whitelist(categories) => {
+                categories.is_empty()
+            }
+        }
+    }
+}
+
 struct FmuLayer{
     logger_uid: u64,
     callback: Fmi2CallbackLogger,
     categories: Vec<Fmi2LogCategory>,
     component_environment: SyncComponentEnvironment,
-    enabled: bool,
+    category_filter: CategoryFilter,
     instance_name_bytes: Option<Vec<u8>>
 }
 
@@ -333,12 +521,18 @@ impl FmuLayer{
         component_environment: SyncComponentEnvironment,
         enabled: bool
     ) -> Self {
+        let category_filter = if enabled {
+            CategoryFilter::new_blacklist()
+        } else {
+            CategoryFilter::new_whitelist()
+        };
+
         Self {
             logger_uid,
             callback,
-            categories: Vec::with_capacity(16), //There are 10 predefined logCategories, so a capacity of 16 will allow the user to implement a handful of their own without this having to reallocate for size
+            categories: Vec::with_capacity(16), // There are 10 predefined logCategories, so a capacity of 16 will allow the user to implement a handful of their own without this having to reallocate for size
             component_environment,
-            enabled,
+            category_filter,
             instance_name_bytes: None
         }
     }
@@ -442,7 +636,9 @@ impl <S: Subscriber + for<'lookup> LookupSpan<'lookup>> Layer<S> for FmuLayer{
         _event: &Event<'_>,
         _ctx: Context<'_, S>
     ) {
-        if !(self.enabled && self.interested_in_event(_event, &_ctx)) {
+        if self.category_filter.all_categories_refused()
+        || !self.interested_in_event(_event, &_ctx)
+        {
             return
         }
 
@@ -451,7 +647,7 @@ impl <S: Subscriber + for<'lookup> LookupSpan<'lookup>> Layer<S> for FmuLayer{
 
         let category = visitor.category.unwrap_or_default();
 
-        if !(self.interested_in_category(&category)) {
+        if !(self.category_filter.allows(&category)) {
             return
         }
 
