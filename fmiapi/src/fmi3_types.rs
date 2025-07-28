@@ -19,12 +19,12 @@ pub type Fmi3Int32 = i32;
 pub type Fmi3UInt32 = u32;
 pub type Fmi3Int64 = i64;
 pub type Fmi3UInt64 = u64;
-pub type Fmi3Boolean = bool; // As of the 2018 edition of rust, rusts bool is equal to the C bool.
+pub type Fmi3Boolean = bool; // As of the 2018 edition of rust, Rust's bool is equal to the C bool.
 pub type Fmi3Char = c_char;
 pub type Fmi3String = *const Fmi3Char;
 pub type Fmi3Byte = u8;
 pub type Fmi3Binary = *const Fmi3Byte;
-pub type Fmi3Clock = bool; // As of the 2018 edition of rust, rusts bool is equal to the C bool.
+pub type Fmi3Clock = bool; // As of the 2018 edition of rust, Rust's bool is equal to the C bool.
 
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
@@ -120,6 +120,58 @@ pub type Fmi3LogMessageCallback = unsafe extern "C" fn(
     category: Fmi3String,
     message: Fmi3String
 );
+
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug, Default, PartialEq)]
+pub enum Fmi3LogCategory {
+    #[default] LogEvents,
+    LogSingularLinearSystems,
+    LogNonlinearSystems,
+    LogDynamicStateSelection,
+    LogStatusWarning,
+    LogStatusDiscard,
+    LogStatusError,
+    LogStatusFatal,
+    LogUserDefined(String)
+}
+
+impl Fmi3LogCategory {
+    pub fn str_name(&self) -> &str {
+        match self {
+            Fmi3LogCategory::LogEvents => "logEvents",
+            Fmi3LogCategory::LogSingularLinearSystems => "logSingularLinearSystems",
+            Fmi3LogCategory::LogNonlinearSystems => "logNonlinearSystems",
+            Fmi3LogCategory::LogDynamicStateSelection => "logDynamicStateSelection",
+            Fmi3LogCategory::LogStatusWarning => "logStatusWarning",
+            Fmi3LogCategory::LogStatusDiscard => "logStatusDiscard",
+            Fmi3LogCategory::LogStatusError => "logStatusError",
+            Fmi3LogCategory::LogStatusFatal => "logStatusFatal",
+            Fmi3LogCategory::LogUserDefined(name) => name,
+        }
+    }
+}
+
+impl Display for Fmi3LogCategory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.str_name())
+    }
+}
+
+impl From<&str> for Fmi3LogCategory {
+    fn from(value: &str) -> Self {
+        match value {
+            "logEvents" => Fmi3LogCategory::LogEvents,
+            "logSingularLinearSystems" => Fmi3LogCategory::LogSingularLinearSystems,
+            "logNonlinearSystems" => Fmi3LogCategory::LogNonlinearSystems,
+            "logDynamicStateSelection" => Fmi3LogCategory::LogDynamicStateSelection,
+            "logStatusWarning" => Fmi3LogCategory::LogStatusWarning,
+            "logStatusDiscard" => Fmi3LogCategory::LogStatusDiscard,
+            "logStatusError" => Fmi3LogCategory::LogStatusError,
+            "logStatusFatal" => Fmi3LogCategory::LogStatusFatal,
+            _ => Fmi3LogCategory::LogUserDefined(String::from(value))
+        }
+    }
+}
 
 /// NOT CURRENTLY FULLY SUPPORTED!
 /// ~ "This is not my final form" ~
