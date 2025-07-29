@@ -161,7 +161,7 @@ impl Fmi2Slave {
                 .ok_or(Fmi2SlaveError::ReturnError)?;
         }
 
-        R::extract(return_message)
+        R::extract_from(return_message)
             .ok_or(Fmi2SlaveError::ReturnError)
     }
 
