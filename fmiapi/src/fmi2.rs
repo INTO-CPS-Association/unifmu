@@ -86,7 +86,9 @@ impl From<fmi2_messages::Fmi2Type> for Fmi2Type {
 }
 
 // ----------------------- Protocol Buffer Trait decorations ---------------------------
-
+// The trait ExpectableReturn extends the Return message with an extract
+// function that let's us pattern match and unwrap the inner type of a
+// ReturnMessage.
 implement_expectable_return!(fmi2_messages::Fmi2EmptyReturn, ReturnMessage, Empty);
 implement_expectable_return!(fmi2_messages::Fmi2StatusReturn, ReturnMessage, Status);
 implement_expectable_return!(fmi2_messages::Fmi2FreeInstanceReturn, ReturnMessage, FreeInstance);
