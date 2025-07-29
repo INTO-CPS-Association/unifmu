@@ -1,7 +1,7 @@
 use std::{
     error::Error,
     ffi::OsString,
-    fmt::Display,
+    fmt::{Debug, Display},
     path::Path
 };
 
@@ -47,7 +47,7 @@ impl Dispatcher {
 }
 
 impl Dispatch for Dispatcher {
-    fn send<S: Message>(&mut self, msg: &S) -> DispatcherResult<()> {
+    fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
         match self {
             Dispatcher::Local(d) => d.send(msg),
             Dispatcher::Remote(d) => d.send(msg)
@@ -61,7 +61,7 @@ impl Dispatch for Dispatcher {
         }
     }
 
-    fn send_and_recv<S: Message, R: Message + Default>(
+    fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R> {
@@ -118,7 +118,7 @@ impl LocalDispatcher {
 }
 
 impl Dispatch for LocalDispatcher {
-    fn send<S: Message>(&mut self, msg: &S) -> DispatcherResult<()> {
+    fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
         self.runtime.block_on(async {
             select! {
                 Err(e) = self.subprocess.monitor_subprocess() => Err(e),
@@ -136,7 +136,7 @@ impl Dispatch for LocalDispatcher {
         })
     }
 
-    fn send_and_recv<S: Message, R: Message + Default>(
+    fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R> {
@@ -193,7 +193,7 @@ impl RemoteDispatcher {
 }
 
 impl Dispatch for RemoteDispatcher {
-    fn send<S: Message>(&mut self, msg: &S) -> DispatcherResult<()> {
+    fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
         self.runtime.block_on(self.socket.send::<S>(msg))
     }
 
@@ -201,7 +201,7 @@ impl Dispatch for RemoteDispatcher {
         self.runtime.block_on(self.socket.recv::<R>())
     }
 
-    fn send_and_recv<S: Message, R: Message + Default>(
+    fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R> {
@@ -233,11 +233,11 @@ pub trait Dispatch {
         }
     }
 
-    fn send<S: Message>(&mut self, msg: &S) -> DispatcherResult<()>; 
+    fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()>; 
 
     fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R>;
 
-    fn send_and_recv<S: Message, R: Message + Default>(
+    fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R>;
@@ -315,7 +315,7 @@ impl BackendSocket {
     /// ZeroMQ message queue, NOT when the message has actually been received
     /// by the backend. As such, there is no absolute guarantee that the
     /// message has been received when this returns. 
-    async fn send<S: Message>(&mut self, msg: &S) -> DispatcherResult<()> {
+    async fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
         let bytes_send: Bytes = msg.encode_to_vec().into();
         match  self.socket.send(bytes_send.into()).await {
             Ok(_) => Ok(()),
@@ -362,7 +362,7 @@ impl BackendSocket {
 
     /// Shorthand for a call to BackendSocket::send() followed by a call to
     /// BackendSocket::recv().
-    async fn send_and_recv<S: Message, R: Message + Default>(
+    async fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R> {

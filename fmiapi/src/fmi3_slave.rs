@@ -10,7 +10,7 @@ use crate::fmi3_messages::{
 use std::{
     error::Error,
     ffi::CString,
-    fmt::Display
+    fmt::{Debug, Display}
 };
 
 use prost::Message;
@@ -33,7 +33,7 @@ impl Fmi3Slave {
 
     pub fn dispatch<R: Message>(
         &mut self,
-        command: &impl Message,
+        command: &(impl Message + Debug),
         return_matcher: fn(&mut Self, fmi3_return::ReturnMessage) -> Fmi3SlaveResult<R>
     ) -> Fmi3SlaveResult<R> {
         let return_message = self.dispatcher

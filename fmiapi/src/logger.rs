@@ -234,7 +234,7 @@ pub fn refuse_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
 
 pub fn allow_categories_for_callback(
     logger_uid: u64,
-    mut categories: Vec<Fmi2LogCategory>
+    categories: Vec<Fmi2LogCategory>
 ) -> LoggerResult<()> {
     modify_callback_with_result(
         logger_uid,
@@ -262,7 +262,7 @@ pub fn allow_categories_for_callback(
 
 pub fn refuse_categories_for_callback(
     logger_uid: u64,
-    mut categories: Vec<Fmi2LogCategory>
+    categories: Vec<Fmi2LogCategory>
 ) -> LoggerResult<()> {
     modify_callback_with_result(
         logger_uid,

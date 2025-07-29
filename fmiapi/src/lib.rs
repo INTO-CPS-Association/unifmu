@@ -7,5 +7,6 @@ pub mod fmi3_messages;
 pub mod fmi3_slave;
 pub mod fmi3_types;
 mod logger;
+mod protobuf_extensions;
 mod spawn;
 pub mod unifmu_handshake;
