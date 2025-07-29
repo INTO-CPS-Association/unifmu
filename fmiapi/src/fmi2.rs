@@ -170,7 +170,8 @@ impl Fmi2Slave {
         log_return: fmi2_messages::Fmi2LogReturn
     ) {
         if logger::ENABLE_FMT_LOGGER {
-            // If fmt logging is enabled the event level is determined by the Fmi2Status for easier glancable logs.
+            // If fmt logging is enabled the event level is determined by the
+            // Fmi2Status for easier glancable logs.
             match log_return.status { 
                 0 | 5 => {
                     info!(
@@ -195,7 +196,8 @@ impl Fmi2Slave {
                 }
             }
         } else {
-            // If not, then we skip the comparison as the event level isn't used by the logger callback when an explicit status is set.
+            // If not, then we skip the comparison as the event level isn't
+            // used by the logger callback when an explicit status is set.
             error!(
                 category = %log_return.category,
                 status = log_return.status,
@@ -205,7 +207,7 @@ impl Fmi2Slave {
     }
 }
 
-/// Sends the fmi3FreeInstance message to the backend when the slave is dropped.
+/// Sends the fmi2FreeInstance message to the backend when the slave is dropped.
 impl Drop for Fmi2Slave {
     fn drop(&mut self) {
         let cmd = Fmi2Command {
