@@ -254,7 +254,9 @@ pub fn allow_categories_for_callback(
             if already_listed_categories.is_empty() {
                 Ok(())
             } else {
-                Err(LoggerError::CategoriesAlreadyListed(already_listed_categories))
+                Err(LoggerError::CategoriesAlreadyListed(
+                    already_listed_categories
+                ))
             }
         }
     )
@@ -282,80 +284,13 @@ pub fn refuse_categories_for_callback(
             if already_listed_categories.is_empty() {
                 Ok(())
             } else {
-                Err(LoggerError::CategoriesAlreadyListed(already_listed_categories))
+                Err(LoggerError::CategoriesAlreadyListed(
+                    already_listed_categories
+                ))
             }
         }
     )
 }
-
-/*
-/// Sets the `enabled` parameter of a FMU logging layer containing a callback,
-/// determining whether or not that layer should emit any logging through the
-/// callback.
-/// 
-/// Calling this function also initializes the global tracing subscriber if
-/// it hasn't already been initialized (see [initialize] for further
-/// explanation).
-/// 
-/// Returns an Err if no FMU logging layer with the given `logger_uid` is
-/// found, or there is a problem with the structure of the global tracing
-/// subscriber.
-/// 
-/// # Parameters
-/// - `logger_uid`: The uid of the FMU logging layer containing the callback.
-/// - `enabled`: A boolean designating whether or not the layer should emit
-///   any logging.
-pub fn update_enabled_for_callback(
-    logger_uid: u64,
-    enabled: bool
-) -> LoggerResult<()> {
-    modify_callback(
-        logger_uid,
-        |layer| layer.enabled = enabled
-    )
-}
-
-/// Sets the logCategories for a FMU logging layer containing a callback.
-/// 
-/// Calling this function also initializes the global tracing subscriber if
-/// it hasn't already been initialized (see [initialize] for further
-/// explanation).
-/// 
-/// Returns an Err if no FMU logging layer with the given `logger_uid` is
-/// found, or there is a problem with the structure of the global tracing
-/// subscriber.
-/// 
-/// # Parameters
-/// - `logger_uid`: The uid of the FMU logging layer to set categories for.
-pub fn set_categories_for_callback(
-    logger_uid: u64,
-    mut categories: Vec<Fmi2LogCategory>
-) -> LoggerResult<()> {
-    modify_callback(
-        logger_uid,
-        |layer| layer.set_categories(&mut categories)
-    )
-}
-
-/// Sets the logCategories of a FMU logging layer containing a callback.
-/// 
-/// Calling this function also initializes the global tracing subscriber if
-/// it hasn't already been initialized (see [initialize] for further
-/// explanation).
-/// 
-/// Returns an Err if no FMU logging layer with the given `logger_uid` is
-/// found, or there is a problem with the structure of the global tracing
-/// subscriber.
-/// 
-/// # Parameters
-/// - `logger_uid`: The uid of the FMU logging layer to clear the categories of.
-pub fn clear_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
-    modify_callback(
-        logger_uid,
-        |layer| layer.clear_categories()
-    )
-}
-*/
 
 pub type LoggerResult<T> = Result<T, LoggerError>;
 
@@ -387,7 +322,7 @@ impl Display for LoggerError {
                 write!(
                     f,
                     "the categories {}were already listed in the logging filter",
-                    categories.into_iter()
+                    categories.iter()
                         .map(|category| format!("{category}"))
                         .reduce(
                             |folded, next_string| {
@@ -408,7 +343,8 @@ impl Display for LoggerError {
 impl Error for LoggerError {}
 
 /// ID is just a simple counter under the assumption that users won't run more
-/// than 2^64 instances of one FMU in one simulation. 
+/// than 2^64 instances of one FMU in one simulation.
+/// This seems a rational assumption, but who knows what the future brings.
 static ID_COUNTER: AtomicU64 = AtomicU64::new(1);
 
 fn new_logger_id() -> LoggerResult<u64> {
@@ -427,11 +363,14 @@ cfg_if::cfg_if! {
     }
 }
 
-type FmuLayerVector = Vec<FmuLayer>;
-type FmuLayerReloadHandle = Handle<FmuLayerVector, Layered<Option<fmt::Layer<Registry>>, Registry>>;
+type FmuLayerReloadHandle = Handle<
+    Vec<FmuLayer>,
+    Layered<Option<fmt::Layer<Registry>>,
+    Registry>
+>;
 
 static FMU_LOGGER_RELOAD_HANDLE: LazyLock<LoggerResult<FmuLayerReloadHandle>> = LazyLock::new(|| {
-    let fmu_layers: FmuLayerVector = Vec::new();
+    let fmu_layers: Vec<FmuLayer> = Vec::new();
 
     let (reloadable, reload_handle) = reload::Layer::new(fmu_layers);
 
@@ -448,40 +387,75 @@ struct EnabledForLayer {
     logger_uid: u64
 }
 
+/// A filter for logging categories.
+/// 
+/// If the filter is the Blacklist variant, any category in the list is
+/// refused.
+/// 
+/// If the filter is the Whitelist variant, any category in the list is
+/// allowed.
 enum CategoryFilter {
     Blacklist(Vec<Fmi2LogCategory>),
     Whitelist(Vec<Fmi2LogCategory>)
 }
 
+/// There are 10 predefined logCategories, so a capacity of 16 will allow the
+/// user to implement a handful of their own without this having to reallocate
+/// for size.
+const LIST_CAPACITY: usize = 16;
+
 impl CategoryFilter {
+    /// Create a new Blacklist variant of the CategoryFilter.
     pub fn new_blacklist() -> Self {
-        CategoryFilter::Blacklist(Vec::<Fmi2LogCategory>::with_capacity(16))
+        CategoryFilter::Blacklist(
+            Vec::<Fmi2LogCategory>::with_capacity(LIST_CAPACITY)
+        )
     }
 
+    /// Create a new Whitelist variant of the CategoryFilter.
     pub fn new_whitelist() -> Self {
-        CategoryFilter::Whitelist(Vec::<Fmi2LogCategory>::with_capacity(16))
+        CategoryFilter::Whitelist(
+            Vec::<Fmi2LogCategory>::with_capacity(LIST_CAPACITY)
+        )
     }
 
-    pub fn blacklist_category(&mut self, category: Fmi2LogCategory) -> Result<(), Fmi2LogCategory> {
+    /// Blacklist the given category if the filter is a Blacklist.
+    /// It will henceforth be refused by the filter.
+    /// 
+    /// Returns the given category wrapped in an Err if the filter is a
+    /// Whitelist.
+    pub fn blacklist_category(
+        &mut self,
+        category: Fmi2LogCategory
+    ) -> Result<(), Fmi2LogCategory> {
         if let CategoryFilter::Blacklist(categories) = self {
             if !categories.contains(&category) {
                 categories.push(category);
                 return Ok(()) 
             }
         }
-        return Err(category)
+        Err(category)
     }
 
-    pub fn whitelist_category(&mut self, category: Fmi2LogCategory) -> Result<(), Fmi2LogCategory> {
+    /// Whitelist the given category if the filter is a Whitelist.
+    /// It will henceforth be allowed by the filter.
+    /// 
+    /// Returns the given category wrapped in an Err if the filter is a
+    /// Blacklist.
+    pub fn whitelist_category(
+        &mut self,
+        category: Fmi2LogCategory
+    ) -> Result<(), Fmi2LogCategory> {
         if let CategoryFilter::Whitelist(categories) = self {
             if !categories.contains(&category) {
                 categories.push(category);
                 return Ok(())
             }
         }
-        return Err(category)
+        Err(category)
     }
 
+    /// Is the given category allowed by the filter.
     pub fn allows(&self, category: &Fmi2LogCategory) -> bool {
         match self {
             CategoryFilter::Blacklist(categories) => {
@@ -493,6 +467,7 @@ impl CategoryFilter {
         }
     }
 
+    /// Are ALL categories currently refused by the filter.
     pub fn all_categories_refused(&self) -> bool {
         match self {
             CategoryFilter::Blacklist(_) => {
@@ -508,7 +483,6 @@ impl CategoryFilter {
 struct FmuLayer{
     logger_uid: u64,
     callback: Fmi2CallbackLogger,
-    categories: Vec<Fmi2LogCategory>,
     component_environment: SyncComponentEnvironment,
     category_filter: CategoryFilter,
     instance_name_bytes: Option<Vec<u8>>
@@ -530,7 +504,6 @@ impl FmuLayer{
         Self {
             logger_uid,
             callback,
-            categories: Vec::with_capacity(16), // There are 10 predefined logCategories, so a capacity of 16 will allow the user to implement a handful of their own without this having to reallocate for size
             component_environment,
             category_filter,
             instance_name_bytes: None
@@ -540,28 +513,10 @@ impl FmuLayer{
     /// Sets the instance name that is to be passed to the callback on logging
     /// any event.
     pub fn set_instance_name(&mut self, instance_name: &str) {
-        let mut instance_name_bytes = String::from(instance_name).into_bytes();
+        let mut instance_name_bytes = String::from(instance_name)
+            .into_bytes();
         instance_name_bytes.push(0);
         self.instance_name_bytes = Some(instance_name_bytes);
-    }
-
-    /// Sets the logging categories that the FmuLayer will log events for.
-    /// 
-    /// If any categories are set, the FmuLayer will only emit events for
-    /// which the value of the `category` field is equal to one of these set
-    /// categories. (Events without an explicit `category` field defaults to
-    /// `LogAll`).
-    pub fn set_categories(&mut self, categories: &mut Vec<Fmi2LogCategory>) {
-        self.clear_categories();
-        self.categories.append(categories);
-    }
-
-    /// Clears the logging categories for the FmuLayer, indicating that any
-    /// event no matter the presence or value of its `category` field will be
-    /// logged (assuming that the event is meant for this FmuLayer and the
-    /// FmuLayer is enabled).
-    pub fn clear_categories(&mut self) {
-        self.categories.clear();
     }
     
     fn logger_uid_in_attributes(&self, attrs: &span::Attributes<'_>) -> bool {
@@ -570,20 +525,26 @@ impl FmuLayer{
         visitor.luid.is_some_and(|luid| luid == self.logger_uid)
     }
 
-    fn interested_in_parent_of_span<S: Subscriber + for<'lookup> LookupSpan<'lookup>>(
+    fn interested_in_parent_of_span<S>(
         &self,
         span: &SpanRef<'_, S>
-    ) -> bool {
+    ) -> bool
+    where
+        S: Subscriber + for<'lookup> LookupSpan<'lookup>
+    {
         span.parent()
             .is_some_and(|parent_span|
                 self.interested_in_span(&parent_span)
             )
     }
 
-    fn interested_in_span<S: Subscriber + for<'lookup> LookupSpan<'lookup>>(
+    fn interested_in_span<S>(
         &self,
         span: &SpanRef<'_, S>
-    ) -> bool {
+    ) -> bool
+    where
+        S: Subscriber + for<'lookup> LookupSpan<'lookup>
+    {
         span.extensions()
             .get::<EnabledForLayer>()
             .is_some_and(|enabled_for_layer|
@@ -591,19 +552,16 @@ impl FmuLayer{
             )
     }
 
-    fn interested_in_event<S: Subscriber + for<'lookup> LookupSpan<'lookup>>(
+    fn interested_in_event<S>(
         &self,
         event: &Event<'_>,
         ctx: &Context<'_, S>
-    ) -> bool {
+    ) -> bool
+    where
+        S: Subscriber + for<'lookup> LookupSpan<'lookup>
+    {
         ctx.event_span(event)
             .is_some_and(|span| self.interested_in_span(&span))
-    }
-
-    /// The FmuLayer is interested in a category if it is contained in the
-    /// FmuLayer's `categories` vector OR if the `categories` vector is empty.
-    fn interested_in_category(&self, category: &Fmi2LogCategory) -> bool {
-        self.categories.is_empty() || self.categories.contains(category)
     }
 }
 
