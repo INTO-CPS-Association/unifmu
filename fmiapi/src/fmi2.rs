@@ -609,9 +609,9 @@ pub extern "C" fn fmi2SetDebugLogging(
                     .collect();
 
                 match if logging_on {
-                    logger::allow_categories_for_callback(slave.logger_uid, categories)
+                    logger::enable_categories_for_callback(slave.logger_uid, categories)
                 } else {
-                    logger::refuse_categories_for_callback(slave.logger_uid, categories)
+                    logger::disable_categories_for_callback(slave.logger_uid, categories)
                 } {
                     Err(error @ logger::LoggerError::CategoriesAlreadyListed(_)) => {
                         error!(
@@ -633,9 +633,9 @@ pub extern "C" fn fmi2SetDebugLogging(
         }
     } else if let Err(error) =
         if logging_on {
-            logger::allow_all_categories_for_callback(slave.logger_uid) 
+            logger::enable_all_categories_for_callback(slave.logger_uid) 
         } else {
-            logger::refuse_all_categories_for_callback(slave.logger_uid) 
+            logger::disable_all_categories_for_callback(slave.logger_uid) 
         }
     {
         error!(

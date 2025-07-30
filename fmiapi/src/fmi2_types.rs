@@ -115,7 +115,7 @@ pub type Fmi2CallbackLogger = unsafe extern "C" fn(
 );
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub enum Fmi2LogCategory {
     LogEvents,
     LogSingularLinearSystems,

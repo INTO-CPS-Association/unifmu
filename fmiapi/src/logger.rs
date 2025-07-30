@@ -7,6 +7,7 @@ use crate::fmi2_types::{
 };
 
 use std::{
+    collections::HashSet,
     ffi::CStr,
     fmt::{Debug, Display},
     error::Error,
@@ -214,7 +215,7 @@ pub fn add_name_to_callback(
     )
 }
 
-pub fn allow_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
+pub fn enable_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
     modify_callback(
         logger_uid,
         |layer| {
@@ -223,7 +224,7 @@ pub fn allow_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
     )
 }
 
-pub fn refuse_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
+pub fn disable_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
     modify_callback(
         logger_uid,
         |layer| {
@@ -232,7 +233,7 @@ pub fn refuse_all_categories_for_callback(logger_uid: u64) -> LoggerResult<()> {
     )
 }
 
-pub fn allow_categories_for_callback(
+pub fn enable_categories_for_callback(
     logger_uid: u64,
     categories: Vec<Fmi2LogCategory>
 ) -> LoggerResult<()> {
@@ -242,7 +243,7 @@ pub fn allow_categories_for_callback(
             let already_listed_categories: Vec<Fmi2LogCategory> = categories.into_iter()
                 .filter_map(|category| {
                     if let Err(category) = layer.category_filter
-                        .whitelist_category(category)
+                        .enable_category(category)
                     {
                         Some(category)
                     } else {
@@ -262,7 +263,7 @@ pub fn allow_categories_for_callback(
     )
 }
 
-pub fn refuse_categories_for_callback(
+pub fn disable_categories_for_callback(
     logger_uid: u64,
     categories: Vec<Fmi2LogCategory>
 ) -> LoggerResult<()> {
@@ -272,7 +273,7 @@ pub fn refuse_categories_for_callback(
             let already_listed_categories: Vec<Fmi2LogCategory> = categories.into_iter()
                 .filter_map(|category| {
                     if let Err(category) = layer.category_filter
-                        .blacklist_category(category)
+                        .disable_category(category)
                     {
                         Some(category)
                     } else {
@@ -395,8 +396,8 @@ struct EnabledForLayer {
 /// If the filter is the Whitelist variant, any category in the list is
 /// allowed.
 enum CategoryFilter {
-    Blacklist(Vec<Fmi2LogCategory>),
-    Whitelist(Vec<Fmi2LogCategory>)
+    Blacklist(HashSet<Fmi2LogCategory>),
+    Whitelist(HashSet<Fmi2LogCategory>)
 }
 
 /// There are 10 predefined logCategories, so a capacity of 16 will allow the
@@ -408,14 +409,14 @@ impl CategoryFilter {
     /// Create a new Blacklist variant of the CategoryFilter.
     pub fn new_blacklist() -> Self {
         CategoryFilter::Blacklist(
-            Vec::<Fmi2LogCategory>::with_capacity(LIST_CAPACITY)
+            HashSet::<Fmi2LogCategory>::with_capacity(LIST_CAPACITY)
         )
     }
 
     /// Create a new Whitelist variant of the CategoryFilter.
     pub fn new_whitelist() -> Self {
         CategoryFilter::Whitelist(
-            Vec::<Fmi2LogCategory>::with_capacity(LIST_CAPACITY)
+            HashSet::<Fmi2LogCategory>::with_capacity(LIST_CAPACITY)
         )
     }
 
@@ -424,14 +425,22 @@ impl CategoryFilter {
     /// 
     /// Returns the given category wrapped in an Err if the filter is a
     /// Whitelist.
-    pub fn blacklist_category(
+    pub fn disable_category(
         &mut self,
         category: Fmi2LogCategory
     ) -> Result<(), Fmi2LogCategory> {
-        if let CategoryFilter::Blacklist(categories) = self {
-            if !categories.contains(&category) {
-                categories.push(category);
-                return Ok(()) 
+        match self {
+            CategoryFilter::Blacklist(categories) => {
+                if !categories.contains(&category) {
+                    categories.insert(category);
+                    return Ok(()) 
+                }
+            }
+            CategoryFilter::Whitelist(categories) => {
+                if categories.contains(&category) {
+                    categories.remove(&category);
+                    return Ok(())
+                }
             }
         }
         Err(category)
@@ -442,21 +451,29 @@ impl CategoryFilter {
     /// 
     /// Returns the given category wrapped in an Err if the filter is a
     /// Blacklist.
-    pub fn whitelist_category(
+    pub fn enable_category(
         &mut self,
         category: Fmi2LogCategory
     ) -> Result<(), Fmi2LogCategory> {
-        if let CategoryFilter::Whitelist(categories) = self {
-            if !categories.contains(&category) {
-                categories.push(category);
-                return Ok(())
+        match self {
+            CategoryFilter::Blacklist(categories) => {
+                if categories.contains(&category) {
+                    categories.remove(&category);
+                    return Ok(()) 
+                }
+            }
+            CategoryFilter::Whitelist(categories) => {
+                if !categories.contains(&category) {
+                    categories.insert(category);
+                    return Ok(())
+                }
             }
         }
         Err(category)
     }
 
-    /// Is the given category allowed by the filter.
-    pub fn allows(&self, category: &Fmi2LogCategory) -> bool {
+    /// Is the given category enabled by the filter.
+    pub fn enabled(&self, category: &Fmi2LogCategory) -> bool {
         match self {
             CategoryFilter::Blacklist(categories) => {
                 !categories.contains(category)
@@ -467,8 +484,18 @@ impl CategoryFilter {
         }
     }
 
-    /// Are ALL categories currently refused by the filter.
-    pub fn all_categories_refused(&self) -> bool {
+    /// Are ALL categories currently disabled by the filter.
+    /// 
+    /// As the number of different categories is unbounded, and we at compile
+    /// time don't know what categories exist outside of the standard
+    /// categories, it is technically possible that this function returns false
+    /// even if all categories defined by the FMU are disabled.
+    /// It is possible to parse the FMU model description XML, find the
+    /// categories set by the FMU, and hold this up against the contents of the
+    /// filter. But that would defeat the point of this function, namely that
+    /// it is a fast initial check for the logger, letting it quickly return
+    /// if the importer has no interest in any log category.
+    pub fn all_categories_disabled(&self) -> bool {
         match self {
             CategoryFilter::Blacklist(_) => {
                 false
@@ -563,6 +590,14 @@ impl FmuLayer{
         ctx.event_span(event)
             .is_some_and(|span| self.interested_in_span(&span))
     }
+
+    fn interested_in_category(&self, category: &Fmi2LogCategory) -> bool {
+        self.category_filter.enabled(category)
+    }
+
+    fn disabled(&self) -> bool {
+        self.category_filter.all_categories_disabled()
+    }
 }
 
 impl <S: Subscriber + for<'lookup> LookupSpan<'lookup>> Layer<S> for FmuLayer{
@@ -594,7 +629,7 @@ impl <S: Subscriber + for<'lookup> LookupSpan<'lookup>> Layer<S> for FmuLayer{
         _event: &Event<'_>,
         _ctx: Context<'_, S>
     ) {
-        if self.category_filter.all_categories_refused()
+        if self.disabled()
         || !self.interested_in_event(_event, &_ctx)
         {
             return
@@ -605,7 +640,7 @@ impl <S: Subscriber + for<'lookup> LookupSpan<'lookup>> Layer<S> for FmuLayer{
 
         let category = visitor.category.unwrap_or_default();
 
-        if !(self.category_filter.allows(&category)) {
+        if !(self.interested_in_category(&category)) {
             return
         }
 
