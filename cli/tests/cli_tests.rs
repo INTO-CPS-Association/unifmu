@@ -55,7 +55,7 @@ fn test_extract() {
 
 #[for_each_fmu(include: fmi2, local)]
 #[test]
-fn test_intantiate() {
+fn test_instantiate() {
     let fmu = WildFmu{};
 
     fmu_python_test(fmu, "fmi2_instantiate");
@@ -63,7 +63,7 @@ fn test_intantiate() {
 
 #[for_each_fmu(include: fmi3, local)]
 #[test]
-fn test_intantiate() {
+fn test_instantiate() {
     let fmu = WildFmu{};
 
     fmu_python_test(fmu, "fmi3_instantiate");
@@ -71,7 +71,7 @@ fn test_intantiate() {
 
 #[for_each_fmu(include: fmi2, distributed, blackbox)]
 #[test]
-fn test_intantiate() {
+fn test_instantiate() {
     let fmu = WildFmu{};
 
     distributed_fmu_python_test(fmu, "fmi2_instantiate");
@@ -79,7 +79,7 @@ fn test_intantiate() {
 
 #[for_each_fmu(include: fmi3, distributed, blackbox)]
 #[test]
-fn test_intantiate() {
+fn test_instantiate() {
     let fmu = WildFmu{};
 
     distributed_fmu_python_test(fmu, "fmi3_instantiate");
