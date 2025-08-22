@@ -9,4 +9,5 @@ pub mod fmi3_types;
 mod logger;
 mod protobuf_extensions;
 mod spawn;
+mod string_conversion;
 pub mod unifmu_handshake;
