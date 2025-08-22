@@ -24,7 +24,7 @@ toml = "0.9"
 
 [dev-dependencies]
 assert_cmd = "2"
-duct = "0.13"
+duct = "1"
 predicates = "3"
 serial_test = "3"
 tokio = { version = "1", features = ["full"] }
