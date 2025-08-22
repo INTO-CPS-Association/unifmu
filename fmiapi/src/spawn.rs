@@ -76,7 +76,10 @@ impl LaunchConfig {
     }
 }
 
-pub fn spawn_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
+pub fn spawn_slave(
+    resource_path: &Path,
+    remote_connction_notifier: impl Fn(&str)
+) -> Result<Dispatcher, ()> {
     let config = LaunchConfig::create(resource_path)?;
 
     debug!("{:?}", config);
@@ -86,7 +89,7 @@ pub fn spawn_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
             resource_path,
             &config.get_launch_command()?
         ),
-        BackendLocation::Remote => Dispatcher::remote()
+        BackendLocation::Remote => Dispatcher::remote(remote_connction_notifier)
     };
 
     let mut dispatcher = match dispatcher_result {
@@ -97,14 +100,14 @@ pub fn spawn_slave(resource_path: &Path) -> Result<Dispatcher, ()> {
         }
     };
 
-    info!("Awaiting handshake.");
+    println!("Awaiting handshake.");
     match dispatcher.await_handshake() {
         Ok(_) => {
-            info!("Connection established!");
+            println!("Connection established!");
             Ok(dispatcher)
         },
         Err(e) => {
-            error!{"Handshake failed with error {:#?}", e};
+            println!{"Handshake failed with error {:#?}", e};
             Err(())
         }
     } 

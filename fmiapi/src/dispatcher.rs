@@ -5,7 +5,7 @@ use std::{
     path::Path
 };
 
-use crate::unifmu_handshake::{HandshakeStatus, HandshakeReply,};
+use crate::unifmu_handshake::{HandshakeStatus, HandshakeReply};
 
 use bytes::Bytes;
 use colored::Colorize;
@@ -31,18 +31,25 @@ impl Dispatcher {
     /// the resources at resource_path as part of the Dispatchers creation.
     pub fn local(
         resource_path: &Path,
-        launch_command: &Vec<String>,
+        launch_command: &Vec<String>
     ) -> DispatcherResult<Self> {
-        info!("Local dispatcher created.");
-        Ok(Self::Local(LocalDispatcher::create(resource_path, launch_command)?))
+        Ok(
+            Self::Local(
+                LocalDispatcher::create(
+                    resource_path,
+                    launch_command
+                )?
+            )
+        )
     }
 
     /// Creates a Dispatcher to a remote UNIFMU backend.
     /// 
     /// The backend must be initialized seperately.
-    pub fn remote() -> DispatcherResult<Self> {
-        info!("Remote dispatcher created.");
-        Ok(Self::Remote(RemoteDispatcher::create()?))
+    pub fn remote(
+        remote_connction_notifier: impl Fn(&str)
+    ) -> DispatcherResult<Self> {
+        Ok(Self::Remote(RemoteDispatcher::create(remote_connction_notifier)?))
     }
 }
 
@@ -85,14 +92,13 @@ pub struct LocalDispatcher {
 impl LocalDispatcher {
     pub fn create(
         resource_path: &Path,
-        launch_command: &Vec<String>,
+        launch_command: &Vec<String>
     ) -> DispatcherResult<Self> {
         let runtime = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build() {
                 Ok(runtime) => runtime,
                 Err(e) => {
-                    error!("Couldn't setup concurrency runtime: {:#?}", e);
                     return Err(DispatcherError::ConcurrencyError);
                 }
             };
@@ -111,7 +117,7 @@ impl LocalDispatcher {
             Self {
                 socket,
                 subprocess,
-                runtime,
+                runtime
             }
         )
     }
@@ -158,7 +164,7 @@ pub struct RemoteDispatcher {
 }
 
 impl RemoteDispatcher {
-    pub fn create() -> DispatcherResult<Self> {
+    pub fn create(remote_connction_notifier: impl Fn(&str)) -> DispatcherResult<Self> {
         let runtime = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build() {
@@ -181,7 +187,7 @@ impl RemoteDispatcher {
             .bold();
 
         // Communicate the portnumber that remote backend should connect to
-        println!("{decorated_communication}{port}");
+        remote_connction_notifier(&format!("{decorated_communication}{port}"));
 
         Ok(
             Self {

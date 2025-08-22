@@ -224,7 +224,10 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         PathBuf::from(resource_path_str)
     };
 
-    let dispatcher = match spawn_slave(Path::new(&resources_dir)) {
+    let dispatcher = match spawn_slave(
+        Path::new(&resources_dir),
+        |_| {}
+    ) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
             error!("Spawning fmi3 slave failed.");

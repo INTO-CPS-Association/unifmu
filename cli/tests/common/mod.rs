@@ -71,6 +71,8 @@ pub fn fmu_python_test(
     }
 }
 
+const REMOTE_PORT_CONNECTION_MESSAGE_STUB: &str = "Connect remote backend to dispatcher through port ";
+
 /// Pass the Distributed FMU to the given test function in a python subprocess,
 /// and start the private backend when the FMU is instantiated.
 /// 
@@ -110,11 +112,20 @@ pub fn distributed_fmu_python_test(
 
                     panic!("PYTHON {line}");
                 
-                } else if line.contains("Connect remote backend to dispatcher through port") {
-                    let port_string =  line[50..].to_string();
+                } else if
+                    remote_process.is_none()
+                    && line.contains(REMOTE_PORT_CONNECTION_MESSAGE_STUB)
+                {
+                    let connect_message_start_index = line.find(REMOTE_PORT_CONNECTION_MESSAGE_STUB)
+                        .expect("'line' from local fmiapi should contain 'REMOTE_PORT_CONNECTION_MESSAGE_STUB'");
 
+                    let port_start_index = REMOTE_PORT_CONNECTION_MESSAGE_STUB.len()
+                        + connect_message_start_index;
+
+                    let port_string =  line[port_start_index..].to_string();
+                    
                     println!("Connecting remote backend to fmu dispatcher through port {port_string}");
-
+                    
                     remote_process = Some(fmu.start_remote_backend(port_string));
 
                 } else {

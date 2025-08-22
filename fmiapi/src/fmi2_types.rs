@@ -1,5 +1,6 @@
 // Type definitions for parameters in functions crossing the ABI boundary
 // betweeen C and Rust.
+use crate::category_filter::LogCategory;
 
 use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int}, fmt::{Debug, Display}};
 
@@ -130,8 +131,8 @@ pub enum Fmi2LogCategory {
     LogUserDefined(String)
 }
 
-impl Fmi2LogCategory {
-    pub fn str_name(&self) -> &str {
+impl LogCategory for Fmi2LogCategory {
+    fn str_name(&self) -> &str {
         match self {
             Fmi2LogCategory::LogEvents => "logEvents",
             Fmi2LogCategory::LogSingularLinearSystems => "logSingularLinearSystems",
@@ -169,6 +170,12 @@ impl From<&str> for Fmi2LogCategory {
             "logAll" => Fmi2LogCategory::LogAll,
             _ => Fmi2LogCategory::LogUserDefined(String::from(value))
         }
+    }
+}
+
+impl From<String> for Fmi2LogCategory {
+    fn from(value: String) -> Self {
+        Self::from(&value as &str)
     }
 }
 

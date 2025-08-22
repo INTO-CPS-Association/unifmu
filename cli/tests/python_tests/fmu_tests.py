@@ -549,4 +549,17 @@ if __name__ == "__main__":
     else:
         is_zipped = False
 
+    # When these tests are called from the rust test module, python runs them
+    # noninteractively (as there are no parts of the code that ask for
+    # interaction from any human). When python code is run noninteractively all
+    # messages send to stdout are buffered and held until execution ends.
+    # This interferes with our tests - distributed UniFMUs have an interactive
+    # step where the "local" part sends a message to stdout that is needed to
+    # start up the "remote" part. We automate this interaction (see the rust
+    # common module for tests), and as such we need the messages from python
+    # to be emitted when printed instead of at end of execution.
+    # This line ensures that prints are emitted at line end, which 
+    # is sufficient.
+    sys.stdout.reconfigure(line_buffering=True)
+
     globals()[function_name](fmu_filepath, is_zipped)

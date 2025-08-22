@@ -1,0 +1,143 @@
+use crate::{
+    category_filter::CategoryFilter,
+    fmi2_types::{
+        ComponentEnvironment,
+        Fmi2CallbackLogger,
+        Fmi2LogCategory,
+        Fmi2Status,
+        Fmi2String
+    },
+    logger::Logger
+};
+
+use std::ffi::CStr;
+
+pub struct Fmi2Logger {
+    callback: Fmi2CallbackLogger,
+    environment: *const ComponentEnvironment,
+    filter: CategoryFilter<Fmi2LogCategory>,
+    instance_name: Fmi2String
+}
+
+impl Fmi2Logger {
+    pub fn new(
+        callback: Fmi2CallbackLogger,
+        instance_name: Fmi2String,
+        environment: *const ComponentEnvironment,
+        enabled: bool
+    ) -> Self {
+        let filter = if enabled {
+            CategoryFilter::new_blacklist()
+        } else {
+            CategoryFilter::new_whitelist()
+        };
+
+        Self {
+            callback,
+            environment,
+            filter,
+            instance_name
+        }
+    }
+
+    pub fn enable_categories(
+        &mut self,
+        categories: Vec<Fmi2LogCategory>
+    ) {
+        for category in categories {
+            let _ = self.filter.enable_category(category);
+        }
+    }
+
+    pub fn disable_categories(
+        &mut self,
+        categories: Vec<Fmi2LogCategory>
+    ) {
+        for category in categories {
+            let _ = self.filter.disable_category(category);
+        }
+    }
+
+    pub fn enable_all_categories(&mut self) {
+        self.filter = CategoryFilter::new_blacklist();
+    }
+
+    pub fn disable_all_categories(&mut self) {
+        self.filter = CategoryFilter::new_blacklist();
+    }
+}
+
+impl Logger for Fmi2Logger {
+    type Category = Fmi2LogCategory;
+    type Status = Fmi2Status;
+
+    fn log(
+        &self,
+        status: Fmi2Status,
+        category: Fmi2LogCategory,
+        message: &str
+    ) {
+        if !self.filter.enabled(&category) {
+            return
+        }
+
+        let mut category_bytes: Vec<u8> = category.to_string().into_bytes();
+        category_bytes.push(0);
+        let c_category = CStr::from_bytes_until_nul(&category_bytes)
+            .unwrap_or_default();
+
+        let mut message_bytes: Vec<u8> = message.to_string().into_bytes();
+        message_bytes.push(0);
+        let c_message = CStr::from_bytes_until_nul(&message_bytes)
+            .unwrap_or_default();
+
+        unsafe { (self.callback)(
+            self.environment,
+            self.instance_name,
+            status,
+            c_category.as_ptr(),
+            c_message.as_ptr()
+        ); }
+    }
+
+    fn ok(&self, message: &str) {
+
+        self.fmt_log(message);
+
+        self.log(
+            Fmi2Status::Ok,
+            Fmi2LogCategory::LogAll,
+            message
+        )
+    }
+
+    fn warning(&self, message: &str) {
+        self.fmt_log(&format!("[WARNING] {}", message));
+
+        self.log(
+            Fmi2Status::Warning,
+            Fmi2LogCategory::LogStatusWarning,
+            message
+        )
+    }
+
+    fn error(&self, message: &str) {
+        self.fmt_log(&format!("[ERROR] {}", message));
+
+        self.log(
+            Fmi2Status::Error,
+            Fmi2LogCategory::LogStatusError,
+            message
+        );
+    }
+
+    fn fatal(&self, message: &str) {
+        self.fmt_log(&format!("[FATAL] {}", message));
+
+        self.log(
+            Fmi2Status::Fatal,
+            Fmi2LogCategory::LogStatusFatal,
+            message
+        );
+    }
+}
