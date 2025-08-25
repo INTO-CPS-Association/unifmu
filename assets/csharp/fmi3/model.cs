@@ -112,8 +112,19 @@ public class Model
 
     private Dictionary<uint, PropertyInfo> all_parameters = new Dictionary<uint, PropertyInfo>();
 
-    public Model(string instance_name, string instantiation_token, string resource_path, bool visible, bool logging_on, bool event_mode_used, bool early_return_allowed, List<uint> required_intermediate_variables)
-    {
+    private LogCallback log_callback { get; set; }
+
+    public Model(
+        string instance_name,
+        string instantiation_token,
+        string resource_path,
+        bool visible,
+        bool logging_on,
+        bool event_mode_used,
+        bool early_return_allowed,
+        List<uint> required_intermediate_variables,
+        LogCallback log_callback
+    ) {
         this.instance_name = instance_name;
         this.instantiation_token = instantiation_token;
         this.resource_path = resource_path;
@@ -122,6 +133,7 @@ public class Model
         this.event_mode_used = false;
         this.early_return_allowed = early_return_allowed;
         this.required_intermediate_variables = required_intermediate_variables;
+        this.log_callback = log_callback;
         var type = this.GetType();
 
         this.reference_to_attributes = new Dictionary<uint, PropertyInfo>
