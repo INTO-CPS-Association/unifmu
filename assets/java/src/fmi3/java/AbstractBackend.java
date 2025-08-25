@@ -40,7 +40,7 @@ public abstract class AbstractBackend {
                 .build()
         );
     }
-/*
+
     public static void loggingCallback(Model.Fmi3Status status, String category, String message) {
         sendReply(
             Fmi3Messages.Fmi3Return
@@ -63,7 +63,7 @@ public abstract class AbstractBackend {
             Fmi3Messages.Fmi3Command command = recvCommand();
 
             switch (command.getCommandCase()) {
-                case FMI2CALLBACKCONTINUE:
+                case FMI3CALLBACKCONTINUE:
                     break;
                 default:
                     System.out.println("Unexpected command received after replying with a logging message.");
@@ -75,7 +75,7 @@ public abstract class AbstractBackend {
             System.exit(1);
         }
     }
-*/
+
     static void handshake() {
         sendReply(
             UnifmuHandshake.HandshakeReply

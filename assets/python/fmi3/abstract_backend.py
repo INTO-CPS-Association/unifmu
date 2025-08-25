@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from schemas.fmi3_messages_pb2 import (
     Fmi3Command,
     Fmi3Return,
+    Fmi3LogReturn,
     Fmi3StatusReturn,
 )
 from schemas.unifmu_handshake_pb2 import (
@@ -45,24 +46,24 @@ class AbstractBackend(ABC):
             )            
         )
 
-#    def log_callback(self, status, category, message):
-#        self.send_reply(
-#            Fmi2Return(
-#                log=Fmi2LogReturn(
-#                    status=status,
-#                    category=category,
-#                    log_message=message
-#                )
-#            )
-#        )
-#
-#        (command_group, _) = self.recv_command()
-#
-#        match command_group:
-#            case "Fmi2CallbackContinue":
-#                return
-#            case _:
-#                self.unknown_command(command_group)
+    def log_callback(self, status, category, message):
+        self.send_reply(
+            Fmi3Return(
+                log=Fmi3LogReturn(
+                    status=status,
+                    category=category,
+                    log_message=message
+                )
+            )
+        )
+
+        (command_group, _) = self.recv_command()
+
+        match command_group:
+            case "Fmi3CallbackContinue":
+                return
+            case _:
+                self.unknown_command(command_group)
 
     def handshake(self):
         self.send_reply(HandshakeReply(status=HandshakeStatus.OK))

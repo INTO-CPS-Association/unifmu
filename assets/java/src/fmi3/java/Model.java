@@ -262,10 +262,51 @@ public class Model implements Serializable {
 
     }
 
+    /**
+     * Sends a logging message to the importer of the FMU.
+     * 
+     * In its basic form, when this function is called it sends a message to
+     * the UniFMU API layer which then decides whether or not to forward that
+     * message to the program importing this FMU. This decision is based on the
+     * value of the category parameter and information given to the API layer
+     * by the FMU importer. 
+     * 
+     * The importer can turn all logging on or off, or signal that it is only
+     * interested in a subset of logging categories. This filtering is handled
+     * by the UniFMU API layer already and cannot be disabled. Blanket
+     * enabling/disabling is communicated at instantiation, and full and fine
+     * control is done through calls to fmi2SetDebugLogging(). 
+     * 
+     * Expand on this function to increase functionality or leave it as is to
+     * simply send log events to the FMU importer through the UniFMU API layer.
+     * 
+     * @param message The message to be logged.
+     * @param status The status of the FMU at the moment of logging. This is
+     *   used to determine the severity of the message.
+     * @param category The logging category that this message falls under.
+     *   This is used by the UniFMU API layer and the FMU importer to determine
+     *   whether or not it is interested in the message. The category can have
+     *   any value, but only values set in the modelDescription.xml are valid
+     *   and recognized by the FMU importer. The following categories are 
+     *   predefined by the FMI3 standard and are included in the
+     *   modelDescription.xml by default:
+     *     - logStatusWarning
+     *     - logStatusDiscard
+     *     - logStatusError
+     *     - logStatusFatal
+     *     - logEvents
+     *   If custom categories are defined, make sure to include them in the
+     *   modelDescription.xml AND ensure that the importer doesn't disable
+     *   them.
+     */
+    public void log(String message, Fmi3Status status, String category) {
+        Backend.loggingCallback(status, category, message);
+    }
+
     /* doStep and updateDiscreteStates */
 
     public Fmi3DoStepResult fmi3DoStep(double currentCommunicationPoint, double communicationStepSize, boolean noStepPrior) {
-        
+
         update_outputs();
         Boolean event_handling_needed = false;
         Boolean terminate_simulation = false;

@@ -13,6 +13,7 @@ class Model:
             event_mode_used,
             early_return_allowed,
             required_intermediate_variables,
+            _log_callback
     ) -> None:
         self.instance_name = instance_name
         self.instantiation_token = instantiation_token
@@ -22,6 +23,7 @@ class Model:
         self.event_mode_used = event_mode_used
         self.early_return_allowed = early_return_allowed
         self.required_intermediate_variables = required_intermediate_variables
+        self._log_callback = _log_callback
         self.state = FMIState.FMIInstantiatedState
         self.float32_a = 0.0
         self.float32_b = 0.0
@@ -668,7 +670,42 @@ class Model:
             self.clock_reference_to_shift[r] = float(counters[idx])/float(resolutions[idx])
         return Fmi3Status.ok
 
-    
+    # ================= Logging =================
+
+    """ UniFMU logging function
+
+    Call this function whenever something should be logged.
+    This will send a message thourgh the UniFMU layer to the importer if the
+    importer has enabled logging and is interested in the given logging category.
+
+    Keyword arguments:
+    message  -- The message to log.
+    status   -- The Fmi3Status that the program is expected to return when log() is
+                called. For example, if the log() call is simply informing of normal
+                operation, it would expect to return Fmi3Status.ok, while if the log()
+                call is informing of an error it would expect to return Fmi3Status.error.
+    category -- The logging category. Used by the UniFMU layer to dertermine whether or
+                not a message should be send to the importer. A category must be defined
+                in the modelDescription.xml to be valid an visible to the importer, but
+                can otherwise be any string. A number of categories are predefined by the
+                FMI standard and included by default in UniFMU:
+                - logStatusWarning
+                - logStatusDiscard
+                - logStatusError
+                - logStatusFatal
+                - logEvents
+    """
+    def log(self, message, status, category = "logEvents"):
+        # Feel free to expand on the functionality of the function.
+        # The model will be informed of whether or not to output logging and
+        # what categories to log through a call to fmi3SetDebugLogging().
+        # The UniFMU layer already handles filtering of messages so that
+        # the FMU importer only receives logging events that is interested in,
+        # but if you want to filter before sending the events to the UniFMU 
+        # layer to save on message bandwidth, feel free to do so.
+        
+        # Removing the line below will break logging.
+        self._log_callback(status, category, message)
 
     # ================= Helpers =================
 

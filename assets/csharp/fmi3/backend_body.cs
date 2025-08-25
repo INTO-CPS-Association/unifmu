@@ -45,6 +45,25 @@ namespace Launch
         {
             Model model = null;
 
+            LogCallback logCallback = (status, category, message) => {
+                SendReply(new Fmi3Return{Log = new Fmi3LogReturn{
+                    Status = status,
+                    Category = category,
+                    LogMessage = message
+                }});
+
+                Fmi3Command command = RecvCommand();
+
+                switch (command.CommandCase)
+                {
+                    case Fmi3Command.CommandOneofCase.Fmi3CallbackContinue:
+                        break;
+                    default:
+                        HandleUnexpectedCommand(command);
+                        break;
+                }
+            };
+
             while (true)
             {
                 Fmi3Command command = RecvCommand();
@@ -65,7 +84,8 @@ namespace Launch
                             command.Fmi3InstantiateCoSimulation.LoggingOn,
                             command.Fmi3InstantiateCoSimulation.EventModeUsed,
                             command.Fmi3InstantiateCoSimulation.EarlyReturnAllowed,
-                            req_int_vars
+                            req_int_vars,
+                            logCallback
                         );
 
                         SendReply(new Fmi3Return{Empty = new Fmi3EmptyReturn()});

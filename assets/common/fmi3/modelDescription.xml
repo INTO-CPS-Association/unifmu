@@ -6,8 +6,7 @@
     <Category name="logStatusDiscard" />
     <Category name="logStatusError" />
     <Category name="logStatusFatal" />
-    <Category name="logStatusPending" />
-    <Category name="logAll" />
+    <Category name="logEvents" />
   </LogCategories>
   
   <ModelVariables>

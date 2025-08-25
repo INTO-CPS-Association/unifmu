@@ -53,7 +53,8 @@ class Backend(AbstractBackend):
                         data.logging_on,
                         data.event_mode_used,
                         data.early_return_allowed,
-                        data.required_intermediate_variables
+                        data.required_intermediate_variables,
+                        _log_callback=self.log_callback
                     )
                     self.send_reply(Fmi3Return(empty=Fmi3EmptyReturn()))
 

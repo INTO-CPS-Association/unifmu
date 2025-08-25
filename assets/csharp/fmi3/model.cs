@@ -7,6 +7,8 @@ using System.Numerics;
 using System.Linq;
 using Fmi3Messages;
 
+public delegate void LogCallback(Fmi3Status status, String category, String message);
+
 public class Model
 {
     private string instance_name = "";
@@ -798,6 +800,79 @@ public class Model
     private void UpdateClockedOutputs()
     {
         this.clocked_variable_c += this.clocked_variable_a + this.clocked_variable_b;
+    }
+
+    /// <summary>UniFMU logging function
+    /// <para>
+    /// Call this function whenever something should be logged.
+    /// This will send a message thourgh the UniFMU layer to
+    /// the importer if the importer has enabled logging and
+    /// is interested in the given logging category.
+    /// </para>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Both status and category have default values, but they
+    /// should be explicitly set in most cases.
+    /// </para>
+    /// <para>
+    /// The status should always reflect the *expected* return
+    /// value of the current operation. For example if the
+    /// current operation is progressing as it should and the
+    /// call to Log() is notifying of normal operation then the
+    /// status parameter should be set to Fmi3Status.Fmi3Ok as
+    /// we would currently expect the operation to return this
+    /// state. As a further example, if the call to Log() is
+    /// made when an error is encountered then we would expect
+    /// to return an Fmi3Status.Fmi3Error to the importer, and
+    /// therefore the state parameter should also be set to
+    /// Fmi3Status.Fmi3Error.
+    /// </para>
+    /// <para>
+    /// The value of the category parameter is used by the
+    /// UniFMU API layer to decide whether or not to actually
+    /// send the message to the FMU importer. The importer
+    /// can designate which categories that it is interested in,
+    /// and if it does so, the UniFMU API layer only forwards
+    /// messages with such interesting categories.
+    /// The categories can be any string, and must be defined
+    /// in modelDescription.xml to be valid an visible to the
+    /// importer. A number of categories are predefined by
+    /// the FMI2 standard and included in the 
+    /// modelDescription.xml by default:
+    /// <list type="bullet">
+    /// <item>
+    /// <description>logStatusWarning</description>
+    /// </item>
+    /// <item>
+    /// <description>logStatusDiscard</description>
+    /// </item>
+    /// <item>
+    /// <description>logStatusError</description>
+    /// </item>
+    /// <item>
+    /// <description>logStatusFatal</description>
+    /// </item>
+    /// <item>
+    /// <description>logEvents</description>
+    /// </item>
+    /// </list>
+    /// The importer calls Fmi3SetDebugLogging() to specify
+    /// which categories it is interested in and whether or not
+    /// logging should even be enabled. You can use this to
+    /// expand the Log() function to pre-filter the messages
+    /// if you want to reduce the amount of messages exchanged
+    /// between this model and the UniFMU API layer. (It is
+    /// advised to read the FMI3 standard, specifically the
+    /// sections on logging beforehand.)
+    /// </para>
+    /// </remarks>
+    /// <param name="message">the message to be logged
+    /// </param>
+    /// <param name="status">the Fmi3Status that the FMU expects to next return (default: Fmi3Status.Fmi3Ok)</param>
+    /// <param name="category">the logging category that this log event falls under</param>
+    private void Log(String message, Fmi3Status status = Fmi3Status.Fmi3Ok, String category = "logEvents") {
+        this.log_callback(status, category, message);
     }
 
     public Fmi3Status SetValueReflection<T>(IEnumerable<uint> references, IEnumerable<T> values)
