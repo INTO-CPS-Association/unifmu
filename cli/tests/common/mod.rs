@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 
 use std::{
+    collections::HashMap,
     ffi::OsString,
     fs::{copy, create_dir, create_dir_all, read_dir, remove_dir_all, File},
     io::{self, BufRead, BufReader, Write},
@@ -71,16 +72,21 @@ pub fn fmu_python_test(
     }
 }
 
+/// When distributed FMUs are instantiated they'll output a message containing
+/// this stub followed by a port number (and a newline). After outputting this
+/// message, the FMU awaits a handshake from a local connection through the
+/// given port. The message may be send multiple times per single instantiation
+/// depending on the logging feature that `fmiapi` was compiled with.
 const REMOTE_PORT_CONNECTION_MESSAGE_STUB: &str = "Connect remote backend to dispatcher through port ";
 
 /// Pass the Distributed FMU to the given test function in a python subprocess,
-/// and start the private backend when the FMU is instantiated.
+/// and starts any private backends when their FMU is instantiated.
 /// 
 /// Monitors the output of this subprocess, and if
 /// the subprocess returns a TEST FAILED message, this function panics with
 /// "PYTHON " + that message.
 ///
-/// If for whatever reason the private backend wasn't started, this function
+/// If for whatever reason any private backends weren't started, this function
 /// panics.
 /// As such this hould ONLY be called with Distributed FMUs that are
 /// instantiated as part of the test.
@@ -96,15 +102,21 @@ pub fn distributed_fmu_python_test(
 
     let python_test_output_reader = BufReader::new(&python_test_process);
 
-    let mut remote_process: Option<duct::Handle> = None;
+    let mut remote_processes: HashMap<u32, duct::Handle> = HashMap::new();
 
     for read_result in python_test_output_reader.lines() {
         match read_result {
             Ok(line) => {
                 if line.contains("TEST FAILED") {
-                    if let Some(remote_process) = remote_process {
-                        let _ = remote_process.kill();
-                    }
+                    let _ = remote_processes.drain().map(|kv_pair| {
+                        if let Err(e) = kv_pair.1.kill() {
+                            println!(
+                                "Error while killing remote process connected through port {}: {}",
+                                kv_pair.0,
+                                e
+                            );
+                        }
+                    });
 
                     if DEBUG_PERSIST_FAILING_TEST_FMUS {
                         fmu.persist_directory();
@@ -113,8 +125,7 @@ pub fn distributed_fmu_python_test(
                     panic!("PYTHON {line}");
                 
                 } else if
-                    remote_process.is_none()
-                    && line.contains(REMOTE_PORT_CONNECTION_MESSAGE_STUB)
+                    line.contains(REMOTE_PORT_CONNECTION_MESSAGE_STUB)
                 {
                     let connect_message_start_index = line.find(REMOTE_PORT_CONNECTION_MESSAGE_STUB)
                         .expect("'line' from local fmiapi should contain 'REMOTE_PORT_CONNECTION_MESSAGE_STUB'");
@@ -123,19 +134,28 @@ pub fn distributed_fmu_python_test(
                         + connect_message_start_index;
 
                     let port_string =  line[port_start_index..].to_string();
-                    
-                    println!("Connecting remote backend to fmu dispatcher through port {port_string}");
-                    
-                    remote_process = Some(fmu.start_remote_backend(port_string));
 
+                    if let Ok(port_int) = port_string.parse::<u32>() {
+                        remote_processes.entry(port_int).or_insert_with(|| {
+                            println!("Connecting remote backend to fmu dispatcher through port {port_string}");
+                            
+                            fmu.start_remote_backend(port_string)
+                        });
+                    }
                 } else {
                     println!("{line}");
                 }
             },
             Err(e) => {
-                if let Some(remote_process) = remote_process {
-                    let _ = remote_process.kill();
-                }
+                let _ = remote_processes.drain().map(|kv_pair| {
+                    if let Err(e) = kv_pair.1.kill() {
+                        println!(
+                            "Error while killing remote process connected through port {}: {}",
+                            kv_pair.0,
+                            e
+                        );
+                    }
+                });
 
                 if DEBUG_PERSIST_FAILING_TEST_FMUS {
                     fmu.persist_directory();
@@ -146,14 +166,23 @@ pub fn distributed_fmu_python_test(
         }
     }
 
-    if let Some(remote_process) = remote_process {
-        let _ = remote_process.wait();
-    } else {
+    if remote_processes.is_empty() {
         if DEBUG_PERSIST_FAILING_TEST_FMUS {
             fmu.persist_directory();
         }
-        panic!("Remote backend wasn't started!");
+
+        panic!("Remote backend(s) wasn't started!");
     }
+
+    let _ = remote_processes.drain().map(|kv_pair| {
+        if let Err(e) = kv_pair.1.wait() {
+            println!(
+                "Error while waiting on remote process connected through port {}: {}",
+                kv_pair.0,
+                e
+            );
+        }
+    });
 }
 
 /// Starts the python test subprocess, returning a duct::ReaderHandle to it.
@@ -198,7 +227,7 @@ fn start_python_test_process(
         .expect("Should be able to start python test process")
 }
 
-/// Checks the validity of the FMU model description byt converting it to
+/// Checks the validity of the FMU model description by converting it to
 /// VDM-SL and comparing them to a prebuild model.
 /// 
 /// Panics if the vdmcheck tool isn't available or if it returns an error.
