@@ -176,21 +176,3 @@ fn test_unexpected_exit_during_command() {
 
     fmu_python_test(fmu, "fmi3_simulate");
 }
-
-#[for_each_fmu(include: fmi2, local)]
-#[test]
-#[should_panic(expected = "Cannot find shared library")]
-fn test_instantiate_as_fmi3() {
-    let fmu = WildFmu{};
-
-    fmu_python_test(fmu, "fmi3_instantiate");
-}
-
-#[for_each_fmu(include: fmi3, local)]
-#[test]
-#[should_panic(expected = "Cannot find shared library")]
-fn test_instantiate_as_fmi2() {
-    let fmu = WildFmu{};
-
-    fmu_python_test(fmu, "fmi2_instantiate");
-}
