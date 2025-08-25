@@ -5,6 +5,7 @@ mod fmi2_logger;
 pub mod fmi2_messages;
 pub mod fmi2_types;
 pub mod fmi3;
+mod fmi3_logger;
 pub mod fmi3_messages;
 pub mod fmi3_slave;
 pub mod fmi3_types;

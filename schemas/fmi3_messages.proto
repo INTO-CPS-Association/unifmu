@@ -432,6 +432,15 @@ message Fmi3SetShiftFraction {
   repeated uint64 resolutions = 3;
 }
 
+// -------------- UniFMU specific Callback messages -----------------
+message Fmi3CallbackContinue {}
+
+message Fmi3LogReturn {
+  Fmi3Status status = 1;
+  string category = 2;
+  string log_message = 3;
+}
+
 // ----------------------- FMI Command Wrapper ----------------------
 
 message Fmi3Command {
@@ -495,6 +504,9 @@ message Fmi3Command {
     Fmi3SetIntervalFraction Fmi3SetIntervalFraction = 56;
     Fmi3SetShiftDecimal Fmi3SetShiftDecimal = 57;
     Fmi3SetShiftFraction Fmi3SetShiftFraction = 58;
+
+    // UniFMU Common
+    Fmi3CallbackContinue Fmi3CallbackContinue = 59;
   }
 }
 
@@ -529,5 +541,6 @@ message Fmi3Return {
     Fmi3GetIntervalFractionReturn get_interval_fraction = 25;
     Fmi3GetShiftDecimalReturn get_shift_decimal = 26;
     Fmi3GetShiftFractionReturn get_shift_fraction = 27;
+    Fmi3LogReturn log = 28;
   }
 }

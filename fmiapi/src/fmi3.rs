@@ -5,20 +5,15 @@ use std::{
     ffi::{c_void, CStr, CString, NulError},
     path::{Path, PathBuf},
     slice::{from_raw_parts, from_raw_parts_mut},
-    str::Utf8Error,
-    sync::LazyLock
+    str::Utf8Error
 };
 
 use libc::{c_char, size_t};
 use url::Url;
-use tracing::{error, warn};
-use tracing_subscriber;
 
-use crate::fmi3_messages::{
-    self,
-    Fmi3Command,
-    fmi3_command::Command
-};
+use crate::{fmi3_logger::Fmi3Logger, fmi3_messages::{
+    self, fmi3_command::Command, fmi3_return::ReturnMessage, Fmi3Command
+}};
 use crate::fmi3_slave::{
     Fmi3Slave,
     Fmi3SlaveType,
@@ -51,23 +46,44 @@ use crate::fmi3_types::{
     c2s,
     c2non_empty_s
 };
+use crate::logger::Logger;
+use crate::protobuf_extensions::{
+    ExpectableReturn,
+    implement_expectable_return
+};
 use crate::spawn::spawn_slave;
 
-/// One shot function that sets up logging.
-/// 
-/// Checking the result runs the contained function once if it hasn't been run
-/// or returns the stored result.
-/// 
-/// Result should be checked at entrance to instantiation functions, and an
-/// error should be considered a grave error signifying something seriously
-/// wrong (most probably that the global logger was already set somewhere else).
-static ENABLE_LOGGING: LazyLock<Result<(), Fmi3Status>> = LazyLock::new(|| {
-    if tracing_subscriber::fmt::try_init().is_err() {
-        return Err(Fmi3Status::Fmi3Fatal);
-    }
-    Ok(())
-});
-
+// ----------------------- Protocol Buffer Trait decorations ---------------------------
+// The trait ExpectableReturn extends the Return message with an extract
+// function that let's us pattern match and unwrap the inner type of a
+// ReturnMessage.
+implement_expectable_return!(fmi3_messages::Fmi3EmptyReturn, ReturnMessage, Empty);
+implement_expectable_return!(fmi3_messages::Fmi3StatusReturn, ReturnMessage, Status);
+implement_expectable_return!(fmi3_messages::Fmi3DoStepReturn, ReturnMessage, DoStep);
+implement_expectable_return!(fmi3_messages::Fmi3FreeInstanceReturn, ReturnMessage, FreeInstance);
+implement_expectable_return!(fmi3_messages::Fmi3GetFloat32Return, ReturnMessage, GetFloat32);
+implement_expectable_return!(fmi3_messages::Fmi3GetFloat64Return, ReturnMessage, GetFloat64);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt8Return, ReturnMessage, GetInt8);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt8Return, ReturnMessage, GetUInt8);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt16Return, ReturnMessage, GetInt16);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt16Return, ReturnMessage, GetUInt16);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt32Return, ReturnMessage, GetInt32);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt32Return, ReturnMessage, GetUInt32);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt64Return, ReturnMessage, GetInt64);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt64Return, ReturnMessage, GetUInt64);
+implement_expectable_return!(fmi3_messages::Fmi3GetBooleanReturn, ReturnMessage, GetBoolean);
+implement_expectable_return!(fmi3_messages::Fmi3GetStringReturn, ReturnMessage, GetString);
+implement_expectable_return!(fmi3_messages::Fmi3GetBinaryReturn, ReturnMessage, GetBinary);
+implement_expectable_return!(fmi3_messages::Fmi3GetDirectionalDerivativeReturn, ReturnMessage, GetDirectionalDerivative);
+implement_expectable_return!(fmi3_messages::Fmi3GetAdjointDerivativeReturn, ReturnMessage, GetAdjointDerivative);
+implement_expectable_return!(fmi3_messages::Fmi3GetOutputDerivativesReturn, ReturnMessage, GetOutputDerivatives);
+implement_expectable_return!(fmi3_messages::Fmi3SerializeFmuStateReturn, ReturnMessage, SerializeFmuState);
+implement_expectable_return!(fmi3_messages::Fmi3GetClockReturn, ReturnMessage, GetClock);
+implement_expectable_return!(fmi3_messages::Fmi3UpdateDiscreteStatesReturn, ReturnMessage, UpdateDiscreteStates);
+implement_expectable_return!(fmi3_messages::Fmi3GetIntervalDecimalReturn, ReturnMessage, GetIntervalDecimal);
+implement_expectable_return!(fmi3_messages::Fmi3GetIntervalFractionReturn, ReturnMessage, GetIntervalFraction);
+implement_expectable_return!(fmi3_messages::Fmi3GetShiftDecimalReturn, ReturnMessage, GetShiftDecimal);
+implement_expectable_return!(fmi3_messages::Fmi3GetShiftFractionReturn, ReturnMessage, GetShiftFraction);
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 
 static VERSION: &str = "3.0\0";
@@ -84,7 +100,7 @@ pub extern "C" fn fmi3SetDebugLogging(
     n_categories: size_t,
     categories: *const Fmi3String
 ) -> Fmi3Status {
-    error!("fmi3SetDebugLogging is not implemented by UNIFMU.");
+    instance.logger.error("fmi3SetDebugLogging is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -95,15 +111,15 @@ pub extern "C" fn fmi3InstantiateModelExchange(
     resource_path: Fmi3String,
     visible: Fmi3Boolean,
     logging_on: Fmi3Boolean,
-    instance_environment: Fmi3InstanceEnvironment,
+    instance_environment: *const Fmi3InstanceEnvironment,
     log_message: Fmi3LogMessageCallback,
 ) -> Option<Fmi3SlaveType> {
-    if (*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set global tracing subscriber.");
-        return None;
-    }
-
-    error!("fmi3InstantiateModelExchange is not implemented by UNIFMU.");
+    let logger = Fmi3Logger::new(
+        log_message,
+        instance_environment,
+        logging_on
+    );
+    logger.error("fmi3InstantiateModelExchange is not implemented by UNIFMU.");
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 
@@ -142,19 +158,22 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     early_return_allowed: Fmi3Boolean,
     required_intermediate_variables: *const Fmi3ValueReference,
     n_required_intermediate_variables: size_t,
-    instance_environment: Fmi3InstanceEnvironment,
+    instance_environment: *const Fmi3InstanceEnvironment,
     log_message: Fmi3LogMessageCallback,
     intermediate_update: Fmi3IntermediateUpdateCallback,
 ) -> Option<Fmi3SlaveType> {
-    if (*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set global tracing subscriber.");
-        return None;
-    }
+    let logger = Fmi3Logger::new(
+        log_message,
+        instance_environment,
+        logging_on
+    );
 
     let instance_name = match c2non_empty_s(instance_name) {
         Ok(name) => name,
         Err(error) => {
-            error!("could not parse instance_name: {}", error);
+            logger.error(&format!(
+                "could not parse instance_name: {}", error
+            ));
             return None;
         }
     };
@@ -162,7 +181,9 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     let instantiation_token = match c2s(instantiation_token) {
         Ok(string) => string,
         Err(error) => {
-            error!("could not convert instantiation_token to String: {}", error);
+            logger.error(&format!(
+                "could not convert instantiation_token to String: {}", error
+            ));
             return None;
         }
     };
@@ -178,7 +199,9 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     let resource_path_str = match c2non_empty_s(resource_path) {
         Ok(path_string) => path_string,
         Err(error) => {
-            error!("could not parse resource_path: {}", error);
+            logger.error(&format!(
+                "could not parse resource_path: {}", error
+            ));
             return None;
         }
     };
@@ -199,7 +222,9 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         let resource_uri = match Url::parse(&resource_path_str) {
             Ok(uri) => uri,
             Err(e) => {
-                error!("Unable to parse uri: {:#?}", e);
+                logger.error(&format!(
+                    "Unable to parse uri: {:#?}", e
+                ));
                 return None;
             }
         };
@@ -208,15 +233,17 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
             match resource_uri.to_file_path() {
                 Ok(path) => path,
                 Err(_) => {
-                    error!(
+                    logger.error(&format!(
                         "URI was parsed but could not be converted into a file path, got: '{:?}'.",
                         resource_uri
-                    );
+                    ));
                     return None;
                 }
             }
         } else {
-            error!("Unsupported URI scheme: '{}'", resource_uri.scheme());
+            logger.error(&format!(
+                "Unsupported URI scheme: '{}'", resource_uri.scheme()
+            ));
             return None;
         }
     } else {
@@ -226,11 +253,11 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
 
     let dispatcher = match spawn_slave(
         Path::new(&resources_dir),
-        |_| {}
+        |message| logger.ok(message)
     ) {
         Ok(dispatcher) => dispatcher,
         Err(_) => {
-            error!("Spawning fmi3 slave failed.");
+            logger.error("Spawning fmi3 slave failed.");
             return None;
         }
     };
@@ -238,12 +265,12 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     let resource_path = match resources_dir.into_os_string().into_string() {
         Ok(string_path) => string_path,
         Err(e) => {
-            error!("Couldn't convert resource directory path into String.");
+            logger.error("Couldn't convert resource directory path into String.");
             return None;
         }
     };
 
-    let mut slave = Fmi3Slave::new(dispatcher);
+    let mut slave = Fmi3Slave::new(dispatcher, logger);
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3InstantiateCoSimulation(
@@ -260,16 +287,13 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         )),
     };
 
-    match slave.dispatch(
-        &cmd, 
-        Fmi3Slave::empty_return_matcher
-    ) {
+    match slave.dispatch::<fmi3_messages::Fmi3EmptyReturn>(&cmd) {
         Err(error) => {
-            error!(
+            slave.logger.error(&format!(
                 "Instantiation of fmi3 slave '{}' failed with error [{}].",
                 instance_name,
                 error
-            );
+            ));
             None
         },
         Ok(_) => Some(Box::new(slave))
@@ -283,18 +307,19 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
     resource_path: Fmi3String,
     visible: Fmi3Boolean,
     logging_on: Fmi3Boolean,
-    instance_environment: Fmi3InstanceEnvironment,
+    instance_environment: *const Fmi3InstanceEnvironment,
     log_message: Fmi3LogMessageCallback,
     clock_update: UnsupportedCallback,
     lock_preemption: UnsupportedCallback,
     unlock_preemption: UnsupportedCallback,
 ) -> Option<Fmi3SlaveType> {
-    if (*ENABLE_LOGGING).is_err() {
-        error!("Tried to set already set global tracing subscriber.");
-        return None;
-    }
+    let logger = Fmi3Logger::new(
+        log_message,
+        instance_environment,
+        logging_on
+    );
 
-    error!("fmi3InstantiateScheduledExecution is not implemented by UNIFMU.");
+    logger.error("fmi3InstantiateScheduledExecution is not implemented by UNIFMU.");
     None // Currently, we only support CoSimulation, return null pointer as per the FMI standard
 }
 
@@ -323,10 +348,7 @@ pub unsafe extern "C" fn fmi3DoStep(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::do_step_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3DoStepReturn>(&cmd) {
         Ok(result) => {
             if !last_successful_time.is_null() {
                 unsafe {
@@ -351,12 +373,14 @@ pub unsafe extern "C" fn fmi3DoStep(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3DoStep failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3DoStep failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -398,10 +422,12 @@ pub extern "C" fn fmi3EnterInitializationMode(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3EnterInitializationMode failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3EnterInitializationMode failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -414,10 +440,12 @@ pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3St
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3ExitInitializationMode failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3ExitInitializationMode failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -430,10 +458,12 @@ pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3EnterEventMode failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3EnterEventMode failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -446,10 +476,12 @@ pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3EnterStepMode failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3EnterStepMode failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -500,10 +532,7 @@ pub unsafe extern "C" fn fmi3GetFloat32(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_float_32_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetFloat32Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -511,12 +540,14 @@ pub unsafe extern "C" fn fmi3GetFloat32(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetFloat32 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetFloat32 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -568,10 +599,7 @@ pub unsafe extern "C" fn fmi3GetFloat64(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_float_64_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetFloat64Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -579,12 +607,15 @@ pub unsafe extern "C" fn fmi3GetFloat64(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetFloat64 failed with error: {:?}.", error);
+            instance.logger.error(
+                &format!(
+                "fmi3GetFloat64 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -636,10 +667,7 @@ pub unsafe extern "C" fn fmi3GetInt8(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_int_8_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetInt8Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let values: Vec<i8> = result.values
@@ -652,12 +680,14 @@ pub unsafe extern "C" fn fmi3GetInt8(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetInt8 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetInt8 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -709,10 +739,7 @@ pub unsafe extern "C" fn fmi3GetUInt8(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_u_int_8_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetUInt8Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let values: Vec<u8> = result.values
@@ -725,12 +752,14 @@ pub unsafe extern "C" fn fmi3GetUInt8(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetUInt8 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetUInt8 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -782,10 +811,7 @@ pub unsafe extern "C" fn fmi3GetInt16(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_int_16_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetInt16Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let values: Vec<i16> = result.values
@@ -798,12 +824,14 @@ pub unsafe extern "C" fn fmi3GetInt16(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetInt16 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetInt16 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -855,10 +883,7 @@ pub unsafe extern "C" fn fmi3GetUInt16(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_u_int_16_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetUInt16Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let values: Vec<u16> = result.values
@@ -871,12 +896,14 @@ pub unsafe extern "C" fn fmi3GetUInt16(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetUInt16 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetUInt16 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -928,10 +955,7 @@ pub unsafe extern "C" fn fmi3GetInt32(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_int_32_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetInt32Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -939,12 +963,14 @@ pub unsafe extern "C" fn fmi3GetInt32(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetInt32 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetInt32 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -996,10 +1022,7 @@ pub unsafe extern "C" fn fmi3GetUInt32(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_u_int_32_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetUInt32Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -1007,12 +1030,14 @@ pub unsafe extern "C" fn fmi3GetUInt32(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetUInt32 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetUInt32 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1064,10 +1089,7 @@ pub unsafe extern "C" fn fmi3GetInt64(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_int_64_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetInt64Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -1075,12 +1097,14 @@ pub unsafe extern "C" fn fmi3GetInt64(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetInt64 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetInt64 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1132,10 +1156,7 @@ pub unsafe extern "C" fn fmi3GetUInt64(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_u_int_64_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetUInt64Return>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -1143,12 +1164,14 @@ pub unsafe extern "C" fn fmi3GetUInt64(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetUInt64 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetUInt64 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1200,10 +1223,7 @@ pub unsafe extern "C" fn fmi3GetBoolean(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_boolean_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetBooleanReturn>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -1211,12 +1231,14 @@ pub unsafe extern "C" fn fmi3GetBoolean(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetBoolean failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetBoolean failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1264,10 +1286,7 @@ pub unsafe extern "C" fn fmi3GetString(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_string_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetStringReturn>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let conversion_result: Result<Vec<CString>, NulError> = result
@@ -1281,7 +1300,7 @@ pub unsafe extern "C" fn fmi3GetString(
                         instance.string_buffer = converted_values
                     },
                     Err(e) =>  {
-                        error!("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
+                        instance.logger.error("Backend returned strings containing interior nul bytes. These cannot be converted into CStrings.");
                         return Fmi3Status::Fmi3Fatal;
                     }
                 }
@@ -1299,12 +1318,14 @@ pub unsafe extern "C" fn fmi3GetString(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetString failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetString failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1329,10 +1350,7 @@ pub unsafe extern "C" fn fmi3GetBinary(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_binary_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetBinaryReturn>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 let compatible_value_sizes: Vec<size_t> = result.
@@ -1374,12 +1392,14 @@ pub unsafe extern "C" fn fmi3GetBinary(
             
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
                 })
         }
         Err(error) => {
-            error!("Fmi3GetBinary failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "Fmi3GetBinary failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }    
@@ -1431,10 +1451,7 @@ pub unsafe extern "C" fn fmi3GetClock(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_clock_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetClockReturn>(&cmd) {
         Ok(result) => {
             if !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
@@ -1442,12 +1459,14 @@ pub unsafe extern "C" fn fmi3GetClock(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetClock failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetClock failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1506,10 +1525,7 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_interval_decimal_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetIntervalDecimalReturn>(&cmd) {
         Ok(result) => {
             if !result.intervals.is_empty() {
                 intervals_out.copy_from_slice(&result.intervals);
@@ -1520,7 +1536,7 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
                     .map(Fmi3IntervalQualifier::try_from)
                     .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
                 else {
-                    error!("Unknown interval qualifier returned from backend.");
+                    instance.logger.error("Unknown interval qualifier returned from backend.");
                     return Fmi3Status::Fmi3Fatal
                 };
                 qualifiers_out.copy_from_slice(qualifiers.as_slice());
@@ -1528,12 +1544,14 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetIntervalDecimal failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetIntervalDecimal failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1572,10 +1590,7 @@ pub extern "C" fn fmi3GetIntervalFraction(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_interval_fraction_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetIntervalFractionReturn>(&cmd) {
         Ok(result) => {
             if !result.counters.is_empty() {
                 counters_out.copy_from_slice(&result.counters);
@@ -1590,7 +1605,7 @@ pub extern "C" fn fmi3GetIntervalFraction(
                     .map(Fmi3IntervalQualifier::try_from)
                     .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
                 else {
-                    error!("Unknown interval qualifier returned from backend.");
+                    instance.logger.error("Unknown interval qualifier returned from backend.");
                     return Fmi3Status::Fmi3Fatal
                 };
                 qualifiers_out.copy_from_slice(qualifiers.as_slice());
@@ -1598,12 +1613,14 @@ pub extern "C" fn fmi3GetIntervalFraction(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetIntervalFraction failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetIntervalFraction failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1630,10 +1647,7 @@ pub extern "C" fn fmi3GetShiftDecimal(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_shift_decimal_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetShiftDecimalReturn>(&cmd) {
         Ok(result) => {
             if !result.shifts.is_empty() {
                 shifts_out.copy_from_slice(&result.shifts);
@@ -1641,12 +1655,14 @@ pub extern "C" fn fmi3GetShiftDecimal(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetShiftDecimal failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetShiftDecimal failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1680,10 +1696,7 @@ pub extern "C" fn fmi3GetShiftFraction(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::get_shift_fraction_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3GetShiftFractionReturn>(&cmd) {
         Ok(result) => {
             if !result.counters.is_empty() {
                 counters_out.copy_from_slice(&result.counters);
@@ -1695,12 +1708,14 @@ pub extern "C" fn fmi3GetShiftFraction(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
             })
         }
         Err(error) => {
-            error!("fmi3GetShiftFraction failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetShiftFraction failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1731,10 +1746,12 @@ pub extern "C" fn fmi3SetIntervalDecimal(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetIntervalDecimal failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetIntervalDecimal failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 
@@ -1771,10 +1788,12 @@ pub extern "C" fn fmi3SetIntervalFraction(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetIntervalFraction failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetIntervalFraction failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -1804,10 +1823,12 @@ pub extern "C" fn fmi3SetShiftDecimal(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetShiftDecimal failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetShiftDecimal failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -1843,10 +1864,12 @@ pub extern "C" fn fmi3SetShiftFraction(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetShiftFraction failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetShiftFraction failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -1855,7 +1878,7 @@ pub extern "C" fn fmi3SetShiftFraction(
 pub extern "C" fn fmi3EvaluateDiscreteStates(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3EvaluateDiscreteStates is not implemented by UNIFMU.");
+    instance.logger.error("fmi3EvaluateDiscreteStates is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -1881,9 +1904,7 @@ pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
         )),
     };
 
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::update_discrete_states_return_matcher){
+    match instance.dispatch::<fmi3_messages::Fmi3UpdateDiscreteStatesReturn>(&cmd){
         Ok(result) => {
             if !discrete_states_need_update.is_null() {
                 unsafe {
@@ -1922,12 +1943,14 @@ pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("Unknown status returned from backend.");
+                    instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
                 })
         }
         Err(error) => {
-            error!("fmi3UpdateDiscreteStates failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3UpdateDiscreteStates failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -1937,7 +1960,7 @@ pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
 pub extern "C" fn fmi3EnterContinuousTimeMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    error!("fmi3EnterContinuousTimeMode is not implemented by UNIFMU.");
+    instance.logger.error("fmi3EnterContinuousTimeMode is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -1948,7 +1971,7 @@ pub extern "C" fn fmi3CompletedIntegratorStep(
 	enter_event_mode: *const Fmi3Boolean,
 	terminate_simulation: *const Fmi3Boolean,
 ) -> Fmi3Status {
-    error!("fmi3CompletedIntegratorStep is not implemented by UNIFMU.");
+    instance.logger.error("fmi3CompletedIntegratorStep is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -1957,7 +1980,7 @@ pub extern "C" fn fmi3SetTime(
     instance: &mut Fmi3Slave,
 	time: Fmi3Float64,
 ) -> Fmi3Status {
-    error!("fmi3SetTime is not implemented by UNIFMU.");
+    instance.logger.error("fmi3SetTime is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -1967,7 +1990,7 @@ pub extern "C" fn fmi3SetContinuousStates(
 	continuous_states: *const Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3SetContinuousStates is not implemented by UNIFMU.");
+    instance.logger.error("fmi3SetContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -1977,7 +2000,7 @@ pub extern "C" fn fmi3GetContinuousStateDerivatives(
 	derivatives: *mut Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetContinuousStateDerivatives is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetContinuousStateDerivatives is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -1987,7 +2010,7 @@ pub extern "C" fn fmi3GetEventIndicators(
 	event_indicators: *mut Fmi3Float64,
 	n_event_indicators: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetEventIndicators is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetEventIndicators is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -1997,7 +2020,7 @@ pub extern "C" fn fmi3GetContinuousStates(
 	continuous_states: *mut Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetContinuousStates is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2007,7 +2030,7 @@ pub extern "C" fn fmi3GetNominalsOfContinuousStates(
 	nominals: *mut Fmi3Float64,
 	n_continuous_states: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNominalsOfContinuousStates is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetNominalsOfContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2016,7 +2039,7 @@ pub extern "C" fn fmi3GetNumberOfEventIndicators(
     instance: &mut Fmi3Slave,
 	n_event_indicators: *const size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNumberOfEventIndicators is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetNumberOfEventIndicators is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2025,7 +2048,7 @@ pub extern "C" fn fmi3GetNumberOfContinuousStates(
     instance: &mut Fmi3Slave,
 	n_continuous_states: *const size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNumberOfContinuousStates is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetNumberOfContinuousStates is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2038,7 +2061,7 @@ pub extern "C" fn fmi3GetOutputDerivatives(
 	values: *mut Fmi3Float64,
 	n_values: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetOutputDerivatives is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetOutputDerivatives is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2048,7 +2071,7 @@ pub extern "C" fn fmi3ActivateModelPartition(
 	value_reference: Fmi3ValueReference,
 	activation_time: Fmi3Float64,
 ) -> Fmi3Status {
-    error!("fmi3ActivateModelPartition is not implemented by UNIFMU.");
+    instance.logger.error("fmi3ActivateModelPartition is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2101,10 +2124,12 @@ pub unsafe extern "C" fn fmi3SetFloat32(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetFloat32 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetFloat32 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2160,10 +2185,12 @@ pub unsafe extern "C" fn fmi3SetFloat64(
         )),
     };
     
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetFloat64 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetFloat64 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2221,10 +2248,12 @@ pub unsafe extern "C" fn fmi3SetInt8(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetInt8 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetInt8 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2282,10 +2311,12 @@ pub unsafe extern "C" fn fmi3SetUInt8(
         )),
     };
     
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetUInt8 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetUInt8 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2343,10 +2374,12 @@ pub unsafe extern "C" fn fmi3SetInt16(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetInt16 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetInt16 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2404,10 +2437,12 @@ pub unsafe extern "C" fn fmi3SetUInt16(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetUInt16 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetUInt16 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2461,10 +2496,12 @@ pub unsafe extern "C" fn fmi3SetInt32(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetInt32 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetInt32 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2518,10 +2555,12 @@ pub unsafe extern "C" fn fmi3SetUInt32(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetUInt32 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetUInt32 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2575,10 +2614,12 @@ pub unsafe extern "C" fn fmi3SetInt64(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetInt64 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetInt64 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2632,10 +2673,12 @@ pub unsafe extern "C" fn fmi3SetUInt64(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetUInt64 failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetUInt64 failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2689,10 +2732,12 @@ pub unsafe extern "C" fn fmi3SetBoolean(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetBoolean failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetBoolean failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2756,16 +2801,20 @@ pub unsafe extern "C" fn fmi3SetString(
                 )),
             };
         
-            instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+            instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
                 .map(|status| status.into())
                 .unwrap_or_else(|error| {
-                    error!("fmi3SetString failed with error: {:?}.", error);
+                    instance.logger.error(&format!(
+                "fmi3SetString failed with error: {:?}.", error
+                    ));
                     Fmi3Status::Fmi3Error
                 })
         },
 
         Err(conversion_error) => {
-            error!("The String values could not be converted to Utf-8: {:?}.", conversion_error);
+            instance.logger.error(&format!(
+                "The String values could not be converted to Utf-8: {:?}.", conversion_error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -2874,10 +2923,12 @@ pub unsafe extern "C" fn fmi3SetBinary(
     };
 
     // Call the dispatcher with references, binary values, and their sizes
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetBinary failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetBinary failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2930,10 +2981,12 @@ pub unsafe extern "C" fn fmi3SetClock(
         )),
     };
 	
-	instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+	instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetClock failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetClock failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -2944,7 +2997,7 @@ pub extern "C" fn fmi3GetNumberOfVariableDependencies(
     value_reference: *const Fmi3ValueReference,
     n_dependencies: *const size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetNumberOfVariableDependencies is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetNumberOfVariableDependencies is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2958,7 +3011,7 @@ pub extern "C" fn fmi3GetVariableDependencies(
 	dependency_kinds: *mut Fmi3DependencyKind,
 	n_dependencies: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetVariableDependencies is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetVariableDependencies is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -2968,13 +3021,15 @@ pub extern "C" fn fmi3GetFMUState(
     state: *mut *mut SlaveState,
 ) -> Fmi3Status {
 
-    if state.is_null() {
-        error!("fmi3GetFMUstate called with state pointing to null!");
+    if instance.is_null() {
+        // TODO: Output this message in some way "fmi3GetFMUstate called with instance pointing to null!"
         return Fmi3Status::Fmi3Error;
     }
 
-    if instance.is_null() {
-        error!("fmi3GetFMUstate called with instance pointing to null!");
+    let instance = unsafe { &mut *instance };
+
+    if state.is_null() {
+        instance.logger.error("fmi3GetFMUstate called with state pointing to null!");
         return Fmi3Status::Fmi3Error;
     }
 
@@ -2982,14 +3037,9 @@ pub extern "C" fn fmi3GetFMUState(
         command: Some(Command::Fmi3SerializeFmuState(
             fmi3_messages::Fmi3SerializeFmuState {}
         )),
-    };
+    };    
 
-    let instance = unsafe { &mut *instance };
-
-    match instance.dispatch(
-        &cmd,
-        Fmi3Slave::serialize_fmu_state_return_matcher
-    ) {
+    match instance.dispatch::<fmi3_messages::Fmi3SerializeFmuStateReturn>(&cmd) {
         Ok(result) => {
             unsafe {
                 match (*state).as_mut() {
@@ -3006,12 +3056,16 @@ pub extern "C" fn fmi3GetFMUState(
 
             Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
-                    error!("fmi3GetFMUstate: Unknown status ({:?}) returned from backend.", result.status);
+                    instance.logger.error(&format!(
+                        "fmi3GetFMUstate: Unknown status ({:?}) returned from backend.", result.status
+                    ));
                     Fmi3Status::Fmi3Fatal
                 })
         }
         Err(error) => {
-            error!("fmi3GetFMUstate failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3GetFMUstate failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         }
     }
@@ -3023,11 +3077,14 @@ pub extern "C" fn fmi3SetFMUState(
 	state: *const SlaveState,
 ) -> Fmi3Status {
     if instance.is_null() {
-        error!("fmi3SetFMUstate called with instance pointing to null!");
+        // TODO: output this message in some way "fmi3SetFMUstate called with instance pointing to null!"
         return Fmi3Status::Fmi3Error;
     }
+
+    let instance = unsafe { &mut *instance };
+
     if state.is_null() {
-        error!("fmi3SetFMUstate called with state pointing to null!");
+        instance.logger.error("fmi3SetFMUstate called with state pointing to null!");
         return Fmi3Status::Fmi3Error;
     }
     let state_ref = unsafe { &*state };
@@ -3040,10 +3097,13 @@ pub extern "C" fn fmi3SetFMUState(
             }
         )),
     };
-    unsafe { (*instance).dispatch(&cmd, Fmi3Slave::status_return_matcher) }
+
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|status| status.into())
         .unwrap_or_else(|error| {
-            error!("fmi3SetFMUstate failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3SetFMUstate failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -3053,13 +3113,15 @@ pub extern "C" fn fmi3FreeFMUState(
     instance: *mut Fmi3Slave,
     state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-    if state.is_null(){
-        warn!("fmi3FreeFMUstate called with state pointing to null!");
+    if instance.is_null(){
+        //TODO: find a way to emit this message: "fmi3FreeFMUstate called with instance pointing to null!"
         return Fmi3Status::Fmi3OK;
     }
 
-    if instance.is_null(){
-        warn!("fmi3FreeFMUstate called with instance pointing to null!");
+    let instance = unsafe { &mut *instance };
+
+    if state.is_null(){
+        instance.logger.ok("fmi3FreeFMUstate called with state pointing to null!");
         return Fmi3Status::Fmi3OK;
     }
 
@@ -3067,7 +3129,7 @@ pub extern "C" fn fmi3FreeFMUState(
         let state_ptr = *state;
 
         if state_ptr.is_null() {
-            warn!("fmi3FreeFMUstate called with state pointing to null!");
+            instance.logger.ok("fmi3FreeFMUstate called with state pointing to null!");
             return Fmi3Status::Fmi3OK;
         }
 
@@ -3099,7 +3161,7 @@ pub extern "C" fn fmi3SerializeFMUState(
     let serialized_state_len = state.bytes.len();
 
     if serialized_state_len > size {
-        error!("Error while calling fmi3SerializeFMUstate: FMUstate too big to be contained in given byte vector.");
+        instance.logger.error("Error while calling fmi3SerializeFMUstate: FMUstate too big to be contained in given byte vector.");
         return Fmi3Status::Fmi3Error;
     }
 
@@ -3122,7 +3184,7 @@ pub unsafe extern "C" fn fmi3DeserializeFMUState(
     let serialized_state = unsafe { from_raw_parts(serialized_state, size) };
 
     if state.is_null() {
-        error!("fmi3DeSerializeFMUstate called with state pointing to null!");
+        instance.logger.error("fmi3DeSerializeFMUstate called with state pointing to null!");
         return Fmi3Status::Fmi3Error;
     }
 
@@ -3153,7 +3215,7 @@ pub extern "C" fn fmi3GetDirectionalDerivative(
 	delta_unknowns: *const Fmi3Float64,
 	n_delta_unknowns: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetDirectionalDerivative is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetDirectionalDerivative is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -3169,7 +3231,7 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 	delta_knowns: *const Fmi3Float64,
 	n_delta_knowns: size_t,
 ) -> Fmi3Status {
-    error!("fmi3GetAdjointDerivative is not implemented by UNIFMU.");
+    instance.logger.error("fmi3GetAdjointDerivative is not implemented by UNIFMU.");
     Fmi3Status::Fmi3Error
 }
 
@@ -3177,7 +3239,7 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    // error!("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
+    // instance.logger.error("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
     // Fmi3Status::Fmi3Error
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3EnterConfigurationMode(
@@ -3185,10 +3247,12 @@ pub extern "C" fn fmi3EnterConfigurationMode(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|s| s.into())
         .unwrap_or_else(|error| {
-            error!("fmi3EnterConfigurationMode failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3EnterConfigurationMode failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -3197,7 +3261,7 @@ pub extern "C" fn fmi3EnterConfigurationMode(
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    // error!("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
+    // instance.logger.error("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
     // Fmi3Status::Fmi3Error
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3ExitConfigurationMode(
@@ -3205,10 +3269,12 @@ pub extern "C" fn fmi3ExitConfigurationMode(
         )),
     };
 
-    instance.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|s| s.into())
         .unwrap_or_else(|error| {
-            error!("fmi3ExitConfigurationMode failed with error: {:?}.", error);
+            instance.logger.error(&format!(
+                "fmi3ExitConfigurationMode failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -3221,10 +3287,12 @@ pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
         )),
     };
 
-    slave.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    slave.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|s| s.into())
         .unwrap_or_else(|error| {
-            error!("Termination failed with error: {:?}.", error);
+            slave.logger.error(&format!(
+                "Termination failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }
@@ -3233,12 +3301,8 @@ pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
 pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
     let mut slave = slave;
 
-    match slave.as_mut() {
-        Some(s) => {
-            // fmi3FreeInstance message is send to backend on drop
-            drop(slave)
-        }
-        None => {warn!("No instance given.")}
+    if slave.as_mut().is_some() {
+        drop(slave)
     }
 }
 
@@ -3250,10 +3314,12 @@ pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
         )),
     };
 
-    slave.dispatch(&cmd, Fmi3Slave::status_return_matcher)
+    slave.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|s| s.into())
         .unwrap_or_else(|error| {
-            error!("fmi3Reset failed with error: {:?}.", error);
+            slave.logger.error(&format!(
+                "fmi3Reset failed with error: {:?}.", error
+            ));
             Fmi3Status::Fmi3Error
         })
 }

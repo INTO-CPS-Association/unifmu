@@ -8,6 +8,7 @@ use std::{
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::fmi3_messages;
+use crate::category_filter::LogCategory;
 
 pub type Fmi3Float32 = f32;
 pub type Fmi3Float64 = f64;
@@ -122,7 +123,7 @@ pub type Fmi3LogMessageCallback = unsafe extern "C" fn(
 );
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub enum Fmi3LogCategory {
     #[default] LogEvents,
     LogSingularLinearSystems,
@@ -135,8 +136,8 @@ pub enum Fmi3LogCategory {
     LogUserDefined(String)
 }
 
-impl Fmi3LogCategory {
-    pub fn str_name(&self) -> &str {
+impl LogCategory for Fmi3LogCategory {
+    fn str_name(&self) -> &str {
         match self {
             Fmi3LogCategory::LogEvents => "logEvents",
             Fmi3LogCategory::LogSingularLinearSystems => "logSingularLinearSystems",
@@ -170,6 +171,12 @@ impl From<&str> for Fmi3LogCategory {
             "logStatusFatal" => Fmi3LogCategory::LogStatusFatal,
             _ => Fmi3LogCategory::LogUserDefined(String::from(value))
         }
+    }
+}
+
+impl From<String> for Fmi3LogCategory {
+    fn from(value: String) -> Self {
+        Self::from(&value as &str)
     }
 }
 
