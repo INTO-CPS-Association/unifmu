@@ -51,6 +51,10 @@ impl Logger for Fmi2Logger {
         category: Fmi2LogCategory,
         message: &str
     ) {
+        self.fmt_log(&format!(
+            "{}{}", status.fmt_log_prefix(), message
+        ));
+
         if !self.filter.enabled(&category) {
             return
         }
@@ -75,9 +79,6 @@ impl Logger for Fmi2Logger {
     }
 
     fn ok(&self, message: &str) {
-
-        self.fmt_log(message);
-
         self.log(
             Fmi2Status::Ok,
             Fmi2LogCategory::LogAll,
@@ -86,8 +87,6 @@ impl Logger for Fmi2Logger {
     }
 
     fn warning(&self, message: &str) {
-        self.fmt_log(&format!("[WARNING] {}", message));
-
         self.log(
             Fmi2Status::Warning,
             Fmi2LogCategory::LogStatusWarning,
@@ -96,8 +95,6 @@ impl Logger for Fmi2Logger {
     }
 
     fn error(&self, message: &str) {
-        self.fmt_log(&format!("[ERROR] {}", message));
-
         self.log(
             Fmi2Status::Error,
             Fmi2LogCategory::LogStatusError,
@@ -106,8 +103,6 @@ impl Logger for Fmi2Logger {
     }
 
     fn fatal(&self, message: &str) {
-        self.fmt_log(&format!("[FATAL] {}", message));
-
         self.log(
             Fmi2Status::Fatal,
             Fmi2LogCategory::LogStatusFatal,
@@ -117,5 +112,18 @@ impl Logger for Fmi2Logger {
 
     fn filter(&mut self) -> &mut CategoryFilter<Self::Category> {
         &mut self.filter
+    }
+}
+
+impl Fmi2Status {
+    pub fn fmt_log_prefix(&self) -> String {
+        match self {
+            Fmi2Status::Ok => String::from("[OK] "),
+            Fmi2Status::Warning => String::from("[WARN] "),
+            Fmi2Status::Error => String::from("[ERROR] "),
+            Fmi2Status::Fatal => String::from("[FATAL] "),
+            Fmi2Status::Pending => String::from("[PENDING] "),
+            Fmi2Status::Discard => String::from("[DISCARD] ")
+        }
     }
 }

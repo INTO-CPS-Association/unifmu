@@ -4,8 +4,7 @@ use crate::{
         Fmi3InstanceEnvironment,
         Fmi3LogMessageCallback,
         Fmi3LogCategory,
-        Fmi3Status,
-        Fmi3String
+        Fmi3Status
     },
     logger::Logger
 };
@@ -48,6 +47,10 @@ impl Logger for Fmi3Logger {
         category: Fmi3LogCategory,
         message: &str
     ) {
+        self.fmt_log(&format!(
+            "{}{}", status.fmt_log_prefix(), message
+        ));
+
         if !self.filter.enabled(&category) {
             return
         }
@@ -71,9 +74,6 @@ impl Logger for Fmi3Logger {
     }
 
     fn ok(&self, message: &str) {
-
-        self.fmt_log(message);
-
         self.log(
             Fmi3Status::Fmi3OK,
             Fmi3LogCategory::LogEvents,
@@ -82,8 +82,6 @@ impl Logger for Fmi3Logger {
     }
 
     fn warning(&self, message: &str) {
-        self.fmt_log(&format!("[WARNING] {}", message));
-
         self.log(
             Fmi3Status::Fmi3Warning,
             Fmi3LogCategory::LogStatusWarning,
@@ -92,8 +90,6 @@ impl Logger for Fmi3Logger {
     }
 
     fn error(&self, message: &str) {
-        self.fmt_log(&format!("[ERROR] {}", message));
-
         self.log(
             Fmi3Status::Fmi3Error,
             Fmi3LogCategory::LogStatusError,
@@ -102,8 +98,6 @@ impl Logger for Fmi3Logger {
     }
 
     fn fatal(&self, message: &str) {
-        self.fmt_log(&format!("[FATAL] {}", message));
-
         self.log(
             Fmi3Status::Fmi3Fatal,
             Fmi3LogCategory::LogStatusFatal,
@@ -113,5 +107,17 @@ impl Logger for Fmi3Logger {
 
     fn filter(&mut self) -> &mut CategoryFilter<Self::Category> {
         &mut self.filter
+    }
+}
+
+impl Fmi3Status {
+    pub fn fmt_log_prefix(&self) -> String {
+        match self {
+            Fmi3Status::Fmi3OK => String::from("[OK] "),
+            Fmi3Status::Fmi3Warning => String::from("[WARN] "),
+            Fmi3Status::Fmi3Error => String::from("[ERROR] "),
+            Fmi3Status::Fmi3Fatal => String::from("[FATAL] "),
+            Fmi3Status::Fmi3Discard => String::from("[DISCARD] ")
+        }
     }
 }
