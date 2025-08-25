@@ -39,32 +39,6 @@ impl Fmi2Logger {
             instance_name
         }
     }
-
-    pub fn enable_categories(
-        &mut self,
-        categories: Vec<Fmi2LogCategory>
-    ) {
-        for category in categories {
-            let _ = self.filter.enable_category(category);
-        }
-    }
-
-    pub fn disable_categories(
-        &mut self,
-        categories: Vec<Fmi2LogCategory>
-    ) {
-        for category in categories {
-            let _ = self.filter.disable_category(category);
-        }
-    }
-
-    pub fn enable_all_categories(&mut self) {
-        self.filter = CategoryFilter::new_blacklist();
-    }
-
-    pub fn disable_all_categories(&mut self) {
-        self.filter = CategoryFilter::new_blacklist();
-    }
 }
 
 impl Logger for Fmi2Logger {
@@ -139,5 +113,9 @@ impl Logger for Fmi2Logger {
             Fmi2LogCategory::LogStatusFatal,
             message
         );
+    }
+
+    fn filter(&mut self) -> &mut CategoryFilter<Self::Category> {
+        &mut self.filter
     }
 }
