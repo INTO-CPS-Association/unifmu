@@ -1,4 +1,4 @@
-use crate::category_filter::{CategoryFilter, LogCategory};
+use super::category_filter::{CategoryFilter, LogCategory};
 
 pub trait Logger 
 where Self::Category: LogCategory

@@ -1,15 +1,20 @@
-use crate::dispatcher::{Dispatch, Dispatcher, DispatcherError};
-use crate::fmi3_logger::Fmi3Logger;
-use crate::fmi3_messages::{
-    self,
-    Fmi3Command,
-    fmi3_command::Command,
-    Fmi3Return,
-    fmi3_return,
-    fmi3_return::ReturnMessage
+use super::{
+    fmi3_logger::Fmi3Logger,
+    fmi3_messages::{
+        self,
+        Fmi3Command,
+        fmi3_command::Command,
+        Fmi3Return,
+        fmi3_return,
+        fmi3_return::ReturnMessage
+    }
 };
-use crate::logger::Logger;
-use crate::protobuf_extensions::ExpectableReturn;
+
+use crate::common::{
+    dispatcher::{Dispatch, Dispatcher, DispatcherError},
+    logger::Logger,
+    protobuf_extensions::ExpectableReturn
+};
 
 use std::{
     error::Error,

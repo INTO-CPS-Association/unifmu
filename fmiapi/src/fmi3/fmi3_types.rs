@@ -1,3 +1,7 @@
+use super::fmi3_messages;
+
+use crate::common::category_filter::LogCategory;
+
 use std::{
     error::Error,
     ffi::{CStr, c_char},
@@ -6,9 +10,6 @@ use std::{
 };
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-
-use crate::fmi3_messages;
-use crate::category_filter::LogCategory;
 
 pub type Fmi3Float32 = f32;
 pub type Fmi3Float64 = f64;
@@ -96,20 +97,6 @@ pub enum Fmi3DependencyKind {
 pub struct Fmi3InstanceEnvironment {
     _data: [u8; 0]
 }
-
-/// The Fmi3InstanceEnvironment is assumed to be kept valid by the importer for
-/// the FMU's lifetime, or at least be kept in the proper state before calling
-/// the FMI API. We tell the Rust compiler that it is safe to share this
-/// between threads to get logging to work, but we must "manually" ensure that
-/// it is only used when a FMI call is made with the related FMU component
-/// (AKA the fmu_slave). (By manually it is meant that we write the code without
-/// relying on the compiler to catch our mistakes. Very unrustian, but such is
-/// the FFI life.)
-#[derive(Copy, Clone)]
-pub struct SyncInstanceEnvironment(pub *const Fmi3InstanceEnvironment);
-
-unsafe impl Send for SyncInstanceEnvironment {}
-unsafe impl Sync for SyncInstanceEnvironment {}
 
 pub type Fmi3ValueReference = u32;
 

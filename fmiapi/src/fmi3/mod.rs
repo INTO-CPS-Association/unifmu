@@ -1,25 +1,23 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
-use std::{
-    ffi::{c_void, CStr, CString, NulError},
-    path::{Path, PathBuf},
-    slice::{from_raw_parts, from_raw_parts_mut},
-    str::Utf8Error
+mod fmi3_logger;
+mod fmi3_messages;
+mod fmi3_slave;
+mod fmi3_types;
+
+use fmi3_logger::Fmi3Logger;
+use fmi3_messages::{
+    fmi3_command::Command,
+    fmi3_return::ReturnMessage,
+    Fmi3Command
 };
-
-use libc::{c_char, size_t};
-use url::Url;
-
-use crate::{fmi3_logger::Fmi3Logger, fmi3_messages::{
-    self, fmi3_command::Command, fmi3_return::ReturnMessage, Fmi3Command
-}};
-use crate::fmi3_slave::{
+use fmi3_slave::{
     Fmi3Slave,
     Fmi3SlaveType,
     SlaveState
 };
-use crate::fmi3_types::{
+use fmi3_types::{
     Fmi3Float32,
     Fmi3Float64,
     Fmi3Int8,
@@ -44,13 +42,26 @@ use crate::fmi3_types::{
     Fmi3IntermediateUpdateCallback,
     UnsupportedCallback,
 };
-use crate::logger::Logger;
-use crate::protobuf_extensions::{
-    ExpectableReturn,
-    implement_expectable_return
+
+use crate::common::{
+    logger::Logger,
+    protobuf_extensions::{
+        ExpectableReturn,
+        implement_expectable_return
+    },
+    spawn::spawn_slave,
+    string_conversion::{c2s, c2non_empty_s}
 };
-use crate::spawn::spawn_slave;
-use crate::string_conversion::{c2s, c2non_empty_s};
+
+use std::{
+    ffi::{c_void, CStr, CString, NulError},
+    path::{Path, PathBuf},
+    slice::{from_raw_parts, from_raw_parts_mut},
+    str::Utf8Error
+};
+
+use libc::{c_char, size_t};
+use url::Url;
 
 // ----------------------- Protocol Buffer Trait decorations ---------------------------
 // The trait ExpectableReturn extends the Return message with an extract
@@ -83,8 +94,8 @@ implement_expectable_return!(fmi3_messages::Fmi3GetIntervalDecimalReturn, Return
 implement_expectable_return!(fmi3_messages::Fmi3GetIntervalFractionReturn, ReturnMessage, GetIntervalFraction);
 implement_expectable_return!(fmi3_messages::Fmi3GetShiftDecimalReturn, ReturnMessage, GetShiftDecimal);
 implement_expectable_return!(fmi3_messages::Fmi3GetShiftFractionReturn, ReturnMessage, GetShiftFraction);
-// ------------------------------------- FMI FUNCTIONS --------------------------------
 
+// ------------------------------------- FMI FUNCTIONS --------------------------------
 static VERSION: &str = "3.0\0";
 
 #[no_mangle]

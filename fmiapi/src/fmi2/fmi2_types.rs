@@ -1,6 +1,7 @@
-// Type definitions for parameters in functions crossing the ABI boundary
-// betweeen C and Rust.
-use crate::category_filter::LogCategory;
+//! Type definitions for parameters in functions crossing the ABI boundary
+//! betweeen C and Rust.
+
+use crate::common::category_filter::LogCategory;
 
 use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int}, fmt::{Debug, Display}};
 
@@ -10,54 +11,10 @@ pub type Fmi2Real = c_double;
 pub type Fmi2Integer = c_int;
 /// Should be checked for out of range value and converted to bool before use
 /// if given as a function argument.
-/// 
-/// # Example
-/// ```
-/// use fmiapi::fmi2_types::Fmi2Boolean;
-/// 
-/// pub extern "C" fn some_ffi_function(boolean_from_c: Fmi2Boolean) {
-///     let converted_boolean = match boolean_from_c {
-///         0 => false,
-///         1 => true,
-///         _ => {
-///             // Handle error
-///             // ...
-///             return // Potential error return value
-///         }
-///     };
-/// }
-/// ```
 pub type Fmi2Boolean = c_int;
 pub type Fmi2Char = c_char;
 /// Must be checked for null-ness and converted to Rust str before use if given
 /// as a function argument.
-/// 
-/// # Example
-/// ```
-/// use std::ffi::CStr;
-/// use fmiapi::fmi2_types::Fmi2String;
-/// 
-/// pub unsafe extern "C" fn some_ffi_function(string_from_c: Fmi2String) {
-///     let converted_string = unsafe {
-///         match string_from_c.as_ref() {
-///             Some(reference) => match CStr::from_ptr(reference).to_str() {
-///                 Ok(converted_string) => converted_string,
-///                 Err(e) => {
-///                     // Handle error
-///                     // ...
-///                     return // Potential error return value
-///                 }
-///             },
-///             None => {
-///                 // Handle error
-///                 // ...
-///                 return // Potential error return value
-///             }
-///         }
-///     };
-///     // ...
-/// }
-/// ```
 pub type Fmi2String = *const Fmi2Char;
 pub type Fmi2Byte = c_char;
 
@@ -89,20 +46,6 @@ pub enum Fmi2Status {
 pub struct ComponentEnvironment {
     _data: [u8; 0]
 }
-
-/// The ComponentEnvironment is assumed to be kept valid by the importer for
-/// the FMU's lifetime, or at least be kept in the proper state before calling
-/// the FMI API. We tell the Rust compiler that it is safe to share this
-/// between threads to get logging to work, but we must "manually" ensure that
-/// it is only used when a FMI call is made with the related FMU component
-/// (AKA the fmu_slave). (By manually it is meant that we write the code without
-/// relying on the compiler to catch our mistakes. Very unrustian, but such is
-/// the FFI life.)
-#[derive(Copy, Clone)]
-pub struct SyncComponentEnvironment(pub *const ComponentEnvironment);
-
-unsafe impl Send for SyncComponentEnvironment {}
-unsafe impl Sync for SyncComponentEnvironment {}
 
 /// Represents the function signature of the logging callback function passsed
 /// from the environment to the slave during instantiation.

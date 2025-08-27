@@ -1,25 +1,29 @@
-use crate::dispatcher::{Dispatch, Dispatcher, DispatcherError};
-use crate::fmi2_messages::{
-    self,
-    Fmi2Command,
-    fmi2_command::Command,
-    Fmi2Return,
-    fmi2_return,
-    fmi2_return::ReturnMessage
+use super::{
+    fmi2_messages::{
+        self,
+        Fmi2Command,
+        fmi2_command::Command,
+        Fmi2Return,
+        fmi2_return,
+        fmi2_return::ReturnMessage
+    },
+    fmi2_types::Fmi2Status,
+    fmi2_logger::Fmi2Logger
 };
-use crate::fmi2_types::Fmi2Status;
-use crate::fmi2_logger::Fmi2Logger;
-use crate::logger::Logger;
-use crate::protobuf_extensions::ExpectableReturn;
-use crate::string_conversion::{c2s, c2non_empty_s};
 
-use prost::Message;
+use crate::common::{
+    dispatcher::{Dispatch, Dispatcher, DispatcherError},
+    logger::Logger,
+    protobuf_extensions::ExpectableReturn
+};
 
 use std::{
     error::Error,
     ffi::CString,
     fmt::{Debug, Display}
 };
+
+use prost::Message;
 
 #[repr(C)]
 pub struct Fmi2Slave {

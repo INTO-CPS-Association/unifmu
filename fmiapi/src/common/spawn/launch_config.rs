@@ -5,8 +5,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::dispatcher::{Dispatch, Dispatcher, DispatcherError};
-
 use serde::Deserialize;
 
 #[derive(Debug, Default, Deserialize)]
@@ -59,7 +57,7 @@ impl LaunchConfig {
     }
 }
 
-pub type ConfigResult<T> = Result<T, ConfigError>;
+type ConfigResult<T> = Result<T, ConfigError>;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -89,69 +87,3 @@ impl Display for ConfigError {
 }
 
 impl Error for ConfigError {}
-
-pub fn spawn_slave(
-    resource_path: &Path,
-    remote_connction_notifier: impl Fn(&str)
-) -> SpawnResult<Dispatcher> {
-    let config = LaunchConfig::create(resource_path)?;
-
-    let dispatcher_result = match config.location {
-        BackendLocation::Local => Dispatcher::local(
-            resource_path,
-            &config.get_launch_command()?
-        ),
-        BackendLocation::Remote => Dispatcher::remote(remote_connction_notifier)
-    };
-
-    let mut dispatcher = match dispatcher_result {
-        Ok(dispatcher) => dispatcher,
-        Err(error) => {
-            return Err(SpawnError::DispatcherCreation(error));
-        }
-    };
-
-    println!("Awaiting handshake.");
-    match dispatcher.await_handshake() {
-        Ok(_) => {
-            println!("Connection established!");
-            Ok(dispatcher)
-        },
-        Err(error) => {
-            Err(SpawnError::Handshake(error))
-        }
-    } 
-}
-
-pub type SpawnResult<T> = Result<T, SpawnError>;
-
-#[derive(Debug)]
-pub enum SpawnError {
-    Handshake(DispatcherError),
-    DispatcherCreation(DispatcherError),
-    Config(ConfigError)
-}
-
-impl Display for SpawnError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Handshake(dp_error) => write!(
-                f, "handshake failed; {}", dp_error
-            ),
-            Self::DispatcherCreation(dp_error) => write!(
-                f, "couldn't create new dispatcher; {}", dp_error
-            ),
-            Self::Config(cf_error) => write!(
-                f, "couldn't import config; {}", cf_error
-            )
-        }
-    }
-}
-
-impl Error for SpawnError {}
-
-impl From<ConfigError> for SpawnError {
-    fn from(value: ConfigError) -> Self {
-        Self::Config(value)
-    }
-}

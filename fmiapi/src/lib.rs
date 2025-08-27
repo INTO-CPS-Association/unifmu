@@ -1,17 +1,3 @@
-mod category_filter;
-mod dispatcher;
+mod common;
 pub mod fmi2;
-mod fmi2_logger;
-pub mod fmi2_messages;
-pub mod fmi2_slave;
-pub mod fmi2_types;
 pub mod fmi3;
-mod fmi3_logger;
-pub mod fmi3_messages;
-pub mod fmi3_slave;
-pub mod fmi3_types;
-mod logger;
-mod protobuf_extensions;
-mod spawn;
-mod string_conversion;
-pub mod unifmu_handshake;

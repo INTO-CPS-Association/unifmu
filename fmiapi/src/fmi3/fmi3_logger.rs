@@ -1,29 +1,27 @@
-use crate::{
+use super::fmi3_types::{
+    Fmi3InstanceEnvironment,
+    Fmi3LogMessageCallback,
+    Fmi3LogCategory,
+    Fmi3Status
+};
+
+use crate::common::{
     category_filter::CategoryFilter,
-    fmi2_types::{
-        ComponentEnvironment,
-        Fmi2CallbackLogger,
-        Fmi2LogCategory,
-        Fmi2Status,
-        Fmi2String
-    },
     logger::Logger
 };
 
 use std::ffi::CStr;
 
-pub struct Fmi2Logger {
-    callback: Fmi2CallbackLogger,
-    environment: *const ComponentEnvironment,
-    filter: CategoryFilter<Fmi2LogCategory>,
-    instance_name: Fmi2String
+pub struct Fmi3Logger {
+    callback: Fmi3LogMessageCallback,
+    environment: *const Fmi3InstanceEnvironment,
+    filter: CategoryFilter<Fmi3LogCategory>
 }
 
-impl Fmi2Logger {
+impl Fmi3Logger {
     pub fn new(
-        callback: Fmi2CallbackLogger,
-        instance_name: Fmi2String,
-        environment: *const ComponentEnvironment,
+        callback: Fmi3LogMessageCallback,
+        environment: *const Fmi3InstanceEnvironment,
         enabled: bool
     ) -> Self {
         let filter = if enabled {
@@ -35,20 +33,19 @@ impl Fmi2Logger {
         Self {
             callback,
             environment,
-            filter,
-            instance_name
+            filter
         }
     }
 }
 
-impl Logger for Fmi2Logger {
-    type Category = Fmi2LogCategory;
-    type Status = Fmi2Status;
+impl Logger for Fmi3Logger {
+    type Category = Fmi3LogCategory;
+    type Status = Fmi3Status;
 
     fn log(
         &self,
-        status: Fmi2Status,
-        category: Fmi2LogCategory,
+        status: Fmi3Status,
+        category: Fmi3LogCategory,
         message: &str
     ) {
         self.fmt_log(&format!(
@@ -71,7 +68,6 @@ impl Logger for Fmi2Logger {
 
         unsafe { (self.callback)(
             self.environment,
-            self.instance_name,
             status,
             c_category.as_ptr(),
             c_message.as_ptr()
@@ -80,32 +76,32 @@ impl Logger for Fmi2Logger {
 
     fn ok(&self, message: &str) {
         self.log(
-            Fmi2Status::Ok,
-            Fmi2LogCategory::LogAll,
+            Fmi3Status::Fmi3OK,
+            Fmi3LogCategory::LogEvents,
             message
         )
     }
 
     fn warning(&self, message: &str) {
         self.log(
-            Fmi2Status::Warning,
-            Fmi2LogCategory::LogStatusWarning,
+            Fmi3Status::Fmi3Warning,
+            Fmi3LogCategory::LogStatusWarning,
             message
         )
     }
 
     fn error(&self, message: &str) {
         self.log(
-            Fmi2Status::Error,
-            Fmi2LogCategory::LogStatusError,
+            Fmi3Status::Fmi3Error,
+            Fmi3LogCategory::LogStatusError,
             message
         );
     }
 
     fn fatal(&self, message: &str) {
         self.log(
-            Fmi2Status::Fatal,
-            Fmi2LogCategory::LogStatusFatal,
+            Fmi3Status::Fmi3Fatal,
+            Fmi3LogCategory::LogStatusFatal,
             message
         );
     }
@@ -115,15 +111,14 @@ impl Logger for Fmi2Logger {
     }
 }
 
-impl Fmi2Status {
+impl Fmi3Status {
     pub fn fmt_log_prefix(&self) -> String {
         match self {
-            Fmi2Status::Ok => String::from("[OK] "),
-            Fmi2Status::Warning => String::from("[WARN] "),
-            Fmi2Status::Error => String::from("[ERROR] "),
-            Fmi2Status::Fatal => String::from("[FATAL] "),
-            Fmi2Status::Pending => String::from("[PENDING] "),
-            Fmi2Status::Discard => String::from("[DISCARD] ")
+            Fmi3Status::Fmi3OK => String::from("[OK] "),
+            Fmi3Status::Fmi3Warning => String::from("[WARN] "),
+            Fmi3Status::Fmi3Error => String::from("[ERROR] "),
+            Fmi3Status::Fmi3Fatal => String::from("[FATAL] "),
+            Fmi3Status::Fmi3Discard => String::from("[DISCARD] ")
         }
     }
 }

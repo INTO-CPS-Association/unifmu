@@ -2,17 +2,22 @@
 #![allow(unused_variables)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
-use crate::fmi2_messages::{
-    self,
+mod fmi2_logger;
+mod fmi2_messages;
+mod fmi2_slave;
+mod fmi2_types;
+
+use fmi2_logger::Fmi2Logger;
+use fmi2_messages::{
     Fmi2Command,
     fmi2_command::Command,
     fmi2_return::ReturnMessage
 };
-use crate::fmi2_slave::{
+use fmi2_slave::{
     Fmi2Slave,
     SlaveState
 };
-use crate::fmi2_types::{
+use fmi2_types::{
     Fmi2Real,
     Fmi2Integer,
     Fmi2Boolean,
@@ -23,17 +28,16 @@ use crate::fmi2_types::{
     Fmi2StatusKind,
     Fmi2Type
 };
-use crate::fmi2_logger::Fmi2Logger;
-use crate::logger::Logger;
-use crate::protobuf_extensions::{
-    ExpectableReturn,
-    implement_expectable_return
-};
-use crate::spawn::spawn_slave;
-use crate::string_conversion::{c2s, c2non_empty_s};
 
-use libc::size_t;
-use url::Url;
+use crate::common::{
+    logger::Logger,
+    protobuf_extensions::{
+        ExpectableReturn,
+        implement_expectable_return
+    },
+    spawn::spawn_slave,
+    string_conversion::{c2s, c2non_empty_s}
+};
 
 use std::{
     ffi::{CStr, CString, NulError},
@@ -42,6 +46,9 @@ use std::{
     slice::{from_raw_parts, from_raw_parts_mut},
     str::Utf8Error
 };
+
+use libc::size_t;
+use url::Url;
 
 // ---------------------- Protocol Buffer Transformations ---------------------
 impl From<fmi2_messages::Fmi2Type> for Fmi2Type {
