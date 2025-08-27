@@ -200,3 +200,18 @@ pub struct Fmi2CallbackFunctions {
     pub step_finished: Option<Fmi2StepFinished>,
     pub component_environment: ComponentEnvironment,
 }
+
+#[repr(i32)]
+#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
+pub enum Fmi2StatusKind {
+    Fmi2DoStepStatus = 0,
+    Fmi2PendingStatus = 1,
+    Fmi2LastSuccessfulTime = 2,
+    Fmi2Terminated = 3,
+}
+
+#[repr(i32)]
+pub enum Fmi2Type {
+    Fmi2ModelExchange = 0,
+    Fmi2CoSimulation = 1,
+}

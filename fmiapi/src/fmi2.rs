@@ -1,17 +1,16 @@
 #![allow(non_snake_case)]
-#![allow(unreachable_code)]
 #![allow(unused_variables)]
-#![allow(dead_code)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
-use crate::dispatcher::{Dispatch, Dispatcher, DispatcherError};
 use crate::fmi2_messages::{
     self,
     Fmi2Command,
     fmi2_command::Command,
-    Fmi2Return,
-    fmi2_return,
     fmi2_return::ReturnMessage
+};
+use crate::fmi2_slave::{
+    Fmi2Slave,
+    SlaveState
 };
 use crate::fmi2_types::{
     Fmi2Real,
@@ -20,7 +19,9 @@ use crate::fmi2_types::{
     Fmi2String,
     Fmi2Status,
     Fmi2CallbackFunctions,
-    Fmi2LogCategory
+    Fmi2LogCategory,
+    Fmi2StatusKind,
+    Fmi2Type
 };
 use crate::fmi2_logger::Fmi2Logger;
 use crate::logger::Logger;
@@ -29,22 +30,28 @@ use crate::protobuf_extensions::{
     implement_expectable_return
 };
 use crate::spawn::spawn_slave;
+use crate::string_conversion::{c2s, c2non_empty_s};
 
 use libc::size_t;
-
-use num_enum::{IntoPrimitive, TryFromPrimitive};
-use prost::Message;
 use url::Url;
 
 use std::{
-    error::Error,
     ffi::{CStr, CString, NulError},
-    fmt::{Debug, Display},
     os::raw::{c_char, c_uint},
     path::Path,
     slice::{from_raw_parts, from_raw_parts_mut},
     str::Utf8Error
 };
+
+// ---------------------- Protocol Buffer Transformations ---------------------
+impl From<fmi2_messages::Fmi2Type> for Fmi2Type {
+    fn from(src: fmi2_messages::Fmi2Type) -> Self {
+        match src {
+            fmi2_messages::Fmi2Type::Fmi2ModelExchange => Self::Fmi2ModelExchange,
+            fmi2_messages::Fmi2Type::Fmi2CoSimulation => Self::Fmi2CoSimulation,
+        }
+    }
+}
 
 impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
     fn from(src: fmi2_messages::Fmi2StatusReturn) -> Self {
@@ -65,32 +72,6 @@ impl From<fmi2_messages::Fmi2Status> for Fmi2Status {
     }
 }
 
-#[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
-pub enum Fmi2StatusKind {
-    Fmi2DoStepStatus = 0,
-    Fmi2PendingStatus = 1,
-    Fmi2LastSuccessfulTime = 2,
-    Fmi2Terminated = 3,
-}
-
-// ====================== config =======================
-
-#[repr(i32)]
-pub enum Fmi2Type {
-    Fmi2ModelExchange = 0,
-    Fmi2CoSimulation = 1,
-}
-
-impl From<fmi2_messages::Fmi2Type> for Fmi2Type {
-    fn from(src: fmi2_messages::Fmi2Type) -> Self {
-        match src {
-            fmi2_messages::Fmi2Type::Fmi2ModelExchange => Self::Fmi2ModelExchange,
-            fmi2_messages::Fmi2Type::Fmi2CoSimulation => Self::Fmi2CoSimulation,
-        }
-    }
-}
-
 // ----------------------- Protocol Buffer Trait decorations ---------------------------
 // The trait ExpectableReturn extends the Return message with an extract
 // function that let's us pattern match and unwrap the inner type of a
@@ -105,142 +86,6 @@ implement_expectable_return!(fmi2_messages::Fmi2GetStringReturn, ReturnMessage, 
 implement_expectable_return!(fmi2_messages::Fmi2GetRealOutputDerivativesReturn, ReturnMessage, GetRealOutputDerivatives);
 implement_expectable_return!(fmi2_messages::Fmi2GetDirectionalDerivativesReturn, ReturnMessage, GetDirectionalDerivatives);
 implement_expectable_return!(fmi2_messages::Fmi2SerializeFmuStateReturn, ReturnMessage, SerializeFmuState);
-
-// ----------------------- Library instantiation and cleanup ---------------------------
-
-#[repr(C)]
-pub struct Fmi2Slave {
-    /// Buffer storing the c-strings returned by `fmi2GetStrings`.
-    /// The specs states that the caller should copy the strings to its own memory immidiately after the call has been made.
-    /// The reason for this recommendation is that a FMU is allowed to free or overwrite the memory as soon as another call is made to the FMI interface.
-    pub string_buffer: Vec<CString>,
-
-    /// Object performing remote procedure calls on the slave
-    pub dispatcher: Dispatcher,
-
-    pub logger: Fmi2Logger,
-    pub last_successful_time: Option<f64>,
-    pub pending_message: Option<String>,
-    pub dostep_status: Option<Fmi2Status>
-}
-//  + Send + UnwindSafe + RefUnwindSafe
-// impl RefUnwindSafe for Slave {}
-// impl UnwindSafe for Slave {}
-// unsafe impl Send for Slave {}
-
-impl Fmi2Slave {
-    fn new(
-        dispatcher: Dispatcher,
-        logger: Fmi2Logger
-    ) -> Self {
-        Self {
-            dispatcher,
-            logger,
-            string_buffer: Vec::new(),
-            last_successful_time: None,
-            pending_message: None,
-            dostep_status: None,
-        }
-    }
-
-    fn dispatch<R>(&mut self, command: &(impl Message + Debug)) -> Fmi2SlaveResult<R>
-    where
-        R: Message + ExpectableReturn<ReturnMessage>
-    {
-        let mut return_message = self.dispatcher
-            .send_and_recv::<_, Fmi2Return>(command)?
-            .return_message
-            .ok_or(Fmi2SlaveError::ReturnError)?;
-
-        while let fmi2_return::ReturnMessage::Log(log_return) = return_message {
-            self.handle_log_return(log_return);
-
-            let continue_command = Fmi2Command {
-                command: Some(Command::Fmi2CallbackContinue(
-                    fmi2_messages::Fmi2CallbackContinue {}
-                )),
-            };
-
-            return_message = self.dispatcher
-                .send_and_recv::<_, Fmi2Return>(&continue_command)?
-                .return_message
-                .ok_or(Fmi2SlaveError::ReturnError)?;
-        }
-
-        R::extract_from(return_message)
-            .ok_or(Fmi2SlaveError::ReturnError)
-    }
-
-    fn handle_log_return(
-        &mut self,
-        log_return: fmi2_messages::Fmi2LogReturn
-    ) {
-        self.logger.log(
-            log_return.status().into(),
-            log_return.category.into(),
-            &log_return.log_message
-        );
-    }
-}
-
-/// Sends the fmi2FreeInstance message to the backend when the slave is dropped.
-impl Drop for Fmi2Slave {
-    fn drop(&mut self) {
-        let cmd = Fmi2Command {
-            command: Some(Command::Fmi2FreeInstance(
-                fmi2_messages::Fmi2FreeInstance {}
-            )),
-        };
-
-        match self.dispatcher.send(&cmd) {
-            Ok(_) => self.logger.ok("Send free instance message to shut down backend"),
-            Err(error) => self.logger.error(&format!(
-                "Freeing instance failed with error: {}.", error
-            )),
-        };
-    }
-}
-
-type Fmi2SlaveResult<T> = Result<T, Fmi2SlaveError>;
-
-#[derive(Debug)]
-pub enum Fmi2SlaveError {
-    DispatchError(DispatcherError),
-    ReturnError
-}
-
-impl Display for Fmi2SlaveError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::DispatchError(dispatcher_error) => {
-                write!(f, "dispatch error; {}", dispatcher_error)
-            }
-            Self::ReturnError => {
-                write!(f, "unknown return message from backend")
-            }
-        }
-    }
-}
-
-impl Error for Fmi2SlaveError {}
-
-impl From<DispatcherError> for Fmi2SlaveError {
-    fn from(value: DispatcherError) -> Self {
-        Self::DispatchError(value)
-    }
-}
-
-#[derive(Debug)]
-pub struct SlaveState {
-    bytes: Vec<u8>,
-}
-impl SlaveState {
-    fn new(bytes: &[u8]) -> Self {
-        Self {
-            bytes: Vec::from(bytes),
-        }
-    }
-}
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 
@@ -319,66 +164,42 @@ pub unsafe extern "C" fn fmi2Instantiate(
     // Model Exchange as that is not yet implemented.
     if let Fmi2Type::Fmi2ModelExchange = fmu_type {
         logger.error("Model Exchange is not implemented for UNIFMU.");
-        return None;
+        return None
     }
 
-    let instance_name = match unsafe { instance_name.as_ref() } {
-        None => {
-            logger.error("Argument 'instance_name' was null.");
-            return None;
-        }
-        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
-            Err(_) => {
-                logger.error("Argument 'instance_name' could not be parsed as a utf-8 formatted string.");
-                return None;
-            }
-            Ok(name_str) => match name_str.len() {
-                0 => {
-                    logger.error("Argument 'instance_name' must not be an empty string.");
-                    return None;
-                }
-                _ => name_str
-            }
+    let instance_name = match c2non_empty_s(instance_name) {
+        Ok(name) => name,
+        Err(error) => {
+            logger.error(&format!(
+                "Could not parse instance_name; {}", error
+            ));
+            return None
         }
     };
     
-    let fmu_guid = match unsafe { fmu_guid.as_ref() } {
-        None => {
-            logger.error("Argument 'fmu_guid' was null.");
-            return None;
-        }
-        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
-            Err(_) => {
-                logger.error("Argument 'fmu_guid' could not be parsed as a utf-8 formatted string.");
-                return None;
-            }
-            Ok(guid_str) => guid_str
-        }
-    };
-
-    let fmu_resource_location = match unsafe { fmu_resource_location.as_ref() } {
-        None => {
-            logger.error("Argument 'fmu_resource_location' was null.");
-            return None;
-        }
-        Some(string_reference) => match unsafe { CStr::from_ptr(string_reference).to_str() } {
-            Err(_) => {
-                logger.error("Argument 'fmu_resource_location' could not be parsed as a utf-8 formatted string.");
-                return None;
-            }
-            Ok(resources_str) => match resources_str.len() {
-                0 => {
-                    logger.error("Argument 'fmu_resource_location' must not be an empty string.");
-                    return None;
-                }
-                _ => resources_str
-            }
-        }
-    };
-
-    let resource_uri = match Url::parse(fmu_resource_location) {
+    let fmu_guid = match c2s(fmu_guid) {
+        Ok(guid) => guid,
         Err(error) => {
-            logger.error("Unable to parse argument 'fmu_resource_location' as url.");
+            logger.error(&format!(
+                "Could not convert fmu_guid to String; {}", error
+            ));
+            return None
+        }
+    };
+
+    let fmu_resource_location = match c2non_empty_s(fmu_resource_location) {
+        Ok(location) => location,
+        Err(error) => {
+            logger.error(&format!(
+                "Could not parse fmu_resource_location; {}", error
+            ));
+            return None
+        }
+    };
+
+    let resource_uri = match Url::parse(&fmu_resource_location) {
+        Err(error) => {
+            logger.error(&format!("Unable to parse argument 'fmu_resource_location' as url; {}.", error));
             return None;
         }
         Ok(url) => url
@@ -411,10 +232,10 @@ pub unsafe extern "C" fn fmi2Instantiate(
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2Instantiate(
             fmi2_messages::Fmi2Instantiate {
-                instance_name: String::from(instance_name),
+                instance_name,
                 fmu_type: 0,
-                fmu_guid: String::from(fmu_guid),
-                fmu_resource_location: String::from(fmu_resource_location),
+                fmu_guid,
+                fmu_resource_location,
                 visible: false,
                 logging_on,
             }
@@ -437,7 +258,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
 pub extern "C" fn fmi2FreeInstance(slave: Option<Box<Fmi2Slave>>) {
     let mut slave = slave;
 
-    if let Some(s) = slave.as_mut() {
+    if let Some(_s) = slave.as_mut() {
         drop(slave)
     }
 }

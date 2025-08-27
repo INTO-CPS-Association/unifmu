@@ -43,8 +43,6 @@ use crate::fmi3_types::{
     Fmi3LogMessageCallback,
     Fmi3IntermediateUpdateCallback,
     UnsupportedCallback,
-    c2s,
-    c2non_empty_s
 };
 use crate::logger::Logger;
 use crate::protobuf_extensions::{
@@ -52,6 +50,7 @@ use crate::protobuf_extensions::{
     implement_expectable_return
 };
 use crate::spawn::spawn_slave;
+use crate::string_conversion::{c2s, c2non_empty_s};
 
 // ----------------------- Protocol Buffer Trait decorations ---------------------------
 // The trait ExpectableReturn extends the Return message with an extract
@@ -172,9 +171,9 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         Ok(name) => name,
         Err(error) => {
             logger.error(&format!(
-                "could not parse instance_name: {}", error
+                "Could not parse instance_name; {}", error
             ));
-            return None;
+            return None
         }
     };
 
@@ -182,9 +181,9 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         Ok(string) => string,
         Err(error) => {
             logger.error(&format!(
-                "could not convert instantiation_token to String: {}", error
+                "Could not convert instantiation_token to String; {}", error
             ));
-            return None;
+            return None
         }
     };
 
@@ -200,7 +199,7 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         Ok(path_string) => path_string,
         Err(error) => {
             logger.error(&format!(
-                "could not parse resource_path: {}", error
+                "could not parse resource_path; {}", error
             ));
             return None;
         }
