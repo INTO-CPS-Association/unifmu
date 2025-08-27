@@ -1,12 +1,13 @@
 use std::{
+    error::Error,
+    fmt::{Debug, Display},
     fs::read_to_string,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
-use crate::dispatcher::{Dispatch, Dispatcher};
+use crate::dispatcher::{Dispatch, Dispatcher, DispatcherError};
 
 use serde::Deserialize;
-use tracing::{debug, error, info};
 
 #[derive(Debug, Default, Deserialize)]
 pub enum BackendLocation {
@@ -25,64 +26,75 @@ pub struct LaunchConfig {
 }
 
 impl LaunchConfig {
-    pub fn create(resource_path: &Path) -> Result<LaunchConfig, ()> {
+    pub fn create(resource_path: &Path) -> ConfigResult<LaunchConfig> {
         let config_path = resource_path.join("launch.toml");
-        info!("Reading configuration file at path '{:?}'",config_path);
+        println!("Reading configuration file at path '{:?}'",config_path);
 
         // Check if file is there and give error if not.
         if !config_path.exists() {
-            error!("Configuration file not found at path: '{:?}', ensure that 'launch.toml' exists in the resources directory of the fmu.", config_path);
-            return Err(());
+            return Err(ConfigError::NotFound(config_path));
         }
 
-        let config = match read_to_string(&config_path) {
-            Ok(config) => config,
-            Err(_) => {
-                error!(
-                    "Unable to read configuration file stored at path: '{:?}', ensure that 'launch.toml' exists in the resources directory of the fmu.",
-                     config_path
-                );
-                return Err(());
-            }
-        };
+        let config_string = read_to_string(&config_path)
+            .map_err(|error| ConfigError::Unreadable(config_path, error))?;
 
-        let config: LaunchConfig = match toml::from_str(config.as_str()) {
-            Ok(config) => config,
-            Err(e) => {
-                error!("configuration file was opened, but the contents does not appear to be valid: {:?}", e);
-                return Err(());
-            }
-        };
+        let config: LaunchConfig = toml::from_str(&config_string)
+            .map_err(ConfigError::Invalid)?;
 
         Ok(config)
-
     }
 
-    pub fn get_launch_command(& self) -> Result<Vec<String>, ()> {
-        match std::env::consts::OS {
-            "windows" => match &self.windows {
-                Some(cmd) => Ok(cmd.to_vec()),
-                None => Err(()),
-            },
-            "macos" => match &self.macos {
-                Some(cmd) => Ok(cmd.to_vec()),
-                None => Err(()),
-            },
-            _other => match &self.linux {
-                Some(cmd) => Ok(cmd.to_vec()),
-                None => Err(()),
-            },
+    pub fn get_launch_command(&self) -> ConfigResult<Vec<String>> {
+        Ok(
+            match std::env::consts::OS {
+                "windows" => self.windows.as_ref(),
+                "macos" => self.macos.as_ref(),
+                "linux" => self.linux.as_ref(),
+                _other_os=> None
+            }.ok_or(
+                ConfigError::UnsupportedOS(String::from(std::env::consts::OS))
+            )?
+            .to_vec()
+        )
+    }
+}
+
+pub type ConfigResult<T> = Result<T, ConfigError>;
+
+#[derive(Debug)]
+pub enum ConfigError {
+    UnsupportedOS(String),
+    Invalid(toml::de::Error),
+    Unreadable(PathBuf, std::io::Error),
+    NotFound(PathBuf)
+}
+
+impl Display for ConfigError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnsupportedOS(os) => write!(
+                f, "no backend launch command found for the current operating system ({})", os
+            ),
+            Self::Invalid(toml_error) => write!(
+                f, "configuration file was opened, but the contents do not appear to be valid; {}", toml_error
+            ),
+            Self::Unreadable(path, io_error) => write!(
+                f, "unable to read configuration file stored at path '{}'; {}", path.display(), io_error
+            ),
+            Self::NotFound(path) => write!(
+                f, "the config file was not found at '{}'", path.display()
+            )
         }
     }
 }
 
+impl Error for ConfigError {}
+
 pub fn spawn_slave(
     resource_path: &Path,
     remote_connction_notifier: impl Fn(&str)
-) -> Result<Dispatcher, ()> {
+) -> SpawnResult<Dispatcher> {
     let config = LaunchConfig::create(resource_path)?;
-
-    debug!("{:?}", config);
 
     let dispatcher_result = match config.location {
         BackendLocation::Local => Dispatcher::local(
@@ -94,9 +106,8 @@ pub fn spawn_slave(
 
     let mut dispatcher = match dispatcher_result {
         Ok(dispatcher) => dispatcher,
-        Err(_) => {
-            error!("Couldn't create new dispatcher.");
-            return Err(());
+        Err(error) => {
+            return Err(SpawnError::DispatcherCreation(error));
         }
     };
 
@@ -106,9 +117,41 @@ pub fn spawn_slave(
             println!("Connection established!");
             Ok(dispatcher)
         },
-        Err(e) => {
-            println!{"Handshake failed with error {:#?}", e};
-            Err(())
+        Err(error) => {
+            Err(SpawnError::Handshake(error))
         }
     } 
+}
+
+pub type SpawnResult<T> = Result<T, SpawnError>;
+
+#[derive(Debug)]
+pub enum SpawnError {
+    Handshake(DispatcherError),
+    DispatcherCreation(DispatcherError),
+    Config(ConfigError)
+}
+
+impl Display for SpawnError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Handshake(dp_error) => write!(
+                f, "handshake failed; {}", dp_error
+            ),
+            Self::DispatcherCreation(dp_error) => write!(
+                f, "couldn't create new dispatcher; {}", dp_error
+            ),
+            Self::Config(cf_error) => write!(
+                f, "couldn't import config; {}", cf_error
+            )
+        }
+    }
+}
+
+impl Error for SpawnError {}
+
+impl From<ConfigError> for SpawnError {
+    fn from(value: ConfigError) -> Self {
+        Self::Config(value)
+    }
 }

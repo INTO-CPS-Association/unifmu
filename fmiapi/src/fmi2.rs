@@ -195,7 +195,7 @@ impl Drop for Fmi2Slave {
         match self.dispatcher.send(&cmd) {
             Ok(_) => self.logger.ok("Send free instance message to shut down backend"),
             Err(error) => self.logger.error(&format!(
-                "Freeing instance failed with error: {:?}.", error
+                "Freeing instance failed with error: {}.", error
             )),
         };
     }
@@ -213,7 +213,7 @@ impl Display for Fmi2SlaveError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::DispatchError(dispatcher_error) => {
-                write!(f, "dispatch error: {}", dispatcher_error)
+                write!(f, "dispatch error; {}", dispatcher_error)
             }
             Self::ReturnError => {
                 write!(f, "unknown return message from backend")
@@ -399,8 +399,8 @@ pub unsafe extern "C" fn fmi2Instantiate(
         Path::new(&resources_dir),
         |message| logger.ok(message)
     ) {
-        Err(_) => {
-            logger.error("Spawning fmi2 slave failed.");
+        Err(error) => {
+            logger.error(&format!("Spawning fmi2 slave failed; {}", error));
             return None;
         }
         Ok(dispatcher) => dispatcher
@@ -424,7 +424,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
     match slave.dispatch::<fmi2_messages::Fmi2EmptyReturn>(&cmd) {
         Err(error) => {
             slave.logger.error(&format!(
-                "Instantiation of fmi2 slave failed with error {:?}.",
+                "Instantiation of fmi2 slave failed; {}.",
                 error
             ));
             None
@@ -480,7 +480,7 @@ pub extern "C" fn fmi2SetDebugLogging(
         {
             Err(error) => {
                 slave.logger.error(&format!(
-                    "couldn't parse categories: {}", error
+                    "Couldn't parse categories; {}", error
                 ));
                 return Fmi2Status::Error;
             }
@@ -515,7 +515,7 @@ pub extern "C" fn fmi2SetDebugLogging(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "Fmi2SetDebugLogging failed with error: {:?}.", error
+                "Fmi2SetDebugLogging failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -560,7 +560,7 @@ pub extern "C" fn fmi2SetupExperiment(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2SetupExperiment failed with error: {:?}.", error
+                "fmi2SetupExperiment failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -578,7 +578,7 @@ pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Stat
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2EnterInitializationMode failed with error: {:?}.", error
+                "fmi2EnterInitializationMode failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -596,7 +596,7 @@ pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Statu
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2ExitInitializationMode failed with error: {:?}.", error
+                "fmi2ExitInitializationMode failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -614,7 +614,7 @@ pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2Terminate failed with error: {:?}.", error
+                "fmi2Terminate failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -632,7 +632,7 @@ pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2Reset failed with error: {:?}.", error
+                "fmi2Reset failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -668,7 +668,7 @@ pub extern "C" fn fmi2DoStep(
         },
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2DoStep failed with error {:?}.", error
+                "fmi2DoStep failed with error: {}.", error
             ));
             Fmi2Status::Error
         }
@@ -687,7 +687,7 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2CancelStep failed with error: {:?}.", error
+                "fmi2CancelStep failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -744,7 +744,7 @@ pub unsafe extern "C" fn fmi2GetReal(
         }
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2GetReal failed with error: {:?}.", error
+                "fmi2GetReal failed with error: {}.", error
             ));
             Fmi2Status::Error
         }
@@ -800,7 +800,7 @@ pub unsafe extern "C" fn fmi2GetInteger(
         }
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2GetInteger failed with error: {:?}.", error
+                "fmi2GetInteger failed with error: {}.", error
             ));
             Fmi2Status::Error
         }
@@ -864,7 +864,7 @@ pub unsafe extern "C" fn fmi2GetBoolean(
         }
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2GetBoolean failed with error: {:?}.", error
+                "fmi2GetBoolean failed with error: {}.", error
             ));
             Fmi2Status::Error
         }
@@ -929,7 +929,7 @@ pub unsafe extern "C" fn fmi2GetString(
                     Ok(converted_values) => {
                         slave.string_buffer = converted_values
                     },
-                    Err(e) =>  {
+                    Err(_) =>  {
                         slave.logger.fatal(
                             "Backend returned strings containing interior nul bytes. These cannot be converted into CStrings."
                         );
@@ -953,7 +953,7 @@ pub unsafe extern "C" fn fmi2GetString(
         }
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2GetString failed with error: {:?}.", error
+                "fmi2GetString failed with error: {}.", error
             ));
             Fmi2Status::Error
         }
@@ -1005,7 +1005,7 @@ pub unsafe extern "C" fn fmi2SetReal(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2SetReal failed with error: {:?}.", error
+                "fmi2SetReal failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -1056,7 +1056,7 @@ pub unsafe extern "C" fn fmi2SetInteger(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2SetInteger failed with error: {:?}.", error
+                "fmi2SetInteger failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -1115,7 +1115,7 @@ pub unsafe extern "C" fn fmi2SetBoolean(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2SetBoolean failed with error: {:?}.", error
+                "fmi2SetBoolean failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -1178,14 +1178,14 @@ pub unsafe extern "C" fn fmi2SetString(
                 .map(|status| status.into())
                 .unwrap_or_else(|error| {
                     slave.logger.error(&format!(
-                        "fmi2SetString failed with error: {:?}.", error
+                        "fmi2SetString failed with error: {}.", error
                     ));
                     Fmi2Status::Error
                 })
         },
         Err(conversion_error) => {
             slave.logger.error(&format!(
-                "The String values could not be converted to Utf-8: {:?}.", conversion_error
+                "The String values could not be converted to Utf-8; {}.", conversion_error
             ));
             Fmi2Status::Error
         }
@@ -1278,7 +1278,7 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
         },
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2GetDirectionalDerivative failed with error: {:?}.", error
+                "fmi2GetDirectionalDerivative failed with error: {}.", error
             ));
             Fmi2Status::Error
         }
@@ -1336,7 +1336,7 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi2SetRealInputDerivatives failed with error: {:?}.", error
+                "fmi2SetRealInputDerivatives failed with error: {}.", error
             ));
             Fmi2Status::Error
         })
@@ -1399,7 +1399,7 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
         }
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2GetRealOutputDerivatives failed with error: {:?}.", error
+                "fmi2GetRealOutputDerivatives failed with error: {}.", error
             ));
             Fmi2Status::Error
         }
@@ -1452,7 +1452,7 @@ pub extern "C" fn fmi2SetFMUstate(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             unsafe { (*slave).logger.error(&format!(
-                "fmi2SetFMUstate failed with error: {:?}.", error
+                "fmi2SetFMUstate failed with error: {}.", error
             )); }
             Fmi2Status::Error
         })
@@ -1511,7 +1511,7 @@ pub extern "C" fn fmi2GetFMUstate(
         }
         Err(error) => {
             slave.logger.error(&format!(
-                "fmi2GetFMUstate failed with error: {:?}.", error
+                "fmi2GetFMUstate failed with error: {}.", error
             ));
             Fmi2Status::Error
         }

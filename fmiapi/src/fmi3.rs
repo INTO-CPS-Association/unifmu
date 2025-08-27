@@ -221,9 +221,9 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         // Parse as a URI
         let resource_uri = match Url::parse(&resource_path_str) {
             Ok(uri) => uri,
-            Err(e) => {
+            Err(error) => {
                 logger.error(&format!(
-                    "Unable to parse uri: {:#?}", e
+                    "Unable to parse uri: {}", error
                 ));
                 return None;
             }
@@ -256,16 +256,16 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         |message| logger.ok(message)
     ) {
         Ok(dispatcher) => dispatcher,
-        Err(_) => {
-            logger.error("Spawning fmi3 slave failed.");
+        Err(error) => {
+            logger.error(&format!("Spawning fmi3 slave failed; {}.", error));
             return None;
         }
     };
 
     let resource_path = match resources_dir.into_os_string().into_string() {
         Ok(string_path) => string_path,
-        Err(e) => {
-            logger.error("Couldn't convert resource directory path into String.");
+        Err(error) => {
+            logger.error(&format!("Couldn't convert resource directory path into String; {}", error));
             return None;
         }
     };
@@ -379,7 +379,7 @@ pub unsafe extern "C" fn fmi3DoStep(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3DoStep failed with error: {:?}.", error
+                "fmi3DoStep failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -426,7 +426,7 @@ pub extern "C" fn fmi3EnterInitializationMode(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3EnterInitializationMode failed with error: {:?}.", error
+                "fmi3EnterInitializationMode failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -444,7 +444,7 @@ pub extern "C" fn fmi3ExitInitializationMode(instance: &mut Fmi3Slave) -> Fmi3St
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3ExitInitializationMode failed with error: {:?}.", error
+                "fmi3ExitInitializationMode failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -462,7 +462,7 @@ pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3EnterEventMode failed with error: {:?}.", error
+                "fmi3EnterEventMode failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -480,7 +480,7 @@ pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3EnterStepMode failed with error: {:?}.", error
+                "fmi3EnterStepMode failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -546,7 +546,7 @@ pub unsafe extern "C" fn fmi3GetFloat32(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetFloat32 failed with error: {:?}.", error
+                "fmi3GetFloat32 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -614,7 +614,7 @@ pub unsafe extern "C" fn fmi3GetFloat64(
         Err(error) => {
             instance.logger.error(
                 &format!(
-                "fmi3GetFloat64 failed with error: {:?}.", error
+                "fmi3GetFloat64 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -686,7 +686,7 @@ pub unsafe extern "C" fn fmi3GetInt8(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetInt8 failed with error: {:?}.", error
+                "fmi3GetInt8 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -758,7 +758,7 @@ pub unsafe extern "C" fn fmi3GetUInt8(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetUInt8 failed with error: {:?}.", error
+                "fmi3GetUInt8 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -830,7 +830,7 @@ pub unsafe extern "C" fn fmi3GetInt16(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetInt16 failed with error: {:?}.", error
+                "fmi3GetInt16 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -902,7 +902,7 @@ pub unsafe extern "C" fn fmi3GetUInt16(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetUInt16 failed with error: {:?}.", error
+                "fmi3GetUInt16 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -969,7 +969,7 @@ pub unsafe extern "C" fn fmi3GetInt32(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetInt32 failed with error: {:?}.", error
+                "fmi3GetInt32 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1036,7 +1036,7 @@ pub unsafe extern "C" fn fmi3GetUInt32(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetUInt32 failed with error: {:?}.", error
+                "fmi3GetUInt32 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1103,7 +1103,7 @@ pub unsafe extern "C" fn fmi3GetInt64(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetInt64 failed with error: {:?}.", error
+                "fmi3GetInt64 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1170,7 +1170,7 @@ pub unsafe extern "C" fn fmi3GetUInt64(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetUInt64 failed with error: {:?}.", error
+                "fmi3GetUInt64 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1237,7 +1237,7 @@ pub unsafe extern "C" fn fmi3GetBoolean(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetBoolean failed with error: {:?}.", error
+                "fmi3GetBoolean failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1324,7 +1324,7 @@ pub unsafe extern "C" fn fmi3GetString(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetString failed with error: {:?}.", error
+                "fmi3GetString failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1398,7 +1398,7 @@ pub unsafe extern "C" fn fmi3GetBinary(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "Fmi3GetBinary failed with error: {:?}.", error
+                "Fmi3GetBinary failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1465,7 +1465,7 @@ pub unsafe extern "C" fn fmi3GetClock(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetClock failed with error: {:?}.", error
+                "fmi3GetClock failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1550,7 +1550,7 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetIntervalDecimal failed with error: {:?}.", error
+                "fmi3GetIntervalDecimal failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1619,7 +1619,7 @@ pub extern "C" fn fmi3GetIntervalFraction(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetIntervalFraction failed with error: {:?}.", error
+                "fmi3GetIntervalFraction failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1661,7 +1661,7 @@ pub extern "C" fn fmi3GetShiftDecimal(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetShiftDecimal failed with error: {:?}.", error
+                "fmi3GetShiftDecimal failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1714,7 +1714,7 @@ pub extern "C" fn fmi3GetShiftFraction(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetShiftFraction failed with error: {:?}.", error
+                "fmi3GetShiftFraction failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -1750,7 +1750,7 @@ pub extern "C" fn fmi3SetIntervalDecimal(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetIntervalDecimal failed with error: {:?}.", error
+                "fmi3SetIntervalDecimal failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -1792,7 +1792,7 @@ pub extern "C" fn fmi3SetIntervalFraction(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetIntervalFraction failed with error: {:?}.", error
+                "fmi3SetIntervalFraction failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -1827,7 +1827,7 @@ pub extern "C" fn fmi3SetShiftDecimal(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetShiftDecimal failed with error: {:?}.", error
+                "fmi3SetShiftDecimal failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -1868,7 +1868,7 @@ pub extern "C" fn fmi3SetShiftFraction(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetShiftFraction failed with error: {:?}.", error
+                "fmi3SetShiftFraction failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -1949,7 +1949,7 @@ pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3UpdateDiscreteStates failed with error: {:?}.", error
+                "fmi3UpdateDiscreteStates failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -2128,7 +2128,7 @@ pub unsafe extern "C" fn fmi3SetFloat32(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetFloat32 failed with error: {:?}.", error
+                "fmi3SetFloat32 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2189,7 +2189,7 @@ pub unsafe extern "C" fn fmi3SetFloat64(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetFloat64 failed with error: {:?}.", error
+                "fmi3SetFloat64 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2252,7 +2252,7 @@ pub unsafe extern "C" fn fmi3SetInt8(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetInt8 failed with error: {:?}.", error
+                "fmi3SetInt8 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2315,7 +2315,7 @@ pub unsafe extern "C" fn fmi3SetUInt8(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetUInt8 failed with error: {:?}.", error
+                "fmi3SetUInt8 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2378,7 +2378,7 @@ pub unsafe extern "C" fn fmi3SetInt16(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetInt16 failed with error: {:?}.", error
+                "fmi3SetInt16 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2441,7 +2441,7 @@ pub unsafe extern "C" fn fmi3SetUInt16(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetUInt16 failed with error: {:?}.", error
+                "fmi3SetUInt16 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2500,7 +2500,7 @@ pub unsafe extern "C" fn fmi3SetInt32(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetInt32 failed with error: {:?}.", error
+                "fmi3SetInt32 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2559,7 +2559,7 @@ pub unsafe extern "C" fn fmi3SetUInt32(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetUInt32 failed with error: {:?}.", error
+                "fmi3SetUInt32 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2618,7 +2618,7 @@ pub unsafe extern "C" fn fmi3SetInt64(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetInt64 failed with error: {:?}.", error
+                "fmi3SetInt64 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2677,7 +2677,7 @@ pub unsafe extern "C" fn fmi3SetUInt64(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetUInt64 failed with error: {:?}.", error
+                "fmi3SetUInt64 failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2736,7 +2736,7 @@ pub unsafe extern "C" fn fmi3SetBoolean(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetBoolean failed with error: {:?}.", error
+                "fmi3SetBoolean failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2805,7 +2805,7 @@ pub unsafe extern "C" fn fmi3SetString(
                 .map(|status| status.into())
                 .unwrap_or_else(|error| {
                     instance.logger.error(&format!(
-                "fmi3SetString failed with error: {:?}.", error
+                "fmi3SetString failed with error: {}.", error
                     ));
                     Fmi3Status::Fmi3Error
                 })
@@ -2813,7 +2813,7 @@ pub unsafe extern "C" fn fmi3SetString(
 
         Err(conversion_error) => {
             instance.logger.error(&format!(
-                "The String values could not be converted to Utf-8: {:?}.", conversion_error
+                "The String values could not be converted to Utf-8: {}.", conversion_error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -2927,7 +2927,7 @@ pub unsafe extern "C" fn fmi3SetBinary(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetBinary failed with error: {:?}.", error
+                "fmi3SetBinary failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -2985,7 +2985,7 @@ pub unsafe extern "C" fn fmi3SetClock(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetClock failed with error: {:?}.", error
+                "fmi3SetClock failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -3064,7 +3064,7 @@ pub extern "C" fn fmi3GetFMUState(
         }
         Err(error) => {
             instance.logger.error(&format!(
-                "fmi3GetFMUstate failed with error: {:?}.", error
+                "fmi3GetFMUstate failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         }
@@ -3102,7 +3102,7 @@ pub extern "C" fn fmi3SetFMUState(
         .map(|status| status.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3SetFMUstate failed with error: {:?}.", error
+                "fmi3SetFMUstate failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -3251,7 +3251,7 @@ pub extern "C" fn fmi3EnterConfigurationMode(
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3EnterConfigurationMode failed with error: {:?}.", error
+                "fmi3EnterConfigurationMode failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -3273,7 +3273,7 @@ pub extern "C" fn fmi3ExitConfigurationMode(
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             instance.logger.error(&format!(
-                "fmi3ExitConfigurationMode failed with error: {:?}.", error
+                "fmi3ExitConfigurationMode failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -3291,7 +3291,7 @@ pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "Termination failed with error: {:?}.", error
+                "Termination failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
@@ -3318,7 +3318,7 @@ pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
         .map(|s| s.into())
         .unwrap_or_else(|error| {
             slave.logger.error(&format!(
-                "fmi3Reset failed with error: {:?}.", error
+                "fmi3Reset failed with error: {}.", error
             ));
             Fmi3Status::Fmi3Error
         })
