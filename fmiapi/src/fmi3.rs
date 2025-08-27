@@ -265,7 +265,7 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
     let resource_path = match resources_dir.into_os_string().into_string() {
         Ok(string_path) => string_path,
         Err(error) => {
-            logger.error(&format!("Couldn't convert resource directory path into String; {}", error));
+            logger.error(&format!("Couldn't convert resource directory path into String; {:?}", error));
             return None;
         }
     };
