@@ -9,13 +9,12 @@ use crate::unifmu_handshake::{HandshakeStatus, HandshakeReply};
 
 use bytes::Bytes;
 use colored::Colorize;
-use prost::Message;
-use subprocess::{ExitStatus, Popen, PopenConfig};
+use prost::{DecodeError, Message, UnknownEnumValue};
+use subprocess::{ExitStatus, Popen, PopenConfig, PopenError};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 use tokio::select;
-use tracing::{error, info, warn};
-use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend};
+use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend, ZmqError};
 
 /// Generic Dispatcher for dispatching FMI commands to arbitrary backend.
 /// Can send and recieve messages and await handshake from backend.
@@ -49,7 +48,11 @@ impl Dispatcher {
     pub fn remote(
         remote_connction_notifier: impl Fn(&str)
     ) -> DispatcherResult<Self> {
-        Ok(Self::Remote(RemoteDispatcher::create(remote_connction_notifier)?))
+        Ok(
+            Self::Remote(
+                RemoteDispatcher::create(remote_connction_notifier)?
+            )
+        )
     }
 }
 
@@ -94,14 +97,9 @@ impl LocalDispatcher {
         resource_path: &Path,
         launch_command: &Vec<String>
     ) -> DispatcherResult<Self> {
-        let runtime = match tokio::runtime::Builder::new_current_thread()
+        let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
-            .build() {
-                Ok(runtime) => runtime,
-                Err(e) => {
-                    return Err(DispatcherError::ConcurrencyError);
-                }
-            };
+            .build()?;
 
         let socket = runtime.block_on(
             BackendSocket::create("tcp://127.0.0.1:0")
@@ -127,8 +125,8 @@ impl Dispatch for LocalDispatcher {
     fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
         self.runtime.block_on(async {
             select! {
-                Err(e) = self.subprocess.monitor_subprocess() => Err(e),
-                result = self.socket.send::<S>(msg) => result,
+                Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
+                result = self.socket.send::<S>(msg) => Ok(result?),
             }
         })
     }
@@ -136,8 +134,8 @@ impl Dispatch for LocalDispatcher {
     fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R> {
         self.runtime.block_on(async {
             select! {
-                Err(e) = self.subprocess.monitor_subprocess() => Err(e),
-                result = self.socket.recv::<R>() => result,
+                Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
+                result = self.socket.recv::<R>() => Ok(result?),
             }
         })
     }
@@ -148,8 +146,8 @@ impl Dispatch for LocalDispatcher {
     ) -> DispatcherResult<R> {
         self.runtime.block_on(async {
             select! {
-                result = self.socket.send_and_recv::<S, R>(msg) => result,
-                Err(e) = self.subprocess.monitor_subprocess() => Err(e),
+                result = self.socket.send_and_recv::<S, R>(msg) => Ok(result?),
+                Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
             }
         })
     }
@@ -165,15 +163,9 @@ pub struct RemoteDispatcher {
 
 impl RemoteDispatcher {
     pub fn create(remote_connction_notifier: impl Fn(&str)) -> DispatcherResult<Self> {
-        let runtime = match tokio::runtime::Builder::new_current_thread()
+        let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
-            .build() {
-                Ok(runtime) => runtime,
-                Err(e) => {
-                    error!("Couldn't setup concurrency runtime: {:#?}", e);
-                    return Err(DispatcherError::ConcurrencyError);
-                }
-            };
+            .build()?;
 
         let socket = runtime.block_on(
             BackendSocket::create("tcp://0.0.0.0:0")
@@ -200,18 +192,18 @@ impl RemoteDispatcher {
 
 impl Dispatch for RemoteDispatcher {
     fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
-        self.runtime.block_on(self.socket.send::<S>(msg))
+        Ok(self.runtime.block_on(self.socket.send::<S>(msg))?)
     }
 
     fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R> {
-        self.runtime.block_on(self.socket.recv::<R>())
+        Ok(self.runtime.block_on(self.socket.recv::<R>())?)
     }
 
     fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R> {
-        self.runtime.block_on(self.socket.send_and_recv::<S, R>(msg))
+        Ok(self.runtime.block_on(self.socket.send_and_recv::<S, R>(msg))?)
     }
 }
 
@@ -220,22 +212,17 @@ impl Dispatch for RemoteDispatcher {
 /// Gives the await_handshake() function using implemented methods.
 pub trait Dispatch {
     fn await_handshake(&mut self) -> DispatcherResult<()> {
-        match self.recv::<HandshakeReply>() {
-            Ok(response) => match HandshakeStatus::try_from(response.status) {
-                Ok(HandshakeStatus::Ok) => {
-                    info!("Handshake successful.");
-                    Ok(())
-                },
-                Ok(_) => {
-                    error!("Backend reported error as part of handshake.");
-                    Err(DispatcherError::BackendImplementationError)
-                },
-                Err(e) => {
-                    error!("Malformed handshake response.");
-                    Err(DispatcherError::EnumDecodeError(e))
-                }
+        let response = self.recv::<HandshakeReply>()?;
+        match HandshakeStatus::try_from(response.status) {
+            Ok(HandshakeStatus::Ok) => {
+                Ok(())
             },
-            Err(dispatcher_error) => Err(dispatcher_error)
+            Ok(_) => {
+                Err(DispatcherError::DeniedHandshake)
+            },
+            Err(error) => {
+                Err(DispatcherError::MalformedHandshake(error))
+            }
         }
     }
 
@@ -253,41 +240,54 @@ pub type DispatcherResult<T> = Result<T, DispatcherError>;
 
 #[derive(Debug)]
 pub enum DispatcherError {
-    DecodeError(prost::DecodeError),
-    EnumDecodeError(prost::UnknownEnumValue),
-    SocketError,
-    SubprocessError,
-    ConcurrencyError,
-    BackendImplementationError,
+    MalformedHandshake(UnknownEnumValue),
+    DeniedHandshake,
+    Socket(SocketError),
+    Subprocess(SubprocessError),
+    RuntimeSetup(std::io::Error)
 }
 
 impl Display for DispatcherError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::DecodeError(prost_error) => {
-                write!(f, "protobuf error: {}", prost_error)
-            }
-            Self::EnumDecodeError(prost_error) => {
-                write!(f, "protobuf error: {}", prost_error)
-            }
-            Self::SocketError => {
-                write!(f, "ZeroMQ socket error")
-            }
-            Self::SubprocessError => {
-                write!(f, "backend subprocess error")
-            }
-            Self::ConcurrencyError => {
-                write!(f, "error in concurrency runtime")
-            }
-            Self::BackendImplementationError => {
-                write!(f, "backend implementation error")
-            }
+            Self::MalformedHandshake(uev_error) => write!(
+                f, "handshake was malformed; {}", uev_error
+            ),
+            Self::DeniedHandshake => write!(
+                f, "backend reported error as part of handshake"
+            ),
+            Self::Socket(sckt_error) => write!(
+                f, "error in message queue socket; {}", sckt_error
+            ),
+            Self::Subprocess(sp_error) => write!(
+                f, "error in backend subprocess; {}", sp_error
+            ),
+            Self::RuntimeSetup(io_error) => write!(
+                f, "couldn't setup concurrency runtime; {}", io_error
+            )
         }
     }
 }
 
 impl Error for DispatcherError {}
 
+impl From<SubprocessError> for DispatcherError {
+    fn from(value: SubprocessError) -> Self {
+        Self::Subprocess(value)
+    }
+}
+
+impl From<SocketError> for DispatcherError {
+    fn from(value: SocketError) -> Self {
+        Self::Socket(value)
+    }
+}
+
+impl From<std::io::Error> for DispatcherError {
+    fn from(value: std::io::Error) -> Self {
+        Self::RuntimeSetup(value)
+    }
+}
 /// Represents the communication socket with the backend process.
 /// 
 /// Stores the actual ZeroMQ Socket for concurrency reasons.
@@ -297,14 +297,13 @@ struct BackendSocket {
 }
 
 impl BackendSocket {
-    pub async fn create(endpoint: &str) -> DispatcherResult<Self> {
+    pub async fn create(endpoint: &str) -> SocketResult<Self> {
         let mut socket = RepSocket::new();
 
         let endpoint = match socket.bind(endpoint).await {
             Ok(endpoint) => endpoint,
-            Err(e) => {
-                error!("Couldn't bind to backend socket; {:#?}", e);
-                return Err(DispatcherError::SocketError);
+            Err(error) => {
+                return Err(SocketError::ZmqBind(error));
             }
         };
 
@@ -321,13 +320,12 @@ impl BackendSocket {
     /// ZeroMQ message queue, NOT when the message has actually been received
     /// by the backend. As such, there is no absolute guarantee that the
     /// message has been received when this returns. 
-    async fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
+    async fn send<S: Message + Debug>(&mut self, msg: &S) -> SocketResult<()> {
         let bytes_send: Bytes = msg.encode_to_vec().into();
         match  self.socket.send(bytes_send.into()).await {
             Ok(_) => Ok(()),
-            Err(e) => {
-                warn!("Sending message {:?} failed with error {:?}", msg, e);
-                Err(DispatcherError::SocketError)
+            Err(error) => {
+                Err(SocketError::ZmqSend(format!("{:?}", msg), error))
             }
         }
     }
@@ -341,27 +339,24 @@ impl BackendSocket {
     /// 
     /// A call to recv() will await until a message is received through the
     /// ZeroMQ socket.
-    async fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R> {
+    async fn recv<R: Message + Default>(&mut self) -> SocketResult<R> {
         match self.socket.recv().await {
             Ok(buf) => {
                 let buf: Bytes = match buf.get(0) {
                     Some(bytes) => bytes,
                     None => {
-                        warn!("No bytes in socket buffer");
-                        return Err(DispatcherError::SocketError);
+                        return Err(SocketError::EmptyBuffer)
                     }
                 }.to_owned();
                 match R::decode(buf.as_ref()) {
                     Ok(msg) => Ok(msg),
-                    Err(e) => {
-                        error!("Couldn't decode message.");
-                        Err(DispatcherError::DecodeError(e))
+                    Err(error) => {
+                        Err(SocketError::Decode(error))
                     },
                 }
             },
-            Err(e) => {
-                error!("Receiving on socket failed with error '{:#?}'", e);
-                Err(DispatcherError::SocketError)
+            Err(error) => {
+                Err(SocketError::ZmqReceive(error))
             }
         }
     }
@@ -371,11 +366,46 @@ impl BackendSocket {
     async fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
-    ) -> DispatcherResult<R> {
+    ) -> SocketResult<R> {
         self.send(msg).await?;
         self.recv().await
     }
 }
+
+type SocketResult<T> = Result<T, SocketError>;
+
+#[derive(Debug)]
+pub enum SocketError {
+    ZmqBind(ZmqError),
+    ZmqSend(String, ZmqError),
+    ZmqReceive(ZmqError),
+    EmptyBuffer,
+    Decode(DecodeError)
+}
+
+impl Display for SocketError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ZmqBind(error) => write!(
+                f, "couldn't bind to backend socket; {}", error
+            ),
+            Self::ZmqSend(message, error) => write!(
+                f, "failed to send message {}; {}", message, error
+            ),
+            Self::ZmqReceive(error) => write!(
+                f, "receiving on socket failed; {}", error
+            ),
+            Self::EmptyBuffer => write!(
+                f, "no bytes in received message"
+            ),
+            Self::Decode(error) => write!(
+                f, "couldn't decode received message; {}", error
+            )
+        }
+    }
+}
+
+impl Error for SocketError {}
 
 /// Representes the subprocess containing the backend.
 /// 
@@ -390,19 +420,17 @@ impl BackendSubprocess {
         endpoint: String,
         launch_command: &Vec<String>,
         resource_path: &Path
-    ) -> DispatcherResult<Self> {
+    ) -> SubprocessResult<Self> {
         let endpoint_port = match endpoint
             .split(":")
             .last() {
                 Some(port) => port,
                 None => {
-                    error!("No port was specified for endpoint.");
-                    return Err(DispatcherError::SocketError);
+                    return Err(SubprocessError::NoPortGiven)
                 }
             }
             .to_owned();
         
-        info!("Collecting local environment variables.");
         let mut env_vars: Vec<(OsString, OsString)> = std::env::vars_os().collect();
 
         env_vars.push((
@@ -414,7 +442,6 @@ impl BackendSubprocess {
             OsString::from(endpoint_port),
         ));
 
-        info!("Spawning backend process.");
         let subprocess = match Popen::create(
             launch_command,
             PopenConfig {
@@ -424,9 +451,11 @@ impl BackendSubprocess {
             },
         ) {
             Ok(subprocess) => subprocess,
-            Err(_e) => {
-                error!("Unable to start the process using the specified command '{:?}'. Ensure that you can invoke the command directly from a shell.", launch_command);
-                return Err(DispatcherError::SubprocessError);
+            Err(error) => {
+                return Err(SubprocessError::UnExecutableCommand(
+                    format!("{:?}", launch_command),
+                    error
+                ))
             }
         };
 
@@ -442,22 +471,11 @@ impl BackendSubprocess {
     /// returns an exit status.
     /// 
     /// Will only ever return an Err.
-    async fn monitor_subprocess(&mut self) -> DispatcherResult<()> {
+    async fn monitor_subprocess(&mut self) -> SubprocessResult<()> {
         loop {
             match self.subprocess.poll() {
                 Some(exit_status) => {
-                    match exit_status {
-                        ExitStatus::Exited(code) => {
-                            error!("Backend exited unexpectedly with exit status {}.", code);
-                        },
-                        ExitStatus::Signaled(signal) => {
-                            error!("Backend exited unexpectedly because of signal {}.", signal);
-                        },
-                        _ => {
-                            error!("Backend exited unexpectedly.");
-                        }
-                    }
-                    return Err(DispatcherError::SubprocessError)
+                    return Err(SubprocessError::UnexpectedExit(exit_status))
                 },
                 None => {
                     sleep(self.polling_time).await; // Is magic number.
@@ -466,3 +484,44 @@ impl BackendSubprocess {
         }
     }
 }
+
+type SubprocessResult<T> = Result<T, SubprocessError>;
+
+#[derive(Debug)]
+pub enum SubprocessError {
+    UnexpectedExit(ExitStatus),
+    NoPortGiven,
+    UnExecutableCommand(String, PopenError)
+}
+
+impl Display for SubprocessError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnexpectedExit(exit_status) => {
+                let clarification = match exit_status {
+                    ExitStatus::Exited(code) => format!(
+                        "with exit status {}", code
+                    ),
+                    ExitStatus::Signaled(signal) => format!(
+                        "because of signal {}", signal
+                    ),
+                    ExitStatus::Other(status) => format!(
+                        "with unknown status {}", status
+                    ),
+                    ExitStatus::Undetermined => String::from(
+                        "for an undeterminable reason"
+                    )
+                };
+                write!(f, "backend exited unexpectedly {}", clarification)
+            }
+            Self::NoPortGiven => {
+                write!(f, "the endpoint given to for the backend to connect to didn't have a portnumber")
+            }
+            Self::UnExecutableCommand(command, popen_error) => {
+                write!(f, "unable to start the backend subprocess using the specified command '{}'; {}", command, popen_error)
+            }
+        }
+    }
+}
+
+impl Error for SubprocessError {}
