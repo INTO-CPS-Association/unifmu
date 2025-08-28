@@ -2995,7 +2995,14 @@ pub extern "C" fn fmi3GetFMUState(
 ) -> Fmi3Status {
 
     if instance.is_null() {
-        // TODO: Output this message in some way "fmi3GetFMUstate called with instance pointing to null!"
+        // Note that this error message can never reach the importer as the
+        // slave includes the logging callback. This is only visible if the
+        // api has been compiled with the 'fmt_logging' feature, and then
+        // only on the stderr of the process containing the FMU.
+        Fmi3Logger::fmt_log(
+            "fmi3GetFMUstate called with instance pointing to null!",
+            &Fmi3Status::Fmi3Error
+        );
         return Fmi3Status::Fmi3Error;
     }
 
@@ -3050,7 +3057,14 @@ pub extern "C" fn fmi3SetFMUState(
 	state: *const SlaveState,
 ) -> Fmi3Status {
     if instance.is_null() {
-        // TODO: output this message in some way "fmi3SetFMUstate called with instance pointing to null!"
+        // Note that this error message can never reach the importer as the
+        // slave includes the logging callback. This is only visible if the
+        // api has been compiled with the 'fmt_logging' feature, and then
+        // only on the stderr of the process containing the FMU.
+        Fmi3Logger::fmt_log(
+            "fmi3SetFMUstate called with instance pointing to null!",
+            &Fmi3Status::Fmi3Error
+        );
         return Fmi3Status::Fmi3Error;
     }
 
@@ -3087,7 +3101,14 @@ pub extern "C" fn fmi3FreeFMUState(
     state: *mut *mut SlaveState,
 ) -> Fmi3Status {
     if instance.is_null(){
-        //TODO: find a way to emit this message: "fmi3FreeFMUstate called with instance pointing to null!"
+        // Note that this error message can never reach the importer as the
+        // slave includes the logging callback. This is only visible if the
+        // api has been compiled with the 'fmt_logging' feature, and then
+        // only on the stderr of the process containing the FMU.
+        Fmi3Logger::fmt_log(
+            "fmi3FreeFMUstate called with instance pointing to null.",
+            &Fmi3Status::Fmi3OK
+        );
         return Fmi3Status::Fmi3OK;
     }
 
@@ -3212,8 +3233,6 @@ pub extern "C" fn fmi3GetAdjointDerivative(
 pub extern "C" fn fmi3EnterConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    // instance.logger.error("fmi3EnterConfigurationMode is not implemented by UNIFMU.");
-    // Fmi3Status::Fmi3Error
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3EnterConfigurationMode(
             fmi3_messages::Fmi3EnterConfigurationMode {}
@@ -3234,8 +3253,6 @@ pub extern "C" fn fmi3EnterConfigurationMode(
 pub extern "C" fn fmi3ExitConfigurationMode(
     instance: &mut Fmi3Slave,
 ) -> Fmi3Status {
-    // instance.logger.error("fmi3ExitConfigurationMode is not implemented by UNIFMU.");
-    // Fmi3Status::Fmi3Error
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3ExitConfigurationMode(
             fmi3_messages::Fmi3ExitConfigurationMode {}
@@ -3276,6 +3293,15 @@ pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
 
     if slave.as_mut().is_some() {
         drop(slave)
+    } else {
+        // Note that this error message can never reach the importer as the
+        // slave includes the logging callback. This is only visible if the
+        // api has been compiled with the 'fmt_logging' feature, and then
+        // only on the stderr of the process containing the FMU.
+        Fmi3Logger::fmt_log(
+            "fmi3FreeInstance called with slave pointing to null.",
+            &Fmi3Status::Fmi3Warning
+        );
     }
 }
 

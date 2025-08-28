@@ -1,7 +1,9 @@
 use super::category_filter::{CategoryFilter, LogCategory};
 
 pub trait Logger 
-where Self::Category: LogCategory
+where 
+    Self::Category: LogCategory,
+    Self::Status: LogStatus
 {
     type Category;
     type Status;
@@ -49,14 +51,25 @@ where Self::Category: LogCategory
         *self.filter() = CategoryFilter::new_blacklist();
     }
 
-    
+    /// Prints the message with a prefix based on the status to stderr if the
+    /// api was build with the 'fmt_logging' feature.
+    /// 
+    /// If not build with the 'fmt_logging' feature, this function does nothing
     #[cfg(feature = "fmt_logging")]
-    fn fmt_log(&self, message: &str) {
-        println!("{message}");
+    fn fmt_log(message: &str, status: &Self::Status) {
+        eprintln!("{}{}", status.fmt_log_prefix(), message);
     }
 
-    #[allow(unused_variables)]
+    /// Prints the message with a prefix based on the status to stderr if the
+    /// api was build with the 'fmt_logging' feature.
+    /// 
+    /// If not build with the 'fmt_logging' feature, this function does nothing
     #[cfg(not(feature = "fmt_logging"))]
-    fn fmt_log(&self, message: &str) {}
+    fn fmt_log(_message: &str, _status: &Self::Status) {}
     
+}
+
+pub trait LogStatus {
+    #[allow(dead_code)]
+    fn fmt_log_prefix(&self) -> String;
 }

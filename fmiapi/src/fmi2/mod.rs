@@ -86,13 +86,11 @@ pub unsafe extern "C" fn fmi2Instantiate(
 
     let functions = match unsafe { functions.as_ref() } {
         None => {
-            /* TODO - replace with own fmt logger call.
-            error!(
-                category = %Fmi2LogCategory::LogStatusError,
-                "Pointer to callback functions was null."
+            Fmi2Logger::fmt_log(
+                "Pointer to callback functions was null.", 
+                &Fmi2Status::Error
             );
-             */
-            return None;
+            return None
         }
         Some(functions_reference) => functions_reference
     };
@@ -101,13 +99,11 @@ pub unsafe extern "C" fn fmi2Instantiate(
         0 => false,
         1 => true,
         _ => {
-            /* TODO - replace with own fmt logger call.
-            error!(
-                category = %Fmi2LogCategory::LogStatusError,
-                "Invalid value passed to 'logging_on'."
+            Fmi2Logger::fmt_log(
+                "Invalid value passed to 'logging_on'.",
+                &Fmi2Status::Error
             );
-            */
-            return None;
+            return None
         }
     };
 
@@ -1203,7 +1199,14 @@ pub extern "C" fn fmi2SetFMUstate(
 ) -> Fmi2Status {
 
     if slave.is_null() {
-        // slave contains the logger - without it we can't log errors.
+        // Note that this error message can never reach the importer as the
+        // slave includes the logging callback. This is only visible if the
+        // api has been compiled with the 'fmt_logging' feature, and then
+        // only on the stderr of the process containing the FMU.
+        Fmi2Logger::fmt_log(
+            "fmi2FreeFMUstate valled with slave pointint to null!",
+            &Fmi2Status::Error
+        );
         return Fmi2Status::Error;
     }
     if state.is_null() {
@@ -1255,7 +1258,14 @@ pub extern "C" fn fmi2GetFMUstate(
 ) -> Fmi2Status {
 
     if slave.is_null() {
-        // slave contains the logger - without it we can't log errors.
+        // Note that this error message can never reach the importer as the
+        // slave includes the logging callback. This is only visible if the
+        // api has been compiled with the 'fmt_logging' feature, and then
+        // only on the stderr of the process containing the FMU.
+        Fmi2Logger::fmt_log(
+            "fmi2FreeFMUstate valled with slave pointint to null!",
+            &Fmi2Status::Error
+        );
         return Fmi2Status::Error;
     }
 
@@ -1314,6 +1324,14 @@ pub extern "C" fn fmi2FreeFMUstate(
 ) -> Fmi2Status {
 
     if slave.is_null() {
+        // Note that this error message can never reach the importer as the
+        // slave includes the logging callback. This is only visible if the
+        // api has been compiled with the 'fmt_logging' feature, and then
+        // only on the stderr of the process containing the FMU.
+        Fmi2Logger::fmt_log(
+            "fmi2FreeFMUstate valled with slave pointint to null.",
+            &Fmi2Status::Ok
+        );
         return Fmi2Status::Ok;
     }
 
@@ -1353,8 +1371,9 @@ pub extern "C" fn fmi2FreeFMUstate(
 /// # Returns
 /// - `Fmi2Status::Ok`: If the operation succeeds and the FMU state is successfully serialized and stored.
 /// - `Fmi2Status::Error`: If an error occurs during the serialization or if invalid pointers are provided.
-#[no_mangle]
+/// 
 /// We assume that the buffer is sufficiently large
+#[no_mangle]
 pub extern "C" fn fmi2SerializeFMUstate(
     slave: &Fmi2Slave,
     state: &SlaveState,

@@ -7,7 +7,7 @@ use super::fmi3_types::{
 
 use crate::common::{
     category_filter::CategoryFilter,
-    logger::Logger
+    logger::{Logger, LogStatus}
 };
 
 use std::ffi::CStr;
@@ -48,9 +48,7 @@ impl Logger for Fmi3Logger {
         category: Fmi3LogCategory,
         message: &str
     ) {
-        self.fmt_log(&format!(
-            "{}{}", status.fmt_log_prefix(), message
-        ));
+        Self::fmt_log(message, &status);
 
         if !self.filter.enabled(&category) {
             return
@@ -111,8 +109,8 @@ impl Logger for Fmi3Logger {
     }
 }
 
-impl Fmi3Status {
-    pub fn fmt_log_prefix(&self) -> String {
+impl LogStatus for Fmi3Status {
+    fn fmt_log_prefix(&self) -> String {
         match self {
             Fmi3Status::Fmi3OK => String::from("[OK] "),
             Fmi3Status::Fmi3Warning => String::from("[WARN] "),
