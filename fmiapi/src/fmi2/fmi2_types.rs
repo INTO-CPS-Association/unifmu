@@ -1,7 +1,15 @@
 //! Type definitions for parameters in functions crossing the ABI boundary
 //! betweeen C and Rust.
 
-use crate::common::category_filter::LogCategory;
+use super::fmi2_messages::{self, fmi2_return::ReturnMessage};
+
+use crate::common::{
+    category_filter::LogCategory,
+    protobuf_extensions::{
+        ExpectableReturn,
+        implement_expectable_return
+    }
+};
 
 use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int}, fmt::{Debug, Display}};
 
@@ -16,6 +24,7 @@ pub type Fmi2Char = c_char;
 /// Must be checked for null-ness and converted to Rust str before use if given
 /// as a function argument.
 pub type Fmi2String = *const Fmi2Char;
+#[allow(dead_code)]
 pub type Fmi2Byte = c_char;
 
 #[repr(i32)]
@@ -27,6 +36,25 @@ pub enum Fmi2Status {
     Error = 3,
     Fatal = 4,
     Pending = 5,
+}
+
+impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
+    fn from(src: fmi2_messages::Fmi2StatusReturn) -> Self {
+        src.status().into()
+    }
+}
+
+impl From<fmi2_messages::Fmi2Status> for Fmi2Status {
+    fn from(src: fmi2_messages::Fmi2Status) -> Self {
+        match src {
+            fmi2_messages::Fmi2Status::Fmi2Ok => Self::Ok,
+            fmi2_messages::Fmi2Status::Fmi2Warning => Self::Warning,
+            fmi2_messages::Fmi2Status::Fmi2Discard => Self::Discard,
+            fmi2_messages::Fmi2Status::Fmi2Error => Self::Error,
+            fmi2_messages::Fmi2Status::Fmi2Fatal => Self::Fatal,
+            fmi2_messages::Fmi2Status::Fmi2Pending => Self::Pending,
+        }
+    }
 }
 
 /// From specification:
@@ -144,6 +172,7 @@ pub struct Fmi2CallbackFunctions {
     pub component_environment: ComponentEnvironment,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi2StatusKind {
@@ -158,3 +187,27 @@ pub enum Fmi2Type {
     Fmi2ModelExchange = 0,
     Fmi2CoSimulation = 1,
 }
+
+impl From<fmi2_messages::Fmi2Type> for Fmi2Type {
+    fn from(src: fmi2_messages::Fmi2Type) -> Self {
+        match src {
+            fmi2_messages::Fmi2Type::Fmi2ModelExchange => Self::Fmi2ModelExchange,
+            fmi2_messages::Fmi2Type::Fmi2CoSimulation => Self::Fmi2CoSimulation,
+        }
+    }
+}
+
+// ----------------------- Protocol Buffer Trait decorations ---------------------------
+// The trait ExpectableReturn extends the Return message with an extract
+// function that let's us pattern match and unwrap the inner type of a
+// ReturnMessage.
+implement_expectable_return!(fmi2_messages::Fmi2EmptyReturn, ReturnMessage, Empty);
+implement_expectable_return!(fmi2_messages::Fmi2StatusReturn, ReturnMessage, Status);
+implement_expectable_return!(fmi2_messages::Fmi2FreeInstanceReturn, ReturnMessage, FreeInstance);
+implement_expectable_return!(fmi2_messages::Fmi2GetRealReturn, ReturnMessage, GetReal);
+implement_expectable_return!(fmi2_messages::Fmi2GetIntegerReturn, ReturnMessage, GetInteger);
+implement_expectable_return!(fmi2_messages::Fmi2GetBooleanReturn, ReturnMessage, GetBoolean);
+implement_expectable_return!(fmi2_messages::Fmi2GetStringReturn, ReturnMessage, GetString);
+implement_expectable_return!(fmi2_messages::Fmi2GetRealOutputDerivativesReturn, ReturnMessage, GetRealOutputDerivatives);
+implement_expectable_return!(fmi2_messages::Fmi2GetDirectionalDerivativesReturn, ReturnMessage, GetDirectionalDerivatives);
+implement_expectable_return!(fmi2_messages::Fmi2SerializeFmuStateReturn, ReturnMessage, SerializeFmuState);

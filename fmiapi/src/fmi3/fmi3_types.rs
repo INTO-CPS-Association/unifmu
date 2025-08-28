@@ -1,12 +1,16 @@
-use super::fmi3_messages;
+use super::fmi3_messages::{self, fmi3_return::ReturnMessage};
 
-use crate::common::category_filter::LogCategory;
+use crate::common::{
+    category_filter::LogCategory,
+    protobuf_extensions::{
+        ExpectableReturn,
+        implement_expectable_return
+    }
+};
 
 use std::{
-    error::Error,
-    ffi::{CStr, c_char},
-    fmt::Display,
-    str::Utf8Error
+    ffi::c_char,
+    fmt::Display
 };
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -62,6 +66,7 @@ impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
     }
 }
 
+#[allow(clippy::enum_variant_names)]
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi3IntervalQualifier {
@@ -70,6 +75,7 @@ pub enum Fmi3IntervalQualifier {
     Fmi3IntervalChanged = 2,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi3DependencyKind {
@@ -183,3 +189,35 @@ pub type Fmi3IntermediateUpdateCallback = unsafe extern "C" fn(
 /// Callbacks of this type are part of the FMI3 API that is not supported by
 /// UniFMU.
 pub type UnsupportedCallback = unsafe extern "C" fn(...);
+
+// ----------------------- Protocol Buffer Trait decorations ---------------------------
+// The trait ExpectableReturn extends the Return message with an extract
+// function that let's us pattern match and unwrap the inner type of a
+// ReturnMessage.
+implement_expectable_return!(fmi3_messages::Fmi3EmptyReturn, ReturnMessage, Empty);
+implement_expectable_return!(fmi3_messages::Fmi3StatusReturn, ReturnMessage, Status);
+implement_expectable_return!(fmi3_messages::Fmi3DoStepReturn, ReturnMessage, DoStep);
+implement_expectable_return!(fmi3_messages::Fmi3FreeInstanceReturn, ReturnMessage, FreeInstance);
+implement_expectable_return!(fmi3_messages::Fmi3GetFloat32Return, ReturnMessage, GetFloat32);
+implement_expectable_return!(fmi3_messages::Fmi3GetFloat64Return, ReturnMessage, GetFloat64);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt8Return, ReturnMessage, GetInt8);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt8Return, ReturnMessage, GetUInt8);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt16Return, ReturnMessage, GetInt16);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt16Return, ReturnMessage, GetUInt16);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt32Return, ReturnMessage, GetInt32);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt32Return, ReturnMessage, GetUInt32);
+implement_expectable_return!(fmi3_messages::Fmi3GetInt64Return, ReturnMessage, GetInt64);
+implement_expectable_return!(fmi3_messages::Fmi3GetUInt64Return, ReturnMessage, GetUInt64);
+implement_expectable_return!(fmi3_messages::Fmi3GetBooleanReturn, ReturnMessage, GetBoolean);
+implement_expectable_return!(fmi3_messages::Fmi3GetStringReturn, ReturnMessage, GetString);
+implement_expectable_return!(fmi3_messages::Fmi3GetBinaryReturn, ReturnMessage, GetBinary);
+implement_expectable_return!(fmi3_messages::Fmi3GetDirectionalDerivativeReturn, ReturnMessage, GetDirectionalDerivative);
+implement_expectable_return!(fmi3_messages::Fmi3GetAdjointDerivativeReturn, ReturnMessage, GetAdjointDerivative);
+implement_expectable_return!(fmi3_messages::Fmi3GetOutputDerivativesReturn, ReturnMessage, GetOutputDerivatives);
+implement_expectable_return!(fmi3_messages::Fmi3SerializeFmuStateReturn, ReturnMessage, SerializeFmuState);
+implement_expectable_return!(fmi3_messages::Fmi3GetClockReturn, ReturnMessage, GetClock);
+implement_expectable_return!(fmi3_messages::Fmi3UpdateDiscreteStatesReturn, ReturnMessage, UpdateDiscreteStates);
+implement_expectable_return!(fmi3_messages::Fmi3GetIntervalDecimalReturn, ReturnMessage, GetIntervalDecimal);
+implement_expectable_return!(fmi3_messages::Fmi3GetIntervalFractionReturn, ReturnMessage, GetIntervalFraction);
+implement_expectable_return!(fmi3_messages::Fmi3GetShiftDecimalReturn, ReturnMessage, GetShiftDecimal);
+implement_expectable_return!(fmi3_messages::Fmi3GetShiftFractionReturn, ReturnMessage, GetShiftFraction);

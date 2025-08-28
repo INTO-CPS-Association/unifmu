@@ -10,8 +10,7 @@ mod fmi2_types;
 use fmi2_logger::Fmi2Logger;
 use fmi2_messages::{
     Fmi2Command,
-    fmi2_command::Command,
-    fmi2_return::ReturnMessage
+    fmi2_command::Command
 };
 use fmi2_slave::{
     Fmi2Slave,
@@ -31,10 +30,6 @@ use fmi2_types::{
 
 use crate::common::{
     logger::Logger,
-    protobuf_extensions::{
-        ExpectableReturn,
-        implement_expectable_return
-    },
     spawn::spawn_slave,
     string_conversion::{c2s, c2non_empty_s}
 };
@@ -49,50 +44,6 @@ use std::{
 
 use libc::size_t;
 use url::Url;
-
-// ---------------------- Protocol Buffer Transformations ---------------------
-impl From<fmi2_messages::Fmi2Type> for Fmi2Type {
-    fn from(src: fmi2_messages::Fmi2Type) -> Self {
-        match src {
-            fmi2_messages::Fmi2Type::Fmi2ModelExchange => Self::Fmi2ModelExchange,
-            fmi2_messages::Fmi2Type::Fmi2CoSimulation => Self::Fmi2CoSimulation,
-        }
-    }
-}
-
-impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
-    fn from(src: fmi2_messages::Fmi2StatusReturn) -> Self {
-        src.status().into()
-    }
-}
-
-impl From<fmi2_messages::Fmi2Status> for Fmi2Status {
-    fn from(src: fmi2_messages::Fmi2Status) -> Self {
-        match src {
-            fmi2_messages::Fmi2Status::Fmi2Ok => Self::Ok,
-            fmi2_messages::Fmi2Status::Fmi2Warning => Self::Warning,
-            fmi2_messages::Fmi2Status::Fmi2Discard => Self::Discard,
-            fmi2_messages::Fmi2Status::Fmi2Error => Self::Error,
-            fmi2_messages::Fmi2Status::Fmi2Fatal => Self::Fatal,
-            fmi2_messages::Fmi2Status::Fmi2Pending => Self::Pending,
-        }
-    }
-}
-
-// ----------------------- Protocol Buffer Trait decorations ---------------------------
-// The trait ExpectableReturn extends the Return message with an extract
-// function that let's us pattern match and unwrap the inner type of a
-// ReturnMessage.
-implement_expectable_return!(fmi2_messages::Fmi2EmptyReturn, ReturnMessage, Empty);
-implement_expectable_return!(fmi2_messages::Fmi2StatusReturn, ReturnMessage, Status);
-implement_expectable_return!(fmi2_messages::Fmi2FreeInstanceReturn, ReturnMessage, FreeInstance);
-implement_expectable_return!(fmi2_messages::Fmi2GetRealReturn, ReturnMessage, GetReal);
-implement_expectable_return!(fmi2_messages::Fmi2GetIntegerReturn, ReturnMessage, GetInteger);
-implement_expectable_return!(fmi2_messages::Fmi2GetBooleanReturn, ReturnMessage, GetBoolean);
-implement_expectable_return!(fmi2_messages::Fmi2GetStringReturn, ReturnMessage, GetString);
-implement_expectable_return!(fmi2_messages::Fmi2GetRealOutputDerivativesReturn, ReturnMessage, GetRealOutputDerivatives);
-implement_expectable_return!(fmi2_messages::Fmi2GetDirectionalDerivativesReturn, ReturnMessage, GetDirectionalDerivatives);
-implement_expectable_return!(fmi2_messages::Fmi2SerializeFmuStateReturn, ReturnMessage, SerializeFmuState);
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 

@@ -9,7 +9,6 @@ mod fmi3_types;
 use fmi3_logger::Fmi3Logger;
 use fmi3_messages::{
     fmi3_command::Command,
-    fmi3_return::ReturnMessage,
     Fmi3Command
 };
 use fmi3_slave::{
@@ -45,10 +44,6 @@ use fmi3_types::{
 
 use crate::common::{
     logger::Logger,
-    protobuf_extensions::{
-        ExpectableReturn,
-        implement_expectable_return
-    },
     spawn::spawn_slave,
     string_conversion::{c2s, c2non_empty_s}
 };
@@ -62,38 +57,6 @@ use std::{
 
 use libc::{c_char, size_t};
 use url::Url;
-
-// ----------------------- Protocol Buffer Trait decorations ---------------------------
-// The trait ExpectableReturn extends the Return message with an extract
-// function that let's us pattern match and unwrap the inner type of a
-// ReturnMessage.
-implement_expectable_return!(fmi3_messages::Fmi3EmptyReturn, ReturnMessage, Empty);
-implement_expectable_return!(fmi3_messages::Fmi3StatusReturn, ReturnMessage, Status);
-implement_expectable_return!(fmi3_messages::Fmi3DoStepReturn, ReturnMessage, DoStep);
-implement_expectable_return!(fmi3_messages::Fmi3FreeInstanceReturn, ReturnMessage, FreeInstance);
-implement_expectable_return!(fmi3_messages::Fmi3GetFloat32Return, ReturnMessage, GetFloat32);
-implement_expectable_return!(fmi3_messages::Fmi3GetFloat64Return, ReturnMessage, GetFloat64);
-implement_expectable_return!(fmi3_messages::Fmi3GetInt8Return, ReturnMessage, GetInt8);
-implement_expectable_return!(fmi3_messages::Fmi3GetUInt8Return, ReturnMessage, GetUInt8);
-implement_expectable_return!(fmi3_messages::Fmi3GetInt16Return, ReturnMessage, GetInt16);
-implement_expectable_return!(fmi3_messages::Fmi3GetUInt16Return, ReturnMessage, GetUInt16);
-implement_expectable_return!(fmi3_messages::Fmi3GetInt32Return, ReturnMessage, GetInt32);
-implement_expectable_return!(fmi3_messages::Fmi3GetUInt32Return, ReturnMessage, GetUInt32);
-implement_expectable_return!(fmi3_messages::Fmi3GetInt64Return, ReturnMessage, GetInt64);
-implement_expectable_return!(fmi3_messages::Fmi3GetUInt64Return, ReturnMessage, GetUInt64);
-implement_expectable_return!(fmi3_messages::Fmi3GetBooleanReturn, ReturnMessage, GetBoolean);
-implement_expectable_return!(fmi3_messages::Fmi3GetStringReturn, ReturnMessage, GetString);
-implement_expectable_return!(fmi3_messages::Fmi3GetBinaryReturn, ReturnMessage, GetBinary);
-implement_expectable_return!(fmi3_messages::Fmi3GetDirectionalDerivativeReturn, ReturnMessage, GetDirectionalDerivative);
-implement_expectable_return!(fmi3_messages::Fmi3GetAdjointDerivativeReturn, ReturnMessage, GetAdjointDerivative);
-implement_expectable_return!(fmi3_messages::Fmi3GetOutputDerivativesReturn, ReturnMessage, GetOutputDerivatives);
-implement_expectable_return!(fmi3_messages::Fmi3SerializeFmuStateReturn, ReturnMessage, SerializeFmuState);
-implement_expectable_return!(fmi3_messages::Fmi3GetClockReturn, ReturnMessage, GetClock);
-implement_expectable_return!(fmi3_messages::Fmi3UpdateDiscreteStatesReturn, ReturnMessage, UpdateDiscreteStates);
-implement_expectable_return!(fmi3_messages::Fmi3GetIntervalDecimalReturn, ReturnMessage, GetIntervalDecimal);
-implement_expectable_return!(fmi3_messages::Fmi3GetIntervalFractionReturn, ReturnMessage, GetIntervalFraction);
-implement_expectable_return!(fmi3_messages::Fmi3GetShiftDecimalReturn, ReturnMessage, GetShiftDecimal);
-implement_expectable_return!(fmi3_messages::Fmi3GetShiftFractionReturn, ReturnMessage, GetShiftFraction);
 
 // ------------------------------------- FMI FUNCTIONS --------------------------------
 static VERSION: &str = "3.0\0";
