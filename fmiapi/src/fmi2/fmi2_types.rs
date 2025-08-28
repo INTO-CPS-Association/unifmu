@@ -4,7 +4,10 @@
 use super::fmi2_messages::{self, fmi2_return::ReturnMessage};
 
 use crate::common::{
-    category_filter::LogCategory,
+    logger::{
+        log_category::LogCategory,
+        log_status::LogStatus
+    },
     protobuf_extensions::{
         ExpectableReturn,
         implement_expectable_return
@@ -36,6 +39,35 @@ pub enum Fmi2Status {
     Error = 3,
     Fatal = 4,
     Pending = 5,
+}
+
+impl LogStatus for Fmi2Status {
+    fn fmt_log_prefix(&self) -> String {
+        match self {
+            Fmi2Status::Ok => String::from("[OK] "),
+            Fmi2Status::Warning => String::from("[WARN] "),
+            Fmi2Status::Error => String::from("[ERROR] "),
+            Fmi2Status::Fatal => String::from("[FATAL] "),
+            Fmi2Status::Pending => String::from("[PENDING] "),
+            Fmi2Status::Discard => String::from("[DISCARD] ")
+        }
+    }
+
+    fn ok() -> Self {
+        Fmi2Status::Ok
+    }
+
+    fn warning() -> Self {
+        Fmi2Status::Warning
+    }
+
+    fn error() -> Self {
+        Fmi2Status::Error
+    }
+
+    fn fatal() -> Self {
+        Fmi2Status::Fatal
+    }
 }
 
 impl From<fmi2_messages::Fmi2StatusReturn> for Fmi2Status {
@@ -117,6 +149,22 @@ impl LogCategory for Fmi2LogCategory {
             Fmi2LogCategory::LogAll => "logAll",
             Fmi2LogCategory::LogUserDefined(name) => name,
         }
+    }
+
+    fn ok() -> Self {
+        Fmi2LogCategory::LogAll
+    }
+
+    fn warning() -> Self {
+        Fmi2LogCategory::LogStatusWarning
+    }
+
+    fn error() -> Self {
+        Fmi2LogCategory::LogStatusError
+    }
+
+    fn fatal() -> Self {
+        Fmi2LogCategory::LogStatusFatal
     }
 }
 

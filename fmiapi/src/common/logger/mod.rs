@@ -1,4 +1,10 @@
-use super::category_filter::{CategoryFilter, LogCategory};
+pub mod category_filter;
+pub mod log_category;
+pub mod log_status;
+
+use category_filter::CategoryFilter;
+use log_category::LogCategory;
+use log_status::LogStatus;
 
 pub trait Logger 
 where 
@@ -15,15 +21,23 @@ where
         message: &str
     );
 
-    fn ok(&self, message: &str);
-
-    fn warning(&self, message: &str);
-
-    fn error(&self, message: &str);
-
-    fn fatal(&self, message: &str);
-
     fn filter(&mut self) -> &mut CategoryFilter<Self::Category>;
+
+    fn ok(&self, message: &str) {
+        self.log(Self::Status::ok(), Self::Category::ok(), message);
+    }
+
+    fn warning(&self, message: &str) {
+        self.log(Self::Status::warning(), Self::Category::warning(), message);
+    }
+
+    fn error(&self, message: &str) {
+        self.log(Self::Status::error(), Self::Category::error(), message);
+    }
+
+    fn fatal(&self, message: &str) {
+        self.log(Self::Status::fatal(), Self::Category::fatal(), message);
+    }
 
     fn enable_categories(
         &mut self,
@@ -67,9 +81,4 @@ where
     #[cfg(not(feature = "fmt_logging"))]
     fn fmt_log(_message: &str, _status: &Self::Status) {}
     
-}
-
-pub trait LogStatus {
-    #[allow(dead_code)]
-    fn fmt_log_prefix(&self) -> String;
 }

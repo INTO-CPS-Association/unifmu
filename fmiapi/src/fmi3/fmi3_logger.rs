@@ -5,9 +5,9 @@ use super::fmi3_types::{
     Fmi3Status
 };
 
-use crate::common::{
-    category_filter::CategoryFilter,
-    logger::{Logger, LogStatus}
+use crate::common::logger::{
+    Logger,
+    category_filter::CategoryFilter
 };
 
 use std::ffi::CStr;
@@ -72,51 +72,7 @@ impl Logger for Fmi3Logger {
         ); }
     }
 
-    fn ok(&self, message: &str) {
-        self.log(
-            Fmi3Status::Fmi3OK,
-            Fmi3LogCategory::LogEvents,
-            message
-        )
-    }
-
-    fn warning(&self, message: &str) {
-        self.log(
-            Fmi3Status::Fmi3Warning,
-            Fmi3LogCategory::LogStatusWarning,
-            message
-        )
-    }
-
-    fn error(&self, message: &str) {
-        self.log(
-            Fmi3Status::Fmi3Error,
-            Fmi3LogCategory::LogStatusError,
-            message
-        );
-    }
-
-    fn fatal(&self, message: &str) {
-        self.log(
-            Fmi3Status::Fmi3Fatal,
-            Fmi3LogCategory::LogStatusFatal,
-            message
-        );
-    }
-
     fn filter(&mut self) -> &mut CategoryFilter<Self::Category> {
         &mut self.filter
-    }
-}
-
-impl LogStatus for Fmi3Status {
-    fn fmt_log_prefix(&self) -> String {
-        match self {
-            Fmi3Status::Fmi3OK => String::from("[OK] "),
-            Fmi3Status::Fmi3Warning => String::from("[WARN] "),
-            Fmi3Status::Fmi3Error => String::from("[ERROR] "),
-            Fmi3Status::Fmi3Fatal => String::from("[FATAL] "),
-            Fmi3Status::Fmi3Discard => String::from("[DISCARD] ")
-        }
     }
 }

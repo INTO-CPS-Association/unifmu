@@ -1,8 +1,6 @@
-use std::{collections::HashSet, fmt::{Debug, Display}, hash::Hash};
+use super::log_category::LogCategory;
 
-pub trait LogCategory: for <'a> From<&'a str> + Default + Debug + Display + Eq + Hash {
-    fn str_name(&self) -> &str;
-}
+use std::collections::HashSet;
 
 /// A filter for logging categories.
 /// 

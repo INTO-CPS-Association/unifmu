@@ -1,7 +1,10 @@
 use super::fmi3_messages::{self, fmi3_return::ReturnMessage};
 
 use crate::common::{
-    category_filter::LogCategory,
+    logger::{
+        log_category::LogCategory,
+        log_status::LogStatus
+    },
     protobuf_extensions::{
         ExpectableReturn,
         implement_expectable_return
@@ -40,6 +43,34 @@ pub enum Fmi3Status {
     Fmi3Discard = 2,
     Fmi3Error = 3,
     Fmi3Fatal = 4,
+}
+
+impl LogStatus for Fmi3Status {
+    fn fmt_log_prefix(&self) -> String {
+        match self {
+            Fmi3Status::Fmi3OK => String::from("[OK] "),
+            Fmi3Status::Fmi3Warning => String::from("[WARN] "),
+            Fmi3Status::Fmi3Error => String::from("[ERROR] "),
+            Fmi3Status::Fmi3Fatal => String::from("[FATAL] "),
+            Fmi3Status::Fmi3Discard => String::from("[DISCARD] ")
+        }
+    }
+
+    fn ok() -> Self {
+        Fmi3Status::Fmi3OK
+    }
+
+    fn warning() -> Self {
+        Fmi3Status::Fmi3Warning
+    }
+
+    fn error() -> Self {
+        Fmi3Status::Fmi3Error
+    }
+
+    fn fatal() -> Self {
+        Fmi3Status::Fmi3Fatal
+    }
 }
 
 impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
@@ -142,6 +173,22 @@ impl LogCategory for Fmi3LogCategory {
             Fmi3LogCategory::LogStatusFatal => "logStatusFatal",
             Fmi3LogCategory::LogUserDefined(name) => name,
         }
+    }
+
+    fn ok() -> Self {
+        Fmi3LogCategory::LogEvents
+    }
+
+    fn warning() -> Self {
+        Fmi3LogCategory::LogStatusWarning
+    }
+
+    fn error() -> Self {
+        Fmi3LogCategory::LogStatusError
+    }
+
+    fn fatal() -> Self {
+        Fmi3LogCategory::LogStatusFatal
     }
 }
 

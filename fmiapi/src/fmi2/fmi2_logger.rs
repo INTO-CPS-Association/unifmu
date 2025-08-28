@@ -6,9 +6,9 @@ use super::fmi2_types::{
     Fmi2String
 };
 
-use crate::common::{
-    category_filter::CategoryFilter,
-    logger::{Logger, LogStatus}
+use crate::common::logger::{
+    Logger,
+    category_filter::CategoryFilter
 };
 
 use std::ffi::CStr;
@@ -77,52 +77,7 @@ impl Logger for Fmi2Logger {
         ); }
     }
 
-    fn ok(&self, message: &str) {
-        self.log(
-            Fmi2Status::Ok,
-            Fmi2LogCategory::LogAll,
-            message
-        )
-    }
-
-    fn warning(&self, message: &str) {
-        self.log(
-            Fmi2Status::Warning,
-            Fmi2LogCategory::LogStatusWarning,
-            message
-        )
-    }
-
-    fn error(&self, message: &str) {
-        self.log(
-            Fmi2Status::Error,
-            Fmi2LogCategory::LogStatusError,
-            message
-        );
-    }
-
-    fn fatal(&self, message: &str) {
-        self.log(
-            Fmi2Status::Fatal,
-            Fmi2LogCategory::LogStatusFatal,
-            message
-        );
-    }
-
     fn filter(&mut self) -> &mut CategoryFilter<Self::Category> {
         &mut self.filter
-    }
-}
-
-impl LogStatus for Fmi2Status {
-    fn fmt_log_prefix(&self) -> String {
-        match self {
-            Fmi2Status::Ok => String::from("[OK] "),
-            Fmi2Status::Warning => String::from("[WARN] "),
-            Fmi2Status::Error => String::from("[ERROR] "),
-            Fmi2Status::Fatal => String::from("[FATAL] "),
-            Fmi2Status::Pending => String::from("[PENDING] "),
-            Fmi2Status::Discard => String::from("[DISCARD] ")
-        }
     }
 }

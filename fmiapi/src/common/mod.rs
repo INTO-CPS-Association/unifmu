@@ -1,4 +1,3 @@
-pub mod category_filter;
 pub mod dispatcher;
 pub mod logger;
 pub mod protobuf_extensions;
