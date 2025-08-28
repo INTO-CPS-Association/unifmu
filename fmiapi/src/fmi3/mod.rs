@@ -226,7 +226,7 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
 
     let dispatcher = match spawn_slave(
         Path::new(&resources_dir),
-        |message| logger.ok(message)
+        |port| logger.communicate_port_connection_action(port)
     ) {
         Ok(dispatcher) => dispatcher,
         Err(error) => {

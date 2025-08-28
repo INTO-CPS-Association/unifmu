@@ -6,6 +6,7 @@ use category_filter::CategoryFilter;
 use log_category::LogCategory;
 use log_status::LogStatus;
 
+use colored::Colorize;
 pub trait Logger 
 where 
     Self::Category: LogCategory,
@@ -37,6 +38,18 @@ where
 
     fn fatal(&self, message: &str) {
         self.log(Self::Status::fatal(), Self::Category::fatal(), message);
+    }
+
+    fn communicate_port_connection_action(&self, port_str: &str) {
+        self.log(
+            Self::Status::ok(),
+            Self::Category::unifmu_message(),
+            &format!(
+                "{} Connect remote backend to dispatcher through port {}",
+                "ACTION REQUIRED ~".yellow().bold(),
+                port_str.green().bold()
+            )
+        );
     }
 
     fn enable_categories(
@@ -71,7 +84,11 @@ where
     /// If not build with the 'fmt_logging' feature, this function does nothing
     #[cfg(feature = "fmt_logging")]
     fn fmt_log(message: &str, status: &Self::Status) {
-        eprintln!("{}{}", status.fmt_log_prefix(), message);
+        if status.is_ok() {
+            println!("{}", message);
+        } else {
+            eprintln!("{}{}", status.fmt_log_prefix(), message);
+        }
     }
 
     /// Prints the message with a prefix based on the status to stderr if the

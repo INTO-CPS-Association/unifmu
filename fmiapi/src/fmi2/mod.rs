@@ -172,7 +172,7 @@ pub unsafe extern "C" fn fmi2Instantiate(
 
     let dispatcher = match spawn_slave(
         Path::new(&resources_dir),
-        |message| logger.ok(message)
+        |port| logger.communicate_port_connection_action(port)
     ) {
         Err(error) => {
             logger.error(&format!("Spawning fmi2 slave failed; {}", error));

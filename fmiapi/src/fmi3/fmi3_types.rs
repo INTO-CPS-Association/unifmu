@@ -48,28 +48,32 @@ pub enum Fmi3Status {
 impl LogStatus for Fmi3Status {
     fn fmt_log_prefix(&self) -> String {
         match self {
-            Fmi3Status::Fmi3OK => String::from("[OK] "),
-            Fmi3Status::Fmi3Warning => String::from("[WARN] "),
-            Fmi3Status::Fmi3Error => String::from("[ERROR] "),
-            Fmi3Status::Fmi3Fatal => String::from("[FATAL] "),
-            Fmi3Status::Fmi3Discard => String::from("[DISCARD] ")
+            Self::Fmi3OK => String::from("[OK] "),
+            Self::Fmi3Warning => String::from("[WARN] "),
+            Self::Fmi3Error => String::from("[ERROR] "),
+            Self::Fmi3Fatal => String::from("[FATAL] "),
+            Self::Fmi3Discard => String::from("[DISCARD] ")
         }
     }
 
     fn ok() -> Self {
-        Fmi3Status::Fmi3OK
+        Self::Fmi3OK
     }
 
     fn warning() -> Self {
-        Fmi3Status::Fmi3Warning
+        Self::Fmi3Warning
     }
 
     fn error() -> Self {
-        Fmi3Status::Fmi3Error
+        Self::Fmi3Error
     }
 
     fn fatal() -> Self {
-        Fmi3Status::Fmi3Fatal
+        Self::Fmi3Fatal
+    }
+
+    fn is_ok(&self) -> bool {
+        matches!(self, Self::Fmi3OK)
     }
 }
 
@@ -157,38 +161,44 @@ pub enum Fmi3LogCategory {
     LogStatusDiscard,
     LogStatusError,
     LogStatusFatal,
+    LogUnifmuMessages,
     LogUserDefined(String)
 }
 
 impl LogCategory for Fmi3LogCategory {
     fn str_name(&self) -> &str {
         match self {
-            Fmi3LogCategory::LogEvents => "logEvents",
-            Fmi3LogCategory::LogSingularLinearSystems => "logSingularLinearSystems",
-            Fmi3LogCategory::LogNonlinearSystems => "logNonlinearSystems",
-            Fmi3LogCategory::LogDynamicStateSelection => "logDynamicStateSelection",
-            Fmi3LogCategory::LogStatusWarning => "logStatusWarning",
-            Fmi3LogCategory::LogStatusDiscard => "logStatusDiscard",
-            Fmi3LogCategory::LogStatusError => "logStatusError",
-            Fmi3LogCategory::LogStatusFatal => "logStatusFatal",
-            Fmi3LogCategory::LogUserDefined(name) => name,
+            Self::LogEvents => "logEvents",
+            Self::LogSingularLinearSystems => "logSingularLinearSystems",
+            Self::LogNonlinearSystems => "logNonlinearSystems",
+            Self::LogDynamicStateSelection => "logDynamicStateSelection",
+            Self::LogStatusWarning => "logStatusWarning",
+            Self::LogStatusDiscard => "logStatusDiscard",
+            Self::LogStatusError => "logStatusError",
+            Self::LogStatusFatal => "logStatusFatal",
+            Self::LogUnifmuMessages => "logUnifmuMessages",
+            Self::LogUserDefined(name) => name,
         }
     }
 
     fn ok() -> Self {
-        Fmi3LogCategory::LogEvents
+        Self::LogEvents
     }
 
     fn warning() -> Self {
-        Fmi3LogCategory::LogStatusWarning
+        Self::LogStatusWarning
     }
 
     fn error() -> Self {
-        Fmi3LogCategory::LogStatusError
+        Self::LogStatusError
     }
 
     fn fatal() -> Self {
-        Fmi3LogCategory::LogStatusFatal
+        Self::LogStatusFatal
+    }
+
+    fn unifmu_message() -> Self {
+        Self::LogUnifmuMessages
     }
 }
 
@@ -201,15 +211,16 @@ impl Display for Fmi3LogCategory {
 impl From<&str> for Fmi3LogCategory {
     fn from(value: &str) -> Self {
         match value {
-            "logEvents" => Fmi3LogCategory::LogEvents,
-            "logSingularLinearSystems" => Fmi3LogCategory::LogSingularLinearSystems,
-            "logNonlinearSystems" => Fmi3LogCategory::LogNonlinearSystems,
-            "logDynamicStateSelection" => Fmi3LogCategory::LogDynamicStateSelection,
-            "logStatusWarning" => Fmi3LogCategory::LogStatusWarning,
-            "logStatusDiscard" => Fmi3LogCategory::LogStatusDiscard,
-            "logStatusError" => Fmi3LogCategory::LogStatusError,
-            "logStatusFatal" => Fmi3LogCategory::LogStatusFatal,
-            _ => Fmi3LogCategory::LogUserDefined(String::from(value))
+            "logEvents" => Self::LogEvents,
+            "logSingularLinearSystems" => Self::LogSingularLinearSystems,
+            "logNonlinearSystems" => Self::LogNonlinearSystems,
+            "logDynamicStateSelection" => Self::LogDynamicStateSelection,
+            "logStatusWarning" => Self::LogStatusWarning,
+            "logStatusDiscard" => Self::LogStatusDiscard,
+            "logStatusError" => Self::LogStatusError,
+            "logStatusFatal" => Self::LogStatusFatal,
+            "logUnifmuMessages" => Self::LogUnifmuMessages,
+            _ => Self::LogUserDefined(String::from(value))
         }
     }
 }

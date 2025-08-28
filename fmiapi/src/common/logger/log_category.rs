@@ -7,4 +7,6 @@ pub trait LogCategory: for <'a> From<&'a str> + Default + Debug + Display + Eq +
     fn warning() -> Self;
     fn error() -> Self;
     fn fatal() -> Self;
+
+    fn unifmu_message() -> Self;
 }

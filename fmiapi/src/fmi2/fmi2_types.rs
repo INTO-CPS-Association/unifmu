@@ -44,29 +44,33 @@ pub enum Fmi2Status {
 impl LogStatus for Fmi2Status {
     fn fmt_log_prefix(&self) -> String {
         match self {
-            Fmi2Status::Ok => String::from("[OK] "),
-            Fmi2Status::Warning => String::from("[WARN] "),
-            Fmi2Status::Error => String::from("[ERROR] "),
-            Fmi2Status::Fatal => String::from("[FATAL] "),
-            Fmi2Status::Pending => String::from("[PENDING] "),
-            Fmi2Status::Discard => String::from("[DISCARD] ")
+            Self::Ok => String::from("[OK] "),
+            Self::Warning => String::from("[WARN] "),
+            Self::Error => String::from("[ERROR] "),
+            Self::Fatal => String::from("[FATAL] "),
+            Self::Pending => String::from("[PENDING] "),
+            Self::Discard => String::from("[DISCARD] ")
         }
     }
 
     fn ok() -> Self {
-        Fmi2Status::Ok
+        Self::Ok
     }
 
     fn warning() -> Self {
-        Fmi2Status::Warning
+        Self::Warning
     }
 
     fn error() -> Self {
-        Fmi2Status::Error
+        Self::Error
     }
 
     fn fatal() -> Self {
-        Fmi2Status::Fatal
+        Self::Fatal
+    }
+
+    fn is_ok(&self) -> bool {
+        matches!(self, Self::Ok)
     }
 }
 
@@ -131,40 +135,46 @@ pub enum Fmi2LogCategory {
     LogStatusFatal,
     LogStatusPending,
     #[default] LogAll,
+    LogUnifmuMessages,
     LogUserDefined(String)
 }
 
 impl LogCategory for Fmi2LogCategory {
     fn str_name(&self) -> &str {
         match self {
-            Fmi2LogCategory::LogEvents => "logEvents",
-            Fmi2LogCategory::LogSingularLinearSystems => "logSingularLinearSystems",
-            Fmi2LogCategory::LogNonlinearSystems => "logNonlinearSystems",
-            Fmi2LogCategory::LogDynamicStateSelection => "logDynamicStateSelection",
-            Fmi2LogCategory::LogStatusWarning => "logStatusWarning",
-            Fmi2LogCategory::LogStatusDiscard => "logStatusDiscard",
-            Fmi2LogCategory::LogStatusError => "logStatusError",
-            Fmi2LogCategory::LogStatusFatal => "logStatusFatal",
-            Fmi2LogCategory::LogStatusPending => "logStatusPending",
-            Fmi2LogCategory::LogAll => "logAll",
-            Fmi2LogCategory::LogUserDefined(name) => name,
+            Self::LogEvents => "logEvents",
+            Self::LogSingularLinearSystems => "logSingularLinearSystems",
+            Self::LogNonlinearSystems => "logNonlinearSystems",
+            Self::LogDynamicStateSelection => "logDynamicStateSelection",
+            Self::LogStatusWarning => "logStatusWarning",
+            Self::LogStatusDiscard => "logStatusDiscard",
+            Self::LogStatusError => "logStatusError",
+            Self::LogStatusFatal => "logStatusFatal",
+            Self::LogStatusPending => "logStatusPending",
+            Self::LogAll => "logAll",
+            Self::LogUnifmuMessages => "logUnifmuMessages",
+            Self::LogUserDefined(name) => name,
         }
     }
 
     fn ok() -> Self {
-        Fmi2LogCategory::LogAll
+        Self::LogAll
     }
 
     fn warning() -> Self {
-        Fmi2LogCategory::LogStatusWarning
+        Self::LogStatusWarning
     }
 
     fn error() -> Self {
-        Fmi2LogCategory::LogStatusError
+        Self::LogStatusError
     }
 
     fn fatal() -> Self {
-        Fmi2LogCategory::LogStatusFatal
+        Self::LogStatusFatal
+    }
+
+    fn unifmu_message() -> Self {
+        Self::LogUnifmuMessages
     }
 }
 
@@ -177,17 +187,18 @@ impl Display for Fmi2LogCategory {
 impl From<&str> for Fmi2LogCategory {
     fn from(value: &str) -> Self {
         match value {
-            "logEvents" => Fmi2LogCategory::LogEvents,
-            "logSingularLinearSystems" => Fmi2LogCategory::LogSingularLinearSystems,
-            "logNonlinearSystems" => Fmi2LogCategory::LogNonlinearSystems,
-            "logDynamicStateSelection" => Fmi2LogCategory::LogDynamicStateSelection,
-            "logStatusWarning" => Fmi2LogCategory::LogStatusWarning,
-            "logStatusDiscard" => Fmi2LogCategory::LogStatusDiscard,
-            "logStatusError" => Fmi2LogCategory::LogStatusError,
-            "logStatusFatal" => Fmi2LogCategory::LogStatusFatal,
-            "logStatusPending" => Fmi2LogCategory::LogStatusPending,
-            "logAll" => Fmi2LogCategory::LogAll,
-            _ => Fmi2LogCategory::LogUserDefined(String::from(value))
+            "logEvents" => Self::LogEvents,
+            "logSingularLinearSystems" => Self::LogSingularLinearSystems,
+            "logNonlinearSystems" => Self::LogNonlinearSystems,
+            "logDynamicStateSelection" => Self::LogDynamicStateSelection,
+            "logStatusWarning" => Self::LogStatusWarning,
+            "logStatusDiscard" => Self::LogStatusDiscard,
+            "logStatusError" => Self::LogStatusError,
+            "logStatusFatal" => Self::LogStatusFatal,
+            "logStatusPending" => Self::LogStatusPending,
+            "logAll" => Self::LogAll,
+            "logUnifmuMessages" => Self::LogUnifmuMessages,
+            _ => Self::LogUserDefined(String::from(value))
         }
     }
 }

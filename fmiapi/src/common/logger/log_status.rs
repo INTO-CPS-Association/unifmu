@@ -6,4 +6,6 @@ pub trait LogStatus {
     fn warning() -> Self;
     fn error() -> Self;
     fn fatal() -> Self;
+
+    fn is_ok(&self) -> bool;
 }

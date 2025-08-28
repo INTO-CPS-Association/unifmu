@@ -12,7 +12,6 @@ use std::{
     path::Path
 };
 
-use colored::Colorize;
 use prost::{Message, UnknownEnumValue};
 use tokio::runtime::Runtime;
 use tokio::select;
@@ -163,7 +162,7 @@ pub struct RemoteDispatcher {
 }
 
 impl RemoteDispatcher {
-    pub fn create(remote_connction_notifier: impl Fn(&str)) -> DispatcherResult<Self> {
+    pub fn create(remote_connection_notifier: impl Fn(&str)) -> DispatcherResult<Self> {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
@@ -172,15 +171,10 @@ impl RemoteDispatcher {
             BackendSocket::create("tcp://0.0.0.0:0")
         )?;
 
-        let port = &format!("{}", &socket.endpoint)[14..]
-            .on_green()
-            .bold();
-        let decorated_communication = "Connect remote backend to dispatcher through port "
-            .bright_green()
-            .bold();
+        let port = &format!("{}", &socket.endpoint)[14..];
 
         // Communicate the portnumber that remote backend should connect to
-        remote_connction_notifier(&format!("{decorated_communication}{port}"));
+        remote_connection_notifier(port);
 
         Ok(
             Self {
