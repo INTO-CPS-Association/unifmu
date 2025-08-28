@@ -110,7 +110,7 @@ impl Drop for Fmi2Slave {
         };
 
         match self.dispatcher.send(&cmd) {
-            Ok(_) => self.logger.ok("Send free instance message to shut down backend"),
+            Ok(_) => self.logger.ok("Send free instance message to shut down backend."),
             Err(error) => self.logger.error(&format!(
                 "Freeing instance failed with error: {}.", error
             )),

@@ -23,7 +23,6 @@ use std::{
 };
 
 use prost::Message;
-use tracing::error;
 
 pub struct Fmi3Slave {
     dispatcher: Dispatcher,
@@ -92,10 +91,10 @@ impl Drop for Fmi3Slave {
         };
 
         match self.dispatcher.send(&cmd) {
-            Ok(_) => (),
-            Err(error) => error!(
-                "Freeing instance failed with error: {:?}.", error
-            ),
+            Ok(_) => self.logger.ok("Send free instance message to shut down backend."),
+            Err(error) => self.logger.error(&format!(
+                "Freeing instance failed with error: {}.", error
+            )),
         };
     }
 }
