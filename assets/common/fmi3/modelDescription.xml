@@ -7,6 +7,7 @@
     <Category name="logStatusError" />
     <Category name="logStatusFatal" />
     <Category name="logEvents" />
+    <Category name="logUnifmuMessages" description="Messages related to internal UniFMU functionality. Enabling this is required for distributed UniFMUs" />
   </LogCategories>
   
   <ModelVariables>
