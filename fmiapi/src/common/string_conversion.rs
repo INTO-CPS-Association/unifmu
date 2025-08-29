@@ -1,3 +1,5 @@
+//! Contains functions for converting C strings into Rust Strings.
+
 use std::{
     error::Error,
     ffi::{CStr, c_char},

@@ -1,3 +1,6 @@
+//! Contains the BackendSocket, a struct wrapping the ZeroMQ socket used to
+//! communicate with the backend.
+
 use std::{
     error::Error,
     fmt::{Debug, Display}

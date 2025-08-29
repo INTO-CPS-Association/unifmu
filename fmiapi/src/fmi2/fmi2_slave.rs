@@ -1,3 +1,6 @@
+//! This module contains definitions, trait implementations and related
+//! structures to the `Fmi2Slave` struct.
+
 use super::{
     fmi2_messages::{
         self,
@@ -25,6 +28,17 @@ use std::{
 
 use prost::Message;
 
+/// Struct representing an - and containing the references and subsctructures
+/// of - a singular FMU instance. In FMI2 palor this is the fmi2Component.
+/// 
+/// Th content and structure of this struct is undefined and unknown in the
+/// FMI2 standard by design, letting implementers defines and use it as needed
+/// for their specific usecase. In UniFMU's case this struct is the root
+/// identity of the FMU instance, with the actions of it's methods and contents
+/// of it's fields related to that instance's FMU functionality, including the
+/// behaviour defined in the user implemented backend. There is a one to one
+/// relationship between an instant of this struct and a UniFMU backend
+/// process.
 #[repr(C)]
 pub struct Fmi2Slave {
     /// Buffer storing the c-strings returned by `fmi2GetStrings`.
@@ -60,7 +74,21 @@ impl Fmi2Slave {
         }
     }
 
-    pub fn dispatch<R>(&mut self, command: &(impl Message + Debug)) -> Fmi2SlaveResult<R>
+    /// Dispatches a FMI command to the backend, handles any callbacks from the
+    /// backend during command execution, and returns the return message from
+    /// the backend after it has executed the command.
+    /// 
+    /// This method will return an error if it at any point gets and unexpected
+    /// return message from the backend, or if communication with the backend
+    /// is disrupted.
+    /// 
+    /// Currently only the 'logger' callback is handled (accepting and
+    /// emitting log events from the backend) (see page 21 fo the Fmi 2.0.5
+    /// specification, and the `common::logger` module for further details).
+    pub fn dispatch<R>(
+        &mut self,
+        command: &(impl Message + Debug)
+    ) -> Fmi2SlaveResult<R>
     where
         R: Message + ExpectableReturn<ReturnMessage>
     {
@@ -88,6 +116,8 @@ impl Fmi2Slave {
             .ok_or(Fmi2SlaveError::ReturnError)
     }
 
+    /// Logs the logging event contained in the Fmi2LogReturn message using the
+    /// Fmi2Slaves logger.
     fn handle_log_return(
         &mut self,
         log_return: fmi2_messages::Fmi2LogReturn

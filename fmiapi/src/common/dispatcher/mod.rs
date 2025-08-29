@@ -1,3 +1,5 @@
+//! Contains the `Dispatch` trait and structs implementing the trait.
+
 mod backend_subprocess;
 mod backend_socket;
 
@@ -44,13 +46,15 @@ impl Dispatcher {
 
     /// Creates a Dispatcher to a remote UNIFMU backend.
     /// 
-    /// The backend must be initialized seperately.
+    /// The backend must be initialized seperately. When the message queue
+    /// socket is ready, the function passed in `remote_connection_notifier`
+    /// will be called with the socket port number as the only parameter.
     pub fn remote(
-        remote_connction_notifier: impl Fn(&str)
+        remote_connection_notifier: impl Fn(&str)
     ) -> DispatcherResult<Self> {
         Ok(
             Self::Remote(
-                RemoteDispatcher::create(remote_connction_notifier)?
+                RemoteDispatcher::create(remote_connection_notifier)?
             )
         )
     }
@@ -206,6 +210,11 @@ impl Dispatch for RemoteDispatcher {
 /// Ensures that FMI commands can be dispatched.
 /// Gives the await_handshake() function using implemented methods.
 pub trait Dispatch {
+    /// Await the initial handshake from the backend.
+    /// 
+    /// This method includes a call to Self::recv() and thus can be followed by
+    /// a call to Self::send() or Self::send_and_recv() without error (if the
+    /// await_handshake() method itself returns without error).
     fn await_handshake(&mut self) -> DispatcherResult<()> {
         let response = self.recv::<HandshakeReply>()?;
         match HandshakeStatus::try_from(response.status) {
@@ -221,10 +230,25 @@ pub trait Dispatch {
         }
     }
 
+    /// Send a message to the backend.
+    /// 
+    /// A successfull call to Self::recv() or Self::send_and_recv() must have
+    /// been made previous to a call to Self::send(). If not, send() will fail.
     fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()>; 
 
+    /// Receive a response from the backend.
+    /// 
+    /// Communication with the backend must initiated by a call to
+    /// this function.
+    /// Any subsequent calls to this function must be preceded by a call to
+    /// Self::send(). Otherwise the recv() call will fail.
     fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R>;
 
+    /// Sends a message to - and receives a response from - the backend.
+    /// 
+    /// A successfull call to Self::recv() or Self::send_and_recv() must have
+    /// been made previous to a call to Self::send_and_recv(). If not,
+    /// send_and_recv() will fail.
     fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,

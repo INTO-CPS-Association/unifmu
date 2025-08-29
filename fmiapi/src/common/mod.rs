@@ -1,3 +1,5 @@
+//! Modules common to both FMI versions
+
 pub mod dispatcher;
 pub mod logger;
 pub mod protobuf_extensions;

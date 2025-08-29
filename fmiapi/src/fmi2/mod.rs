@@ -1,3 +1,6 @@
+//! This module contains the public FMI2 API along with private helper
+//! submodules. For details on the FMI2 API see the FMI2 Specification.
+
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 #![deny(unsafe_op_in_unsafe_fn)]

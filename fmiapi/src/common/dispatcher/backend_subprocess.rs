@@ -1,3 +1,6 @@
+//! Contains the BackendSubprocess, a struct wrapping a handle to the
+//! process containing the backend.
+
 use std::{
     error::Error,
     ffi::OsString,
@@ -62,6 +65,7 @@ impl BackendSubprocess {
 
         Ok(
             Self{
+                // TODO: This is a magic number. Is there a smarter way to define polling_time?
                 polling_time: Duration::from_millis(100),
                 subprocess
             }

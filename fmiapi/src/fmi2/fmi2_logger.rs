@@ -1,3 +1,6 @@
+//! Contains the Fmi2Logger struct, used to send log messages to the importer
+//! and the environment if build with the `fmt_logging` feature.
+
 use super::fmi2_types::{
     ComponentEnvironment,
     Fmi2CallbackLogger,
@@ -13,10 +16,18 @@ use crate::common::logger::{
 
 use std::ffi::CStr;
 
+/// Contains functionality for filtering and emitting FMI2 log events.
+/// 
+/// Primarily implements the `common::logger::Logger` trait for FMI2 types,
+/// sending log events to the implementer through the contained
+/// `Fmi2CallbackLogger` function pointer.
 pub struct Fmi2Logger {
     callback: Fmi2CallbackLogger,
     environment: *const ComponentEnvironment,
     filter: CategoryFilter<Fmi2LogCategory>,
+    /// This is stored as a Fmi2String instead of a normal Rust type, as it
+    /// is only ever used as a parameter of the call to `self.callback`,
+    /// which effectively contains a C function pointer.
     instance_name: Fmi2String
 }
 
@@ -52,6 +63,11 @@ impl Logger for Fmi2Logger {
         category: Fmi2LogCategory,
         message: &str
     ) {
+        // When enabled, the call to `fmt_log()` is - among other things -
+        // intended as way to gather logging when the importer is possibly
+        // failing.
+        // As such, it is called before checking if the importer is interested
+        // in the category of the log event.
         Self::fmt_log(message, &status);
 
         if !self.filter.enabled(&category) {

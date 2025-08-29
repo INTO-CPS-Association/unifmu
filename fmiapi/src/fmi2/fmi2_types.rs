@@ -1,5 +1,8 @@
-//! Type definitions for parameters in functions crossing the ABI boundary
-//! betweeen C and Rust.
+//! FMI2 specific type definitions, including types crossing the ABI boundary.
+//! For types with a one to one relation to types in the FMI2 specification
+//! their corrosponding names in the specification will be denoted as a
+//! comment on the type in the following form:
+//! FMI2 Spec name: <CORROSPONDING NAME>
 
 use super::fmi2_messages::{self, fmi2_return::ReturnMessage};
 
@@ -18,18 +21,32 @@ use std::{cmp::PartialEq, ffi::{c_char, c_double, c_int}, fmt::{Debug, Display}}
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+/// FMI2 Spec name: fmi2Real
 pub type Fmi2Real = c_double;
+
+/// FMI2 Spec name: fmi2Integer
 pub type Fmi2Integer = c_int;
+
 /// Should be checked for out of range value and converted to bool before use
 /// if given as a function argument.
+/// 
+/// FMI2 Spec name: fmi2Boolean
 pub type Fmi2Boolean = c_int;
+
+/// FMI2 Spec name: fmi2Char
 pub type Fmi2Char = c_char;
+
 /// Must be checked for null-ness and converted to Rust str before use if given
 /// as a function argument.
+/// 
+/// FMI2 Spec name: fmi2String
 pub type Fmi2String = *const Fmi2Char;
+
+/// FMI2 Spec name: fmi2Byte
 #[allow(dead_code)]
 pub type Fmi2Byte = c_char;
 
+/// FMI2 Spec name: fmi2Status
 #[repr(i32)]
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi2Status {
@@ -106,6 +123,8 @@ impl From<fmi2_messages::Fmi2Status> for Fmi2Status {
 /// 
 /// Representing it this way lets us have type safety without knowing the
 /// structure of the type.
+/// 
+/// FMI2 Spec name: componentEnvironment
 #[repr(C)]
 pub struct ComponentEnvironment {
     _data: [u8; 0]
@@ -113,6 +132,8 @@ pub struct ComponentEnvironment {
 
 /// Represents the function signature of the logging callback function passsed
 /// from the environment to the slave during instantiation.
+/// 
+/// FMI2 Spec name: fmi2CallbackFunctions.logger
 pub type Fmi2CallbackLogger = unsafe extern "C" fn(
     component_environment: *const ComponentEnvironment,
     instance_name: Fmi2String,
@@ -122,6 +143,7 @@ pub type Fmi2CallbackLogger = unsafe extern "C" fn(
     ...
 );
 
+/// See section 2.2.4 "Definition of Log Categories" in the FMI2 Spec.
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub enum Fmi2LogCategory {
@@ -211,14 +233,18 @@ impl From<String> for Fmi2LogCategory {
 
 //pub type Fmi2CallbackAllocateMemory = extern "C" fn(nobj: c_ulonglong, size: c_ulonglong);
 //pub type Fmi2CallbackFreeMemory = extern "C" fn(obj: *const c_void);
+
+/// FMI2 Spec name: fmi2CallbackFuntions.stepFinished
 pub type Fmi2StepFinished = unsafe extern "C" fn(
     component_environment: *const ComponentEnvironment,
     status: Fmi2Status
 );
 
 /// A set of callback functions provided by the environment
-/// Note that all but the 'logger' function are optional and may only be used if the appropriate
-/// flags are set in the 'modelDescription.xml' file
+/// Note that all but the 'logger' function are optional and may only be used
+/// if the appropriate flags are set in the 'modelDescription.xml' file.
+/// 
+/// FMI2 Spec name: fmi2CallbackFunctions
 #[repr(C)]
 pub struct Fmi2CallbackFunctions {
     pub logger: Fmi2CallbackLogger,
@@ -231,6 +257,7 @@ pub struct Fmi2CallbackFunctions {
     pub component_environment: ComponentEnvironment,
 }
 
+/// FMI2 Spec name: fmi2StatusKind
 #[allow(clippy::enum_variant_names)]
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
@@ -241,6 +268,7 @@ pub enum Fmi2StatusKind {
     Fmi2Terminated = 3,
 }
 
+/// FMI2 Spec name: fmi2Type
 #[repr(i32)]
 pub enum Fmi2Type {
     Fmi2ModelExchange = 0,
