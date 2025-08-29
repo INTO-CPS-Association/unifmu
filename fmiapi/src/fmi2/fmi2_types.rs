@@ -59,17 +59,6 @@ pub enum Fmi2Status {
 }
 
 impl LogStatus for Fmi2Status {
-    fn fmt_log_prefix(&self) -> String {
-        match self {
-            Self::Ok => String::from("[OK] "),
-            Self::Warning => String::from("[WARN] "),
-            Self::Error => String::from("[ERROR] "),
-            Self::Fatal => String::from("[FATAL] "),
-            Self::Pending => String::from("[PENDING] "),
-            Self::Discard => String::from("[DISCARD] ")
-        }
-    }
-
     fn ok() -> Self {
         Self::Ok
     }
@@ -86,6 +75,19 @@ impl LogStatus for Fmi2Status {
         Self::Fatal
     }
 
+    #[cfg(feature = "fmt_logging")]
+    fn fmt_log_prefix(&self) -> String {
+        match self {
+            Self::Ok => String::from("[OK] "),
+            Self::Warning => String::from("[WARN] "),
+            Self::Error => String::from("[ERROR] "),
+            Self::Fatal => String::from("[FATAL] "),
+            Self::Pending => String::from("[PENDING] "),
+            Self::Discard => String::from("[DISCARD] ")
+        }
+    }
+
+    #[cfg(feature = "fmt_logging")]
     fn is_ok(&self) -> bool {
         matches!(self, Self::Ok)
     }
