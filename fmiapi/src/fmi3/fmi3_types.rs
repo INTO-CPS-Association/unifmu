@@ -1,3 +1,9 @@
+//! FMI3 specific type definitions, including types crossing the ABI boundary.
+//! For types with a one to one relation to types in the FMI3 specification
+//! their corrosponding names in the specification will be denoted as a
+//! comment on the type in the following form:
+//! FMI3 Spec name: <CORROSPONDING NAME>
+
 use super::fmi3_messages::{self, fmi3_return::ReturnMessage};
 
 use crate::common::{
@@ -18,23 +24,40 @@ use std::{
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+/// FMI3 Spec name: fmi3Float32
 pub type Fmi3Float32 = f32;
+/// FMI3 Spec name: fmi3Float64
 pub type Fmi3Float64 = f64;
+/// FMI3 Spec name: fmi3Int8
 pub type Fmi3Int8 = i8;
+/// FMI3 Spec name: fmi3UInt8
 pub type Fmi3UInt8 = u8;
+/// FMI3 Spec name: fmi3Int16
 pub type Fmi3Int16 = i16;
+/// FMI3 Spec name: fmi3UInt16
 pub type Fmi3UInt16 = u16;
+/// FMI3 Spec name: fmi3Int32
 pub type Fmi3Int32 = i32;
+/// FMI3 Spec name: fmi3UInt32
 pub type Fmi3UInt32 = u32;
+/// FMI3 Spec name: fmi3Int64
 pub type Fmi3Int64 = i64;
+/// FMI3 Spec name: fmi3UInt64
 pub type Fmi3UInt64 = u64;
+/// FMI3 Spec name: fmi3Boolean
 pub type Fmi3Boolean = bool; // As of the 2018 edition of rust, Rust's bool is equal to the C bool.
+/// FMI3 Spec name: fmi3Char
 pub type Fmi3Char = c_char;
+/// FMI3 Spec name: fmi3String
 pub type Fmi3String = *const Fmi3Char;
+/// FMI3 Spec name: fmi3Byte
 pub type Fmi3Byte = u8;
+/// FMI3 Spec name: fmi3Binary
 pub type Fmi3Binary = *const Fmi3Byte;
+/// FMI3 Spec name: fmi3Clock
 pub type Fmi3Clock = bool; // As of the 2018 edition of rust, Rust's bool is equal to the C bool.
 
+/// FMI3 Spec name: fmi3Status
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi3Status {
@@ -103,6 +126,7 @@ impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
     }
 }
 
+/// FMI3 Spec name: fmi3IntervalQualifier
 #[allow(clippy::enum_variant_names)]
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
@@ -112,6 +136,7 @@ pub enum Fmi3IntervalQualifier {
     Fmi3IntervalChanged = 2,
 }
 
+/// FMI3 Spec name: fmi3DependencyKind
 #[allow(clippy::enum_variant_names)]
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
@@ -136,15 +161,20 @@ pub enum Fmi3DependencyKind {
 /// 
 /// Representing it this way lets us have type safety without knowing the
 /// structure of the type.
+/// 
+/// FMI3 Spec name: fmi3InstanceEnvironment
 #[repr(C)]
 pub struct Fmi3InstanceEnvironment {
     _data: [u8; 0]
 }
 
+/// FMI3 Spec name: fmi3ValueReference
 pub type Fmi3ValueReference = u32;
 
 /// Represents the function signature of the logging callback function passsed
 /// from the environment to the slave during instantiation.
+/// 
+/// FMI3 Spec name: fmi3LogMessageCallback
 pub type Fmi3LogMessageCallback = unsafe extern "C" fn(
     instance_environment: *const Fmi3InstanceEnvironment,
     status: Fmi3Status,
@@ -152,6 +182,7 @@ pub type Fmi3LogMessageCallback = unsafe extern "C" fn(
     message: Fmi3String
 );
 
+/// See section "2.4.5. LogCategories" of the FMI3 Specification.
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub enum Fmi3LogCategory {
@@ -235,6 +266,8 @@ impl From<String> for Fmi3LogCategory {
 
 /// NOT CURRENTLY FULLY SUPPORTED!
 /// ~ "This is not my final form" ~
+/// 
+/// FMI3 Spec name: fmi3IntermediateUpdateCallback
 pub type Fmi3IntermediateUpdateCallback = unsafe extern "C" fn(
     instance_environment: *const Fmi3InstanceEnvironment,
     intermediate_update_time: Fmi3Float64,

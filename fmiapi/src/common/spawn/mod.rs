@@ -1,3 +1,8 @@
+//! Contains the `spawn_slave()` function, which initiates the UniFMU backend
+//! and returns a `Dispatcher` for further communication with the backend.
+//! 
+//! Also contains other types related to spawning.
+
 mod launch_config;
 
 use launch_config::{BackendLocation, ConfigError, LaunchConfig};
@@ -10,9 +15,15 @@ use std::{
     path::Path,
 };
 
+/// Initiates the UniFMU backend based on the contents of the `launch.toml`
+/// config file. Returns an `Ok(Dispatcher)` on successful initiation.
+/// 
+/// User action may be required in the case that the backend is remote.
+/// In this case the `remote_connection_notifier` will be called with the
+/// port number that the Rust layer will be listening on.
 pub fn spawn_slave(
     resource_path: &Path,
-    remote_connction_notifier: impl Fn(&str)
+    remote_connection_notifier: impl Fn(&str)
 ) -> SpawnResult<Dispatcher> {
     let config = LaunchConfig::create(resource_path)?;
 
@@ -21,7 +32,7 @@ pub fn spawn_slave(
             resource_path,
             &config.get_launch_command()?
         ),
-        BackendLocation::Remote => Dispatcher::remote(remote_connction_notifier)
+        BackendLocation::Remote => Dispatcher::remote(remote_connection_notifier)
     };
 
     let mut dispatcher = match dispatcher_result {

@@ -1,3 +1,7 @@
+//! Contains the `CategoryFilter`, an enum that contains lists of LogCategories,
+//! and determines whether they are enabled dependent on the `CategoryFilter`'s
+//! variant.
+
 use super::log_category::LogCategory;
 
 use std::collections::HashSet;

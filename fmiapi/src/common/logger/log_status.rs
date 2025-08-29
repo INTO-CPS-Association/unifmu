@@ -1,3 +1,4 @@
+/// Extended logging related functionality for FMIX fmiXStatus'es.
 pub trait LogStatus {
     fn ok() -> Self;
     fn warning() -> Self;

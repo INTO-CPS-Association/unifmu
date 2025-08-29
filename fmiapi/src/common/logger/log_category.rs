@@ -1,5 +1,6 @@
 use std::{fmt::{Debug, Display}, hash::Hash};
 
+/// Extended logging related functionality for FMIX logCategories.
 pub trait LogCategory: for <'a> From<&'a str> + Default + Debug + Display + Eq + Hash {
     fn str_name(&self) -> &str;
 

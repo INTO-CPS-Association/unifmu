@@ -1,3 +1,6 @@
+//! Contains the Fmi3Logger struct, used to send log messages to the importer
+//! and the environment if build with the `fmt_logging` feature.
+
 use super::fmi3_types::{
     Fmi3InstanceEnvironment,
     Fmi3LogMessageCallback,
@@ -12,6 +15,11 @@ use crate::common::logger::{
 
 use std::ffi::CStr;
 
+/// Contains functionality for filtering and emitting FMI3 log events.
+/// 
+/// Primarily implements the `common::logger::Logger` trait for FMI3 types,
+/// sending log events to the implementer through the contained
+/// `Fmi3LogMessageCallback` function pointer.
 pub struct Fmi3Logger {
     callback: Fmi3LogMessageCallback,
     environment: *const Fmi3InstanceEnvironment,
@@ -48,6 +56,11 @@ impl Logger for Fmi3Logger {
         category: Fmi3LogCategory,
         message: &str
     ) {
+        // When enabled, the call to `fmt_log()` is - among other things -
+        // intended as way to gather logging when the importer is possibly
+        // failing.
+        // As such, it is called before checking if the importer is interested
+        // in the category of the log event.
         Self::fmt_log(message, &status);
 
         if !self.filter.enabled(&category) {

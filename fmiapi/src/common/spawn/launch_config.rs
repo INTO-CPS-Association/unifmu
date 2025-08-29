@@ -1,3 +1,6 @@
+//! Contains the LaunchConfig, a struct representing the `launch.toml` file
+//! present in the FMU, along with related types.
+
 use std::{
     error::Error,
     fmt::{Debug, Display},
@@ -14,6 +17,7 @@ pub enum BackendLocation {
     Remote,
 }
 
+/// Represents the parsed form of a `launch.toml` config file.
 #[derive(Debug, Deserialize)]
 pub struct LaunchConfig {
     #[serde(default)]
@@ -24,6 +28,9 @@ pub struct LaunchConfig {
 }
 
 impl LaunchConfig {
+    /// Looks for a `launch.toml` file in `resource_path`, tries to parse it,
+    /// and returns a `Ok(LaunchConfig)` with the parsed contents on a
+    /// succesful parse.
     pub fn create(resource_path: &Path) -> ConfigResult<LaunchConfig> {
         let config_path = resource_path.join("launch.toml");
         println!("Reading configuration file at path '{:?}'",config_path);
@@ -42,6 +49,8 @@ impl LaunchConfig {
         Ok(config)
     }
 
+    /// Returns the launch command for the current operating system, if present
+    /// in the `LaunchConfig`.
     pub fn get_launch_command(&self) -> ConfigResult<Vec<String>> {
         Ok(
             match std::env::consts::OS {
