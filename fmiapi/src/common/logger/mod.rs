@@ -8,8 +8,6 @@ use category_filter::CategoryFilter;
 use log_category::LogCategory;
 use log_status::LogStatus;
 
-use colored::Colorize;
-
 /// A `Logger` can send log events with LogCategories and LogStatuses to the
 /// importer, and to the environment if the module is compiled with the 
 /// "fmt_logging" feature flag set.
@@ -58,9 +56,8 @@ where
             Self::Status::ok(),
             Self::Category::unifmu_message(),
             &format!(
-                "{} Connect remote backend to dispatcher through port {}",
-                "ACTION REQUIRED ~".yellow().bold(),
-                port_str.green().bold()
+                "ACTION REQUIRED ~ Connect remote backend to dispatcher through port: {}",
+                port_str
             )
         );
     }

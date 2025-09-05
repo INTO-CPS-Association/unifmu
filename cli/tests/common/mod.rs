@@ -77,7 +77,7 @@ pub fn fmu_python_test(
 /// message, the FMU awaits a handshake from a local connection through the
 /// given port. The message may be send multiple times per single instantiation
 /// depending on the logging feature that `fmiapi` was compiled with.
-const REMOTE_PORT_CONNECTION_MESSAGE_STUB: &str = "Connect remote backend to dispatcher through port ";
+const REMOTE_PORT_CONNECTION_MESSAGE_STUB: &str = "Connect remote backend to dispatcher through port: ";
 
 /// Pass the Distributed FMU to the given test function in a python subprocess,
 /// and starts any private backends when their FMU is instantiated.

@@ -14,7 +14,6 @@ crate-type = ["rlib", "cdylib"]
 [dependencies]
 bytes = "1"
 cfg-if = "1"
-colored = "3"
 libc = "0.2"
 num_enum = "0.7"
 prost = "0.14"
