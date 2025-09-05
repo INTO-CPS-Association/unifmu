@@ -2,10 +2,7 @@
 //! process containing the backend.
 
 use std::{
-    error::Error,
-    ffi::OsString,
-    fmt::{Debug, Display},
-    path::Path
+    error::Error, ffi::OsString, fmt::{Debug, Display}, io::Read, path::Path
 };
 
 use subprocess::{ExitStatus, Popen, PopenConfig, PopenError};
@@ -51,6 +48,8 @@ impl BackendSubprocess {
             PopenConfig {
                 cwd: Some(resource_path.as_os_str().to_owned()),
                 env: Some(env_vars),
+                stderr: subprocess::Redirection::Merge,
+                stdout: subprocess::Redirection::Pipe,
                 ..Default::default()
             },
         ) {
@@ -80,7 +79,11 @@ impl BackendSubprocess {
         loop {
             match self.subprocess.poll() {
                 Some(exit_status) => {
-                    return Err(SubprocessError::UnexpectedExit(exit_status))
+                    let mut output_dump = String::new();
+                    if let Some(file) = &mut self.subprocess.stdout {
+                        let _ = file.read_to_string(&mut output_dump);
+                    }
+                    return Err(SubprocessError::UnexpectedExit(exit_status, output_dump))
                 },
                 None => {
                     sleep(self.polling_time).await; // Is magic number.
@@ -94,7 +97,7 @@ type SubprocessResult<T> = Result<T, SubprocessError>;
 
 #[derive(Debug)]
 pub enum SubprocessError {
-    UnexpectedExit(ExitStatus),
+    UnexpectedExit(ExitStatus, String),
     NoPortGiven,
     UnExecutableCommand(String, PopenError)
 }
@@ -102,7 +105,7 @@ pub enum SubprocessError {
 impl Display for SubprocessError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::UnexpectedExit(exit_status) => {
+            Self::UnexpectedExit(exit_status, output_dump) => {
                 let clarification = match exit_status {
                     ExitStatus::Exited(code) => format!(
                         "with exit status {}", code
@@ -117,7 +120,12 @@ impl Display for SubprocessError {
                         "for an undeterminable reason"
                     )
                 };
-                write!(f, "backend exited unexpectedly {}", clarification)
+                let backend_output_message = if output_dump.is_empty() {
+                    String::from(". Backend emitted no output before exit")
+                } else {
+                    format!(". Backend emitted the following output before exit: \n{}", output_dump)
+                };
+                write!(f, "backend exited unexpectedly {}{}", clarification, backend_output_message)
             }
             Self::NoPortGiven => {
                 write!(f, "the endpoint given to for the backend to connect to didn't have a portnumber")
