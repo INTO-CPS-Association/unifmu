@@ -730,13 +730,21 @@ class Model:
         return Fmi3Status.ok
 
     def _get_value(self, references):
-
         values = []
         for r in references:
             if r in self.clocked_variables:
                 if not ((self.state == FMIState.FMIEventModeState) or (self.state == FMIState.FMIInitializationModeState)):
-                    return Fmi3Status.error
-            values.append(getattr(self, self.all_references[r]))
+                    self.log(
+                        f"Tried to get clocked variable #{r}# when neither in event mode nor in initialization mode.",
+                        Fmi3Status.error,
+                        "logStatusError"
+                    )
+                    return Fmi3Status.error, values
+            value = getattr(self, self.all_references[r])
+            if isinstance(value, list):
+                values.extend(value)
+            else:
+                values.append(value)
 
         return Fmi3Status.ok, values
 
