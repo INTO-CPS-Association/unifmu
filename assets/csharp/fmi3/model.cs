@@ -902,17 +902,33 @@ public class Model
 
     public (Fmi3Status, IEnumerable<T>) GetValueReflection<T>(IEnumerable<uint> references)
     {
+        var status = Fmi3Status.Fmi3Ok;
         var values = new List<T>(references.Count());
         foreach (var r in references)
         {
             if (clocked_variables.ContainsKey(r))
             {
                 if (!(state.HasFlag(FMIState.FMIEventModeState) || state.HasFlag(FMIState.FMIInitializationModeState)))
-                    return (Fmi3Status.Fmi3Error, null);
+                {
+                    this.Log(
+                        $"Tried to get clocked variable #{r}# when neither in event mode nor in initialization mode.",
+                        Fmi3Status.Fmi3Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Fmi3Warning;
+                }
             }
-            values.Add((T)this.all_references[r].GetValue(this));
+            var value = this.all_references[r].GetValue(this);
+            if (value is IEnumerable<T>)
+            {
+                values.AddRange((IEnumerable<T>)value);
+            }
+            else
+            {
+                values.Add((T)value);
+            }
         }
-        return (Fmi3Status.Fmi3Ok, values);
+        return (status, values);
     }
 
     [Flags]
