@@ -736,7 +736,7 @@ class Model:
             if r in self.clocked_variables:
                 if not ((self.state == FMIState.FMIEventModeState) or (self.state == FMIState.FMIInitializationModeState)):
                     self.log(
-                        f"Tried to get clocked variable #{r}# when neither in event mode nor in initialization mode.",
+                        f"Accessed clocked variable #{r}# when neither in event mode nor in initialization mode.",
                         Fmi3Status.warning,
                         "logStatusWarning"
                     )

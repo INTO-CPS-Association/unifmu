@@ -911,7 +911,7 @@ public class Model
                 if (!(state.HasFlag(FMIState.FMIEventModeState) || state.HasFlag(FMIState.FMIInitializationModeState)))
                 {
                     this.Log(
-                        $"Tried to get clocked variable #{r}# when neither in event mode nor in initialization mode.",
+                        $"Accessed clocked variable #{r}# when neither in event mode nor in initialization mode.",
                         Fmi3Status.Fmi3Warning,
                         "logStatusWarning"
                     );

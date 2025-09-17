@@ -817,23 +817,37 @@ public class Model implements Serializable {
     /* Helpers */
 
     private <T> Fmi3GetValuePair<T> GetValue(Iterable<Integer> references) throws Exception {
-        Fmi3Status status;
+        Fmi3Status status = Fmi3Status.OK;
         var values = new ArrayList<T>();
+
         for (var ref : references) {
-            var field = (T) this.map_to_attributes.get(ref);
+            var field = this.map_to_attributes.get(ref);
+
             if (this.clocked_variables.contains(field)){
                 if (!((this.state == FMIState.FMIEventModeState) || (this.state == FMIState.FMIInitializationModeState)))
                 {
-                    return new Fmi3GetValuePair<T>(Fmi3Status.Error, values);
+                    this.log(
+                        String.format(
+                            "Accessed clocked variable #%s# when neither in event mode nor in initialization mode.",
+                            ref
+                        ),
+                        Fmi3Status.Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Warning;
                 }
             }
-            @SuppressWarnings("unchecked")
-            var val = (T) this.map_to_attributes.get(ref).get(this);
-            values.add(val);
+
+            var val = field.get(this);
+
+            if (val.getClass().isArray()) {
+                values.addAll(Arrays.asList((T[]) val));
+            } else {
+                values.add((T) val);
+            }
         }
 
-        return new Fmi3GetValuePair<T>(Fmi3Status.OK, values);
-
+        return new Fmi3GetValuePair<T>(status, values);
     }
 
     private <T> Fmi3Status SetValue(Iterable<Integer> references, Iterable<T> values) throws Exception {        
