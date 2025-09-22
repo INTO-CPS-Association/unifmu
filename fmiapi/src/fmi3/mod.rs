@@ -507,15 +507,18 @@ pub unsafe extern "C" fn fmi3GetFloat32(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetFloat32Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault() 
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -574,15 +577,18 @@ pub unsafe extern "C" fn fmi3GetFloat64(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetFloat64Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status =Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+
+            status
         }
         Err(error) => {
             instance.logger.error(
@@ -642,20 +648,23 @@ pub unsafe extern "C" fn fmi3GetInt8(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetInt8Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
+            let status = Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    instance.logger.error("Unknown status returned from backend.");
+                    Fmi3Status::Fmi3Fatal
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
                 let values: Vec<i8> = result.values
                     .iter()
                     .map(|v| *v as i8)
                     .collect();
 
                 values_out.copy_from_slice(&values);
-            };
+            }
 
-            Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            })
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -714,20 +723,23 @@ pub unsafe extern "C" fn fmi3GetUInt8(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetUInt8Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
+            let status = Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    instance.logger.error("Unknown status returned from backend.");
+                    Fmi3Status::Fmi3Fatal
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
                 let values: Vec<u8> = result.values
                     .iter()
                     .map(|v| *v as u8)
                     .collect();
 
                 values_out.copy_from_slice(&values);
-            };
+            }
 
-            Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            })
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -786,20 +798,23 @@ pub unsafe extern "C" fn fmi3GetInt16(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetInt16Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
+            let status = Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    instance.logger.error("Unknown status returned from backend.");
+                    Fmi3Status::Fmi3Fatal
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
                 let values: Vec<i16> = result.values
                     .iter()
                     .map(|v| *v as i16)
                     .collect();
 
                 values_out.copy_from_slice(&values);
-            };
+            }
 
-            Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            })
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -858,20 +873,23 @@ pub unsafe extern "C" fn fmi3GetUInt16(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetUInt16Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
+            let status = Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    instance.logger.error("Unknown status returned from backend.");
+                    Fmi3Status::Fmi3Fatal
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
                 let values: Vec<u16> = result.values
                     .iter()
                     .map(|v| *v as u16)
                     .collect();
 
                 values_out.copy_from_slice(&values);
-            };
-
-            Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            })
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -930,15 +948,18 @@ pub unsafe extern "C" fn fmi3GetInt32(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetInt32Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -997,15 +1018,18 @@ pub unsafe extern "C" fn fmi3GetUInt32(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetUInt32Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1064,15 +1088,18 @@ pub unsafe extern "C" fn fmi3GetInt64(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetInt64Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1131,15 +1158,18 @@ pub unsafe extern "C" fn fmi3GetUInt64(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetUInt64Return>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1198,15 +1228,18 @@ pub unsafe extern "C" fn fmi3GetBoolean(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetBooleanReturn>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1261,7 +1294,14 @@ pub unsafe extern "C" fn fmi3GetString(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetStringReturn>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
+            let status = Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    instance.logger.error("Unknown status returned from backend.");
+                    Fmi3Status::Fmi3Fatal
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
                 let conversion_result: Result<Vec<CString>, NulError> = result
                     .values
                     .iter()
@@ -1287,13 +1327,9 @@ pub unsafe extern "C" fn fmi3GetString(
                         );
                     }
                 }
-            };
-
-            Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            })
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1325,7 +1361,14 @@ pub unsafe extern "C" fn fmi3GetBinary(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetBinaryReturn>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
+            let status = Fmi3Status::try_from(result.status)
+                .unwrap_or_else(|_| {
+                    instance.logger.error("Unknown status returned from backend.");
+                    Fmi3Status::Fmi3Fatal
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
                 let compatible_value_sizes: Vec<size_t> = result.
                 values
                 .clone()
@@ -1361,13 +1404,9 @@ pub unsafe extern "C" fn fmi3GetBinary(
                     }
                 }
 
-            };           
+            }
             
-            Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-                })
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1426,15 +1465,18 @@ pub unsafe extern "C" fn fmi3GetClock(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetClockReturn>(&cmd) {
         Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault()
+            && !result.values.is_empty() {
+                values_out.copy_from_slice(&result.values);
+            }
+            
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1500,26 +1542,30 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetIntervalDecimalReturn>(&cmd) {
         Ok(result) => {
-            if !result.intervals.is_empty() {
-                intervals_out.copy_from_slice(&result.intervals);
-            };
-
-            if !result.qualifiers.is_empty() {
-                let Ok(qualifiers) = result.qualifiers.into_iter()
-                    .map(Fmi3IntervalQualifier::try_from)
-                    .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
-                else {
-                    instance.logger.error("Unknown interval qualifier returned from backend.");
-                    return Fmi3Status::Fmi3Fatal
-                };
-                qualifiers_out.copy_from_slice(qualifiers.as_slice());
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault() {
+                if !result.intervals.is_empty() {
+                    intervals_out.copy_from_slice(&result.intervals);
+                }
+
+                if !result.qualifiers.is_empty() {
+                    let Ok(qualifiers) = result.qualifiers.into_iter()
+                        .map(Fmi3IntervalQualifier::try_from)
+                        .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
+                    else {
+                        instance.logger.error("Unknown interval qualifier returned from backend.");
+                        return Fmi3Status::Fmi3Fatal
+                    };
+                    qualifiers_out.copy_from_slice(qualifiers.as_slice());
+                }
+            }
+
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1565,30 +1611,34 @@ pub extern "C" fn fmi3GetIntervalFraction(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetIntervalFractionReturn>(&cmd) {
         Ok(result) => {
-            if !result.counters.is_empty() {
-                counters_out.copy_from_slice(&result.counters);
-            };
-
-            if !result.resolutions.is_empty() {
-                resolutions_out.copy_from_slice(&result.resolutions);
-            };
-
-            if !result.qualifiers.is_empty() {
-                let Ok(qualifiers) = result.qualifiers.into_iter()
-                    .map(Fmi3IntervalQualifier::try_from)
-                    .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
-                else {
-                    instance.logger.error("Unknown interval qualifier returned from backend.");
-                    return Fmi3Status::Fmi3Fatal
-                };
-                qualifiers_out.copy_from_slice(qualifiers.as_slice());
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault() {
+                if !result.counters.is_empty() {
+                    counters_out.copy_from_slice(&result.counters);
+                }
+
+                if !result.resolutions.is_empty() {
+                    resolutions_out.copy_from_slice(&result.resolutions);
+                }
+
+                if !result.qualifiers.is_empty() {
+                    let Ok(qualifiers) = result.qualifiers.into_iter()
+                        .map(Fmi3IntervalQualifier::try_from)
+                        .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
+                    else {
+                        instance.logger.error("Unknown interval qualifier returned from backend.");
+                        return Fmi3Status::Fmi3Fatal
+                    };
+                    qualifiers_out.copy_from_slice(qualifiers.as_slice());
+                }
+            }
+
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1622,15 +1672,18 @@ pub extern "C" fn fmi3GetShiftDecimal(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetShiftDecimalReturn>(&cmd) {
         Ok(result) => {
-            if !result.shifts.is_empty() {
-                shifts_out.copy_from_slice(&result.shifts);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault() 
+            && !result.shifts.is_empty() {
+                shifts_out.copy_from_slice(&result.shifts);
+            }
+
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -1671,19 +1724,23 @@ pub extern "C" fn fmi3GetShiftFraction(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetShiftFractionReturn>(&cmd) {
         Ok(result) => {
-            if !result.counters.is_empty() {
-                counters_out.copy_from_slice(&result.counters);
-            };
-
-            if !result.resolutions.is_empty() {
-                resolutions_out.copy_from_slice(&result.resolutions);
-            };
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error("Unknown status returned from backend.");
                     Fmi3Status::Fmi3Fatal
-            })
+            });
+
+            if !status.is_fault() {
+                if !result.counters.is_empty() {
+                    counters_out.copy_from_slice(&result.counters);
+                }
+
+                if !result.resolutions.is_empty() {
+                    resolutions_out.copy_from_slice(&result.resolutions);
+                }
+            }
+
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
@@ -2996,7 +3053,7 @@ pub extern "C" fn fmi3GetFMUState(
 
     if instance.is_null() {
         // Note that this error message can never reach the importer as the
-        // slave includes the logging callback. This is only visible if the
+        // slave contains the logging callback. This is only visible if the
         // api has been compiled with the 'fmt_logging' feature, and then
         // only on the stderr of the process containing the FMU.
         Fmi3Logger::fmt_log(
@@ -3021,26 +3078,30 @@ pub extern "C" fn fmi3GetFMUState(
 
     match instance.dispatch::<fmi3_messages::Fmi3SerializeFmuStateReturn>(&cmd) {
         Ok(result) => {
-            unsafe {
-                match (*state).as_mut() {
-                    Some(state_ptr) => {
-                        let state = &mut *state_ptr;
-                        state.bytes = result.state;
-                    }
-                    None => {
-                        let new_state = Box::new(SlaveState::new(&result.state));
-                        *state = Box::into_raw(new_state);
-                    }
-                }
-            }
-
-            Fmi3Status::try_from(result.status)
+            let status = Fmi3Status::try_from(result.status)
                 .unwrap_or_else(|_| {
                     instance.logger.error(&format!(
                         "fmi3GetFMUstate: Unknown status ({:?}) returned from backend.", result.status
                     ));
                     Fmi3Status::Fmi3Fatal
-                })
+            });
+
+            if !status.is_fault() {
+                unsafe {
+                    match (*state).as_mut() {
+                        Some(state_ptr) => {
+                            let state = &mut *state_ptr;
+                            state.bytes = result.state;
+                        }
+                        None => {
+                            let new_state = Box::new(SlaveState::new(&result.state));
+                            *state = Box::into_raw(new_state);
+                        }
+                    }
+                }
+            }
+
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(

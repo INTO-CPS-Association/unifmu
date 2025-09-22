@@ -59,13 +59,19 @@ pub type Fmi3Clock = bool; // As of the 2018 edition of rust, Rust's bool is equ
 
 /// FMI3 Spec name: fmi3Status
 #[repr(i32)]
-#[derive(Debug, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 pub enum Fmi3Status {
     Fmi3OK = 0,
     Fmi3Warning = 1,
     Fmi3Discard = 2,
     Fmi3Error = 3,
     Fmi3Fatal = 4,
+}
+
+impl Fmi3Status {
+    fn is_fault(&self) -> bool {
+        return self > Self::Fmi3Warning
+    }
 }
 
 impl LogStatus for Fmi3Status {
