@@ -69,8 +69,10 @@ pub enum Fmi3Status {
 }
 
 impl Fmi3Status {
-    fn is_fault(&self) -> bool {
-        return self > Self::Fmi3Warning
+    /// Returns true if the status signifies that the values of any related
+    /// output variables are undefined.
+    pub fn output_is_undefined(&self) -> bool {
+        *self > Self::Fmi3Warning
     }
 }
 
@@ -110,19 +112,13 @@ impl LogStatus for Fmi3Status {
 
 impl From<fmi3_messages::Fmi3StatusReturn> for Fmi3Status {
     fn from(src: fmi3_messages::Fmi3StatusReturn) -> Self {
-        match src.status() {
-            fmi3_messages::Fmi3Status::Fmi3Ok => Self::Fmi3OK,
-            fmi3_messages::Fmi3Status::Fmi3Warning => Self::Fmi3Warning,
-            fmi3_messages::Fmi3Status::Fmi3Discard => Self::Fmi3Discard,
-            fmi3_messages::Fmi3Status::Fmi3Error => Self::Fmi3Error,
-            fmi3_messages::Fmi3Status::Fmi3Fatal => Self::Fmi3Fatal,
-        }
+        src.status().into()
     }
 }
 
 impl From<fmi3_messages::Fmi3Status> for Fmi3Status {
-    fn from(s: fmi3_messages::Fmi3Status) -> Self {
-        match s {
+    fn from(src: fmi3_messages::Fmi3Status) -> Self {
+        match src {
             fmi3_messages::Fmi3Status::Fmi3Ok => Self::Fmi3OK,
             fmi3_messages::Fmi3Status::Fmi3Warning => Self::Fmi3Warning,
             fmi3_messages::Fmi3Status::Fmi3Discard => Self::Fmi3Discard,

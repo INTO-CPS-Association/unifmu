@@ -513,7 +513,7 @@ pub unsafe extern "C" fn fmi3GetFloat32(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault() 
+            if !status.output_is_undefined() 
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -583,7 +583,7 @@ pub unsafe extern "C" fn fmi3GetFloat64(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -654,7 +654,7 @@ pub unsafe extern "C" fn fmi3GetInt8(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 let values: Vec<i8> = result.values
                     .iter()
@@ -729,7 +729,7 @@ pub unsafe extern "C" fn fmi3GetUInt8(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 let values: Vec<u8> = result.values
                     .iter()
@@ -804,7 +804,7 @@ pub unsafe extern "C" fn fmi3GetInt16(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 let values: Vec<i16> = result.values
                     .iter()
@@ -879,7 +879,7 @@ pub unsafe extern "C" fn fmi3GetUInt16(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 let values: Vec<u16> = result.values
                     .iter()
@@ -954,7 +954,7 @@ pub unsafe extern "C" fn fmi3GetInt32(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -1024,7 +1024,7 @@ pub unsafe extern "C" fn fmi3GetUInt32(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -1094,7 +1094,7 @@ pub unsafe extern "C" fn fmi3GetInt64(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -1164,7 +1164,7 @@ pub unsafe extern "C" fn fmi3GetUInt64(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -1234,7 +1234,7 @@ pub unsafe extern "C" fn fmi3GetBoolean(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -1300,7 +1300,7 @@ pub unsafe extern "C" fn fmi3GetString(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 let conversion_result: Result<Vec<CString>, NulError> = result
                     .values
@@ -1367,7 +1367,7 @@ pub unsafe extern "C" fn fmi3GetBinary(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 let compatible_value_sizes: Vec<size_t> = result.
                 values
@@ -1471,7 +1471,7 @@ pub unsafe extern "C" fn fmi3GetClock(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault()
+            if !status.output_is_undefined()
             && !result.values.is_empty() {
                 values_out.copy_from_slice(&result.values);
             }
@@ -1548,7 +1548,7 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault() {
+            if !status.output_is_undefined() {
                 if !result.intervals.is_empty() {
                     intervals_out.copy_from_slice(&result.intervals);
                 }
@@ -1617,7 +1617,7 @@ pub extern "C" fn fmi3GetIntervalFraction(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault() {
+            if !status.output_is_undefined() {
                 if !result.counters.is_empty() {
                     counters_out.copy_from_slice(&result.counters);
                 }
@@ -1678,7 +1678,7 @@ pub extern "C" fn fmi3GetShiftDecimal(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault() 
+            if !status.output_is_undefined() 
             && !result.shifts.is_empty() {
                 shifts_out.copy_from_slice(&result.shifts);
             }
@@ -1730,7 +1730,7 @@ pub extern "C" fn fmi3GetShiftFraction(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault() {
+            if !status.output_is_undefined() {
                 if !result.counters.is_empty() {
                     counters_out.copy_from_slice(&result.counters);
                 }
@@ -3086,7 +3086,7 @@ pub extern "C" fn fmi3GetFMUState(
                     Fmi3Status::Fmi3Fatal
             });
 
-            if !status.is_fault() {
+            if !status.output_is_undefined() {
                 unsafe {
                     match (*state).as_mut() {
                         Some(state_ptr) => {
