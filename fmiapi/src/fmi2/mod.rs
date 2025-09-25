@@ -125,38 +125,40 @@ pub unsafe extern "C" fn fmi2Instantiate(
     }
 
     let instance_name = match c2non_empty_s(instance_name) {
-        Ok(name) => name,
         Err(error) => {
             logger.error(&format!(
                 "Could not parse instance_name; {}", error
             ));
             return None
         }
+        Ok(name) => name
     };
     
     let fmu_guid = match c2s(fmu_guid) {
-        Ok(guid) => guid,
         Err(error) => {
             logger.error(&format!(
                 "Could not convert fmu_guid to String; {}", error
             ));
             return None
         }
+        Ok(guid) => guid
     };
 
     let fmu_resource_location = match c2non_empty_s(fmu_resource_location) {
-        Ok(location) => location,
         Err(error) => {
             logger.error(&format!(
                 "Could not parse fmu_resource_location; {}", error
             ));
             return None
         }
+        Ok(location) => location
     };
 
     let resource_uri = match Url::parse(&fmu_resource_location) {
         Err(error) => {
-            logger.error(&format!("Unable to parse argument 'fmu_resource_location' as url; {}.", error));
+            logger.error(&format!(
+                "Unable to parse argument 'fmu_resource_location' as url; {}.", error
+            ));
             return None;
         }
         Ok(url) => url
