@@ -8,7 +8,7 @@
     <Category name="logStatusFatal" />
     <Category name="logStatusPending" />
     <Category name="logAll" />
-    <Category name="logUnifmuMessages" description="Messages related to internal UniFMU functionality. Enabling this is required for distributed UniFMUs" />
+    <Category name="logUnifmuMessages" description="Messages related to internal UniFMU functionality. Enabling this category is required for distributed UniFMUs." />
   </LogCategories>
   <ModelVariables>
     <!--Index of variable = "1"-->
