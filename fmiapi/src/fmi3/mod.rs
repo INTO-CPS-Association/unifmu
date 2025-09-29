@@ -558,10 +558,6 @@ pub unsafe extern "C" fn fmi3GetFloat32(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetFloat32(
             fmi3_messages::Fmi3GetFloat32 { value_references }
@@ -574,6 +570,9 @@ pub unsafe extern "C" fn fmi3GetFloat32(
 
             if !status.output_is_undefined() {
                 if !reply.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
                     values_out.copy_from_slice(&reply.values);
                 } else {
                     instance.logger.warning("fmi3GetFloat32 returned no values.");
@@ -628,10 +627,6 @@ pub unsafe extern "C" fn fmi3GetFloat64(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetFloat64(
             fmi3_messages::Fmi3GetFloat64 { value_references }
@@ -644,6 +639,9 @@ pub unsafe extern "C" fn fmi3GetFloat64(
 
             if !status.output_is_undefined() {
                 if !reply.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
                     values_out.copy_from_slice(&reply.values);
                 } else {
                     instance.logger.warning("fmi3GetFloat64 returned no values.");
@@ -699,10 +697,6 @@ pub unsafe extern "C" fn fmi3GetInt8(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt8(
             fmi3_messages::Fmi3GetInt8 { value_references }
@@ -719,6 +713,10 @@ pub unsafe extern "C" fn fmi3GetInt8(
                         .iter()
                         .map(|v| *v as i8)
                         .collect();
+
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
 
                     values_out.copy_from_slice(&values);
                 } else {
@@ -774,10 +772,6 @@ pub unsafe extern "C" fn fmi3GetUInt8(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt8(
             fmi3_messages::Fmi3GetUInt8 { value_references }
@@ -794,6 +788,10 @@ pub unsafe extern "C" fn fmi3GetUInt8(
                         .iter()
                         .map(|v| *v as u8)
                         .collect();
+
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
 
                     values_out.copy_from_slice(&values);
                 } else {
@@ -849,10 +847,6 @@ pub unsafe extern "C" fn fmi3GetInt16(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt16(
             fmi3_messages::Fmi3GetInt16 { value_references }
@@ -869,6 +863,10 @@ pub unsafe extern "C" fn fmi3GetInt16(
                         .iter()
                         .map(|v| *v as i16)
                         .collect();
+
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
 
                     values_out.copy_from_slice(&values);
                 } else {
@@ -924,10 +922,6 @@ pub unsafe extern "C" fn fmi3GetUInt16(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt16(
             fmi3_messages::Fmi3GetUInt16 { value_references }
@@ -944,6 +938,10 @@ pub unsafe extern "C" fn fmi3GetUInt16(
                         .iter()
                         .map(|v| *v as u16)
                         .collect();
+
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
 
                     values_out.copy_from_slice(&values);
                 } else {
@@ -999,10 +997,6 @@ pub unsafe extern "C" fn fmi3GetInt32(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt32(
             fmi3_messages::Fmi3GetInt32 { value_references }
@@ -1015,10 +1009,13 @@ pub unsafe extern "C" fn fmi3GetInt32(
 
             if !status.output_is_undefined() {
                 if !reply.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
                     values_out.copy_from_slice(&reply.values);
                 } else {
-                        instance.logger.warning("fmi3GetInt32 returned no values.");
-                        status = status.escalate_status(Fmi3Status::Fmi3Warning);
+                    instance.logger.warning("fmi3GetInt32 returned no values.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
             }
             
@@ -1069,10 +1066,6 @@ pub unsafe extern "C" fn fmi3GetUInt32(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt32(
             fmi3_messages::Fmi3GetUInt32 { value_references }
@@ -1085,10 +1078,13 @@ pub unsafe extern "C" fn fmi3GetUInt32(
 
             if !status.output_is_undefined() {
                 if !reply.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
                     values_out.copy_from_slice(&reply.values);
                 } else {
-                        instance.logger.warning("fmi3GetUInt32 returned no values.");
-                        status = status.escalate_status(Fmi3Status::Fmi3Warning);
+                    instance.logger.warning("fmi3GetUInt32 returned no values.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
             }
             
@@ -1139,10 +1135,6 @@ pub unsafe extern "C" fn fmi3GetInt64(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt64(
             fmi3_messages::Fmi3GetInt64 { value_references }
@@ -1155,6 +1147,9 @@ pub unsafe extern "C" fn fmi3GetInt64(
 
             if !status.output_is_undefined() {
                 if !reply.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
                     values_out.copy_from_slice(&reply.values);
                 } else {
                     instance.logger.warning("fmi3GetInt64 returned no values.");
@@ -1209,10 +1204,6 @@ pub unsafe extern "C" fn fmi3GetUInt64(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt64(
             fmi3_messages::Fmi3GetUInt64 { value_references }
@@ -1225,6 +1216,9 @@ pub unsafe extern "C" fn fmi3GetUInt64(
 
             if !status.output_is_undefined() {
                 if !reply.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
                     values_out.copy_from_slice(&reply.values);
                 } else {
                     instance.logger.warning("fmi3GetUInt64 returned no values.");
@@ -1279,10 +1273,6 @@ pub unsafe extern "C" fn fmi3GetBoolean(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_values)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetBoolean(
             fmi3_messages::Fmi3GetBoolean { value_references }
@@ -1295,6 +1285,9 @@ pub unsafe extern "C" fn fmi3GetBoolean(
 
             if !status.output_is_undefined() {
                 if !reply.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_values)
+                    };
                     values_out.copy_from_slice(&reply.values);
                 } else {
                     instance.logger.warning("fmi3GetBoolean returned no values.");
@@ -1453,7 +1446,7 @@ pub unsafe extern "C" fn fmi3GetBinary(
                             );
                         }
                     }
-                    
+
                 } else {
                     instance.logger.warning("fmi3GetBinary returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1507,10 +1500,6 @@ pub unsafe extern "C" fn fmi3GetClock(
     }
         .to_owned();
 
-    let values_out = unsafe {
-        from_raw_parts_mut(values, n_value_references)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetClock(
             fmi3_messages::Fmi3GetClock { value_references }
@@ -1519,15 +1508,18 @@ pub unsafe extern "C" fn fmi3GetClock(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetClockReturn>(&cmd) {
         Ok(result) => {
-            let status = Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            });
+            let mut status = parse_status(result.status, &instance.logger);
 
-            if !status.output_is_undefined()
-            && !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values);
+            if !status.output_is_undefined() {
+                if !result.values.is_empty() {
+                    let values_out = unsafe {
+                        from_raw_parts_mut(values, n_value_references)
+                    };
+                    values_out.copy_from_slice(&result.values);
+                } else {
+                    instance.logger.warning("fmi3GetClock returned no values.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
+                }
             }
             
             status
@@ -1580,14 +1572,6 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let intervals_out = unsafe {
-        from_raw_parts_mut(intervals, n_value_references)
-    };
-
-    let qualifiers_out = unsafe {
-        from_raw_parts_mut(qualifiers, n_value_references)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetIntervalDecimal(
             fmi3_messages::Fmi3GetIntervalDecimal { value_references }
@@ -1596,15 +1580,17 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetIntervalDecimalReturn>(&cmd) {
         Ok(result) => {
-            let status = Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            });
+            let mut status = parse_status(result.status, &instance.logger);
 
             if !status.output_is_undefined() {
                 if !result.intervals.is_empty() {
+                    let intervals_out = unsafe {
+                        from_raw_parts_mut(intervals, n_value_references)
+                    };
                     intervals_out.copy_from_slice(&result.intervals);
+                } else {
+                    instance.logger.warning("fmi3GetIntervalDecimal returned no intervals.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
 
                 if !result.qualifiers.is_empty() {
@@ -1613,9 +1599,15 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
                         .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
                     else {
                         instance.logger.error("Unknown interval qualifier returned from backend.");
-                        return Fmi3Status::Fmi3Fatal
+                        return Fmi3Status::Fmi3Error
+                    };
+                    let qualifiers_out = unsafe {
+                        from_raw_parts_mut(qualifiers, n_value_references)
                     };
                     qualifiers_out.copy_from_slice(qualifiers.as_slice());
+                } else {
+                    instance.logger.warning("fmi3GetIntervalDecimal returned no qualifiers.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
             }
 
@@ -1645,18 +1637,6 @@ pub extern "C" fn fmi3GetIntervalFraction(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let counters_out = unsafe {
-        from_raw_parts_mut(counters, n_value_references)
-    };
-
-    let resolutions_out = unsafe {
-        from_raw_parts_mut(resolutions, n_value_references)
-    };
-
-    let qualifiers_out = unsafe {
-        from_raw_parts_mut(qualifiers, n_value_references)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetIntervalFraction(
             fmi3_messages::Fmi3GetIntervalFraction { value_references }
@@ -1665,19 +1645,27 @@ pub extern "C" fn fmi3GetIntervalFraction(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetIntervalFractionReturn>(&cmd) {
         Ok(result) => {
-            let status = Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            });
+            let mut status = parse_status(result.status, &instance.logger);
 
             if !status.output_is_undefined() {
                 if !result.counters.is_empty() {
+                    let counters_out = unsafe {
+                        from_raw_parts_mut(counters, n_value_references)
+                    };
                     counters_out.copy_from_slice(&result.counters);
+                } else {
+                    instance.logger.warning("fmi3GetIntervalFraction returned no counters.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
 
                 if !result.resolutions.is_empty() {
+                    let resolutions_out = unsafe {
+                        from_raw_parts_mut(resolutions, n_value_references)
+                    };
                     resolutions_out.copy_from_slice(&result.resolutions);
+                } else {
+                    instance.logger.warning("fmi3GetIntervalFraction returned no resolutions.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
 
                 if !result.qualifiers.is_empty() {
@@ -1686,9 +1674,15 @@ pub extern "C" fn fmi3GetIntervalFraction(
                         .collect::<Result<Vec<Fmi3IntervalQualifier>, _>>()
                     else {
                         instance.logger.error("Unknown interval qualifier returned from backend.");
-                        return Fmi3Status::Fmi3Fatal
+                        return Fmi3Status::Fmi3Error
+                    };
+                    let qualifiers_out = unsafe {
+                        from_raw_parts_mut(qualifiers, n_value_references)
                     };
                     qualifiers_out.copy_from_slice(qualifiers.as_slice());
+                } else {
+                    instance.logger.warning("fmi3GetIntervalFraction returned no qualifiers.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
             }
 
@@ -1714,10 +1708,6 @@ pub extern "C" fn fmi3GetShiftDecimal(
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
 
-    let shifts_out = unsafe {
-        from_raw_parts_mut(shifts, n_value_references)
-    };
-
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetShiftDecimal(
             fmi3_messages::Fmi3GetShiftDecimal { value_references }
@@ -1726,15 +1716,18 @@ pub extern "C" fn fmi3GetShiftDecimal(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetShiftDecimalReturn>(&cmd) {
         Ok(result) => {
-            let status = Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            });
+            let mut status = parse_status(result.status, &instance.logger);
 
-            if !status.output_is_undefined() 
-            && !result.shifts.is_empty() {
-                shifts_out.copy_from_slice(&result.shifts);
+            if !status.output_is_undefined() {
+                if !result.shifts.is_empty() {
+                    let shifts_out = unsafe {
+                        from_raw_parts_mut(shifts, n_value_references)
+                    };
+                    shifts_out.copy_from_slice(&result.shifts);
+                } else {
+                    instance.logger.warning("fmi3GetShiftDecimal returned no values.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
+                }
             }
 
             status
@@ -1757,18 +1750,9 @@ pub extern "C" fn fmi3GetShiftFraction(
     counters: *mut Fmi3UInt64,
 	resolutions: *mut Fmi3UInt64,
 ) -> Fmi3Status {
-
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
-
-    let counters_out = unsafe {
-        from_raw_parts_mut(counters, n_value_references)
-    };
-
-    let resolutions_out = unsafe {
-        from_raw_parts_mut(resolutions, n_value_references)
-    };
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetShiftFraction(
@@ -1778,19 +1762,27 @@ pub extern "C" fn fmi3GetShiftFraction(
 
     match instance.dispatch::<fmi3_messages::Fmi3GetShiftFractionReturn>(&cmd) {
         Ok(result) => {
-            let status = Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-            });
+            let mut status = parse_status(result.status, &instance.logger);
 
             if !status.output_is_undefined() {
                 if !result.counters.is_empty() {
+                    let counters_out = unsafe {
+                        from_raw_parts_mut(counters, n_value_references)
+                    };
                     counters_out.copy_from_slice(&result.counters);
+                } else {
+                    instance.logger.warning("fmi3GetShiftFraction returned no counters.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
 
                 if !result.resolutions.is_empty() {
+                    let resolutions_out = unsafe {
+                        from_raw_parts_mut(resolutions, n_value_references)
+                    };
                     resolutions_out.copy_from_slice(&result.resolutions);
+                } else {
+                    instance.logger.warning("fmi3GetShiftFraction returned no resolutions.");
+                    status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
             }
 
@@ -3104,7 +3096,6 @@ pub extern "C" fn fmi3GetFMUState(
     instance: *mut Fmi3Slave,
     state: *mut *mut SlaveState,
 ) -> Fmi3Status {
-
     if instance.is_null() {
         // Note that this error message can never reach the importer as the
         // slave contains the logging callback. This is only visible if the
@@ -3132,13 +3123,7 @@ pub extern "C" fn fmi3GetFMUState(
 
     match instance.dispatch::<fmi3_messages::Fmi3SerializeFmuStateReturn>(&cmd) {
         Ok(result) => {
-            let status = Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error(&format!(
-                        "fmi3GetFMUstate: Unknown status ({:?}) returned from backend.", result.status
-                    ));
-                    Fmi3Status::Fmi3Fatal
-            });
+            let mut status = parse_status(result.status, &instance.logger);
 
             if !status.output_is_undefined() {
                 unsafe {
@@ -3452,7 +3437,7 @@ fn send_cmd_recv_status(instance: &mut Fmi3Slave, cmd: Fmi3Command, function_nam
 fn parse_status(status_int: i32, logger: &Fmi3Logger) -> Fmi3Status {
     Fmi3Status::try_from(status_int)
         .unwrap_or_else(|_| {
-            logger.fatal("Unknown status returned from backend.");
+            logger.fatal(format!("Unknown status [{status_int}] returned from backend."));
             Fmi3Status::Fmi3Fatal
     })
 }
