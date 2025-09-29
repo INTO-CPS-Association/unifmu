@@ -494,14 +494,7 @@ pub extern "C" fn fmi3EnterEventMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|reply| parse_status(reply.status, &instance.logger))
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3EnterEventMode failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3EnterEventMode")
 }
 
 #[no_mangle]
@@ -512,14 +505,7 @@ pub extern "C" fn fmi3EnterStepMode(instance: &mut Fmi3Slave) -> Fmi3Status {
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3EnterStepMode failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3EnterStepMode")
 }
 
 /// # Safety
@@ -1407,7 +1393,6 @@ pub unsafe extern "C" fn fmi3GetBinary(
     values: *mut Fmi3Binary,
     n_values: size_t,
 ) -> Fmi3Status {
-    
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
@@ -1632,7 +1617,6 @@ pub extern "C" fn fmi3GetIntervalFraction(
     qualifiers: *mut Fmi3IntervalQualifier,
     n_values: size_t,
 ) -> Fmi3Status {
-
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references)
     }.to_owned();
@@ -1739,7 +1723,6 @@ pub extern "C" fn fmi3GetShiftDecimal(
             Fmi3Status::Fmi3Error
         }
     }
-
 }
 
 #[no_mangle]
@@ -1804,7 +1787,6 @@ pub extern "C" fn fmi3SetIntervalDecimal(
     n_value_references: size_t,
     intervals: *const Fmi3Float64,
 ) -> Fmi3Status {
-
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references) 
     }.to_owned();
@@ -1822,15 +1804,7 @@ pub extern "C" fn fmi3SetIntervalDecimal(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetIntervalDecimal failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
-
+    send_cmd_recv_status(instance, cmd, "fmi3SetIntervalDecimal")
 }
 
 #[no_mangle]
@@ -1841,7 +1815,6 @@ pub extern "C" fn fmi3SetIntervalFraction(
     counters: *const Fmi3UInt64,
 	resolutions: *const Fmi3UInt64,
 ) -> Fmi3Status {
-
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references) 
     }.to_owned();
@@ -1864,14 +1837,7 @@ pub extern "C" fn fmi3SetIntervalFraction(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetIntervalFraction failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetIntervalFraction")
 }
 
 #[no_mangle]
@@ -1881,7 +1847,6 @@ pub extern "C" fn fmi3SetShiftDecimal(
     n_value_references: size_t,
     shifts: *const Fmi3Float64,
 ) -> Fmi3Status {
-
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references) 
     }.to_owned();
@@ -1899,14 +1864,7 @@ pub extern "C" fn fmi3SetShiftDecimal(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetShiftDecimal failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetShiftDecimal")
 }
 
 #[no_mangle]
@@ -1917,7 +1875,6 @@ pub extern "C" fn fmi3SetShiftFraction(
     counters: *const Fmi3UInt64,
 	resolutions: *const Fmi3UInt64,
 ) -> Fmi3Status {
-
     let value_references = unsafe {
         from_raw_parts(value_references, n_value_references) 
     }.to_owned();
@@ -1940,14 +1897,7 @@ pub extern "C" fn fmi3SetShiftFraction(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetShiftFraction failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetShiftFraction")
 }
 
 #[no_mangle]
@@ -2200,14 +2150,7 @@ pub unsafe extern "C" fn fmi3SetFloat32(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetFloat32 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetFloat32")
 }
 
 /// # Safety
@@ -2261,14 +2204,7 @@ pub unsafe extern "C" fn fmi3SetFloat64(
         )),
     };
     
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetFloat64 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetFloat64")
 }
 
 /// # Safety
@@ -2324,14 +2260,7 @@ pub unsafe extern "C" fn fmi3SetInt8(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetInt8 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetInt8")
 }
 
 /// # Safety
@@ -2387,14 +2316,7 @@ pub unsafe extern "C" fn fmi3SetUInt8(
         )),
     };
     
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetUInt8 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetUInt8")
 }
 
 /// # Safety
@@ -2450,14 +2372,7 @@ pub unsafe extern "C" fn fmi3SetInt16(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetInt16 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetInt16")
 }
 
 /// # Safety
@@ -2513,14 +2428,7 @@ pub unsafe extern "C" fn fmi3SetUInt16(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetUInt16 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetUInt16")
 }
 
 /// # Safety
@@ -2572,14 +2480,7 @@ pub unsafe extern "C" fn fmi3SetInt32(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetInt32 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetInt32")
 }
 
 /// # Safety
@@ -2631,14 +2532,7 @@ pub unsafe extern "C" fn fmi3SetUInt32(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetUInt32 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetUInt32")
 }
 
 /// # Safety
@@ -2690,14 +2584,7 @@ pub unsafe extern "C" fn fmi3SetInt64(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetInt64 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetInt64")
 }
 
 /// # Safety
@@ -2749,14 +2636,7 @@ pub unsafe extern "C" fn fmi3SetUInt64(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetUInt64 failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetUInt64")
 }
 
 /// # Safety
@@ -2808,14 +2688,7 @@ pub unsafe extern "C" fn fmi3SetBoolean(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetBoolean failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetBoolean")
 }
 
 /// # Safety
@@ -2877,14 +2750,7 @@ pub unsafe extern "C" fn fmi3SetString(
                 )),
             };
         
-            instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-                .map(|status| status.into())
-                .unwrap_or_else(|error| {
-                    instance.logger.error(&format!(
-                "fmi3SetString failed with error: {}.", error
-                    ));
-                    Fmi3Status::Fmi3Error
-                })
+            send_cmd_recv_status(instance, cmd, "fmi3SetString")
         },
 
         Err(conversion_error) => {
@@ -2999,14 +2865,7 @@ pub unsafe extern "C" fn fmi3SetBinary(
     };
 
     // Call the dispatcher with references, binary values, and their sizes
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetBinary failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetBinary")
 }
 
 /// # Safety
@@ -3057,14 +2916,7 @@ pub unsafe extern "C" fn fmi3SetClock(
         )),
     };
 	
-	instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetClock failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+	send_cmd_recv_status(instance, cmd, "fmi3SetClock")
 }
 
 #[no_mangle]
@@ -3185,14 +3037,7 @@ pub extern "C" fn fmi3SetFMUState(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3SetFMUstate failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3SetFMUState")
 }
 
 #[no_mangle]
@@ -3294,6 +3139,7 @@ pub unsafe extern "C" fn fmi3DeserializeFMUState(
             state.bytes = serialized_state.to_owned();
         }
     }
+
     Fmi3Status::Fmi3OK
 }
 
@@ -3339,14 +3185,7 @@ pub extern "C" fn fmi3EnterConfigurationMode(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|s| s.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3EnterConfigurationMode failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3EnterConfigurationMode")
 }
 
 #[no_mangle]
@@ -3359,71 +3198,62 @@ pub extern "C" fn fmi3ExitConfigurationMode(
         )),
     };
 
-    instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|s| s.into())
-        .unwrap_or_else(|error| {
-            instance.logger.error(&format!(
-                "fmi3ExitConfigurationMode failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3ExitConfigurationMode")
 }
 
 #[no_mangle]
-pub extern "C" fn fmi3Terminate(slave: &mut Fmi3Slave) -> Fmi3Status {
+pub extern "C" fn fmi3Terminate(instance: &mut Fmi3Slave) -> Fmi3Status {
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3Terminate(
             fmi3_messages::Fmi3Terminate {}
         )),
     };
 
-    slave.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|s| s.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "Termination failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3Terminate")
 }
 
 #[no_mangle]
-pub extern "C" fn fmi3FreeInstance(slave: Option<Box<Fmi3Slave>>) {
-    let mut slave = slave;
+pub extern "C" fn fmi3FreeInstance(instance: Option<Box<Fmi3Slave>>) {
+    let mut instance = instance;
 
-    if slave.as_mut().is_some() {
-        drop(slave)
+    if instance.as_mut().is_some() {
+        drop(instance)
     } else {
         // Note that this error message can never reach the importer as the
         // slave includes the logging callback. This is only visible if the
         // api has been compiled with the 'fmt_logging' feature, and then
         // only on the stderr of the process containing the FMU.
         Fmi3Logger::fmt_log(
-            "fmi3FreeInstance called with slave pointing to null.",
+            "fmi3FreeInstance called with instance pointing to null.",
             &Fmi3Status::Fmi3Warning
         );
     }
 }
 
 #[no_mangle]
-pub extern "C" fn fmi3Reset(slave: &mut Fmi3Slave) -> Fmi3Status {
+pub extern "C" fn fmi3Reset(instance: &mut Fmi3Slave) -> Fmi3Status {
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3Reset(
             fmi3_messages::Fmi3Reset {}
         )),
     };
 
-    slave.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
-        .map(|s| s.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi3Reset failed with error: {}.", error
-            ));
-            Fmi3Status::Fmi3Error
-        })
+    send_cmd_recv_status(instance, cmd, "fmi3Reset")
 }
 
-fn send_cmd_recv_status(instance: &mut Fmi3Slave, cmd: Fmi3Command, function_name: &str) -> Fmi3Status {
+/// Send a Fmi3Command to the backend and parse and return the status that it
+/// responds with.
+/// 
+/// If the correspondance with the backend fails, this returns a
+/// Fmi3Status::Fmi3Error and emits an error message through the given
+/// instance's logger.
+/// 
+/// If the status fails to parse, this returns an Fmi3Status::Fmi3Fatal.
+fn send_cmd_recv_status(
+    instance: &mut Fmi3Slave,
+    cmd: Fmi3Command,
+    function_name: &str
+) -> Fmi3Status {
     instance.dispatch::<fmi3_messages::Fmi3StatusReturn>(&cmd)
         .map(|reply| parse_status(reply.status, &instance.logger))
         .unwrap_or_else(|error| {
@@ -3434,6 +3264,12 @@ fn send_cmd_recv_status(instance: &mut Fmi3Slave, cmd: Fmi3Command, function_nam
         })
 }
 
+/// Parses the given status_int as a Fmi3Status, defaulting to
+/// Fmi3Status::Fmi3Fatal, if no Fmi3Status corresponds to the
+/// given status_int.
+/// 
+/// If the status fails to parse, an error message will be emitted through the
+/// given logger.
 fn parse_status(status_int: i32, logger: &Fmi3Logger) -> Fmi3Status {
     Fmi3Status::try_from(status_int)
         .unwrap_or_else(|_| {
