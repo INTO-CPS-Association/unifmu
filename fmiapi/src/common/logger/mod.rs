@@ -19,6 +19,11 @@ where
     type Category;
     type Status;
 
+    /// Log an event message of the given category and status, emitting it
+    /// through all enabled channels.
+    /// 
+    /// Events are filtered based on their category, possibly barring event
+    /// emition.
     fn log(
         &self,
         status: Self::Status,
@@ -84,7 +89,7 @@ where
         }
     }
 
-    /// Emit all log events regardless of their categories..
+    /// Emit all log events regardless of their categories.
     fn enable_all_categories(&mut self) {
         *self.filter() = CategoryFilter::new_blacklist();
     }
@@ -94,21 +99,23 @@ where
         *self.filter() = CategoryFilter::new_blacklist();
     }
 
-    /// Prints the message with a prefix based on the status to stderr if the
-    /// api was build with the 'fmt_logging' feature.
+    /// If the api was build with the 'fmt_logging feature, this function
+    /// prints the given message - with a prefix based on the given status - to
+    /// stderr.
     /// 
     /// If not build with the 'fmt_logging' feature, this function does nothing
     #[cfg(feature = "fmt_logging")]
     fn fmt_log(message: &str, status: &Self::Status) {
         if status.is_ok() {
-            println!("{}", message);
+            eprintln!("{}", message);
         } else {
             eprintln!("{}{}", status.fmt_log_prefix(), message);
         }
     }
 
-    /// Prints the message with a prefix based on the status to stderr if the
-    /// api was build with the 'fmt_logging' feature.
+    /// If the api was build with the 'fmt_logging feature, this function
+    /// prints the given message - with a prefix based on the given status - to
+    /// stderr.
     /// 
     /// If not build with the 'fmt_logging' feature, this function does nothing
     #[cfg(not(feature = "fmt_logging"))]
