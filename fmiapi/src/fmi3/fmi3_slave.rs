@@ -10,7 +10,8 @@ use super::{
         Fmi3Return,
         fmi3_return,
         fmi3_return::ReturnMessage
-    }
+    },
+    fmi3_types::Fmi3Byte
 };
 
 use crate::common::{
@@ -39,19 +40,21 @@ use prost::Message;
 /// relationship between an instant of this struct and a UniFMU backend
 /// process.
 pub struct Fmi3Slave {
+    pub byte_buffer: Vec<Vec<Fmi3Byte>>,
     dispatcher: Dispatcher,
     pub logger: Fmi3Logger,
     pub last_successful_time: Option<f64>,
-    pub string_buffer: Vec<CString>,
+    pub string_buffer: Vec<CString>
 }
 
 impl Fmi3Slave {
     pub fn new(dispatcher: Dispatcher, logger: Fmi3Logger) -> Self {
         Self {
+            byte_buffer: Vec::new(),
             dispatcher,
             logger,
             last_successful_time: None,
-            string_buffer: Vec::new(),
+            string_buffer: Vec::new()
         }
     }
 

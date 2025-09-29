@@ -74,6 +74,17 @@ impl Fmi3Status {
     pub fn output_is_undefined(&self) -> bool {
         *self > Self::Fmi3Warning
     }
+
+    /// Compares the status to the given minimum level and returning the
+    /// minumum level if it is higher than the status (or the original status
+    /// otherwise).
+    pub fn escalate_status(self, minimum_level: Self) -> Self {
+        if minimum_level > self {
+            minimum_level
+        } else {
+            self
+        }
+    }
 }
 
 impl LogStatus for Fmi3Status {
