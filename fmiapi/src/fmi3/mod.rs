@@ -1982,46 +1982,46 @@ pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
 
     match instance.dispatch::<fmi3_messages::Fmi3UpdateDiscreteStatesReturn>(&cmd){
         Ok(result) => {
-            if !discrete_states_need_update.is_null() {
-                unsafe {
-                    *discrete_states_need_update = result
-                        .discrete_states_need_update;
+            let status = parse_status(result.status, &instance.logger);
+
+            if !status.output_is_undefined() {
+                if !discrete_states_need_update.is_null() {
+                    unsafe {
+                        *discrete_states_need_update = result
+                            .discrete_states_need_update;
+                    }
                 }
-            }
-            if !terminate_simulation.is_null() {
-                unsafe {
-                    *terminate_simulation = result.terminate_simulation;
+                if !terminate_simulation.is_null() {
+                    unsafe {
+                        *terminate_simulation = result.terminate_simulation;
+                    }
                 }
-            }
-            if !nominals_continuous_states_changed.is_null() {
-                unsafe {
-                    *nominals_continuous_states_changed = result
-                        .nominals_continuous_states_changed;
+                if !nominals_continuous_states_changed.is_null() {
+                    unsafe {
+                        *nominals_continuous_states_changed = result
+                            .nominals_continuous_states_changed;
+                    }
                 }
-            }
-            if !values_continuous_states_changed.is_null() {
-                unsafe {
-                    *values_continuous_states_changed = result
-                        .values_continuous_states_changed;
+                if !values_continuous_states_changed.is_null() {
+                    unsafe {
+                        *values_continuous_states_changed = result
+                            .values_continuous_states_changed;
+                    }
                 }
-            }
-            if !next_event_time_defined.is_null() {
-                unsafe {
-                    *next_event_time_defined = result
-                        .next_event_time_defined;
+                if !next_event_time_defined.is_null() {
+                    unsafe {
+                        *next_event_time_defined = result
+                            .next_event_time_defined;
+                    }
                 }
-            }
-            if !next_event_time.is_null() {
-                unsafe {
-                    *next_event_time = result.next_event_time;
+                if !next_event_time.is_null() {
+                    unsafe {
+                        *next_event_time = result.next_event_time;
+                    }
                 }
             }
 
-            Fmi3Status::try_from(result.status)
-                .unwrap_or_else(|_| {
-                    instance.logger.error("Unknown status returned from backend.");
-                    Fmi3Status::Fmi3Fatal
-                })
+            status
         }
         Err(error) => {
             instance.logger.error(&format!(
