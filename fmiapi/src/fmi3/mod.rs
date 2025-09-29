@@ -1437,66 +1437,23 @@ pub unsafe extern "C" fn fmi3GetBinary(
 
                     let compatible_value_sizes: Vec<size_t> = result.values
                         .iter()
-                        .map(|v| {v.len() as size_t})
+                        .map(|byte_vec| {byte_vec.len() as size_t})
                         .collect();
 
                     value_sizes_out.copy_from_slice(&compatible_value_sizes);
 
                     instance.byte_buffer = result.values;
 
-                    unsafe {
-                        for (idx, bytes)
-                        in instance.byte_buffer.iter().enumerate() {
+                    for (idx, byte_vec)
+                    in instance.byte_buffer.iter().enumerate() {
+                        unsafe {
                             std::ptr::write(
                                 values.add(idx),
-                                
+                                byte_vec.as_ptr()
                             );
                         }
                     }
-
-                    let n_values_out = compatible_value_sizes.into_iter()
-                        .reduce(|total_size, single_value_size| total_size + single_value_size)
-                        .unwrap_or(0 as size_t);
-
-                    let values_out = unsafe {
-                        from_raw_parts_mut(values, n_values_out)
-                    };
-
-                    let compatible_values: Vec<Fmi3Byte> = result.values
-                        .into_iter()
-                        .flatten()
-                        .collect();
-
-                    values_out.copy_from_slice(&compatible_values);
-
-                    /* 
-                    unsafe {
-                        for (idx, value) in result.values.clone().iter().enumerate() {
-                            let len = value.len();
-                        
-                            if len == 0 {
-                                // Store NULL pointer for empty data
-                                std::ptr::write(values.add(idx), std::ptr::null());
-                                continue;
-                            }
-                        
-                            // Allocate memory for each binary array
-                            let layout = std::alloc::Layout::array::<u8>(len).unwrap();
-                            let data_ptr = std::alloc::alloc(layout) as *mut u8;
-                        
-                            if data_ptr.is_null() {
-                                instance.logger.fatal("fmi3GetBinary: Memory allocation of binary data from backend failed!");
-                                return Fmi3Status::Fmi3Fatal
-                            }
-                        
-                            // Copy data to allocated memory
-                            std::ptr::copy_nonoverlapping(value.as_ptr(), data_ptr, len);
-                        
-                            // Store the pointer in `values`
-                            std::ptr::write(values.add(idx), data_ptr);
-                        }
-                    }
-                    */
+                    
                 } else {
                     instance.logger.warning("fmi3GetBinary returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
