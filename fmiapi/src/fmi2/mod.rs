@@ -291,14 +291,7 @@ pub extern "C" fn fmi2SetDebugLogging(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "Fmi2SetDebugLogging failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2SetDebugLogging")
 }
 
 #[no_mangle]
@@ -336,14 +329,7 @@ pub extern "C" fn fmi2SetupExperiment(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2SetupExperiment failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2SetupExperiment")
 }
 
 #[no_mangle]
@@ -354,14 +340,7 @@ pub extern "C" fn fmi2EnterInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Stat
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2EnterInitializationMode failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2EnterInitializationMode")
 }
 
 #[no_mangle]
@@ -372,14 +351,7 @@ pub extern "C" fn fmi2ExitInitializationMode(slave: &mut Fmi2Slave) -> Fmi2Statu
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2ExitInitializationMode failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2ExitInitializationMode")
 }
 
 #[no_mangle]
@@ -390,14 +362,7 @@ pub extern "C" fn fmi2Terminate(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2Terminate failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2Terminate")
 }
 
 #[no_mangle]
@@ -408,14 +373,7 @@ pub extern "C" fn fmi2Reset(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2Reset failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2Reset")
 }
 
 // ------------------------------------- FMI FUNCTIONS (Stepping) --------------------------------
@@ -463,14 +421,7 @@ pub extern "C" fn fmi2CancelStep(slave: &mut Fmi2Slave) -> Fmi2Status {
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2CancelStep failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2CancelStep")
 }
 
 // ------------------------------------- FMI FUNCTIONS (Getters) --------------------------------
@@ -781,14 +732,7 @@ pub unsafe extern "C" fn fmi2SetReal(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2SetReal failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2SetReal")
 }
 
 /// # Safety
@@ -832,14 +776,7 @@ pub unsafe extern "C" fn fmi2SetInteger(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2SetInteger failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2SetInteger")
 }
 
 /// set boolean variables of FMU
@@ -891,14 +828,7 @@ pub unsafe extern "C" fn fmi2SetBoolean(
         )),
     };
     
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2SetBoolean failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2SetBoolean")
 }
 
 /// # Safety
@@ -954,14 +884,7 @@ pub unsafe extern "C" fn fmi2SetString(
                 )),
             };
         
-            slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-                .map(|status| status.into())
-                .unwrap_or_else(|error| {
-                    slave.logger.error(&format!(
-                        "fmi2SetString failed with error: {}.", error
-                    ));
-                    Fmi2Status::Error
-                })
+            send_cmd_recv_status(slave, cmd, "fmi2SetString")
         },
         Err(conversion_error) => {
             slave.logger.error(&format!(
@@ -1112,14 +1035,7 @@ pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
         )),
     };
 
-    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
-        .map(|status| status.into())
-        .unwrap_or_else(|error| {
-            slave.logger.error(&format!(
-                "fmi2SetRealInputDerivatives failed with error: {}.", error
-            ));
-            Fmi2Status::Error
-        })
+    send_cmd_recv_status(slave, cmd, "fmi2SetRealInputDerivatives")
 }
 
 /// # Safety
@@ -1568,4 +1484,43 @@ pub extern "C" fn fmi2GetStringStatus(
         "fmi2GetStringStatus is not implemented by UniFMU."
     );
     Fmi2Status::Error
+}
+
+/// Send a Fmi2Command to the backend and parse and return the status that it
+/// responds with.
+/// 
+/// If the correspondance with the backend fails, this returns a
+/// Fmi2Status::Error and emits an error message through the given
+/// slave's logger.
+/// 
+/// If the status fails to parse, this returns an Fmi2Status::Fatal.
+fn send_cmd_recv_status(
+    slave: &mut Fmi2Slave,
+    cmd: Fmi2Command,
+    function_name: &str
+) -> Fmi2Status {
+    slave.dispatch::<fmi2_messages::Fmi2StatusReturn>(&cmd)
+        .map(|reply| parse_status(reply.status, &slave.logger))
+        .unwrap_or_else(|error| {
+            slave.logger.error(&format!(
+                "{function_name} failed with error: {error}."
+            ));
+            Fmi2Status::Error
+        })
+}
+
+/// Parses the given status_int as a Fmi2Status, defaulting to
+/// Fmi2Status::Fatal, if no Fmi2Status corresponds to the
+/// given status_int.
+/// 
+/// If the status fails to parse, an error message will be emitted through the
+/// given logger.
+fn parse_status(status_int: i32, logger: &Fmi2Logger) -> Fmi2Status {
+    Fmi2Status::try_from(status_int)
+        .unwrap_or_else(|_| {
+            logger.fatal(&format!(
+                "Unknown status [{status_int}] returned from backend."
+            ));
+            Fmi2Status::Fatal
+    })
 }
