@@ -263,6 +263,10 @@ public class Model implements Serializable {
 
     }
 
+    public Fmi3Status fmi3SetDebugLogging(Iterable<String> categories, Boolean logging_on) {
+        return Fmi3Status.OK;
+    }
+
     /**
      * Sends a logging message to the importer of the FMU.
      * 

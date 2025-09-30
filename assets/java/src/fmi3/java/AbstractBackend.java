@@ -779,6 +779,13 @@ public abstract class AbstractBackend {
                 }
 
                 case FMI3SETDEBUGLOGGING:
+                    var c = command.getFmi3SetDebugLogging();
+                    sendStatusReply(
+                        model.fmi3SetDebugLogging(
+                            c.getCategoriesList(),
+                            c.getLoggingOn()
+                        )
+                    );
                     break;
 
                 case COMMAND_NOT_SET:
