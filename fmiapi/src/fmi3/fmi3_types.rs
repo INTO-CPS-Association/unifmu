@@ -70,9 +70,9 @@ pub enum Fmi3Status {
 
 impl Fmi3Status {
     /// Returns true if the status signifies that the values of any related
-    /// output variables are undefined.
-    pub fn output_is_undefined(&self) -> bool {
-        *self > Self::Fmi3Warning
+    /// output variables are defined.
+    pub fn output_is_defined(&self) -> bool {
+        *self < Self::Fmi3Discard
     }
 
     /// Compares the status to the given minimum level and returning the
