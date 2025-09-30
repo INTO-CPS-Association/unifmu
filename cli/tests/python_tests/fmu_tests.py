@@ -1,4 +1,5 @@
 from common import barren_test, uninstantiating_test, instantiating_test
+from ctypes import c_uint8, c_ubyte
 from fmpy import read_model_description, extract
 from fmpy.fmi2 import FMU2Slave
 from fmpy.fmi3 import FMU3Slave
@@ -423,8 +424,13 @@ def fmi3_simulate(fmu_filename, is_zipped):
         boolean = fmu.getBoolean([
             vrs["boolean_a"], vrs["boolean_b"], vrs["boolean_c"]
         ])
+
         string = fmu.getString([
             vrs["string_a"], vrs["string_b"], vrs["string_c"]
+        ])
+
+        binary = fmu.getBinary([
+            vrs["binary_a"], vrs["binary_b"], vrs["binary_c"]
         ])
 
         print("Asserting initial values")
@@ -440,9 +446,12 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert uint32 == [0, 0, 0]
         assert int64 == [0, 0, 0]
         assert uint64 == [0, 0, 0]
+
         assert boolean == [False, False, False]
-    
+
         assert string == ["", "", ""]
+
+        assert binary == [bytes(c_uint8(0)), bytes(c_uint8(0)), bytes(c_uint8(0))]
 
         # Simulating
         print(f"Updating inputs at time {sim_time}")
@@ -494,6 +503,10 @@ def fmi3_simulate(fmu_filename, is_zipped):
         fmu.setString(
             [vrs["string_a"], vrs["string_b"]],
             ["Hello, ", "World!"]
+        )
+        fmu.setBinary(
+            [vrs["binary_a"], vrs["binary_b"]],
+            [(c_ubyte * 4)(10, 20, 30, 40), (c_ubyte * 4)(15, 25, 35, 45)]
         ) 
     
         print(f"Doing a step of size {step_size} at time {sim_time}")
@@ -513,7 +526,7 @@ def fmi3_simulate(fmu_filename, is_zipped):
         uint64_c = fmu.getUInt64([vrs["uint64_c"]])[0]
         boolean_c = fmu.getBoolean([vrs["boolean_c"]])[0]
         string_c = fmu.getString([vrs["string_c"]])[0]
-
+        binary_c = fmu.getBinary([vrs["binary_c"]])[0]
     
         print("Asserting output values")
         assert float32_c == 3.0
@@ -528,8 +541,14 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert uint64_c == 3
         assert boolean_c == True
         assert string_c == "Hello, World!"
-    
+        assert binary_c == bytes((c_ubyte * 4)(5, 13, 61, 5))
+
+        binary = fmu.getBinary([
+            vrs["binary_a"], vrs["binary_b"], vrs["binary_c"]
+        ])
         
+        assert binary == [bytes((c_ubyte * 4)(10, 20, 30, 40)), bytes((c_ubyte * 4)(15, 25, 35, 45)), bytes((c_ubyte * 4)(5, 13, 61, 5))]
+
     instantiating_test(
         caller = "fmi3_simulate",
         inner_function = inner,
