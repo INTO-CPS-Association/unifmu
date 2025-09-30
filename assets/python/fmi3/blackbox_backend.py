@@ -66,6 +66,14 @@ class BlackboxBackend(AbstractBackend):
             group, data = self.recv_command()
 
             match group:
+                case "Fmi3SetDebugLogging":
+                    self.status_reply(
+                        self.fmu.setDebugLogging(
+                            data.logging_on,
+                            data.categories
+                        )
+                    )
+
                 case "Fmi3InstantiateModelExchange":
                     self.send_reply(Fmi3Return(empty=Fmi3EmptyReturn()))
 
