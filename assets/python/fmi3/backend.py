@@ -41,6 +41,14 @@ class Backend(AbstractBackend):
             group, data = self.recv_command()
         
             match group:
+                case "Fmi3SetDebugLogging":
+                    self.status_reply(
+                        model.fmi3SetDebugLogging(
+                            data.categories,
+                            data.logging_on
+                        )
+                    )
+
                 case "Fmi3InstantiateModelExchange":
                     self.send_reply(Fmi3Return(empty=Fmi3EmptyReturn()))
 

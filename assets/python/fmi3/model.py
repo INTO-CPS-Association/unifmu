@@ -672,6 +672,9 @@ class Model:
 
     # ================= Logging =================
 
+    def fmi3SetDebugLogging(self, categories, logging_on):
+        return Fmi3Status.ok
+
     """ UniFMU logging function
 
     Call this function whenever something should be logged.
