@@ -98,6 +98,7 @@ namespace Launch
                                 command.Fmi3SetDebugLogging.LoggingOn
                             )
                         );
+                        break;
 
                     case Fmi3Command.CommandOneofCase.Fmi3EnterInitializationMode:
                         SendStatusReply(model.Fmi3EnterInitializationMode());

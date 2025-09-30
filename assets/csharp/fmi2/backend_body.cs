@@ -207,6 +207,7 @@ namespace Launch
                                 command.Fmi2SetDebugLogging.LoggingOn
                             )
                         );
+                        break;
 
                     default:
                         HandleUnexpectedCommand(command);
