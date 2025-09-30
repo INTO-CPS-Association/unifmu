@@ -456,7 +456,6 @@ pub unsafe extern "C" fn fmi2GetReal(
     values: *mut Fmi2Real,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
-    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2GetReal(
@@ -467,11 +466,20 @@ pub unsafe extern "C" fn fmi2GetReal(
     };
 
     match slave.dispatch::<fmi2_messages::Fmi2GetRealReturn>(&cmd) {
-        Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values)
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &slave.logger);
+
+            if status.output_is_defined() {
+                if !reply.values.is_empty() {
+                    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
+                    values_out.copy_from_slice(&reply.values)
+                } else {
+                    slave.logger.warning("fmi2GetReal returned no values.");
+                    status = status.escalate_status(Fmi2Status::Warning);
+                }
             }
-            result.status().into()
+            
+            status
         }
         Err(error) => {
             slave.logger.error(&format!(
@@ -512,7 +520,6 @@ pub unsafe extern "C" fn fmi2GetInteger(
     values: *mut Fmi2Integer,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
-    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2GetInteger(
@@ -523,11 +530,20 @@ pub unsafe extern "C" fn fmi2GetInteger(
     };
 
     match slave.dispatch::<fmi2_messages::Fmi2GetIntegerReturn>(&cmd) {
-        Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values)
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &slave.logger);
+
+            if status.output_is_defined() {
+                if !reply.values.is_empty() {
+                    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
+                    values_out.copy_from_slice(&reply.values)
+                } else {
+                    slave.logger.warning("fmi2GetInteger returned no values.");
+                    status = status.escalate_status(Fmi2Status::Warning);
+                }
             }
-            result.status().into()
+
+            status
         }
         Err(error) => {
             slave.logger.error(&format!(
@@ -568,7 +584,6 @@ pub unsafe extern "C" fn fmi2GetBoolean(
     values: *mut Fmi2Boolean,
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
-    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2GetBoolean(
@@ -579,19 +594,29 @@ pub unsafe extern "C" fn fmi2GetBoolean(
     };
 
     match slave.dispatch::<fmi2_messages::Fmi2GetBooleanReturn>(&cmd) {
-        Ok(result) => {
-            if !result.values.is_empty() {
-                let values: Vec<i32> = result.values
-                    .iter()
-                    .map(|v| match v {
-                        false => 0,
-                        true => 1,
-                    })
-                    .collect();
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &slave.logger);
 
-                values_out.copy_from_slice(&values)
+            if status.output_is_defined() {
+                if !reply.values.is_empty() {
+                    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
+                    
+                    let reply_values: Vec<i32> = reply.values
+                        .iter()
+                        .map(|v| match v {
+                            false => 0,
+                            true => 1,
+                        })
+                        .collect();
+
+                    values_out.copy_from_slice(&reply_values)
+                } else {
+                    slave.logger.warning("fmi2GetBoolean returned no values.");
+                    status = status.escalate_status(Fmi2Status::Warning);
+                }
             }
-            result.status().into()
+            
+            status
         }
         Err(error) => {
             slave.logger.error(&format!(
@@ -648,39 +673,46 @@ pub unsafe extern "C" fn fmi2GetString(
     };
 
     match slave.dispatch::<fmi2_messages::Fmi2GetStringReturn>(&cmd) {
-        Ok(result) => {
-            if !result.values.is_empty() {
-                let conversion_result: Result<Vec<CString>, NulError> = result
-                    .values
-                    .iter()
-                    .map(|string| CString::new(string.as_bytes()))
-                    .collect();
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &slave.logger);
 
-                match conversion_result {
-                    Ok(converted_values) => {
-                        slave.string_buffer = converted_values
-                    },
-                    Err(_) =>  {
-                        slave.logger.fatal(
-                            "Backend returned strings containing interior nul bytes. These cannot be converted into CStrings."
-                        );
-                        return Fmi2Status::Fatal;
+            if status.output_is_defined() {
+                if !reply.values.is_empty() {
+                    let conversion_result: Result<Vec<CString>, NulError> = reply
+                        .values
+                        .iter()
+                        .map(|string| CString::new(string.as_bytes()))
+                        .collect();
+
+                    match conversion_result {
+                        Ok(converted_values) => {
+                            slave.string_buffer = converted_values
+                        },
+                        Err(_) =>  {
+                            slave.logger.fatal(
+                                "Backend returned strings containing interior nul bytes. These cannot be converted into CStrings."
+                            );
+                            return Fmi2Status::Fatal;
+                        }
                     }
-                }
 
-                unsafe {
+                    
                     for (idx, cstr)
-                    in slave.string_buffer.iter().enumerate()
-                    {
-                        std::ptr::write(
-                            values.add(idx), 
-                            cstr.as_ptr()
-                        );
+                    in slave.string_buffer.iter().enumerate() {
+                        unsafe {
+                            std::ptr::write(
+                                values.add(idx), 
+                                cstr.as_ptr()
+                            );
+                        }
                     }
+                } else {
+                    slave.logger.warning("fmi2GetString returned no values.");
+                    status = status.escalate_status(Fmi2Status::Warning);
                 }
             }
 
-            result.status().into()
+            status
         }
         Err(error) => {
             slave.logger.error(&format!(
@@ -951,10 +983,6 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
     }
         .to_owned();
 
-    let direction_unknown = unsafe {
-        from_raw_parts_mut(direction_unknown, nvr_known)
-    };
-
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2GetDirectionalDerivatives(
             fmi2_messages::Fmi2GetDirectionalDerivatives {
@@ -968,16 +996,24 @@ pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
     match slave.dispatch::<fmi2_messages::Fmi2GetDirectionalDerivativesReturn>(
         &cmd
     ) {
-        Ok(result) => {
-            if !result.values.is_empty() {
-                direction_unknown.copy_from_slice(&result.values);
-                result.status().into()
-            } else {
-                slave.logger.error(
-                    "fmi2GetDirectionalDerivative returned empty values"
-                );
-                Fmi2Status::Error
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &slave.logger);
+
+            if status.output_is_defined() {
+                if !reply.values.is_empty() {
+                    let direction_unknown = unsafe {
+                        from_raw_parts_mut(direction_unknown, nvr_known)
+                    };
+                    direction_unknown.copy_from_slice(&reply.values);
+                } else {
+                    slave.logger.warning(
+                        "fmi2GetDirectionalDerivative returned no values."
+                    );
+                    status = status.escalate_status(Fmi2Status::Warning);
+                }
             }
+
+            status
         },
         Err(error) => {
             slave.logger.error(&format!(
@@ -1073,7 +1109,6 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
 ) -> Fmi2Status {
     let references = unsafe { from_raw_parts(references, nvr) }.to_owned();
     let orders = unsafe { from_raw_parts(orders, nvr) }.to_owned();
-    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
 
     let cmd = Fmi2Command {
         command: Some(Command::Fmi2GetRealOutputDerivatives(
@@ -1087,11 +1122,22 @@ pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
     match slave.dispatch::<fmi2_messages::Fmi2GetRealOutputDerivativesReturn>(
         &cmd
     ) {
-        Ok(result) => {
-            if !result.values.is_empty() {
-                values_out.copy_from_slice(&result.values)
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &slave.logger);
+
+            if status.output_is_defined() {
+                if !reply.values.is_empty() {
+                    let values_out = unsafe { from_raw_parts_mut(values, nvr) };
+                    values_out.copy_from_slice(&reply.values)
+                } else {
+                    slave.logger.warning(
+                        "fmi2GetRealOutputDerivatives returned no values."
+                    );
+                    status = status.escalate_status(Fmi2Status::Warning);
+                }
             }
-            result.status().into()
+
+            status
         }
         Err(error) => {
             slave.logger.error(&format!(
@@ -1204,20 +1250,27 @@ pub extern "C" fn fmi2GetFMUstate(
     };
 
     match slave.dispatch::<fmi2_messages::Fmi2SerializeFmuStateReturn>(&cmd) {
-        Ok(result) => {
-            unsafe {
-                match (*state).as_mut() {
-                    Some(state_ptr) => {
-                        let state = &mut *state_ptr;
-                        state.bytes = result.state.clone();
-                    }
-                    None => {
-                        let new_state = Box::new(SlaveState::new(&result.state));
-                        *state = Box::into_raw(new_state);
+        Ok(reply) => {
+            let status = parse_status(reply.status, &slave.logger);
+
+            if status.output_is_defined() {
+                unsafe {
+                    match (*state).as_mut() {
+                        Some(state_ptr) => {
+                            let state = &mut *state_ptr;
+                            state.bytes = reply.state.clone();
+                        }
+                        None => {
+                            let new_state = Box::new(
+                                SlaveState::new(&reply.state)
+                            );
+                            *state = Box::into_raw(new_state);
+                        }
                     }
                 }
             }
-            result.status().into()
+            
+            status
         }
         Err(error) => {
             slave.logger.error(&format!(

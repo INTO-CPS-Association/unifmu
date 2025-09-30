@@ -58,6 +58,25 @@ pub enum Fmi2Status {
     Pending = 5,
 }
 
+impl Fmi2Status {
+    /// Returns true if the status signifies that the values of any related
+    /// output variables are defined.
+    pub fn output_is_defined(&self) -> bool {
+        *self < Self::Discard
+    }
+
+    /// Compares the status to the given minimum level and returning the
+    /// minumum level if it is higher than the status (or the original status
+    /// otherwise).
+    pub fn escalate_status(self, minimum_level: Self) -> Self {
+        if minimum_level > self {
+            minimum_level
+        } else {
+            self
+        }
+    }
+}
+
 impl LogStatus for Fmi2Status {
     fn ok() -> Self {
         Self::Ok
