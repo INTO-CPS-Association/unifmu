@@ -91,6 +91,14 @@ namespace Launch
                         SendReply(new Fmi3Return{Empty = new Fmi3EmptyReturn()});
                         break;
 
+                    case Fmi3Command.CommandOneofCase.Fmi3SetDebugLogging:
+                        SendStatusReply(
+                            model.Fmi3SetDebugLogging(
+                                command.Fmi3SetDebugLogging.Categories,
+                                command.Fmi3SetDebugLogging.LoggingOn
+                            )
+                        );
+
                     case Fmi3Command.CommandOneofCase.Fmi3EnterInitializationMode:
                         SendStatusReply(model.Fmi3EnterInitializationMode());
                         break;

@@ -802,6 +802,11 @@ public class Model
         this.clocked_variable_c += this.clocked_variable_a + this.clocked_variable_b;
     }
 
+    public Fmi3Status Fmi3SetDebugLogging(IEnumerable<String> categories, bool loggingOn)
+    {
+        return Fmi3Status.Fmi3Ok;
+    }
+
     /// <summary>UniFMU logging function
     /// <para>
     /// Call this function whenever something should be logged.

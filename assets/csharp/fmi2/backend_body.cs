@@ -200,6 +200,14 @@ namespace Launch
                         Environment.Exit(0);
                         break;
 
+                    case Fmi2Command.CommandOneofCase.Fmi2SetDebugLogging:
+                        SendStatusReply(
+                            model.Fmi2SetDebugLogging(
+                                command.Fmi2SetDebugLogging.Categories,
+                                command.Fmi2SetDebugLogging.LoggingOn
+                            )
+                        );
+
                     default:
                         HandleUnexpectedCommand(command);
                         break;
