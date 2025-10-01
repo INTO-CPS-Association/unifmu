@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "unifmu_macros"
-version = "0.12.0"
+version = "0.13.0"
 
 [lib]
 proc-macro = true
