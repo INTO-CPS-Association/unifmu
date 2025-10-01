@@ -200,7 +200,7 @@ The readme file, as well as other source files for each backend are in the respe
 | --------------------------------- | --------- | ----- |
 | fmi2GetTypesPlatform              | ✓         |       |
 | fmi2GetVersion                    | ✓         |       |
-| fmi2SetDebugLogging               | x         |       |
+| fmi2SetDebugLogging               | ✓         |       |
 | fmi2Instantiate                   | ✓         |       |
 | fmi2FreeInstance                  | ✓         |       |
 | fmi2SetupExperiment               | ✓         |       |
@@ -249,7 +249,7 @@ The readme file, as well as other source files for each backend are in the respe
 | Name                                | Supported | Notes |
 | ----------------------------------- | --------- | ----- |
 | fmi3GetVersion                      | ✓         |       |
-| fmi3SetDebugLogging                 | x         |       |
+| fmi3SetDebugLogging                 | ✓         |       |
 | fmi3InstantiateModelExchange        | x         |       |
 | fmi3InstantiateCoSimulation         | ✓         |       |
 | fmi3InstantiateScheduledExecution   | x         |       |
