@@ -435,23 +435,24 @@ def fmi3_simulate(fmu_filename, is_zipped):
 
         print("Asserting initial values")
     
-        assert float32 == [0.0, 0.0, 0.0]
-        assert float64 == [0.0, 0.0, 0.0]
+        assert float32 == [0.0, 0.0, 0.0], f"Initially fetched float32s were {float32}, should have been [0.0, 0.0, 0.0]."
+        assert float64 == [0.0, 0.0, 0.0], f"Initially fetched float64s were {float64}, should have been [0.0, 0.0, 0.0]."
     
-        assert int8 == [0, 0, 0]
-        assert uint8 == [0, 0, 0]
-        assert int16 == [0, 0, 0]
-        assert uint16 == [0, 0, 0]
-        assert int32 == [0, 0, 0]
-        assert uint32 == [0, 0, 0]
-        assert int64 == [0, 0, 0]
-        assert uint64 == [0, 0, 0]
+        assert int8 == [0, 0, 0], f"Initially fetched int8s were {int8}, should have been [0, 0, 0]."
+        assert uint8 == [0, 0, 0], f"Initially fetched uint8s were {uint8}, should have been [0, 0, 0]."
+        assert int16 == [0, 0, 0], f"Initially fetched int16s were {int16}, should have been [0, 0, 0]."
+        assert uint16 == [0, 0, 0], f"Initially fetched uint16s were {uint16}, should have been [0, 0, 0]."
+        assert int32 == [0, 0, 0], f"Initially fetched int32s were {int32}, should have been [0, 0, 0]."
+        assert uint32 == [0, 0, 0], f"Initially fetched uint32s were {uint32}, should have been [0, 0, 0]."
+        assert int64 == [0, 0, 0], f"Initially fetched int64s were {int64}, should have been [0, 0, 0]."
+        assert uint64 == [0, 0, 0], f"Initially fetched uint64s were {uint64}, should have been [0, 0, 0]."
 
-        assert boolean == [False, False, False]
+        assert boolean == [False, False, False], f"Initially fetched booleans were {boolean}, should have been [False, False, False]."
 
-        assert string == ["", "", ""]
+        assert string == ["", "", ""], f"Initially fetched strings were {string}, should have been [\"\", \"\", \"\"]."
 
-        assert binary == [bytes(c_uint8(0)), bytes(c_uint8(0)), bytes(c_uint8(0))]
+        binary_should_be = [bytes(c_uint8(0)), bytes(c_uint8(0)), bytes(c_uint8(0))]
+        assert binary == binary_should_be, f"Initially fetched binaries were {binary}, should have been {binary_should_be}."
 
         # Simulating
         print(f"Updating inputs at time {sim_time}")
@@ -529,25 +530,27 @@ def fmi3_simulate(fmu_filename, is_zipped):
         binary_c = fmu.getBinary([vrs["binary_c"]])[0]
     
         print("Asserting output values")
-        assert float32_c == 3.0
-        assert float64_c == 3.0
-        assert int8_c == 3
-        assert uint8_c == 3
-        assert int16_c == 3
-        assert uint16_c == 3
-        assert int32_c == 3
-        assert uint32_c == 3
-        assert int64_c == 3
-        assert uint64_c == 3
-        assert boolean_c == True
-        assert string_c == "Hello, World!"
-        assert binary_c == bytes((c_ubyte * 4)(5, 13, 61, 5))
+        assert float32_c == 3.0, f"fetched float32_c was {float32_c}, should have been 3.0."
+        assert float64_c == 3.0, f"fetched float64_c was {float64_c}, should have been 3.0."
+        assert int8_c == 3, f"fetched int8_c was {int8_c}, should have been 3."
+        assert uint8_c == 3, f"fetched uint8_c was {uint8_c}, should have been 3."
+        assert int16_c == 3, f"fetched int16_c was {int16_c}, should have been 3."
+        assert uint16_c == 3, f"fetched uint16_c was {uint16_c}, should have been 3."
+        assert int32_c == 3, f"fetched int32_c was {int32_c}, should have been 3."
+        assert uint32_c == 3, f"fetched uint32_c was {uint32_c}, should have been 3."
+        assert int64_c == 3, f"fetched int64_c was {int64_c}, should have been 3."
+        assert uint64_c == 3, f"fetched uint64_c was {uint64_c}, should have been 3."
+        assert boolean_c == True, f"fetched boolean_c was {boolean_c}, should have been True."
+        assert string_c == "Hello, World!", f"fetched string_c was {string_c}, should have been \"Hello, World!\"."
+        binary_should_be = bytes((c_ubyte * 4)(5, 13, 61, 5))
+        assert binary_c == binary_should_be, f"fetched binary_c was {binary_c}, should have been {binary_should_be}."
 
         binary = fmu.getBinary([
             vrs["binary_a"], vrs["binary_b"], vrs["binary_c"]
         ])
         
-        assert binary == [bytes((c_ubyte * 4)(10, 20, 30, 40)), bytes((c_ubyte * 4)(15, 25, 35, 45)), bytes((c_ubyte * 4)(5, 13, 61, 5))]
+        binary_should_be = [bytes((c_ubyte * 4)(10, 20, 30, 40)), bytes((c_ubyte * 4)(15, 25, 35, 45)), bytes((c_ubyte * 4)(5, 13, 61, 5))]
+        assert binary == binary_should_be, f"fetched binaries was {binary}, should have been {binary_should_be}."
 
     instantiating_test(
         caller = "fmi3_simulate",

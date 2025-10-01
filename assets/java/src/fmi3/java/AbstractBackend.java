@@ -6,6 +6,8 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 
+import java.nio.ByteBuffer;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -90,18 +92,18 @@ public abstract class AbstractBackend {
         socket.connect(endpoint);
     }
 
-    static Iterable<byte[]> convertToByteArrayList(List<ByteString> byteStrings) {
-        List<byte[]> byteArrayList = new ArrayList<>();
+    static Iterable<ByteBuffer> convertToByteBufferArrayList(List<ByteString> byteStrings) {
+        List<ByteBuffer> byteBufferArrayList = new ArrayList<>();
         for (ByteString bs : byteStrings) {
-            byteArrayList.add(bs.toByteArray());
+            byteBufferArrayList.add(bs.asReadOnlyByteBuffer());
         }
-        return byteArrayList;
+        return byteBufferArrayList;
     }
 
-    static List<ByteString> convertToByteStringList(List<byte[]> byteArrays) {
+    static List<ByteString> convertToByteStringList(List<ByteBuffer> byteBuffers) {
         List<ByteString> byteStringList = new ArrayList<>();
-        for (byte[] arr : byteArrays) {
-            byteStringList.add(ByteString.copyFrom(arr));
+        for (ByteBuffer buffer : byteBuffers) {
+            byteStringList.add(ByteString.copyFrom(buffer.duplicate()));
         }
         return byteStringList;
     }
@@ -275,7 +277,7 @@ public abstract class AbstractBackend {
                         model.fmi3SetBinary(
                             c.getValueReferencesList(),
                             c.getValueSizesList(),
-                            convertToByteArrayList(c.getValuesList())
+                            convertToByteBufferArrayList(c.getValuesList())
                         )
                     );
                     break;
@@ -772,7 +774,7 @@ public abstract class AbstractBackend {
                     var c = command.getFmi3DeserializeFmuState();
                     sendStatusReply(
                         model.fmi3DeserializeFmuState(
-                            c.getState().toByteArray()
+                            c.getState().asReadOnlyByteBuffer()
                         )
                     );
                     break;

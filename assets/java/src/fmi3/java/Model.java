@@ -1,6 +1,7 @@
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,15 +65,15 @@ public class Model implements Serializable {
     public String string_a = "";
     public String string_b = "";
     public String string_c = "";
-    public byte[] binary_a = new byte[] {
+    public ByteBuffer binary_a = ByteBuffer.wrap(new byte[] {
         (byte) 0b00000000
-    };
-    public byte[] binary_b = new byte[] {
+    });
+    public ByteBuffer binary_b = ByteBuffer.wrap(new byte[] {
         (byte) 0b00000000
-    };
-    public byte[] binary_c = new byte[] {
+    });
+    public ByteBuffer binary_c = ByteBuffer.wrap(new byte[] {
         (byte) 0b00000000
-    };
+    });
 
     public Float float32_tunable_parameter = 0.0f;
     public Double  float64_tunable_parameter = 0.0;
@@ -86,9 +87,9 @@ public class Model implements Serializable {
     public Long uint64_tunable_parameter = 0L;
     public Boolean boolean_tunable_parameter = false;
     public String string_tunable_parameter = "";
-    public byte[] binary_tunable_parameter = new byte[] {
+    public ByteBuffer binary_tunable_parameter = ByteBuffer.wrap(new byte[] {
         (byte) 0b00000000
-    };
+    });
     public Long uint64_tunable_structural_parameter = 5L;
     public Float[] float32_vector_using_tunable_structural_parameter = new Float[] {
         0.1f,
@@ -398,7 +399,7 @@ public class Model implements Serializable {
         return status;
     }
 
-    public Fmi3Status fmi3SetBinary(Iterable<Integer> references, Iterable<Long> valueSizes, Iterable<byte[]> values) throws Exception {
+    public Fmi3Status fmi3SetBinary(Iterable<Integer> references, Iterable<Long> valueSizes, Iterable<ByteBuffer> values) throws Exception {
         // Store 'valueSizes' somewhere if needed
         Fmi3Status status = SetValue(references, values);
         return status;
@@ -520,8 +521,8 @@ public class Model implements Serializable {
         return pair;
     }
 
-    public Fmi3GetValuePair<byte[]> fmi3GetBinary(Iterable<Integer> references) throws Exception {
-        Fmi3GetValuePair<byte[]> pair = this.GetValue(references);
+    public Fmi3GetValuePair<ByteBuffer> fmi3GetBinary(Iterable<Integer> references) throws Exception {
+        Fmi3GetValuePair<ByteBuffer> pair = this.GetValue(references);
         return pair;
     }
 
@@ -676,15 +677,15 @@ public class Model implements Serializable {
         this.string_a = "";
         this.string_b = "";
         this.string_c = "";
-        this.binary_a = new byte[] {
+        this.binary_a = ByteBuffer.wrap(new byte[] {
             (byte) 0b00000000
-        };
-        this.binary_b = new byte[] {
+        });
+        this.binary_b = ByteBuffer.wrap(new byte[] {
             (byte) 0b00000000
-        };
-        this.binary_c = new byte[] {
+        });
+        this.binary_c = ByteBuffer.wrap(new byte[] {
             (byte) 0b00000000
-        };
+        });
 
         this.float32_tunable_parameter = 0.0f;
         this.float64_tunable_parameter = 0.0;
@@ -698,9 +699,9 @@ public class Model implements Serializable {
         this.uint64_tunable_parameter = 0L;
         this.boolean_tunable_parameter = false;
         this.string_tunable_parameter = "";
-        this.binary_tunable_parameter = new byte[] {
+        this.binary_tunable_parameter = ByteBuffer.wrap(new byte[] {
             (byte) 0b00000000
-        };
+        });
         this.uint64_tunable_structural_parameter = 5L;
         this.float32_vector_using_tunable_structural_parameter = new Float[] {
             0.1f,
@@ -739,12 +740,12 @@ public class Model implements Serializable {
 
         o.writeObject(this);
 
-        return new Fmi3SerializeFmuStatePair(Fmi3Status.OK, b.toByteArray());
+        return new Fmi3SerializeFmuStatePair(Fmi3Status.OK, ByteBuffer.wrap(b.toByteArray()));
     }
 
-    public Fmi3Status fmi3DeserializeFmuState(byte[] bytes) throws Exception {
+    public Fmi3Status fmi3DeserializeFmuState(ByteBuffer bytes) throws Exception {
 
-        try (ByteArrayInputStream b = new ByteArrayInputStream(bytes)) {
+        try (ByteArrayInputStream b = new ByteArrayInputStream(bytes.array())) {
             try (ObjectInputStream o = new ObjectInputStream(b)) {
                 var other = (Model) o.readObject();
                 this.state = other.state;
@@ -900,12 +901,17 @@ public class Model implements Serializable {
         this.uint64_c = this.uint64_a + this.uint64_b;
         this.boolean_c = this.boolean_a || this.boolean_b;
         this.string_c = this.string_a + this.string_b;
-        int length = Math.min(this.binary_a.length, this.binary_b.length);
-        byte[] result = new byte[length];
+        int length = Math.min(
+            this.binary_a.capacity(), this.binary_b.capacity()
+        );
+        ByteBuffer binary_result = ByteBuffer.allocate(length);
         for (int i = 0; i < length; i++) {
-            result[i] = (byte) (this.binary_a[i] ^ this.binary_b[i]);
+            binary_result.put(
+                i,
+                (byte) (this.binary_a.get(i) ^ this.binary_b.get(i))
+            );
         }
-        this.binary_c = result;
+        this.binary_c = binary_result;
     }
 
     private void update_clocks(){
@@ -1026,9 +1032,9 @@ public class Model implements Serializable {
 
     class Fmi3SerializeFmuStatePair {
         public Fmi3Status status;
-        public byte[] bytes;
+        public ByteBuffer bytes;
 
-        Fmi3SerializeFmuStatePair(Fmi3Status status, byte[] bytes) {
+        Fmi3SerializeFmuStatePair(Fmi3Status status, ByteBuffer bytes) {
             this.status = status;
             this.bytes = bytes;
         }
