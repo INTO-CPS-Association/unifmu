@@ -876,33 +876,71 @@ public class Model
     /// </param>
     /// <param name="status">the Fmi3Status that the FMU expects to next return (default: Fmi3Status.Fmi3Ok)</param>
     /// <param name="category">the logging category that this log event falls under</param>
-    private void Log(String message, Fmi3Status status = Fmi3Status.Fmi3Ok, String category = "logEvents") {
+    private void Log(
+        String message,
+        Fmi3Status status = Fmi3Status.Fmi3Ok,
+        String category = "logEvents"
+    )
+    {
         this.log_callback(status, category, message);
     }
 
     public Fmi3Status SetValueReflection<T>(IEnumerable<uint> references, IEnumerable<T> values)
-    {   
+    {
+        var status = Fmi3Status.Fmi3Ok;
+
         foreach (var (r, v) in references.Zip(values)){
-            if (clocked_variables.ContainsKey(r) || tunable_parameters.ContainsKey(r)) {
-                if (state == FMIState.FMIEventModeState || state == FMIState.FMIInitializationModeState){
-                }else{
-                    return Fmi3Status.Fmi3Error;
+            if (
+                clocked_variables.ContainsKey(r)
+                || tunable_parameters.ContainsKey(r)
+            )
+            {
+                if (
+                    state != FMIState.FMIEventModeState
+                    && state != FMIState.FMIInitializationModeState
+                )
+                {
+                    this.Log(
+                        $"Set clocked variable or tunable parameter #{r}# when neither in event mode nor in initialization mode.",
+                        Fmi3Status.Fmi3Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Fmi3Warning;
                 }
-            } else if (tunable_structural_parameters.ContainsKey(r)) {
-                if ((state == FMIState.FMIConfigurationModeState) || (state == FMIState.FMIReconfigurationModeState)){
-                }else{
-                    return Fmi3Status.Fmi3Error;
+            }
+            else if (tunable_structural_parameters.ContainsKey(r))
+            {
+                if (
+                    state != FMIState.FMIConfigurationModeState
+                    && state != FMIState.FMIReconfigurationModeState
+                )
+                {
+                    this.Log(
+                        $"Set tunable structural parameter #{r}# when neither in configuration mode nor in reconfiguration mode.",
+                        Fmi3Status.Fmi3Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Fmi3Warning;
                 }
-            } else if (parameters.ContainsKey(r)) {
-                if (state == FMIState.FMIInitializationModeState){
-                }else{
-                    return Fmi3Status.Fmi3Error;
+            }
+            else if (parameters.ContainsKey(r))
+            {
+                if (
+                    state != FMIState.FMIInitializationModeState
+                )
+                {
+                    this.Log(
+                        $"Set parameter #{r}# when not in initialization mode.",
+                        Fmi3Status.Fmi3Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Fmi3Warning;
                 }
             }
             this.all_references[r].SetValue(this, (object)v);
         }
 
-        return Fmi3Status.Fmi3Ok;
+        return status;
     }    
 
     public (Fmi3Status, IEnumerable<T>) GetValueReflection<T>(IEnumerable<uint> references)
@@ -913,7 +951,10 @@ public class Model
         {
             if (clocked_variables.ContainsKey(r))
             {
-                if (!(state.HasFlag(FMIState.FMIEventModeState) || state.HasFlag(FMIState.FMIInitializationModeState)))
+                if (
+                    state != FMIState.FMIEventModeState
+                    && state != FMIState.FMIInitializationModeState
+                )
                 {
                     this.Log(
                         $"Accessed clocked variable #{r}# when neither in event mode nor in initialization mode.",

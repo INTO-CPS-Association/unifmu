@@ -703,8 +703,8 @@ class Model:
         # The model will be informed of whether or not to output logging and
         # what categories to log through a call to fmi3SetDebugLogging().
         # The UniFMU layer already handles filtering of messages so that
-        # the FMU importer only receives logging events that is interested in,
-        # but if you want to filter before sending the events to the UniFMU 
+        # the FMU importer only receives logging events that it is interested
+        # in, but if you want to filter before sending the events to the UniFMU
         # layer to save on message bandwidth, feel free to do so.
         
         # Removing the line below will break logging.
@@ -713,31 +713,51 @@ class Model:
     # ================= Helpers =================
 
     def _set_value(self, references, values):
+        status = Fmi3Status.ok
         for r, v in zip(references, values):
             if (r in self.clocked_variables or r in self.tunable_parameters):
-                if (self.state == FMIState.FMIEventModeState or self.state == FMIState.FMIInitializationModeState):
-                    pass
-                else:
-                    return Fmi3Status.error
+                if (
+                    self.state != FMIState.FMIEventModeState
+                    and self.state != FMIState.FMIInitializationModeState
+                ):
+                    self.log(
+                        f"Set clocked variable or tunable parameter #{r}# when neither in event mode nor in initialization mode.",
+                        Fmi3Status.warning,
+                        "logStatusWarning"
+                    )
+                    status = Fmi3Status.warning
             elif (r in self.tunable_structural_parameters):
-                if (self.state == FMIState.FMIConfigurationModeState or self.state == FMIState.FMIReconfigurationModeState or self.state == FMIState.FMIInitializationModeState):
-                    pass
-                else:
-                    return Fmi3Status.error
+                if (
+                    self.state != FMIState.FMIConfigurationModeState
+                    and self.state != FMIState.FMIReconfigurationModeState
+                    and self.state != FMIState.FMIInitializationModeState
+                ):
+                    self.log(
+                        f"Set tunable structural parameter #{r}# when neither in configuration mode, in reconfiguration mode nor in initialization mode.",
+                        Fmi3Status.warning,
+                        "logStatusWarning"
+                    )
+                    status = Fmi3Status.warning
             elif (r in self.parameters):
-                if (self.state == FMIState.FMIInitializationModeState):
-                    pass
-                else:
-                    return Fmi3Status.error
+                if (self.state != FMIState.FMIInitializationModeState):
+                    self.log(
+                        f"Set parameter #{r}# when not in initialization mode.",
+                        Fmi3Status.warning,
+                        "logStatusWarning"
+                    )
+                    status = Fmi3Status.warning
             setattr(self, self.all_references[r], v)
-        return Fmi3Status.ok
+        return status
 
     def _get_value(self, references):
         status = Fmi3Status.ok
         values = []
         for r in references:
             if r in self.clocked_variables:
-                if not ((self.state == FMIState.FMIEventModeState) or (self.state == FMIState.FMIInitializationModeState)):
+                if (
+                    self.state != FMIState.FMIEventModeState
+                    and self.state != FMIState.FMIInitializationModeState
+                ):
                     self.log(
                         f"Accessed clocked variable #{r}# when neither in event mode nor in initialization mode.",
                         Fmi3Status.warning,

@@ -857,35 +857,67 @@ public class Model implements Serializable {
     }
 
     private <T> Fmi3Status SetValue(Iterable<Integer> references, Iterable<T> values) throws Exception {        
+        Fmi3Status status = Fmi3Status.OK;
+
         Iterator<Integer> i1 = references.iterator();
         Iterator<T> i2 = values.iterator();
+
         while (i1.hasNext() && i2.hasNext()) {
             Integer r = i1.next();
             var field = (T) this.map_to_attributes.get(r);
             var v = i2.next();
 
-            if ((this.clocked_variables.contains(field)) || (this.tunable_parameters.contains(field))){
-                if (this.state == FMIState.FMIEventModeState || this.state == FMIState.FMIInitializationModeState){
-                } else {
-                    return Fmi3Status.Error;
+            if (
+                this.clocked_variables.contains(field)
+                || this.tunable_parameters.contains(field)
+            ) {
+                if (
+                    this.state != FMIState.FMIEventModeState
+                    && this.state != FMIState.FMIInitializationModeState
+                ) {
+                    this.log(
+                        String.format(
+                            "Set clocked variable or tunable parameter #%s# when neither in event mode nor in initialization mode.",
+                            r
+                        ),
+                        Fmi3Status.Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Warning;
                 }
-            } else if(this.tunable_structural_parameters.contains(field)){
-                if (this.state == FMIState.FMIConfigurationModeState || this.state == FMIState.FMIReconfigurationModeState){
-                }else {
-                    return Fmi3Status.Error;
+            } else if (this.tunable_structural_parameters.contains(field)) {
+                if (
+                    this.state != FMIState.FMIConfigurationModeState
+                    && this.state != FMIState.FMIReconfigurationModeState
+                ) {
+                    this.log(
+                        String.format(
+                            "Set tunable structural parameter #%s# when neither in configuration mode nor in reconfiguration mode.",
+                            r
+                        ),
+                        Fmi3Status.Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Warning;
                 }
-
-            } else if(this.parameters.contains(field)){
-                if (this.state == FMIState.FMIInitializationModeState){
-                }else{
-                    return Fmi3Status.Error;
+            } else if (this.parameters.contains(field)) {
+                if (this.state != FMIState.FMIInitializationModeState) {
+                    this.log(
+                        String.format(
+                            "Set parameter #%s# when not in initialization mode.",
+                            r
+                        ),
+                        Fmi3Status.Warning,
+                        "logStatusWarning"
+                    );
+                    status = Fmi3Status.Warning;
                 }
-
             }
 
             this.map_to_attributes.get(r).set(this, v);            
         }
-        return Fmi3Status.OK;
+        
+        return status;
     }
 
     private void update_outputs() {
