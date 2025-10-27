@@ -36,7 +36,7 @@ else
 fi
 
 ## Compile python app
-"$EXECUTABLE_NAME" backend.py
+"$EXECUTABLE_NAME" main.py
 
 ## Create placeholders for zipping new fmu
 mkdir ${TMP_FOLDER_PATH}
@@ -49,7 +49,9 @@ cp ${COMPILATION_RESOURCES_PATH_NAME}/launch_with_pyinstaller.toml ${TMP_FOLDER_
 rm ${TMP_FOLDER_PATH}/resources/*.py
 rm -r ${TMP_FOLDER_PATH}/resources/schemas/
 rm -r ${TMP_FOLDER_PATH}/resources/${COMPILATION_RESOURCES_PATH_NAME}
-rm backend.spec
+rm ${TMP_FOLDER_PATH}/resources/requirements.txt
+rm ${TMP_FOLDER_PATH}/resources/README.md
+rm main.spec
 rm -r build
 rm -r dist 
 

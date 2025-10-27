@@ -59,7 +59,7 @@ exit /b 1
 
 :Continue_Build
 :: --- Compile python app ---
-"%EXECUTABLE_NAME%" backend.py
+"%EXECUTABLE_NAME%" main.py
 
 :: Create placeholders for zipping new fmu
 mkdir "%TMP_FOLDER_PATH%"
@@ -72,9 +72,12 @@ copy /Y "%COMPILATION_RESOURCES_PATH_NAME%\launch_with_pyinstaller.toml" "%TMP_F
 del /Q "%TMP_FOLDER_PATH%\resources\*.py"
 rmdir /S /Q "%TMP_FOLDER_PATH%\resources\schemas\"
 rmdir /S /Q "%TMP_FOLDER_PATH%\resources\%COMPILATION_RESOURCES_PATH_NAME%"
-del /Q "backend.spec"
+del /Q "%TMP_FOLDER_PATH%\resources\requirements.txt"
+del /Q "%TMP_FOLDER_PATH%\resources\README.md"
+del /Q "main.spec"
 rmdir /S /Q "build"
 rmdir /S /Q "dist"
+
 
 :: --- Wrap the folder with fmu extension (Create the .fmu file) ---
 del /F /Q "..\..\%BASE_FOLDER_NAME%_compiled.fmu"

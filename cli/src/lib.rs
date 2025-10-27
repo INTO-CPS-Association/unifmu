@@ -46,6 +46,9 @@ static FMI3_ARCHITECTURES: [&str; 4] = ["aarch32", "aarch64", "x86", "x86_64"];
 lazy_static! {
     static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
+            ("python/compilation_resources/launch_with_pyinstaller.toml", "compilation_resources/launch_with_pyinstaller.toml"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.sh", "compilation_resources/unifmu_pyinstaller_build_script.sh"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.bat", "compilation_resources/unifmu_pyinstaller_build_script.bat"),
             ("python/requirements.txt", "requirements.txt"),
             ("python/main_local.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
@@ -63,6 +66,9 @@ lazy_static! {
             ("python/README.md", "README.md"),
         ],
         fmi3_resources: vec![
+            ("python/compilation_resources/launch_with_pyinstaller.toml", "compilation_resources/launch_with_pyinstaller.toml"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.sh", "compilation_resources/unifmu_pyinstaller_build_script.sh"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.bat", "compilation_resources/unifmu_pyinstaller_build_script.bat"),
             ("python/requirements.txt", "requirements.txt"),
             ("python/main_local.py", "main.py"),
             ("python/fmi3/abstract_backend.py", "abstract_backend.py"),
@@ -437,7 +443,7 @@ pub fn generate(
                     std::fs::create_dir_all(&destination_folder_path)
                         .map_err(|io_error| {
                             error!(
-                                "Couldn't create binary fodler structure {}: {}",
+                                "Couldn't create binary folder structure {}: {}",
                                 destination_folder_path.display(),
                                 io_error
                             );

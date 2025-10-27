@@ -114,6 +114,37 @@ pip install -r requirements.txt
 
 Install any other dependencies required in your model within the virtual environment before importing the FMU.
 
+# Compilation
+In case you want to compile your Python FMU to avoid dependency issues and hide your white-box model to some degree, you can make use of the resources within the `compilation_resources` folder.
+We provide scripts for shell (Linux) and batch (Windows) that install `pyinstaller` and compile your Python FMU into an executable. The scripts also take care of reconfiguring the launching process of the FMU.
+
+To execute the scripts, use the following commands from within the `resources` folder:
+**Linux**
+``` 
+chmod +x compilation_resources/unifmu_pyinstaller_build_script.sh
+./compilation_resources/unifmu_pyinstaller_build_script.sh
+```
+
+**Windows (On Powershell)**
+``` 
+.\compilation_resources\unifmu_pyinstaller_build_script.bat
+```
+On Windows, you can also double-click on the `.bat` script to execute it.
+
+After the script have successfully compiled your Python FMU, the new compiled FMU will be available in the parent folder of your FMU as follows:
+
+📂parent_folder
+ ┣ 📂your_python_fmu_model(uncompressed) --> Execute the script here.
+ ┣ 📦your_python_fmu_model.fmu
+ ┗ 📦your_python_fmu_model_compiled.fmu --> The resulting compiled FMU.
+
+Notice that the compiled FMU won't contain any explicit files from the original white-box FMU.
+In case you want to do some changes to your model, you need to do these on the original white-box Python FMU and rerun the script.
+
+**Disclaimer:**
+- This feature relies on [PyInstaller](https://pyinstaller.org/en/stable/) and its support is out of our scope.We cannot guarantee that this feature will work with complex FMU models, especially with several dependencies; therefore, we recommend testing the FMUs incrementally if this feature is to be used. For problems with PyInstaller, please visit their documentation page.
+- Be aware that the compiled FMU is not Intellectual-Property-protected.
+
 # File structure
 
 An overview of the role of each file is provided in the tree below:

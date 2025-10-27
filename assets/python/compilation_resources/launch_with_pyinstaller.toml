@@ -1,3 +1,3 @@
-linux = ["sh", "-c", "chmod +x dist/backend/backend && ./dist/backend/backend"]
-macos = ["sh", "-c", "chmod +x dist/backend/backend && ./dist/backend/backend"]
-windows = ["powershell","-command","./dist/backend/backend.exe"]
+linux = ["sh", "-c", "chmod +x dist/main/main && ./dist/main/main"]
+macos = ["sh", "-c", "chmod +x dist/main/main && ./dist/main/main"]
+windows = ["powershell","-command","./dist/main/main.exe"]
