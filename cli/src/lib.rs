@@ -188,6 +188,9 @@ lazy_static! {
     };
     static ref PYTHONASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
+            ("python/compilation_resources/launch_with_pyinstaller.toml", "compilation_resources/launch_with_pyinstaller.toml"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.sh", "compilation_resources/unifmu_pyinstaller_build_script.sh"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.bat", "compilation_resources/unifmu_pyinstaller_build_script.bat"),
             ("python/requirements.txt", "requirements.txt"),
             ("python/main_remote.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
@@ -205,6 +208,9 @@ lazy_static! {
             ("python/README.md", "README.md"),
         ],
         fmi3_resources: vec![
+            ("python/compilation_resources/launch_with_pyinstaller.toml", "compilation_resources/launch_with_pyinstaller.toml"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.sh", "compilation_resources/unifmu_pyinstaller_build_script.sh"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.bat", "compilation_resources/unifmu_pyinstaller_build_script.bat"),
             ("python/requirements.txt", "requirements.txt"),
             ("python/main_remote.py", "main.py"),
             ("python/fmi3/abstract_backend.py", "abstract_backend.py"),
@@ -333,6 +339,9 @@ lazy_static! {
 
     static ref ASSETSREMOTEFMU: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
+            ("python/compilation_resources/launch_with_pyinstaller.toml", "compilation_resources/launch_with_pyinstaller.toml"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.sh", "compilation_resources/unifmu_pyinstaller_build_script.sh"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.bat", "compilation_resources/unifmu_pyinstaller_build_script.bat"),
             ("python/requirements.txt", "requirements.txt"),
             ("python/main_blackbox.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
@@ -349,6 +358,9 @@ lazy_static! {
             ),
         ],
         fmi3_resources: vec![
+            ("python/compilation_resources/launch_with_pyinstaller.toml", "compilation_resources/launch_with_pyinstaller.toml"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.sh", "compilation_resources/unifmu_pyinstaller_build_script.sh"),
+            ("python/compilation_resources/unifmu_pyinstaller_build_script.bat", "compilation_resources/unifmu_pyinstaller_build_script.bat"),
             ("python/requirements.txt", "requirements.txt"),
             ("python/main_blackbox.py", "main.py"),
             ("python/fmi3/abstract_backend.py", "abstract_backend.py"),
