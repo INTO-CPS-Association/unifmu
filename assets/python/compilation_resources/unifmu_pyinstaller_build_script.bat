@@ -27,17 +27,14 @@ set "TWO_UP_FULL_PATH=%CD%\..\.."
 
 set "TMP_FOLDER_PATH=..\..\%BASE_FOLDER_NAME%_tmp"
 
-SET "PACKAGE_NAME=pyinstaller"
-SET "EXECUTABLE_NAME=pyinstaller"
-
 :: --- Check and Install pyinstaller if required ---
 SET "EXECUTABLE_NAME=pyinstaller"
-SET "PACKAGE_NAME=pyinstaller"
+SET "PACKAGE_NAME=PyInstaller"
 
-where /q "%EXECUTABLE_NAME%"
+python -m pip show %PACKAGE_NAME% >NUL 2>&1
 IF %ERRORLEVEL% EQU 0 GOTO :Install_Found
 
-echo ⚙️ Executable '%EXECUTABLE_NAME%' not found in PATH. Installing package '%PACKAGE_NAME%' now...
+echo ⚙️ Executable '%PACKAGE_NAME%' not found in PATH. Installing package '%PACKAGE_NAME%' now...
 
 pip install "%PACKAGE_NAME%"
 
@@ -46,7 +43,7 @@ IF %ERRORLEVEL% EQU 0 GOTO :Install_Success
 GOTO :Install_Failure
 
 :Install_Found
-echo ✅ Executable '%EXECUTABLE_NAME%' (from package '%PACKAGE_NAME%') is already available. Skipping installation.
+echo ✅ Executable '%PACKAGE_NAME%' (from package '%PACKAGE_NAME%') is already available. Skipping installation.
 GOTO :Continue_Build
 
 :Install_Success
@@ -59,7 +56,7 @@ exit /b 1
 
 :Continue_Build
 :: --- Compile python app ---
-"%EXECUTABLE_NAME%" main.py
+python -m %PACKAGE_NAME% main.py
 
 :: Create placeholders for zipping new fmu
 mkdir "%TMP_FOLDER_PATH%"
