@@ -129,10 +129,12 @@ An overview of the role of each file is provided in the tree below:
  ┃ ┃ ┗ 📜unifmu.dll         # binary For Windows
  ┣ 📂resources
  ┃ ┣ 📂schemas
- ┃ ┃ ┗ 📜fmix_messages_pb2.py # schema defining structure of messages sent over RPC. x denotes the version: either 2 for FMI2 or 3 for FMI3
- ┃ ┃ ┗ 📜unifmu_handshake_pb2.py # UniFMU handshaking mechanism for backends and dispatcher.
+ ┃ ┃ ┗ 📜fmix_messages_pbX.py # schema defining structure of messages sent over RPC. x denotes the version: either 2 for FMI2 or 3 for FMI3
+ ┃ ┃ ┗ 📜unifmu_handshake_pbX.py # UniFMU handshaking mechanism for backends and dispatcher.
+ ┃ ┣ 📜abstract_backend.py  # receives messages and dispatched function calls to "model.py"
  ┃ ┣ 📜backend.py           # receives messages and dispatched function calls to "model.py"
- ┃ ┣ 📜launch.toml*         # specifies command used to start FMU
+ ┃ ┣ 📜launch.toml          # specifies command used to start FMU
+ ┃ ┣ 📜main.py              # entrypoint for the FMU backend
  ┃ ┣ 📜model.py*            # implementation of FMU
  ┃ ┣ 📜README.md            # This README.md file
  ┃ ┗ 📜requirements.txt     # Base dependencies to run UniFMU templates
