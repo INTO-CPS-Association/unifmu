@@ -714,7 +714,7 @@ class Model:
 
     def _set_value(self, references, values):
         status = Fmi3Status.ok
-        for r, v in zip(references, values):
+        for r in references:
             if (r in self.clocked_variables or r in self.tunable_parameters):
                 if (
                     self.state != FMIState.FMIEventModeState
@@ -746,7 +746,16 @@ class Model:
                         "logStatusWarning"
                     )
                     status = Fmi3Status.warning
-            setattr(self, self.all_references[r], v)
+
+            reference = self.all_references[r]
+            setattr(
+                self,
+                reference,
+                _pop_n_format_values_for_attribute(
+                    getattr(self, reference),
+                    values
+                )
+            )
         return status
 
     def _get_value(self, references):
@@ -765,11 +774,10 @@ class Model:
                     )
                     status = Fmi3Status.warning
 
-            value = getattr(self, self.all_references[r])
-            if isinstance(value, list):
-                values.extend(value)
-            else:
-                values.append(value)
+            _add_value_to_values(
+                getattr(self, self.all_references[r]),
+                values
+            )
 
         return status, values
 
@@ -794,7 +802,72 @@ class Model:
     def _update_clocked_outputs(self):
         self.clocked_variable_c += self.clocked_variable_a + self.clocked_variable_b
 
+""" Pops values from the "values" attribute and returns them formatted
+as the format of "current_value"
 
+If "current_value" is a scalar, the first value of "values" will be popped
+and returned.
+If "current_value" is a non-scalar (at least a list of scalars, but could
+be any list of lists of lists or scalars, recursive), values of "values"
+are popped from the front and formed into the same structure as that of
+"current_value".
+
+Examples:
+
+current_value is a scalar:
+```
+new_value = self._pop_n_format_values_for_attribute(
+    current_value=9,
+    values=[8, 15, 2]
+)
+
+new_value == 8
+values == [15, 2]
+```
+
+current_value is a list of scalars (vector):
+```
+new_value = self._pop_n_format_values_for_attribute(
+    current_value=[1, 2, 3, 4],
+    values=[19, 18, 17, 16, 15, 14]
+)
+
+new_value == [19, 18, 17, 16]
+values == [15, 14]
+```
+
+current_value is a list of list of scalars (2 dimensional matrix):
+```
+new_value = self._pop_n_format_values_for_attribute(
+    current_value=[[11, 12],
+                   [21, 22],
+                   [31, 32]],
+    values=[1, 1, 2, 3, 5, 8, 13]
+)
+
+new_value == [[1, 1],
+              [2, 3],
+              [5, 8]]
+values == [13]
+```
+"""
+def _pop_n_format_values_for_attribute(current_value, values):
+    if isinstance(current_value, list):
+        return_values = []
+        for sub_value in current_value:
+            return_values.append(
+                _pop_n_format_values_for_attribute(sub_value, values)
+            )
+        return return_values
+    else:
+        return values.pop(0)
+    
+def _add_value_to_values(value, values):
+    if isinstance(value, list):
+        for sub_value in value:
+            _add_value_to_values(sub_value, values)
+    else:
+        values.append(value)
 class Fmi3Status():
     """
     Represents the status of an FMI3 FMU or the results of function calls.
