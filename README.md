@@ -113,8 +113,10 @@ For example the tree below shows the placeholder FMU generated when implementing
  ┃ ┣ 📂schemas
  ┃ ┃ ┃ 📜fmi2_messages_pb2.py
  ┃ ┃ ┗ 📜unifmu_handshake_pb2.py
+ ┃ ┣ 📜abstract_backend.py
  ┃ ┣ 📜backend.py
  ┃ ┣ 📜launch.toml
+ ┃ ┣ 📜main.py
  ┃ ┣ 📜model.py
  ┃ ┣ 📜README.md
  ┃ ┗ 📜requirements.txt
@@ -163,10 +165,12 @@ whereas its fellow private folder contains the model file, the dependencies, and
  ┣ 📂schemas
  ┃ ┃ 📜fmi2_messages_pb2.py
  ┃ ┗ 📜unifmu_handshake_pb2.py
+ ┣ 📜abstract_backend.py
  ┣ 📜backend.py
- ┣ 📜model.py
- ┣ 📜launch.toml
  ┣ 📜endpoint.toml
+ ┣ 📜launch.toml
+ ┣ 📜main.py
+ ┣ 📜model.py
  ┣ 📜README.md
  ┗ 📜requirements.txt
 ```
