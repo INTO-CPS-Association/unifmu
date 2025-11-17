@@ -1,14 +1,72 @@
 from fmpy import read_model_description, extract
-from fmpy.fmi3 import FMU3Slave,fmi3OK, fmi3ValueReference, fmi3Binary, fmi3Error
+from fmpy.fmi3 import FMU3Slave,fmi3OK, fmi3ValueReference, fmi3Binary, fmi3Error, fmi3UInt64,fmi3Float64,fmi3IntervalQualifier, fmi3Instance
 import shutil
 import sys
 import logging
-import time
 import ctypes
-from ctypes import c_uint8,c_char_p
+from ctypes import c_uint8
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
+
+## Overwrites the clock related functions
+def getIntervalDecimal(fmu,valueReferences):
+        nValueReferences = len(valueReferences)
+        valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+        intervals = (fmi3Float64 * nValueReferences)()
+        qualifiers = (fmi3IntervalQualifier * nValueReferences)()
+        fmu.fmi3GetIntervalDecimal(fmu.component, valueReferences, nValueReferences, intervals, qualifiers)
+        return list(intervals),list(qualifiers)
+
+def getIntervalFraction(fmu,valueReferences):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)()
+    resolutions = (fmi3UInt64 * nValueReferences)()
+    qualifiers = (fmi3IntervalQualifier * nValueReferences)()
+    fmu.fmi3GetIntervalFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions, qualifiers)
+    return list(counters),list(resolutions),list(qualifiers)
+
+def getShiftDecimal(fmu,valueReferences):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    shifts = (fmi3Float64 * nValueReferences)()
+    fmu.fmi3GetShiftDecimal(fmu.component, valueReferences, nValueReferences, shifts)
+    return list(shifts)
+
+def getShiftFraction(fmu,valueReferences):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)()
+    resolutions = (fmi3UInt64 * nValueReferences)()
+    fmu.fmi3GetShiftFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions)
+    return list(counters),list(resolutions)
+
+def setIntervalDecimal(fmu,valueReferences, intervals):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    intervals = (fmi3Float64 * nValueReferences)(*intervals)
+    fmu.fmi3SetIntervalDecimal(fmu.component, valueReferences, nValueReferences, intervals)
+
+def setIntervalFraction(fmu,valueReferences, counters, resolutions):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)(*counters)
+    resolutions = (fmi3UInt64 * nValueReferences)(*resolutions)
+    fmu.fmi3SetIntervalFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions)
+
+def setShiftDecimal(fmu,valueReferences, shifts):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    shifts = (fmi3Float64 * nValueReferences)(*shifts)
+    fmu.fmi3SetShiftDecimal(fmu.component, valueReferences, nValueReferences, shifts)
+
+def setShiftFraction(fmu,valueReferences, counters, resolutions):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)(*counters)
+    resolutions = (fmi3UInt64 * nValueReferences)(*resolutions)
+    fmu.fmi3SetShiftFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions)
 
 if __name__ == "__main__":
     input_ok = False
@@ -38,25 +96,13 @@ if __name__ == "__main__":
 
     # initialize
     fmu.instantiate(visible=False,
-                    loggingOn=False,
+                    loggingOn=True,
                     eventModeUsed=True,
                     earlyReturnAllowed=True,
                     logMessage=None,
                     intermediateUpdate=None)
     fmu.enterInitializationMode()
     fmu.exitInitializationMode()
-
-    # fmu.setBinary(
-    #     [vrs["binary_a"], vrs["binary_b"]],
-    #     [(ctypes.c_ubyte * 4)(10, 20, 30, 40), (ctypes.c_ubyte * 4)(15, 25, 35, 45)]
-    # ) 
-    # binary_a = fmu.getBinary([vrs["binary_a"]])[0]
-    # print(f'original binary_a: {bytes((ctypes.c_ubyte * 4)(10, 20, 30, 40))}')
-    # print(f'binary_a: {bytes(binary_a)}')
-    # binary_b = fmu.getBinary([vrs["binary_b"]])[0]
-    # print(f'original binary_b: {bytes((ctypes.c_ubyte * 4)(15, 25, 35, 45))}')
-    # print(f'binary_b: {bytes(binary_b)}')
-    #exit()
 
     print("Fetching initial values from the FMU")
     
@@ -174,7 +220,6 @@ if __name__ == "__main__":
     fmu.setBinary(
         [vrs["binary_a"], vrs["binary_b"]],
         [(ctypes.c_ubyte * 4)(10, 20, 30, 40), (ctypes.c_ubyte * 4)(15, 25, 35, 45)]
-        #[bytes(b'Hola'), c_uint8(15)]
     ) 
     
 
@@ -210,7 +255,6 @@ if __name__ == "__main__":
     assert uint64_c == 3
     assert boolean_c == True
     assert string_c == "Hello, World!"
-    #print(f'binary_c: {bytes(binary_c)}')
     assert binary_c == bytes((ctypes.c_ubyte * 4)(5, 13, 61, 5))
 
     binary = fmu.getBinary([
@@ -218,8 +262,6 @@ if __name__ == "__main__":
     ])
 
     assert binary == [bytes((ctypes.c_ubyte * 4)(10, 20, 30, 40)), bytes((ctypes.c_ubyte * 4)(15, 25, 35, 45)), bytes((ctypes.c_ubyte * 4)(5, 13, 61, 5))]
-    #assert binary == [bytes(b'Hola'), bytes(c_uint8(15)), bytes(b'G')]
-    #exit()
     
     ## Testing state-related functions ##
     can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
@@ -320,7 +362,7 @@ if __name__ == "__main__":
     assert binary_c == bytes(ctypes.c_ubyte(31))
 
     # Entering in configuration mode
-    fmu.enterConfigurationMode()
+    fmu.fmi3EnterConfigurationMode(fmu.component)
     uint64_tunable_structural_parameter = fmu.getUInt64([vrs["uint64_tunable_structural_parameter"]])[0]
     assert uint64_tunable_structural_parameter == 5
 
@@ -328,9 +370,9 @@ if __name__ == "__main__":
     uint64_tunable_structural_parameter = fmu.getUInt64([vrs["uint64_tunable_structural_parameter"]])[0]
     assert uint64_tunable_structural_parameter == 6
     # Exiting configuration mode
-    fmu.exitConfigurationMode()
+    fmu.fmi3ExitConfigurationMode(fmu.component)
 
-    # assert fmu.setUInt64([vrs["uint64_tunable_structural_parameter"]],[7]) == fmi3Error # Throws FMI3Error    
+    fmu.setUInt64([vrs["uint64_tunable_structural_parameter"]],[7]) # Should warn (not in config mode)
 
     # Setting state to previous state
     print("Setting to a previous state")
@@ -372,12 +414,6 @@ if __name__ == "__main__":
     reset_return = fmu.reset()
     enter_init_return = fmu.enterInitializationMode()
     exit_init_return = fmu.exitInitializationMode()
-    print(f"reset return: {reset_return}")
-    print(f"enter return: {enter_init_return}")
-    print(f"exit return: {exit_init_return}")
-    # assert reset_return == 0, f"reset returned with error, should have been return value: {0}" 
-    # assert enter_init_return == 0, f"enterInitializationMode returned with error, should have been return value: {0}"
-    # assert exit_init_return == 0, f"exitInitializationMode returned with error, should have been return value: {0}"
     print("Fetching values after resetting")
     float32 = fmu.getFloat32([
         vrs["float32_a"], vrs["float32_b"], vrs["float32_c"]
@@ -438,44 +474,43 @@ if __name__ == "__main__":
     assert string == ["", "", ""]
     assert binary == [bytes(c_uint8(0)), bytes(c_uint8(0)), bytes(c_uint8(0))]
 
-
     print("Tests for clock-related functions")
-    interval_decimals = fmu.getIntervalDecimal([vrs["clock_a"]])
-    interval_fractions = fmu.getIntervalFraction([vrs["clock_a"]])
-    shift_decimals = fmu.getShiftDecimal([vrs["clock_a"]])
-    shift_fractions = fmu.getShiftFraction([vrs["clock_a"]])
+    interval_decimals = getIntervalDecimal(fmu,[vrs["clock_a"]])
+    interval_fractions = getIntervalFraction(fmu,[vrs["clock_a"]])
+    shift_decimals = getShiftDecimal(fmu,[vrs["clock_a"]])
+    shift_fractions = getShiftFraction(fmu,[vrs["clock_a"]])
 
     assert interval_decimals == ([1.0],[2])
     assert interval_fractions == ([1],[1],[2])
     assert shift_decimals == [1.0]
     assert shift_fractions == ([1],[1])
 
-    fmu.setIntervalDecimal([vrs["clock_a"]],[1.5])
-    fmu.setShiftDecimal([vrs["clock_a"]],[1.5])
+    setIntervalDecimal(fmu,[vrs["clock_a"]],[1.5])
+    setShiftDecimal(fmu,[vrs["clock_a"]],[1.5])
 
-    interval_decimals = fmu.getIntervalDecimal([vrs["clock_a"]])
-    interval_fractions = fmu.getIntervalFraction([vrs["clock_a"]])
-    shift_decimals = fmu.getShiftDecimal([vrs["clock_a"]])
-    shift_fractions = fmu.getShiftFraction([vrs["clock_a"]])
+    interval_decimals = getIntervalDecimal(fmu,[vrs["clock_a"]])
+    interval_fractions = getIntervalFraction(fmu,[vrs["clock_a"]])
+    shift_decimals = getShiftDecimal(fmu,[vrs["clock_a"]])
+    shift_fractions = getShiftFraction(fmu,[vrs["clock_a"]])
     assert interval_decimals == ([1.5],[2])
     assert interval_fractions == ([3],[2],[2])
     assert shift_decimals == [1.5]
     assert shift_fractions == ([3],[2])
 
-    fmu.setIntervalFraction([vrs["clock_a"]],[5],[2])
-    fmu.setShiftFraction([vrs["clock_a"]],[5],[2])
+    setIntervalFraction(fmu,[vrs["clock_a"]],[5],[2])
+    setShiftFraction(fmu,[vrs["clock_a"]],[5],[2])
 
-    interval_decimals = fmu.getIntervalDecimal([vrs["clock_a"]])
-    interval_fractions = fmu.getIntervalFraction([vrs["clock_a"]])
-    shift_decimals = fmu.getShiftDecimal([vrs["clock_a"]])
-    shift_fractions = fmu.getShiftFraction([vrs["clock_a"]])
+    interval_decimals = getIntervalDecimal(fmu,[vrs["clock_a"]])
+    interval_fractions = getIntervalFraction(fmu,[vrs["clock_a"]])
+    shift_decimals = getShiftDecimal(fmu,[vrs["clock_a"]])
+    shift_fractions = getShiftFraction(fmu,[vrs["clock_a"]])
     assert interval_decimals == ([2.5],[2])
     assert interval_fractions == ([5],[2],[2])
     assert shift_decimals == [2.5]
     assert shift_fractions == ([5],[2])
 
     print("Tests for event mode")
-    # fmu.getUInt32([vrs["clocked_variable_c"]]) == fmi3Error # Throws FMI3Error since not in event mode
+    fmu.getUInt32([vrs["clocked_variable_c"]]) # Should warn (not in event mode) 
 
     fmu.enterEventMode()
     clocked_variable_c = fmu.getInt32([vrs["clocked_variable_c"]])[0]
