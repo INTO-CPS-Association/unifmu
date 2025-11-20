@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from fmpy import read_model_description, extract
-from fmpy.fmi3 import FMU3Slave, fmi3Float64, fmi3IntervalQualifier, fmi3ValueReference
+from fmpy.fmi3 import FMU3Slave, fmi3ValueReference, fmi3UInt64, fmi3Float64, fmi3IntervalQualifier
 from shutil import rmtree
 import ctypes
 
@@ -173,10 +173,18 @@ class BlackboxBackend(AbstractBackend):
 
                 case "Fmi3DeserializeFmuState":
                     if self.can_handle_state and isinstance(data.state, bytes):
-                        self.fmu.setFMUstate(data.state)
+                        self.fmu.setFMUState(data.state)
                         self.status_reply(0)
                     else:
                         self.status_reply(3)
+                
+                case "Fmi3EnterConfigurationMode":
+                    self.fmu.fmi3EnterConfigurationMode(self.fmu.component)
+                    self.status_reply(0)
+
+                case "Fmi3ExitConfigurationMode":
+                    self.fmu.fmi3ExitConfigurationMode(self.fmu.component)
+                    self.status_reply(0)
 
                 case "Fmi3GetFloat32":
                     self.send_reply(
@@ -317,18 +325,12 @@ class BlackboxBackend(AbstractBackend):
                     )
 
                 case "Fmi3GetIntervalDecimal":
-                    ## To be fixed for the FMPy library
-                    num_vars = len(data.value_references)
-                    vrs = (fmi3ValueReference * num_vars)(*data.value_references)
-                    intervals = (fmi3Float64 * num_vars)()
-                    qualifiers = (fmi3IntervalQualifier * num_vars)()
                     (
                         new_intervals,
                         new_qualifiers
-                    ) = self.fmu.getIntervalDecimal(
-                        data.value_references, # if not working, use 'vrs' instead
-                        intervals,
-                        qualifiers
+                    ) = getIntervalDecimal(
+                        self.fmu,
+                        data.value_references
                     )
                     self.send_reply(
                         Fmi3Return(
@@ -336,6 +338,58 @@ class BlackboxBackend(AbstractBackend):
                                 status=0,
                                 intervals=new_intervals,
                                 qualifiers=new_qualifiers
+                            )
+                        )
+                    )
+
+                case "Fmi3GetIntervalFraction":
+                    (
+                        counters,
+                        resolutions,
+                        qualifiers
+                    ) = getIntervalFraction(
+                        self.fmu,
+                        data.value_references
+                    )
+                    self.send_reply(
+                        Fmi3Return(
+                            get_interval_fraction=Fmi3GetIntervalFractionReturn(
+                                status=0,
+                                counters=counters,
+                                resolutions=resolutions,
+                                qualifiers=qualifiers
+                            )
+                        )
+                    )
+
+                case "Fmi3GetShiftDecimal":
+                    shifts = getShiftDecimal(
+                        self.fmu,
+                        data.value_references
+                    )
+                    self.send_reply(
+                        Fmi3Return(
+                            get_shift_decimal=Fmi3GetShiftDecimalReturn(
+                                status=0,
+                                shifts=shifts
+                            )
+                        )
+                    )
+                    
+                case "Fmi3GetShiftFraction":
+                    (
+                        counters,
+                        resolutions
+                    ) = getShiftFraction(
+                        self.fmu,
+                        data.value_references
+                    )
+                    self.send_reply(
+                        Fmi3Return(
+                            get_shift_fraction=Fmi3GetShiftFractionReturn(
+                                status=0,
+                                counters=counters,
+                                resolutions=resolutions
                             )
                         )
                     )
@@ -396,6 +450,40 @@ class BlackboxBackend(AbstractBackend):
                     self.fmu.setClock(data.value_references, data.values)
                     self.status_reply(0)
 
+                case "Fmi3SetIntervalDecimal":
+                    setIntervalDecimal(
+                        self.fmu,
+                        data.value_references,
+                        data.intervals
+                    )
+                    self.status_reply(0)
+
+                case "Fmi3SetIntervalFraction":
+                    setIntervalFraction(
+                        self.fmu,
+                        data.value_references,
+                        data.counters,
+                        data.resolutions
+                    )
+                    self.status_reply(0)
+
+                case "Fmi3SetShiftDecimal":
+                    setShiftDecimal(
+                        self.fmu,
+                        data.value_references,
+                        data.shifts
+                    )
+                    self.status_reply(0)
+
+                case "Fmi3SetShiftFraction":
+                    setShiftFraction(
+                        self.fmu,
+                        data.value_references,
+                        data.counters,
+                        data.resolutions
+                    )
+                    self.status_reply(0)
+
                 case "Fmi3UpdateDiscreteStates":
                     (
                         discrete_states_need_update,
@@ -428,3 +516,62 @@ class BlackboxBackend(AbstractBackend):
         # Clean up unzipped temporary FMU directory
         rmtree(self.unzipdir, ignore_errors=True)
         sys.exit(-1)
+
+## Overwrites the clock related functions
+def getIntervalDecimal(fmu,valueReferences):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    intervals = (fmi3Float64 * nValueReferences)()
+    qualifiers = (fmi3IntervalQualifier * nValueReferences)()
+    fmu.fmi3GetIntervalDecimal(fmu.component, valueReferences, nValueReferences, intervals, qualifiers)
+    return list(intervals),list(qualifiers)
+
+def getIntervalFraction(fmu,valueReferences):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)()
+    resolutions = (fmi3UInt64 * nValueReferences)()
+    qualifiers = (fmi3IntervalQualifier * nValueReferences)()
+    fmu.fmi3GetIntervalFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions, qualifiers)
+    return list(counters),list(resolutions),list(qualifiers)
+
+def getShiftDecimal(fmu,valueReferences):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    shifts = (fmi3Float64 * nValueReferences)()
+    fmu.fmi3GetShiftDecimal(fmu.component, valueReferences, nValueReferences, shifts)
+    return list(shifts)
+
+def getShiftFraction(fmu,valueReferences):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)()
+    resolutions = (fmi3UInt64 * nValueReferences)()
+    fmu.fmi3GetShiftFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions)
+    return list(counters),list(resolutions)
+
+def setIntervalDecimal(fmu,valueReferences, intervals):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    intervals = (fmi3Float64 * nValueReferences)(*intervals)
+    fmu.fmi3SetIntervalDecimal(fmu.component, valueReferences, nValueReferences, intervals)
+
+def setIntervalFraction(fmu,valueReferences, counters, resolutions):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)(*counters)
+    resolutions = (fmi3UInt64 * nValueReferences)(*resolutions)
+    fmu.fmi3SetIntervalFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions)
+
+def setShiftDecimal(fmu,valueReferences, shifts):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    shifts = (fmi3Float64 * nValueReferences)(*shifts)
+    fmu.fmi3SetShiftDecimal(fmu.component, valueReferences, nValueReferences, shifts)
+
+def setShiftFraction(fmu,valueReferences, counters, resolutions):
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    counters = (fmi3UInt64 * nValueReferences)(*counters)
+    resolutions = (fmi3UInt64 * nValueReferences)(*resolutions)
+    fmu.fmi3SetShiftFraction(fmu.component, valueReferences, nValueReferences, counters, resolutions)

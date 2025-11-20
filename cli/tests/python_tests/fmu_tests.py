@@ -9,12 +9,12 @@ from fmpy.fmi2 import fmi2OK
 
 ## Overwrites the clock related functions
 def getIntervalDecimal(fmu,valueReferences):
-        nValueReferences = len(valueReferences)
-        valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
-        intervals = (fmi3Float64 * nValueReferences)()
-        qualifiers = (fmi3IntervalQualifier * nValueReferences)()
-        fmu.fmi3GetIntervalDecimal(fmu.component, valueReferences, nValueReferences, intervals, qualifiers)
-        return list(intervals),list(qualifiers)
+    nValueReferences = len(valueReferences)
+    valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)
+    intervals = (fmi3Float64 * nValueReferences)()
+    qualifiers = (fmi3IntervalQualifier * nValueReferences)()
+    fmu.fmi3GetIntervalDecimal(fmu.component, valueReferences, nValueReferences, intervals, qualifiers)
+    return list(intervals),list(qualifiers)
 
 def getIntervalFraction(fmu,valueReferences):
     nValueReferences = len(valueReferences)
