@@ -569,7 +569,9 @@ def fmi3_simulate(fmu_filename, is_zipped):
         fmu.setBinary(
             [vrs["binary_a"], vrs["binary_b"]],
             [(c_ubyte * 4)(10, 20, 30, 40), (c_ubyte * 4)(15, 25, 35, 45)]
-        ) 
+        )
+        binary_test = fmu.getBinary([vrs["binary_a"]])[0]
+        print(f"WAT {binary_test.hex()}")
     
         print(f"Doing a step of size {step_size} at time {sim_time}")
         fmu.doStep(sim_time, step_size)
@@ -604,7 +606,7 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert boolean_c == True, f"fetched boolean_c was {boolean_c}, should have been True."
         assert string_c == "Hello, World!", f"fetched string_c was {string_c}, should have been \"Hello, World!\"."
         binary_should_be = bytes((c_ubyte * 4)(5, 13, 61, 5))
-        assert binary_c == binary_should_be, f"fetched binary_c was {binary_c}, should have been {binary_should_be}."
+        assert binary_c == binary_should_be, f"fetched binary_c was {binary_c.hex()}, should have been {binary_should_be.hex()}."
 
         binary = fmu.getBinary([
             vrs["binary_a"], vrs["binary_b"], vrs["binary_c"]

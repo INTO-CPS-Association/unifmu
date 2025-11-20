@@ -31,6 +31,8 @@ dependencies {
 
     // https://github.com/mwanji/toml4j
     implementation group: 'com.moandjiezana.toml', name: 'toml4j', version: '0.7.2'
+
+    implementation group: 'commons-codec', name: 'commons-codec', version: '1.19.0'
 }
 
 application {

@@ -13,6 +13,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.io.Serializable;
+import org.apache.commons.codec.binary.Hex;
+import com.google.protobuf.ByteString;
 
 
 public class Model implements Serializable {
@@ -65,15 +67,15 @@ public class Model implements Serializable {
     public String string_a = "";
     public String string_b = "";
     public String string_c = "";
-    public ByteBuffer binary_a = ByteBuffer.wrap(new byte[] {
+    public byte[] binary_a = new byte[] {
         (byte) 0b00000000
-    });
-    public ByteBuffer binary_b = ByteBuffer.wrap(new byte[] {
+    };
+    public byte[] binary_b = new byte[] {
         (byte) 0b00000000
-    });
-    public ByteBuffer binary_c = ByteBuffer.wrap(new byte[] {
+    };
+    public byte[] binary_c = new byte[] {
         (byte) 0b00000000
-    });
+    };
 
     public Float float32_tunable_parameter = 0.0f;
     public Double  float64_tunable_parameter = 0.0;
@@ -87,9 +89,9 @@ public class Model implements Serializable {
     public Long uint64_tunable_parameter = 0L;
     public Boolean boolean_tunable_parameter = false;
     public String string_tunable_parameter = "";
-    public ByteBuffer binary_tunable_parameter = ByteBuffer.wrap(new byte[] {
+    public byte[] binary_tunable_parameter = new byte[] {
         (byte) 0b00000000
-    });
+    };
     public Long uint64_tunable_structural_parameter = 5L;
     public Float[] float32_vector_using_tunable_structural_parameter = new Float[] {
         0.1f,
@@ -677,15 +679,15 @@ public class Model implements Serializable {
         this.string_a = "";
         this.string_b = "";
         this.string_c = "";
-        this.binary_a = ByteBuffer.wrap(new byte[] {
+        this.binary_a = new byte[] {
             (byte) 0b00000000
-        });
-        this.binary_b = ByteBuffer.wrap(new byte[] {
+        };
+        this.binary_b = new byte[] {
             (byte) 0b00000000
-        });
-        this.binary_c = ByteBuffer.wrap(new byte[] {
+        };
+        this.binary_c = new byte[] {
             (byte) 0b00000000
-        });
+        };
 
         this.float32_tunable_parameter = 0.0f;
         this.float64_tunable_parameter = 0.0;
@@ -699,9 +701,9 @@ public class Model implements Serializable {
         this.uint64_tunable_parameter = 0L;
         this.boolean_tunable_parameter = false;
         this.string_tunable_parameter = "";
-        this.binary_tunable_parameter = ByteBuffer.wrap(new byte[] {
+        this.binary_tunable_parameter = new byte[] {
             (byte) 0b00000000
-        });
+        };
         this.uint64_tunable_structural_parameter = 5L;
         this.float32_vector_using_tunable_structural_parameter = new Float[] {
             0.1f,
@@ -744,8 +746,9 @@ public class Model implements Serializable {
     }
 
     public Fmi3Status fmi3DeserializeFmuState(ByteBuffer bytes) throws Exception {
-
-        try (ByteArrayInputStream b = new ByteArrayInputStream(bytes.array())) {
+        byte[] state_byte_array = new byte[bytes.remaining()];
+        bytes.get(state_byte_array);
+        try (ByteArrayInputStream b = new ByteArrayInputStream(state_byte_array)) {
             try (ObjectInputStream o = new ObjectInputStream(b)) {
                 var other = (Model) o.readObject();
                 this.state = other.state;
@@ -846,6 +849,10 @@ public class Model implements Serializable {
 
             var val = field.get(this);
 
+            if (val instanceof byte[]) {
+                val = ByteBuffer.wrap((byte[]) val);
+            }
+
             if (val.getClass().isArray()) {
                 values.addAll(Arrays.asList((T[]) val));
             } else {
@@ -913,8 +920,15 @@ public class Model implements Serializable {
                     status = Fmi3Status.Warning;
                 }
             }
-
-            this.map_to_attributes.get(r).set(this, v);            
+            
+            if (v instanceof ByteBuffer) {
+                ByteBuffer byte_buffer = (ByteBuffer) v;
+                byte[] byte_array = new byte[byte_buffer.remaining()];
+                byte_buffer.get(byte_array);
+                this.map_to_attributes.get(r).set(this, byte_array);
+            } else {
+                this.map_to_attributes.get(r).set(this, v);
+            }
         }
         
         return status;
@@ -934,14 +948,11 @@ public class Model implements Serializable {
         this.boolean_c = this.boolean_a || this.boolean_b;
         this.string_c = this.string_a + this.string_b;
         int length = Math.min(
-            this.binary_a.capacity(), this.binary_b.capacity()
+            this.binary_a.length, this.binary_b.length
         );
-        ByteBuffer binary_result = ByteBuffer.allocate(length);
+        byte[] binary_result = new byte[length];
         for (int i = 0; i < length; i++) {
-            binary_result.put(
-                i,
-                (byte) (this.binary_a.get(i) ^ this.binary_b.get(i))
-            );
+            binary_result[i] = (byte) (this.binary_a[i] ^ this.binary_b[i]);
         }
         this.binary_c = binary_result;
     }
