@@ -13,8 +13,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.io.Serializable;
-import org.apache.commons.codec.binary.Hex;
-import com.google.protobuf.ByteString;
 
 
 public class Model implements Serializable {
