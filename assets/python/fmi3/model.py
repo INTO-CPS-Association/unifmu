@@ -64,6 +64,9 @@ class Model:
         self.binary_a = bytes([0])
         self.binary_b = bytes([0])
         self.binary_c = bytes([0])
+        self.matrix_a = [[1,2,3],
+                         [5,8,13],
+                         [21,34,55]]
         self.float32_tunable_parameter = 0.0
         self.float64_tunable_parameter = 0.0
         self.int8_tunable_parameter = 0
@@ -132,7 +135,8 @@ class Model:
             35: "string_c",
             36: "binary_a",
             37: "binary_b",
-            38: "binary_c",            
+            38: "binary_c",
+            39: "matrix_a"    
         }
 
         self.clocked_variables = {

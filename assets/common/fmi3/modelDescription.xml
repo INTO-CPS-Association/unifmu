@@ -72,6 +72,10 @@
 		<Start value="00" />
 	</Binary>
 	<Binary name="binary_c" valueReference="38" variability="discrete" causality="output" initial="calculated" />
+	<Float32 name="matrix_a" valueReference="39" variability="discrete" causality="input" start="1 2 3 5 8 13 21 34 55">
+		<Dimension start="3"/>
+		<Dimension start="3"/>
+	</Float32>
 
 	<Float32 name="float32_tunable_parameter" valueReference="100" variability="tunable" causality="parameter" start="0.0" />
 	<Float64 name="float64_tunable_parameter" valueReference="101" variability="tunable" causality="parameter" start="0.0" />
