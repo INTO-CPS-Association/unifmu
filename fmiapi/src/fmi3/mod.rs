@@ -559,7 +559,16 @@ pub unsafe extern "C" fn fmi3GetFloat32(
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_values)
                     };
-                    values_out.copy_from_slice(&reply.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetFloat32 returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetFloat32 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -628,7 +637,16 @@ pub unsafe extern "C" fn fmi3GetFloat64(
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_values)
                     };
-                    values_out.copy_from_slice(&reply.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetFloat64 returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetFloat64 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -704,7 +722,16 @@ pub unsafe extern "C" fn fmi3GetInt8(
                         from_raw_parts_mut(values, n_values)
                     };
 
-                    values_out.copy_from_slice(&reply_values);
+                    if values_out.len() == reply_values.len() {
+                        values_out.copy_from_slice(&reply_values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetInt8 returned {} values, but {} was expected",
+                            reply_values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetInt8 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -779,7 +806,16 @@ pub unsafe extern "C" fn fmi3GetUInt8(
                         from_raw_parts_mut(values, n_values)
                     };
 
-                    values_out.copy_from_slice(&reply_values);
+                    if values_out.len() == reply_values.len() {
+                        values_out.copy_from_slice(&reply_values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetUInt8 returned {} values, but {} was expected",
+                            reply_values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetUInt8 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -854,7 +890,16 @@ pub unsafe extern "C" fn fmi3GetInt16(
                         from_raw_parts_mut(values, n_values)
                     };
 
-                    values_out.copy_from_slice(&reply_values);
+                    if values_out.len() == reply_values.len() {
+                        values_out.copy_from_slice(&reply_values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetInt16 returned {} values, but {} was expected",
+                            reply_values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetInt16 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -929,7 +974,16 @@ pub unsafe extern "C" fn fmi3GetUInt16(
                         from_raw_parts_mut(values, n_values)
                     };
 
-                    values_out.copy_from_slice(&reply_values);
+                    if values_out.len() == reply_values.len() {
+                        values_out.copy_from_slice(&reply_values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetUInt16 returned {} values, but {} was expected",
+                            reply_values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetUInt16 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -998,7 +1052,16 @@ pub unsafe extern "C" fn fmi3GetInt32(
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_values)
                     };
-                    values_out.copy_from_slice(&reply.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetInt32 returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetInt32 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1067,7 +1130,16 @@ pub unsafe extern "C" fn fmi3GetUInt32(
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_values)
                     };
-                    values_out.copy_from_slice(&reply.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetUInt32 returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetUInt32 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1136,7 +1208,16 @@ pub unsafe extern "C" fn fmi3GetInt64(
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_values)
                     };
-                    values_out.copy_from_slice(&reply.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetInt64 returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetInt64 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1205,7 +1286,16 @@ pub unsafe extern "C" fn fmi3GetUInt64(
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_values)
                     };
-                    values_out.copy_from_slice(&reply.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetUInt64 returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetUInt64 returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1274,7 +1364,16 @@ pub unsafe extern "C" fn fmi3GetBoolean(
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_values)
                     };
-                    values_out.copy_from_slice(&reply.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetBoolean returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetBoolean returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1492,15 +1591,24 @@ pub unsafe extern "C" fn fmi3GetClock(
     };
 
     match instance.dispatch::<fmi3_messages::Fmi3GetClockReturn>(&cmd) {
-        Ok(result) => {
-            let mut status = parse_status(result.status, &instance.logger);
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &instance.logger);
 
             if status.output_is_defined() {
-                if !result.values.is_empty() {
+                if !reply.values.is_empty() {
                     let values_out = unsafe {
                         from_raw_parts_mut(values, n_value_references)
                     };
-                    values_out.copy_from_slice(&result.values);
+                    if values_out.len() == reply.values.len() {
+                        values_out.copy_from_slice(&reply.values);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetClock returned {} values, but {} was expected",
+                            reply.values.len(),
+                            values_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetClock returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1572,7 +1680,16 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
                     let intervals_out = unsafe {
                         from_raw_parts_mut(intervals, n_value_references)
                     };
-                    intervals_out.copy_from_slice(&reply.intervals);
+                    if intervals_out.len() == reply.intervals.len() {
+                        intervals_out.copy_from_slice(&reply.intervals);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetIntervalDecimal returned {} intervals, but {} was expected",
+                            reply.intervals.len(),
+                            intervals_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetIntervalDecimal returned no intervals.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1591,7 +1708,16 @@ pub unsafe extern "C" fn fmi3GetIntervalDecimal(
                     let qualifiers_out = unsafe {
                         from_raw_parts_mut(qualifiers, n_value_references)
                     };
-                    qualifiers_out.copy_from_slice(reply_qualifiers.as_slice());
+                    if qualifiers_out.len() == reply_qualifiers.len() {
+                        qualifiers_out.copy_from_slice(reply_qualifiers.as_slice());
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetIntervalDecimal returned {} qualifiers, but {} was expected",
+                            reply_qualifiers.len(),
+                            qualifiers_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetIntervalDecimal returned no qualifiers.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1638,7 +1764,16 @@ pub extern "C" fn fmi3GetIntervalFraction(
                     let counters_out = unsafe {
                         from_raw_parts_mut(counters, n_value_references)
                     };
-                    counters_out.copy_from_slice(&reply.counters);
+                    if counters_out.len() == reply.counters.len() {
+                        counters_out.copy_from_slice(&reply.counters);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetIntervalFraction returned {} counters, but {} was expected",
+                            reply.counters.len(),
+                            counters_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetIntervalFraction returned no counters.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1648,7 +1783,16 @@ pub extern "C" fn fmi3GetIntervalFraction(
                     let resolutions_out = unsafe {
                         from_raw_parts_mut(resolutions, n_value_references)
                     };
-                    resolutions_out.copy_from_slice(&reply.resolutions);
+                    if resolutions_out.len() == reply.resolutions.len() {
+                        resolutions_out.copy_from_slice(&reply.resolutions);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetIntervalFraction returned {} resolutions, but {} was expected",
+                            reply.resolutions.len(),
+                            resolutions_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetIntervalFraction returned no resolutions.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1667,7 +1811,16 @@ pub extern "C" fn fmi3GetIntervalFraction(
                     let qualifiers_out = unsafe {
                         from_raw_parts_mut(qualifiers, n_value_references)
                     };
-                    qualifiers_out.copy_from_slice(reply_qualifiers.as_slice());
+                    if qualifiers_out.len() == reply_qualifiers.len() {
+                        qualifiers_out.copy_from_slice(reply_qualifiers.as_slice());
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetIntervalFraction returned {} qualifiers, but {} was expected",
+                            reply_qualifiers.len(),
+                            qualifiers_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetIntervalFraction returned no qualifiers.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1703,15 +1856,24 @@ pub extern "C" fn fmi3GetShiftDecimal(
     };
 
     match instance.dispatch::<fmi3_messages::Fmi3GetShiftDecimalReturn>(&cmd) {
-        Ok(result) => {
-            let mut status = parse_status(result.status, &instance.logger);
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &instance.logger);
 
             if status.output_is_defined() {
-                if !result.shifts.is_empty() {
+                if !reply.shifts.is_empty() {
                     let shifts_out = unsafe {
                         from_raw_parts_mut(shifts, n_value_references)
                     };
-                    shifts_out.copy_from_slice(&result.shifts);
+                    if shifts_out.len() == reply.shifts.len() {
+                        shifts_out.copy_from_slice(&reply.shifts);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetIntervalDecimal returned {} shifts, but {} was expected",
+                            reply.shifts.len(),
+                            shifts_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetShiftDecimal returned no values.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
@@ -1748,25 +1910,43 @@ pub extern "C" fn fmi3GetShiftFraction(
     };
 
     match instance.dispatch::<fmi3_messages::Fmi3GetShiftFractionReturn>(&cmd) {
-        Ok(result) => {
-            let mut status = parse_status(result.status, &instance.logger);
+        Ok(reply) => {
+            let mut status = parse_status(reply.status, &instance.logger);
 
             if status.output_is_defined() {
-                if !result.counters.is_empty() {
+                if !reply.counters.is_empty() {
                     let counters_out = unsafe {
                         from_raw_parts_mut(counters, n_value_references)
                     };
-                    counters_out.copy_from_slice(&result.counters);
+                    if counters_out.len() == reply.counters.len() {
+                        counters_out.copy_from_slice(&reply.counters);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetShiftFraction returned {} counters, but {} was expected",
+                            reply.counters.len(),
+                            counters_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetShiftFraction returned no counters.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
                 }
 
-                if !result.resolutions.is_empty() {
+                if !reply.resolutions.is_empty() {
                     let resolutions_out = unsafe {
                         from_raw_parts_mut(resolutions, n_value_references)
                     };
-                    resolutions_out.copy_from_slice(&result.resolutions);
+                    if resolutions_out.len() == reply.resolutions.len() {
+                        resolutions_out.copy_from_slice(&reply.resolutions);
+                    } else {
+                        instance.logger.error(&format!(
+                            "fmi3GetShiftFraction returned {} resolutions, but {} was expected",
+                            reply.resolutions.len(),
+                            resolutions_out.len()
+                        ));
+                        status = status.escalate_status(Fmi3Status::Fmi3Error);
+                    }
                 } else {
                     instance.logger.warning("fmi3GetShiftFraction returned no resolutions.");
                     status = status.escalate_status(Fmi3Status::Fmi3Warning);
