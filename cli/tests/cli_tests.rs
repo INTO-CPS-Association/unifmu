@@ -133,6 +133,22 @@ fn test_simulate() {
     distributed_fmu_python_test(fmu, "fmi3_simulate");
 }
 
+#[for_each_fmu(include: fmi3, local, python)]
+#[test]
+fn test_matrix_operations() {
+    let fmu = WildFmu{};
+
+    fmu_python_test(fmu, "fmi3_matrix_operations");
+}
+
+#[for_each_fmu(include: fmi3, distributed, python)]
+#[test]
+fn test_matrix_operations() {
+    let fmu = WildFmu{};
+
+    distributed_fmu_python_test(fmu, "fmi3_matrix_operations");
+}
+
 #[for_each_fmu(include: fmi2, local, bare_directory)]
 #[test]
 #[should_panic(expected = "PYTHON TEST FAILED - fmi2_instantiate - instantiation: Failed to instantiate model")]

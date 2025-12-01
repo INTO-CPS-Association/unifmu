@@ -893,6 +893,50 @@ def fmi3_simulate(fmu_filename, is_zipped):
         is_zipped = is_zipped
     )
 
+"""Tries to get and set a 2-dimensional matrix value for the FMU.
+
+The FMU should conform to FMI3.
+
+Parameters
+----------
+fmu_filename : str
+    Full filename of the FMU.
+is_zipped : bool
+    If true, fmu_filename points to a zip directory. If false, fmu_filename
+    points to a normal directory.
+"""
+def fmi3_matrix_operations(fmu_filename, is_zipped):
+    def inner(fmu, model_description):
+        vrs = {}
+        for variable in model_description.modelVariables:
+            vrs[variable.name] = variable.valueReference
+
+        fmu.enterInitializationMode()
+        fmu.exitInitializationMode()
+
+        # Testing initial value of matrix
+        matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+
+        assert matrix_a == [1, 2, 3, 5, 8, 13, 21, 34, 55], f"Initially fetched matrix was {matrix_a}, should have been [1, 2, 3, 5, 8, 13, 21, 34, 55]."
+
+        # Testing roundtrip
+        fmu.setFloat32(
+            [vrs["matrix_a"]],
+            [9, 8, 7, 6, 5, 4, 3, 2, 1]
+        )
+
+        matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+
+        assert matrix_a == [9, 8, 7, 6, 5, 4, 3, 2, 1], f"Matrix after roundtrip was {matrix_a}, should have been [9, 8, 7, 6, 5, 4, 3, 2, 1]."
+
+    instantiating_test(
+        caller = "fmi3_matrix_operations",
+        inner_function = inner,
+        fmu_filename = fmu_filename,
+        fmu_class = FMU3Slave,
+        is_zipped = is_zipped
+    )
+
 if __name__ == "__main__":
     import sys
 
