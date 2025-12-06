@@ -133,7 +133,7 @@ fn test_simulate() {
     distributed_fmu_python_test(fmu, "fmi3_simulate");
 }
 
-#[for_each_fmu(include: fmi3, local, python)]
+#[for_each_fmu(include: fmi3, local, java, python)]
 #[test]
 fn test_matrix_operations() {
     let fmu = WildFmu{};

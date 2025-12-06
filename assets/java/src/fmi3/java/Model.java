@@ -14,6 +14,111 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.io.Serializable;
 
+interface NonScalar<T> {
+    public void setAll(Iterator<T> value_iterator);
+    public List<T> getAll();
+}
+
+class FloatMatrix implements NonScalar<Float>, Serializable {
+    private List<Integer> dimensions;
+    private List<Float> elements;
+    private Integer num_of_elements;
+
+    public FloatMatrix(List<Integer> dimensions) {
+        super();
+
+        this.num_of_elements = FloatMatrix.dimensionalCapacity(dimensions);
+        
+        this.elements = new ArrayList(this.num_of_elements);
+        for (int i = 0; i < this.num_of_elements; i++) {
+            this.elements.add(0.0f);
+        }
+
+        this.dimensions = dimensions;
+    }
+
+    public FloatMatrix(List<Integer> dimensions, List<Float> elements) {
+        super();
+
+        this.num_of_elements = FloatMatrix.dimensionalCapacity(dimensions);
+
+        if (elements.size() != this.num_of_elements) {
+            throw new java.lang.IllegalArgumentException("The parameter 'elements' must contain exactly the number of elements needed to fill out the matrix.");
+        }
+        this.elements = elements;
+
+        this.dimensions = dimensions;
+    }
+
+    public void set(List<Integer> indexes, Float element) {
+        this.elements.set(
+            this.dimensionalIndexesToIndex(indexes),
+            element
+        );
+    }
+
+    public Float get(List<Integer> indexes) {
+        return this.elements.get(
+            this.dimensionalIndexesToIndex(indexes)
+        );
+    }
+
+    public void setAll(Iterator<Float> value_iterator) {
+        List<Float> new_elements = new ArrayList(this.num_of_elements);
+
+        for (int i = 0; i < num_of_elements; i++) {
+            if (value_iterator.hasNext()) {
+                new_elements.add(value_iterator.next());
+            } else {
+                throw new RuntimeException("Parameter 'value_iterator' didn't contain enough elements to fully set the FloatMatrix.");
+            }
+        }
+
+        this.elements = new_elements;
+    }
+
+    public List<Float> getAll() {
+        return this.elements;
+    }
+
+    private int dimensionalIndexesToIndex(List<Integer> indexes) {
+        if (indexes.size() != this.dimensions.size()) {
+            throw new java.lang.IllegalArgumentException("The number of indexes must be equal to the dimension of the matrix.");
+        }
+
+        int singular_index = 0;
+        int dimensional_multiplier = 1;
+
+        for (int i = indexes.size()-1; i >= 0; i--) {
+            if (indexes.get(i) >= this.dimensions.get(i)) {
+                throw new java.lang.IndexOutOfBoundsException("The index exceeded the dimension.");
+            }
+
+            singular_index = singular_index + indexes.get(i) * dimensional_multiplier;
+            dimensional_multiplier = this.dimensions.get(i);
+        }
+
+        return singular_index;
+    }
+
+    private static int dimensionalCapacity(List<Integer> dimensions) {
+        if (dimensions.isEmpty()) {
+            throw new java.lang.IllegalArgumentException("Dimensions cannot be empty.");
+        }
+
+        int capacity = 1;
+
+        for (Integer dimension : dimensions) {
+            if (dimension < 1) {
+                throw new java.lang.IllegalArgumentException("Dimensions must be non-zero positive integers.");
+            }
+
+            capacity = capacity * dimension;
+        }
+
+        return capacity;
+    }
+}
 
 public class Model implements Serializable {
     // No valid datatypes between Protobuf and Java for int8, uint8, int16, uint16 -> all handled as Integer
@@ -74,6 +179,10 @@ public class Model implements Serializable {
     public byte[] binary_c = new byte[] {
         (byte) 0b00000000
     };
+    public FloatMatrix matrix_a = new FloatMatrix(
+        Arrays.asList(new Integer[] {3, 3}),
+        Arrays.asList(new Float[] {1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f})
+    );
 
     public Float float32_tunable_parameter = 0.0f;
     public Double  float64_tunable_parameter = 0.0;
@@ -187,6 +296,8 @@ public class Model implements Serializable {
         this.references_to_attributes.add(this.getClass().getField("binary_b"));
         this.references_to_attributes.add(this.getClass().getField("binary_c"));
 
+        this.references_to_attributes.add(this.getClass().getField("matrix_a"));
+
         this.clocked_variables = new ArrayList<Field>();
         this.clocked_variables.add(this.getClass().getField("clock_a"));
         this.clocked_variables.add(this.getClass().getField("clock_b"));
@@ -223,7 +334,7 @@ public class Model implements Serializable {
         List<Integer> parameters_indexes = new ArrayList<>();
         List<Integer> tunable_parameters_indexes = new ArrayList<>();
         List<Integer> tunable_structural_parameters_indexes = new ArrayList<>();
-        for (int i=0;i<=38;i++){
+        for (int i=0;i<=39;i++){
             references_to_attributes_indexes.add(i);
         }
         for (int i=1001;i<=1003;i++){
@@ -687,6 +798,11 @@ public class Model implements Serializable {
             (byte) 0b00000000
         };
 
+        this.matrix_a = new FloatMatrix(
+            Arrays.asList(new Integer[] {3, 3}),
+            Arrays.asList(new Float[] {1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f})
+        );
+
         this.float32_tunable_parameter = 0.0f;
         this.float64_tunable_parameter = 0.0;
         this.int8_tunable_parameter = 0;
@@ -789,6 +905,7 @@ public class Model implements Serializable {
                 this.binary_a = other.binary_a;
                 this.binary_b = other.binary_b;
                 this.binary_c = other.binary_c;
+                this.matrix_a = other.matrix_a;
                 this.float32_tunable_parameter = other.float32_tunable_parameter;
                 this.float64_tunable_parameter = other.float64_tunable_parameter;
                 this.int8_tunable_parameter = other.int8_tunable_parameter;
@@ -853,6 +970,8 @@ public class Model implements Serializable {
 
             if (val.getClass().isArray()) {
                 values.addAll(Arrays.asList((T[]) val));
+            } else if (val instanceof NonScalar) {
+                values.addAll(((NonScalar) val).getAll());
             } else {
                 values.add((T) val);
             }
@@ -870,7 +989,6 @@ public class Model implements Serializable {
         while (i1.hasNext() && i2.hasNext()) {
             Integer r = i1.next();
             var field = (T) this.map_to_attributes.get(r);
-            var v = i2.next();
 
             if (
                 this.clocked_variables.contains(field)
@@ -918,14 +1036,19 @@ public class Model implements Serializable {
                     status = Fmi3Status.Warning;
                 }
             }
-            
-            if (v instanceof ByteBuffer) {
-                ByteBuffer byte_buffer = (ByteBuffer) v;
-                byte[] byte_array = new byte[byte_buffer.remaining()];
-                byte_buffer.get(byte_array);
-                this.map_to_attributes.get(r).set(this, byte_array);
+
+            if (this.map_to_attributes.get(r).get(this) instanceof NonScalar) {
+                ((NonScalar) this.map_to_attributes.get(r).get(this)).setAll(i2);
             } else {
-                this.map_to_attributes.get(r).set(this, v);
+                var v = i2.next();
+                if (v instanceof ByteBuffer) {
+                    ByteBuffer byte_buffer = (ByteBuffer) v;
+                    byte[] byte_array = new byte[byte_buffer.remaining()];
+                    byte_buffer.get(byte_array);
+                    this.map_to_attributes.get(r).set(this, byte_array);
+                } else {
+                    this.map_to_attributes.get(r).set(this, v);
+                }
             }
         }
         
