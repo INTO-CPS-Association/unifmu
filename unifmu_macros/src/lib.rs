@@ -434,7 +434,7 @@ impl FmuPossibilities {
             "fmi2" => self.fmi2 = new_value,
             "fmi3" => self.fmi3 = new_value,
             "csharp" => self.csharp = new_value,
-            "jave" => self.java = new_value,
+            "java" => self.java = new_value,
             "python" => self.python = new_value,
             "bare_directory" => self.bare_directory = new_value,
             "zipped" => self.zipped = new_value,
@@ -535,7 +535,7 @@ impl syn::parse::Parse for FmuPossibilities {
                         fmu_possibilities.enable_possibility(&included.to_string())
                             .map_err(|_| syn::Error::new(
                                 included.span(),
-                                "the excluded possibility is not recognized"
+                                "the included possibility is not recognized"
                             ))?;
 
                         if input.peek(syn::Token![,]) {
