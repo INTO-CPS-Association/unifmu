@@ -95,7 +95,7 @@ class FloatMatrix implements NonScalar<Float>, Serializable {
             }
 
             singular_index = singular_index + indexes.get(i) * dimensional_multiplier;
-            dimensional_multiplier = this.dimensions.get(i);
+            dimensional_multiplier = dimensional_multiplier * this.dimensions.get(i);
         }
 
         return singular_index;
