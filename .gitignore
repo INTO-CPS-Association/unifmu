@@ -6,6 +6,8 @@ thirdparty/
 **.vscode
 **.pyc
 
+unifmu.sln
+
 .idea/
 
 /target
