@@ -76,6 +76,14 @@
 		<Dimension start="3"/>
 		<Dimension start="3"/>
 	</Float32>
+	<Float32 name="matrix_b" valueReference="40" variability="discrete" causality="input" start="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23">
+		<Dimension start="2"/>
+		<Dimension start="3"/>
+		<Dimension start="4"/>
+	</Float32>
+	<Float32 name="matrix_c" valueReference="41" variability="discrete" causality="output" initial="calculated">
+		<Dimension start="3"/>
+	</Float32>
 
 	<Float32 name="float32_tunable_parameter" valueReference="100" variability="tunable" causality="parameter" start="0.0" />
 	<Float64 name="float64_tunable_parameter" valueReference="101" variability="tunable" causality="parameter" start="0.0" />

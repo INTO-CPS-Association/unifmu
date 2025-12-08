@@ -15,7 +15,13 @@ interface INonScalar<T>
     IEnumerable<T> GetAll();
 }
 
-public class FloatMatrix : INonScalar<float>
+public interface ISerializeable
+{
+    void Serialize(BinaryWriter writer);
+    abstract static ISerializeable DeSerialize(BinaryReader reader);
+}
+
+public class FloatMatrix : INonScalar<float>, ISerializeable
 {
     private readonly List<int> dimensions;
     private List<float> elements;
@@ -35,12 +41,12 @@ public class FloatMatrix : INonScalar<float>
         }
     }
 
-    public void Set(List<int> indexes, float element)
+    public void Set(IEnumerable<int> indexes, float element)
     {
         elements[DimensionalIndexesToListIndex(indexes)] = element;
     }
 
-    public float Get(List<int> indexes)
+    public float Get(IEnumerable<int> indexes)
     {
         return elements[DimensionalIndexesToListIndex(indexes)];
     }
@@ -67,14 +73,41 @@ public class FloatMatrix : INonScalar<float>
         return elements;
     }
 
-    private int DimensionalIndexesToListIndex(List<int> indexes)
+    public void Serialize(BinaryWriter writer)
     {
-        if (indexes.Count != dimensions.Count)
+        writer.Write(dimensions.Count);
+        foreach (int dimension in dimensions)
+            writer.Write(dimension);
+
+        writer.Write(elements.Count);
+        foreach (float element in elements)
+            writer.Write(element);
+    }
+
+    public static ISerializeable DeSerialize(BinaryReader reader)
+    {
+        int dimensions_len = reader.ReadInt32();
+        int[] dimensions = new int[dimensions_len];
+        for (int i = 0; i < dimensions_len; i++)
+            dimensions[i] = reader.ReadInt32();
+        
+        int elements_len = reader.ReadInt32();
+        float[] elements = new float[elements_len];
+        for (int i = 0; i < elements_len; i++)
+            elements[i] = reader.ReadSingle();
+
+        return new FloatMatrix(dimensions, elements);
+    }
+
+    private int DimensionalIndexesToListIndex(IEnumerable<int> indexes)
+    {
+        List<int> index_list = [.. indexes];
+        if (index_list.Count != dimensions.Count)
         {
             throw new ArgumentException(
                 String.Format(
                     "Argument 'indexes' only contained {0} values; should contain {1} values.",
-                    indexes.Count,
+                    index_list.Count,
                     dimensions.Count
                 )
             );
@@ -83,9 +116,9 @@ public class FloatMatrix : INonScalar<float>
         int list_index = 0;
         int dimensional_multiplier = 1;
 
-        for (int i = indexes.Count - 1; i >= 0; i--)
+        for (int i = index_list.Count - 1; i >= 0; i--)
         {
-            if (indexes[i] >= dimensions[i])
+            if (index_list[i] >= dimensions[i])
             {
                 throw new IndexOutOfRangeException(
                     String.Format(
@@ -96,7 +129,7 @@ public class FloatMatrix : INonScalar<float>
                 );
             }
 
-            if (indexes[i] < 0)
+            if (index_list[i] < 0)
             {
                 throw new IndexOutOfRangeException(
                     String.Format(
@@ -106,7 +139,7 @@ public class FloatMatrix : INonScalar<float>
                 );
             }
 
-            list_index += indexes[i] * dimensional_multiplier;
+            list_index += index_list[i] * dimensional_multiplier;
             dimensional_multiplier *= dimensions[i];
         }
 
@@ -174,6 +207,14 @@ public class Model
     public FloatMatrix matrix_a { get; set; } = new(
         [3, 3],
         [1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f]
+    );
+    public FloatMatrix matrix_b { get; set; } = new(
+        [2, 3, 4],
+        [0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f]
+    );
+    public FloatMatrix matrix_c { get; set; } = new(
+        [3],
+        [0.0f, 0.0f, 0.0f]
     );
 
     public float float32_tunable_parameter { get; set; } = 0.0f;
@@ -289,6 +330,8 @@ public class Model
             { 37, type.GetProperty("binary_b") },
             { 38, type.GetProperty("binary_c") },
             { 39, type.GetProperty("matrix_a") },
+            { 40, type.GetProperty("matrix_b") },
+            { 41, type.GetProperty("matrix_c") },
         };
 
         this.clocked_variables = new Dictionary<uint, PropertyInfo>
@@ -477,6 +520,14 @@ public class Model
         this.matrix_a = new(
             [3, 3],
             [1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f]
+        );
+        this.matrix_b = new(
+            [2, 3, 4],
+            [0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f]
+        );
+        this.matrix_c = new(
+            [3],
+            [0.0f, 0.0f, 0.0f]
         );
 
         this.float32_tunable_parameter = 0.0f;
@@ -826,6 +877,9 @@ public class Model
                             foreach (float f in arr)
                                 writer.Write(f);
                             break;
+                        case ISerializeable serializeable:
+                            serializeable.Serialize(writer);
+                            break;
                         default:
                             throw new InvalidOperationException($"Unsupported type for property {prop.Name}");
                     }
@@ -872,6 +926,10 @@ public class Model
                             data[i] = reader.ReadSingle();
                         prop.SetValue(this, data);
                     }
+                    else if (type.GetInterfaces().Any(x => x == typeof(ISerializeable)))
+                    {
+                        prop.SetValue(this, type.GetMethod("DeSerialize").Invoke(null, [reader]));
+                    }
                     else
                     {
                         throw new InvalidOperationException($"Unsupported type for property {prop.Name}");
@@ -904,6 +962,17 @@ public class Model
             result[i] = (byte)(this.binary_a[i] ^ this.binary_b[i]);
         }
         this.binary_c = result;
+
+        this.matrix_c.Set(
+            [0],
+            (
+                this.matrix_c.Get([0])
+                * this.matrix_b.Get([0, 1, 2])
+                + this.matrix_a.Get([1, 0])
+            )
+        );
+        this.matrix_c.Set([1], this.matrix_b.Get([0, 1, 2]));
+        this.matrix_c.Set([2], this.matrix_a.Get([1, 0]));
     }
 
     private void UpdateClocks()

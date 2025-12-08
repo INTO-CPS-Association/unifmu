@@ -433,12 +433,11 @@ def fmi3_simulate(fmu_filename, is_zipped):
     def inner(fmu, model_description):
         can_handle_state = model_description.coSimulation.canGetAndSetFMUstate
     
-        if can_handle_state:
-            print("FMU can get and set state")
+        #if can_handle_state:
+            #print("FMU can get and set state")
 
         start_time = 0.0
         sim_time = start_time
-        threshold = 2.0
         step_size = 1e-2
 
         vrs = {}
@@ -448,8 +447,7 @@ def fmi3_simulate(fmu_filename, is_zipped):
         fmu.enterInitializationMode()
         fmu.exitInitializationMode()
 
-        print("Fetching initial values from the FMU")
-    
+        # Fetching initial values from the FMU
         float32 = fmu.getFloat32([
             vrs["float32_a"], vrs["float32_b"], vrs["float32_c"]
         ])
@@ -494,8 +492,10 @@ def fmi3_simulate(fmu_filename, is_zipped):
             vrs["binary_a"], vrs["binary_b"], vrs["binary_c"]
         ])
 
-        print("Asserting initial values")
-    
+        matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+        matrix_b = fmu.getFloat32([vrs["matrix_b"]], 24)
+
+        # Asserting initial values
         assert float32 == [0.0, 0.0, 0.0], f"Initially fetched float32s were {float32}, should have been [0.0, 0.0, 0.0]."
         assert float64 == [0.0, 0.0, 0.0], f"Initially fetched float64s were {float64}, should have been [0.0, 0.0, 0.0]."
     
@@ -508,6 +508,9 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert int64 == [0, 0, 0], f"Initially fetched int64s were {int64}, should have been [0, 0, 0]."
         assert uint64 == [0, 0, 0], f"Initially fetched uint64s were {uint64}, should have been [0, 0, 0]."
 
+        assert matrix_a == [1.0, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, 55.0], f"Initially fetched matrix_a was {matrix_a}, should have been [1.0, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, 55.0]."
+        assert matrix_b == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0], f"Initially fetched matrix_b was {matrix_b}, should have been [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0]."
+
         assert boolean == [False, False, False], f"Initially fetched booleans were {boolean}, should have been [False, False, False]."
 
         assert string == ["", "", ""], f"Initially fetched strings were {string}, should have been [\"\", \"\", \"\"]."
@@ -516,8 +519,8 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert binary == binary_should_be, f"Initially fetched binaries were {binary}, should have been {binary_should_be}."
 
         # Simulating
-        print(f"Updating inputs at time {sim_time}")
-    
+
+        # Updating inputs
         fmu.setFloat32(
             [vrs["float32_a"], vrs["float32_b"]],
             [1.0, 2.0]
@@ -570,14 +573,16 @@ def fmi3_simulate(fmu_filename, is_zipped):
             [vrs["binary_a"], vrs["binary_b"]],
             [(c_ubyte * 4)(10, 20, 30, 40), (c_ubyte * 4)(15, 25, 35, 45)]
         )
-        binary_test = fmu.getBinary([vrs["binary_a"]])[0]
-        print(f"WAT {binary_test.hex()}")
+        fmu.setFloat32(
+            [vrs["matrix_a"]],
+            [8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0]
+        )
     
-        print(f"Doing a step of size {step_size} at time {sim_time}")
+        # Doing a step
         fmu.doStep(sim_time, step_size)
         sim_time += step_size
     
-        print("Fetching output values")
+        # Fetching output values
         float32_c = fmu.getFloat32([vrs["float32_c"]])[0]
         float64_c = fmu.getFloat64([vrs["float64_c"]])[0]
         int8_c = fmu.getInt8([vrs["int8_c"]])[0]
@@ -591,8 +596,8 @@ def fmi3_simulate(fmu_filename, is_zipped):
         boolean_c = fmu.getBoolean([vrs["boolean_c"]])[0]
         string_c = fmu.getString([vrs["string_c"]])[0]
         binary_c = fmu.getBinary([vrs["binary_c"]])[0]
-    
-        print("Asserting output values")
+        
+        # Asserting output values
         assert float32_c == 3.0, f"fetched float32_c was {float32_c}, should have been 3.0."
         assert float64_c == 3.0, f"fetched float64_c was {float64_c}, should have been 3.0."
         assert int8_c == 3, f"fetched int8_c was {int8_c}, should have been 3."
@@ -607,7 +612,7 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert string_c == "Hello, World!", f"fetched string_c was {string_c}, should have been \"Hello, World!\"."
         binary_should_be = bytes((c_ubyte * 4)(5, 13, 61, 5))
         assert binary_c == binary_should_be, f"fetched binary_c was {binary_c.hex()}, should have been {binary_should_be.hex()}."
-
+        
         binary = fmu.getBinary([
             vrs["binary_a"], vrs["binary_b"], vrs["binary_c"]
         ])
@@ -622,10 +627,10 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert can_handle_state, "FMU cannot get and set state"
         assert can_serialize, "FMU cannot serialize state"
         saved_state = fmu.getFMUState()
-        print("saved state: " + str(saved_state))
+        #print("saved state: " + str(saved_state))
         reroll_time = sim_time
-        print(f"Updating inputs at time {sim_time}")
 
+        # Updating inputs
         fmu.setFloat32(
             [vrs["float32_a"], vrs["float32_b"]],
             [2.0, 3.0]
@@ -677,13 +682,17 @@ def fmi3_simulate(fmu_filename, is_zipped):
         fmu.setBinary(
             [vrs["binary_a"], vrs["binary_b"]],
             [(ctypes.c_ubyte * 1)(15), (ctypes.c_ubyte * 1)(16)]
-        ) 
+        )
+        fmu.setFloat32(
+            [vrs["matrix_a"]],
+            [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]
+        )
 
-        print(f"Doing a step of size {step_size} at time {sim_time}")
+        # Doing a step
         fmu.doStep(sim_time, step_size)
         sim_time += step_size
 
-        print("Fetching output values")
+        # Fetching output values
         float32_c = fmu.getFloat32([vrs["float32_c"]])[0]
         float64_c = fmu.getFloat64([vrs["float64_c"]])[0]
         int8_c = fmu.getInt8([vrs["int8_c"]])[0]
@@ -698,7 +707,7 @@ def fmi3_simulate(fmu_filename, is_zipped):
         string_c = fmu.getString([vrs["string_c"]])[0]
         binary_c = fmu.getBinary([vrs["binary_c"]])[0]
 
-        print("Asserting output values (before setting the state)")
+        # Asserting output values (before setting the state)
         assert float32_c == 5.0
         assert float64_c == 5.0
         assert int8_c == 5
@@ -712,6 +721,10 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert boolean_c == True
         assert string_c == "Hello, World!"
         assert binary_c == bytes(ctypes.c_ubyte(31))
+
+        # Fetching and asserting matrix value
+        matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+        assert matrix_a == [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0], f"Matrix_a after roundtrip was {matrix_a}, should have been [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]."
 
         # Entering in configuration mode
         fmu.fmi3EnterConfigurationMode(fmu.component)
@@ -727,11 +740,10 @@ def fmi3_simulate(fmu_filename, is_zipped):
         fmu.setUInt64([vrs["uint64_tunable_structural_parameter"]],[7]) # Should warn (not in config mode)
 
         # Setting state to previous state
-        print("Setting to a previous state")
         fmu.setFMUState(saved_state)
         sim_time = reroll_time
 
-        print("Fetching output values (after rollback)")
+        # Fetching output values (after rollback)
         float32_c = fmu.getFloat32([vrs["float32_c"]])[0]
         float64_c = fmu.getFloat64([vrs["float64_c"]])[0]
         int8_c = fmu.getInt8([vrs["int8_c"]])[0]
@@ -746,7 +758,7 @@ def fmi3_simulate(fmu_filename, is_zipped):
         string_c = fmu.getString([vrs["string_c"]])[0]
         binary_c = fmu.getBinary([vrs["binary_c"]])[0]
 
-        print("Asserting output values (after rollback)")
+        # Asserting output values (after rollback)
         assert float32_c == 3.0
         assert float64_c == 3.0
         assert int8_c == 3
@@ -759,14 +771,18 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert uint64_c == 3
         assert boolean_c == True
         assert string_c == "Hello, World!"
-        print(f'binary_c:  {list(binary_c)}')
         assert binary_c == bytes((ctypes.c_ubyte * 4)(5, 13, 61, 5))
 
-        print("Resetting state")
+        # Fetching and asserting matrix value (after rollback)
+        matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+        assert matrix_a == [8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0], f"Matrix was {matrix_a} after rollback, should have been [8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0]."
+
+        # Resetting state
         reset_return = fmu.reset()
         enter_init_return = fmu.enterInitializationMode()
         exit_init_return = fmu.exitInitializationMode()
-        print("Fetching values after resetting")
+
+        # Fetching values after resetting
         float32 = fmu.getFloat32([
             vrs["float32_a"], vrs["float32_b"], vrs["float32_c"]
         ])
@@ -810,7 +826,7 @@ def fmi3_simulate(fmu_filename, is_zipped):
             vrs["binary_a"], vrs["binary_b"], vrs["binary_c"]
         ])
 
-        print("Asserting initial values after resetting")
+        # Asserting initial values after resetting
         assert float32 == [0.0, 0.0, 0.0]
         assert float64 == [0.0, 0.0, 0.0]
 
@@ -825,6 +841,10 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert boolean == [False, False, False]
         assert string == ["", "", ""]
         assert binary == [bytes(c_uint8(0)), bytes(c_uint8(0)), bytes(c_uint8(0))]
+
+        # Fetching and asserting matrix value (after resetting)
+        matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+        assert matrix_a == [1.0, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, 55.0], f"Matrix was {matrix_a} after reset, should have been [1.0, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, 55.0]."
 
         print("Tests for clock-related functions")
         interval_decimals = getIntervalDecimal(fmu,[vrs["clock_a"]])
@@ -861,18 +881,16 @@ def fmi3_simulate(fmu_filename, is_zipped):
         assert shift_decimals == [2.5]
         assert shift_fractions == ([5],[2])
 
-        print("Tests for event mode")
+        # Tests for event mode
         fmu.getInt32([vrs["clocked_variable_c"]]) # Should warn (not in event mode) 
 
         fmu.enterEventMode()
         clocked_variable_c = fmu.getInt32([vrs["clocked_variable_c"]])[0]
-        print(f'clocked_variable_c: {clocked_variable_c}')
         assert clocked_variable_c == 0
 
         fmu.setInt32([vrs["clocked_variable_a"],vrs["clocked_variable_b"]],[1,2])
         fmu.updateDiscreteStates()
         clocked_variable_c = fmu.getInt32([vrs["clocked_variable_c"]])[0]
-        print(f'clocked_variable_c: {clocked_variable_c}')
         assert clocked_variable_c == 3
 
         # Check the update of tunable parameters
@@ -914,20 +932,40 @@ def fmi3_matrix_operations(fmu_filename, is_zipped):
         fmu.enterInitializationMode()
         fmu.exitInitializationMode()
 
-        # Testing initial value of matrix
+        # Testing initial values
         matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+        matrix_b = fmu.getFloat32([vrs["matrix_b"]], 24)
 
-        assert matrix_a == [1, 2, 3, 5, 8, 13, 21, 34, 55], f"Initially fetched matrix was {matrix_a}, should have been [1, 2, 3, 5, 8, 13, 21, 34, 55]."
+        assert matrix_a == [1.0, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, 55.0], f"Initially fetched matrix_a was {matrix_a}, should have been [1.0, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, 55.0]."
+        assert matrix_b == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0], f"Initially fetched matrix_b was {matrix_b}, should have been [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0]."
+
+        # Testing functionality of example matrix in model
+        sim_time = 0.0
+        step_size = 1e-2
+        fmu.doStep(sim_time, step_size)
+        sim_time += step_size
+        matrix_c = fmu.getFloat32([vrs["matrix_c"]], 3)
+        assert matrix_c[0] == 215, f"First value of matrix_c after dostep was {matrix_c[0]}, should have been 215. (matrix_c: {matrix_c})"
+        fmu.doStep(sim_time, step_size)
+        sim_time += step_size
+        matrix_c = fmu.getFloat32([vrs["matrix_c"]], 3)
+        assert matrix_c[0] == 1295, f"First value of matrix_c after dostep was {matrix_c[0]}, should have been 1295. (matrix_c: {matrix_c})"
 
         # Testing roundtrip
         fmu.setFloat32(
             [vrs["matrix_a"]],
-            [9, 8, 7, 6, 5, 4, 3, 2, 1]
+            [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]
+        )
+        fmu.setFloat32(
+            [vrs["matrix_b"]],
+            [2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, 28.0, 30.0, 32.0, 34.0, 36.0, 38.0, 40.0, 42.0, 44.0, 46.0, 48.0]
         )
 
         matrix_a = fmu.getFloat32([vrs["matrix_a"]], 9)
+        matrix_b = fmu.getFloat32([vrs["matrix_b"]], 24)
 
-        assert matrix_a == [9, 8, 7, 6, 5, 4, 3, 2, 1], f"Matrix after roundtrip was {matrix_a}, should have been [9, 8, 7, 6, 5, 4, 3, 2, 1]."
+        assert matrix_a == [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0], f"Matrix_a after roundtrip was {matrix_a}, should have been [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]."
+        assert matrix_b == [2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, 28.0, 30.0, 32.0, 34.0, 36.0, 38.0, 40.0, 42.0, 44.0, 46.0, 48.0], f"Matrix_b after roundtrip was {matrix_b}, should have been [2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, 28.0, 30.0, 32.0, 34.0, 36.0, 38.0, 40.0, 42.0, 44.0, 46.0, 48.0]."
 
     instantiating_test(
         caller = "fmi3_matrix_operations",

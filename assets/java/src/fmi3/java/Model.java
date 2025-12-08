@@ -183,6 +183,14 @@ public class Model implements Serializable {
         Arrays.asList(new Integer[] {3, 3}),
         Arrays.asList(new Float[] {1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f})
     );
+    public FloatMatrix matrix_b = new FloatMatrix(
+        Arrays.asList(new Integer[] {2, 3, 4}),
+        Arrays.asList(new Float[] {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f})
+    );
+    public FloatMatrix matrix_c = new FloatMatrix(
+        Arrays.asList(new Integer[] {3}),
+        Arrays.asList(new Float[] {0.0f, 0.0f, 0.0f})
+    );
 
     public Float float32_tunable_parameter = 0.0f;
     public Double  float64_tunable_parameter = 0.0;
@@ -297,6 +305,8 @@ public class Model implements Serializable {
         this.references_to_attributes.add(this.getClass().getField("binary_c"));
 
         this.references_to_attributes.add(this.getClass().getField("matrix_a"));
+        this.references_to_attributes.add(this.getClass().getField("matrix_b"));
+        this.references_to_attributes.add(this.getClass().getField("matrix_c"));
 
         this.clocked_variables = new ArrayList<Field>();
         this.clocked_variables.add(this.getClass().getField("clock_a"));
@@ -334,7 +344,7 @@ public class Model implements Serializable {
         List<Integer> parameters_indexes = new ArrayList<>();
         List<Integer> tunable_parameters_indexes = new ArrayList<>();
         List<Integer> tunable_structural_parameters_indexes = new ArrayList<>();
-        for (int i=0;i<=39;i++){
+        for (int i=0;i<=41;i++){
             references_to_attributes_indexes.add(i);
         }
         for (int i=1001;i<=1003;i++){
@@ -802,6 +812,14 @@ public class Model implements Serializable {
             Arrays.asList(new Integer[] {3, 3}),
             Arrays.asList(new Float[] {1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f})
         );
+        this.matrix_b = new FloatMatrix(
+            Arrays.asList(new Integer[] {2, 3, 4}),
+            Arrays.asList(new Float[] {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f})
+        );
+        this.matrix_c = new FloatMatrix(
+            Arrays.asList(new Integer[] {3}),
+            Arrays.asList(new Float[] {0.0f, 0.0f, 0.0f})
+        );
 
         this.float32_tunable_parameter = 0.0f;
         this.float64_tunable_parameter = 0.0;
@@ -906,6 +924,7 @@ public class Model implements Serializable {
                 this.binary_b = other.binary_b;
                 this.binary_c = other.binary_c;
                 this.matrix_a = other.matrix_a;
+                this.matrix_b = other.matrix_b;
                 this.float32_tunable_parameter = other.float32_tunable_parameter;
                 this.float64_tunable_parameter = other.float64_tunable_parameter;
                 this.int8_tunable_parameter = other.int8_tunable_parameter;
@@ -964,14 +983,14 @@ public class Model implements Serializable {
 
             var val = field.get(this);
 
-            if (val instanceof byte[]) {
-                val = ByteBuffer.wrap((byte[]) val);
+            if (val instanceof byte[] bytes) {
+                val = ByteBuffer.wrap(bytes);
             }
 
             if (val.getClass().isArray()) {
                 values.addAll(Arrays.asList((T[]) val));
-            } else if (val instanceof NonScalar) {
-                values.addAll(((NonScalar) val).getAll());
+            } else if (val instanceof NonScalar non_scalar) {
+                values.addAll(non_scalar.getAll());
             } else {
                 values.add((T) val);
             }
@@ -986,8 +1005,22 @@ public class Model implements Serializable {
         Iterator<Integer> i1 = references.iterator();
         Iterator<T> i2 = values.iterator();
 
-        while (i1.hasNext() && i2.hasNext()) {
+        while (i1.hasNext()) {
             Integer r = i1.next();
+
+            if (!i2.hasNext()) {
+                this.log(
+                        String.format(
+                            "Not enough values were supplied to set parameter #%s#.",
+                            r
+                        ),
+                        Fmi3Status.Error,
+                        "logStatusError"
+                    );
+                    status = Fmi3Status.Error;
+                continue;
+            }
+
             var field = (T) this.map_to_attributes.get(r);
 
             if (
@@ -1037,12 +1070,11 @@ public class Model implements Serializable {
                 }
             }
 
-            if (this.map_to_attributes.get(r).get(this) instanceof NonScalar) {
-                ((NonScalar) this.map_to_attributes.get(r).get(this)).setAll(i2);
+            if (this.map_to_attributes.get(r).get(this) instanceof NonScalar non_scalar) {
+                non_scalar.setAll(i2);
             } else {
                 var v = i2.next();
-                if (v instanceof ByteBuffer) {
-                    ByteBuffer byte_buffer = (ByteBuffer) v;
+                if (v instanceof ByteBuffer byte_buffer) {
                     byte[] byte_array = new byte[byte_buffer.remaining()];
                     byte_buffer.get(byte_array);
                     this.map_to_attributes.get(r).set(this, byte_array);
@@ -1050,6 +1082,15 @@ public class Model implements Serializable {
                     this.map_to_attributes.get(r).set(this, v);
                 }
             }
+        }
+
+        if (i2.hasNext()) {
+            this.log(
+                    "More values were supplied than needed for the given references.",
+                    Fmi3Status.Error,
+                    "logStatusError"
+                );
+            status = Fmi3Status.Error;
         }
         
         return status;
@@ -1076,6 +1117,22 @@ public class Model implements Serializable {
             binary_result[i] = (byte) (this.binary_a[i] ^ this.binary_b[i]);
         }
         this.binary_c = binary_result;
+        this.matrix_c.set(
+            Arrays.asList(new Integer[] {0}),
+            (
+                (this.matrix_c.get(Arrays.asList(new Integer[] {0}))
+                * this.matrix_b.get(Arrays.asList(new Integer[] {0, 1, 2})))
+                + this.matrix_a.get(Arrays.asList(new Integer[] {1, 0}))
+            )
+        );
+        this.matrix_c.set(
+            Arrays.asList(new Integer[] {1}),
+            this.matrix_b.get(Arrays.asList(new Integer[] {0, 1, 2}))
+        );
+        this.matrix_c.set(
+            Arrays.asList(new Integer[] {2}),
+            this.matrix_a.get(Arrays.asList(new Integer[] {1, 0}))
+        );
     }
 
     private void update_clocks(){

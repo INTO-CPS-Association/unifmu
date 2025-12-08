@@ -67,6 +67,13 @@ class Model:
         self.matrix_a = [[1,2,3],
                          [5,8,13],
                          [21,34,55]]
+        self.matrix_b = [[[0,1,2,3],
+                          [4,5,6,7],
+                          [8,9,10,11]],
+                         [[12,13,14,15],
+                          [16,17,18,19],
+                          [20,21,22,23]]]
+        self.matrix_c = [0,0,0]
         self.float32_tunable_parameter = 0.0
         self.float64_tunable_parameter = 0.0
         self.int8_tunable_parameter = 0
@@ -136,7 +143,9 @@ class Model:
             36: "binary_a",
             37: "binary_b",
             38: "binary_c",
-            39: "matrix_a"    
+            39: "matrix_a",
+            40: "matrix_b",
+            41: "matrix_c"
         }
 
         self.clocked_variables = {
@@ -314,6 +323,16 @@ class Model:
         self.binary_a = bytes([0])
         self.binary_b = bytes([0])
         self.binary_c = bytes([0])
+        self.matrix_a = [[1,2,3],
+                         [5,8,13],
+                         [21,34,55]]
+        self.matrix_b = [[[0,1,2,3],
+                          [4,5,6,7],
+                          [8,9,10,11]],
+                         [[12,13,14,15],
+                          [16,17,18,19],
+                          [20,21,22,23]]]
+        self.matrix_c = [0,0,0]
         self.float32_tunable_parameter = 0.0
         self.float64_tunable_parameter = 0.0
         self.int8_tunable_parameter = 0
@@ -380,6 +399,8 @@ class Model:
                 self.string_b,
                 self.binary_a,
                 self.binary_b,
+                self.matrix_a,
+                self.matrix_b,
                 self.float32_tunable_parameter,
                 self.float64_tunable_parameter,
                 self.int8_tunable_parameter,
@@ -436,6 +457,8 @@ class Model:
             string_b,
             binary_a,
             binary_b,
+            matrix_a,
+            matrix_b,
             float32_tunable_parameter,
             float64_tunable_parameter,
             int8_tunable_parameter,
@@ -487,6 +510,8 @@ class Model:
         self.string_b = string_b
         self.binary_a = binary_a
         self.binary_b = binary_b
+        self.matrix_a = matrix_a
+        self.matrix_b = matrix_b
         self.float32_tunable_parameter = float32_tunable_parameter
         self.float64_tunable_parameter = float64_tunable_parameter
         self.int8_tunable_parameter = int8_tunable_parameter
@@ -799,6 +824,9 @@ class Model:
         self.boolean_c = self.boolean_a or self.boolean_b
         self.string_c = self.string_a + self.string_b
         self.binary_c = bytes(a ^ b for a, b in zip(self.binary_a, self.binary_b))
+        self.matrix_c[0] = self.matrix_c[0] * self.matrix_b[0][1][2] + self.matrix_a[1][0]
+        self.matrix_c[1] = self.matrix_b[0][1][2]
+        self.matrix_c[2] = self.matrix_a[1][0]
     
     def _update_clocks(self):
         self.clock_c = self.clock_a and self.clock_b

@@ -620,19 +620,19 @@ impl BreakableFmu for LocalFmu {
             FmuBackendImplementationLanguage::CSharp => {
                 match self.version() {
                     FmiVersion::Fmi2 => 55,
-                    FmiVersion::Fmi3 => 242
+                    FmiVersion::Fmi3 => 363
                 }
             },
             FmuBackendImplementationLanguage::Java => {
                 match self.version() {
                     FmiVersion::Fmi2 => 94,
-                    FmiVersion::Fmi3 => 426
+                    FmiVersion::Fmi3 => 436
                 }
             },
             FmuBackendImplementationLanguage::Python => {
                 match self.version() {
                     FmiVersion::Fmi2 => 38,
-                    FmiVersion::Fmi3 => 200
+                    FmiVersion::Fmi3 => 208
                 }
             },
         }
