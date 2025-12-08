@@ -15,24 +15,24 @@ interface INonScalar<T>
     IEnumerable<T> GetAll();
 }
 
-class FloatMatrix : INonScalar<float>
+public class FloatMatrix : INonScalar<float>
 {
     private readonly List<int> dimensions;
     private List<float> elements;
 
-    public FloatMatrix(List<int> dimensions, List<float> elements)
+    public FloatMatrix(IEnumerable<int> dimensions, IEnumerable<float> elements)
     {
-        if (dimensions.Count < 1)
+        this.dimensions = [.. dimensions];
+        this.elements = [.. elements];
+
+        if (this.dimensions.Count < 1)
         {
             throw new ArgumentException("Argument 'dimensions' must contain atleast one value.");
         }
-        if (dimensions.Exists(d => d < 1))
+        if (this.dimensions.Exists(d => d < 1))
         {
             throw new ArgumentException("Argument 'dimensions' must contain only positive non-zero integers.");
         }
-
-        this.dimensions = dimensions;
-        this.elements = elements;
     }
 
     public void Set(List<int> indexes, float element)
@@ -171,6 +171,10 @@ public class Model
     public byte[] binary_c { get; set; } = new byte[] {
         (byte) 0b00000000
     };
+    public FloatMatrix matrix_a { get; set; } = new(
+        [3, 3],
+        [1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f]
+    );
 
     public float float32_tunable_parameter { get; set; } = 0.0f;
     public double  float64_tunable_parameter { get; set; } = 0.0;
@@ -284,6 +288,7 @@ public class Model
             { 36, type.GetProperty("binary_a") },
             { 37, type.GetProperty("binary_b") },
             { 38, type.GetProperty("binary_c") },
+            { 39, type.GetProperty("matrix_a") },
         };
 
         this.clocked_variables = new Dictionary<uint, PropertyInfo>
@@ -469,6 +474,10 @@ public class Model
         this.binary_c = new byte[] {
             (byte) 0b00000000
         };
+        this.matrix_a = new(
+            [3, 3],
+            [1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f]
+        );
 
         this.float32_tunable_parameter = 0.0f;
         this.float64_tunable_parameter = 0.0;
@@ -993,11 +1002,12 @@ public class Model
     public Fmi3Status SetValueReflection<T>(IEnumerable<uint> references, IEnumerable<T> values)
     {
         var status = Fmi3Status.Fmi3Ok;
+        IEnumerator<T> value_enumerator = values.GetEnumerator();
 
-        foreach (var (r, v) in references.Zip(values)){
+        foreach (var reference in references){
             if (
-                clocked_variables.ContainsKey(r)
-                || tunable_parameters.ContainsKey(r)
+                clocked_variables.ContainsKey(reference)
+                || tunable_parameters.ContainsKey(reference)
             )
             {
                 if (
@@ -1006,14 +1016,14 @@ public class Model
                 )
                 {
                     this.Log(
-                        $"Set clocked variable or tunable parameter #{r}# when neither in event mode nor in initialization mode.",
+                        $"Set clocked variable or tunable parameter #{reference}# when neither in event mode nor in initialization mode.",
                         Fmi3Status.Fmi3Warning,
                         "logStatusWarning"
                     );
                     status = Fmi3Status.Fmi3Warning;
                 }
             }
-            else if (tunable_structural_parameters.ContainsKey(r))
+            else if (tunable_structural_parameters.ContainsKey(reference))
             {
                 if (
                     state != FMIState.FMIConfigurationModeState
@@ -1021,28 +1031,59 @@ public class Model
                 )
                 {
                     this.Log(
-                        $"Set tunable structural parameter #{r}# when neither in configuration mode nor in reconfiguration mode.",
+                        $"Set tunable structural parameter #{reference}# when neither in configuration mode nor in reconfiguration mode.",
                         Fmi3Status.Fmi3Warning,
                         "logStatusWarning"
                     );
                     status = Fmi3Status.Fmi3Warning;
                 }
             }
-            else if (parameters.ContainsKey(r))
+            else if (parameters.ContainsKey(reference))
             {
                 if (
                     state != FMIState.FMIInitializationModeState
                 )
                 {
                     this.Log(
-                        $"Set parameter #{r}# when not in initialization mode.",
+                        $"Set parameter #{reference}# when not in initialization mode.",
                         Fmi3Status.Fmi3Warning,
                         "logStatusWarning"
                     );
                     status = Fmi3Status.Fmi3Warning;
                 }
             }
-            this.all_references[r].SetValue(this, (object)v);
+
+            if (this.all_references[reference].GetValue(this) is INonScalar<T> non_scalar)
+            {
+                try
+                {
+                    non_scalar.SetAll(value_enumerator);
+                }
+                catch (Exception e)
+                {
+                    this.Log(
+                        $"Could not set NonScalar parameter #{reference}#: {e}",
+                        Fmi3Status.Fmi3Error,
+                        "logStatusError"
+                    );
+                    status = Fmi3Status.Fmi3Error;
+                    break;
+                }
+            }
+            else
+            {
+                if (!value_enumerator.MoveNext())
+                {
+                    this.Log(
+                        $"The number of supplied values were less than needed to set parameters; not values left for parameter #{reference}#.",
+                        Fmi3Status.Fmi3Error,
+                        "logStatusError"
+                    );
+                    status = Fmi3Status.Fmi3Error;
+                    break;
+                }
+                this.all_references[reference].SetValue(this, (object)value_enumerator.Current);
+            }
         }
 
         return status;
@@ -1070,9 +1111,13 @@ public class Model
                 }
             }
             var value = this.all_references[r].GetValue(this);
-            if (value is IEnumerable<T>)
+            if (value is INonScalar<T> non_scalar)
             {
-                values.AddRange((IEnumerable<T>)value);
+                values.AddRange(non_scalar.GetAll());
+            }
+            else if (value is IEnumerable<T> enumerable)
+            {
+                values.AddRange(enumerable);
             }
             else
             {
