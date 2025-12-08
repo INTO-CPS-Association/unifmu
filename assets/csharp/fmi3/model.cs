@@ -9,6 +9,111 @@ using Fmi3Messages;
 
 public delegate void LogCallback(Fmi3Status status, String category, String message);
 
+interface INonScalar<T>
+{
+    void SetAll(IEnumerator<T> values);
+    IEnumerable<T> GetAll();
+}
+
+class FloatMatrix : INonScalar<float>
+{
+    private readonly List<int> dimensions;
+    private List<float> elements;
+
+    public FloatMatrix(List<int> dimensions, List<float> elements)
+    {
+        if (dimensions.Count < 1)
+        {
+            throw new ArgumentException("Argument 'dimensions' must contain atleast one value.");
+        }
+        if (dimensions.Exists(d => d < 1))
+        {
+            throw new ArgumentException("Argument 'dimensions' must contain only positive non-zero integers.");
+        }
+
+        this.dimensions = dimensions;
+        this.elements = elements;
+    }
+
+    public void Set(List<int> indexes, float element)
+    {
+        elements[DimensionalIndexesToListIndex(indexes)] = element;
+    }
+
+    public float Get(List<int> indexes)
+    {
+        return elements[DimensionalIndexesToListIndex(indexes)];
+    }
+
+    public void SetAll(IEnumerator<float> values)
+    {
+        List<float> new_elements = new(elements.Count);
+
+        while (new_elements.Count < elements.Count && values.MoveNext())
+        {
+            new_elements.Add(values.Current);
+        }
+
+        if (new_elements.Count != elements.Count)
+        {
+            throw new ArgumentException(String.Format("This FloatMatrix should contain a total of {0} elements, but only {1} were left in the enumerator.", elements.Count, new_elements.Count));
+        }
+
+        elements = new_elements;
+    }
+
+    public IEnumerable<float> GetAll()
+    {
+        return elements;
+    }
+
+    private int DimensionalIndexesToListIndex(List<int> indexes)
+    {
+        if (indexes.Count != dimensions.Count)
+        {
+            throw new ArgumentException(
+                String.Format(
+                    "Argument 'indexes' only contained {0} values; should contain {1} values.",
+                    indexes.Count,
+                    dimensions.Count
+                )
+            );
+        }
+
+        int list_index = 0;
+        int dimensional_multiplier = 1;
+
+        for (int i = indexes.Count - 1; i >= 0; i--)
+        {
+            if (indexes[i] >= dimensions[i])
+            {
+                throw new IndexOutOfRangeException(
+                    String.Format(
+                        "Index {0} of indexes exceeded its corresponding dimensions limit {1}",
+                        i,
+                        dimensions[i] - 1
+                    )
+                );
+            }
+
+            if (indexes[i] < 0)
+            {
+                throw new IndexOutOfRangeException(
+                    String.Format(
+                        "Index {0} was negative; indexes must be non-negative.",
+                        i
+                    )
+                );
+            }
+
+            list_index += indexes[i] * dimensional_multiplier;
+            dimensional_multiplier *= dimensions[i];
+        }
+
+        return list_index;
+    }
+}
+
 public class Model
 {
     private string instance_name = "";
