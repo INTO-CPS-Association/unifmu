@@ -7,7 +7,8 @@ from fmpy.fmi3 import FMU3Slave, fmi3ValueReference, fmi3UInt64, fmi3Float64, fm
 from shutil import rmtree
 from fmpy.fmi2 import fmi2OK
 
-## Overwrites the clock related functions
+## Overwrites the clock related functions - a convenience as fmpy as of writing
+## doesn't have simple convenient functions for clock related stuff.
 def getIntervalDecimal(fmu,valueReferences):
     nValueReferences = len(valueReferences)
     valueReferences = (fmi3ValueReference * nValueReferences)(*valueReferences)

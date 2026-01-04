@@ -135,7 +135,7 @@ pub fn for_each_fmu(
 
             // Ensure that all other attribute macros present on the original
             // function are included on each duplicate function, along with
-            // any  variation dependent extra attributes.
+            // any variation-dependent extra attributes.
             let mut new_attrs: Vec<syn::Attribute> = Vec::with_capacity(
                 function_clone.attrs.capacity() + 1
             );
@@ -146,9 +146,9 @@ pub fn for_each_fmu(
             let variant_version = variant.version_type();
             let variant_language = variant.language_type();
 
-            // Replace each instance of assigning a WildFmu{} to a new variable
+            // Replace each instance of assigning a WildFmu{} to a new variable,
             // with assigning the result of a call to the correct version of
-            // get_clone() with the the FMU variations FMI version and
+            // get_clone() with the the FMU variations, FMI version and
             // programming language.
             let new_block = syn::Block {
                 brace_token: function_clone.block.brace_token,
@@ -206,6 +206,7 @@ pub fn for_each_fmu(
     proc_macro::TokenStream::from(expanded)
 }
 
+/// The FMI versions that a FMU can implement.
 #[derive(PartialEq, Clone, Copy)]
 enum FmiVersion {
     Fmi2,
@@ -237,6 +238,7 @@ impl FmiVersion {
     }
 }
 
+/// The programming languages that a FMU's backend can be implemented in.
 #[derive(PartialEq, Clone, Copy)]
 enum ProgrammingLanguage {
     CSharp,
@@ -278,13 +280,14 @@ impl ProgrammingLanguage {
     }
 }
 
+/// The ways the FMU's directory can be structured.
 #[derive(PartialEq, Clone, Copy)]
 enum FmuPackaging {
     BareDirectory,
     Zipped
 }
 
-const NUM_OF_FMU_PACKGAGINGS: usize = 2;
+const NUM_OF_FMU_PACKAGINGS: usize = 2;
 
 impl FmuPackaging {
     pub fn function_suffix_part(&self) -> std::string::String {
@@ -302,6 +305,7 @@ impl FmuPackaging {
     }
 }
 
+/// The kinds of backend that a FMU can have.
 #[derive(PartialEq, Clone, Copy)]
 enum FmuBackend {
     Blackbox,
@@ -329,6 +333,8 @@ impl FmuBackend {
     }
 }
 
+/// A UniFMU generateable FMU variant. Should correspond to a combination
+/// of types and parameters as defined in the test common module.
 struct FmuVariant {
     pub version: FmiVersion,
     pub language: ProgrammingLanguage,
@@ -347,6 +353,7 @@ impl FmuVariant {
         )
     }
 
+    /// The test Fmu struct type that this variant corresponds to.
     pub fn struct_type(&self) -> proc_macro2::TokenStream {
         let struct_path_segment = syn::PathSegment {
             ident: syn::Ident::new(
@@ -363,19 +370,27 @@ impl FmuVariant {
         quote::quote! {common::#struct_path_segment}
     }
 
+    /// The test FmiVersion type that this variant corresponds to.
     pub fn version_type(&self) -> proc_macro2::TokenStream {
         self.version.type_path()
     }
 
+    /// The test FmuBackendImplementationLanguage type that this variant
+    /// corresponds to.
     pub fn language_type(&self) -> proc_macro2::TokenStream {
         self.language.type_path()
     }
 
+    /// Any extra attributes that a variant function should be decorated with.
     pub fn extra_attribute(&self) -> syn::Attribute {
         self.language.processing_attribute()
     }
 }
 
+/// struct of what possible Fmu parameters are enabled or disabled.
+/// 
+/// Calling get_variations() on it will give a Vec of valid FMU variations,
+/// based on what parameters are enabled or disabled.
 #[derive(Default)]
 struct FmuPossibilities {
     pub fmi2: bool,
@@ -477,7 +492,7 @@ impl FmuPossibilities {
         if self.java {languages.push(ProgrammingLanguage::Java);}
         if self.python {languages.push(ProgrammingLanguage::Python);}
 
-        let mut packagings: Vec<FmuPackaging> = Vec::with_capacity(NUM_OF_FMU_PACKGAGINGS);
+        let mut packagings: Vec<FmuPackaging> = Vec::with_capacity(NUM_OF_FMU_PACKAGINGS);
         if self.bare_directory {packagings.push(FmuPackaging::BareDirectory);}
         if self.zipped {packagings.push(FmuPackaging::Zipped);}
 
@@ -489,7 +504,7 @@ impl FmuPossibilities {
         let mut variations: Vec<FmuVariant> = Vec::with_capacity(
             NUM_OF_FMI_VERSIONS
             * NUM_OF_PROGRAMMING_LANGUAGES
-            * NUM_OF_FMU_PACKGAGINGS
+            * NUM_OF_FMU_PACKAGINGS
             * NUM_OF_FMU_BACKENDS
         );
 

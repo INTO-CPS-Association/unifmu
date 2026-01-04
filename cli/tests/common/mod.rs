@@ -1,4 +1,7 @@
 //! Contains common functions for the test suite.
+//! 
+//! If this is extended with new FMU types, make sure you also update the
+//! for_each_fmu macro in the unifmu_macros module.
 #![allow(dead_code)]
 
 use std::{
@@ -21,7 +24,7 @@ use zip::CompressionMethod;
 /// instead of being cleaned up at the end of the test.
 static DEBUG_PERSIST_FAILING_TEST_FMUS: bool = false;
 
-/// Realtive path from the cli directory to the directory to store test FMUs
+/// Relative path from the cli directory to the directory to store test FMUs
 /// created with the new_persistent() method.
 /// 
 /// This is NOT where initially temporary FMUs that are persistet are saved.
@@ -304,6 +307,8 @@ pub enum FmuBackendImplementationLanguage {
 }
 
 impl FmuBackendImplementationLanguage {
+    /// String used to specify backend language when generating an FMU with
+    /// the UniFMU CLI.
     pub fn cmd_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "c-sharp",
@@ -312,6 +317,8 @@ impl FmuBackendImplementationLanguage {
         }
     }
 
+    /// Language dependent codesnippet that causes the backend to error out
+    /// at runtime
     pub fn fault_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "throw new Exception();",
@@ -320,6 +327,7 @@ impl FmuBackendImplementationLanguage {
         }
     }
 
+    /// Location of the model file in relation to the FMU root directory
     pub fn model_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "model.cs",
@@ -328,6 +336,7 @@ impl FmuBackendImplementationLanguage {
         }
     }
 
+    /// The canon pretty humanreadable name of the language
     pub fn pretty_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "C#",
@@ -337,6 +346,8 @@ impl FmuBackendImplementationLanguage {
     }
 }
 
+/// Returns the name of a shell and the relative path to gradle dependent
+/// on the current OS
 fn gradle_command_base() -> (String, String) {
     match std::env::consts::OS {
         "windows" => (
@@ -362,6 +373,8 @@ pub enum FmiVersion {
 }
 
 impl FmiVersion {
+    /// Gives a string representation of the FmiVersion, specifically formatted
+    /// to work as an argument when generating an FMU with the UniFMU CLI
     pub fn as_str(&self) -> &str {
         match self {
             FmiVersion::Fmi2 => "fmi2",
@@ -370,12 +383,14 @@ impl FmiVersion {
     }
 }
 
+/// The type of directory that an FMU is saved in
 enum FmuDirectory {
     Persistent(PathBuf),
     Temporary(TempDir),
 }
 
 impl FmuDirectory {
+    /// The path to the directory
     pub fn path(&self) -> &Path {
         match self {
             FmuDirectory::Persistent(path_buf) => path_buf.as_path(),
@@ -383,6 +398,8 @@ impl FmuDirectory {
         }
     }
 
+    /// Returns a Persistent version of the FmuDirectory, saving the contents
+    /// of the directory to disk if it was Temporary.
     pub fn persist(self) -> FmuDirectory {
         match self {
             FmuDirectory::Persistent(_) => self,
@@ -1533,7 +1550,7 @@ pub trait BasicFmu {
     /// Path to the directory/zip-file that contains the FMU binary.
     fn importable_path(&self) -> PathBuf;
 
-    /// Whether or not the FMU is zipped or not.
+    /// Whether or not the FMU is zipped.
     fn is_zipped(&self) -> bool;
 
     /// Returns a clone of the FMU but with the importable folder zipped.
@@ -1779,6 +1796,11 @@ fn inject_line(
 
     Ok(())
 }
+
+// Here follows the static Fmu's that are used as the basis when calling
+// get_clone().
+// One should exist for each valid and tested combination of Fmu type,
+// backend language and FMI version.
 
 static CSHARP_FMI2: LazyLock<LocalFmu> = LazyLock::new(|| {
     LocalFmu::new_persistent(
