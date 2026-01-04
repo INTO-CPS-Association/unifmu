@@ -95,54 +95,67 @@ message Fmi3ExitConfigurationMode {}
 
 message Fmi3GetFloat32 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetFloat64 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetInt8 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetUInt8 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetInt16 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetUInt16 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetInt32 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetUInt32 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetInt64 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetUInt64 {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetBoolean {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetString {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetBinary {
   repeated uint32 value_references = 1;
+  uint64 n_values = 2;
 }
 
 message Fmi3GetClock {

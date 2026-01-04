@@ -546,7 +546,7 @@ pub unsafe extern "C" fn fmi3GetFloat32(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetFloat32(
-            fmi3_messages::Fmi3GetFloat32 { value_references }
+            fmi3_messages::Fmi3GetFloat32 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -624,7 +624,7 @@ pub unsafe extern "C" fn fmi3GetFloat64(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetFloat64(
-            fmi3_messages::Fmi3GetFloat64 { value_references }
+            fmi3_messages::Fmi3GetFloat64 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -703,7 +703,7 @@ pub unsafe extern "C" fn fmi3GetInt8(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt8(
-            fmi3_messages::Fmi3GetInt8 { value_references }
+            fmi3_messages::Fmi3GetInt8 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -787,7 +787,7 @@ pub unsafe extern "C" fn fmi3GetUInt8(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt8(
-            fmi3_messages::Fmi3GetUInt8 { value_references }
+            fmi3_messages::Fmi3GetUInt8 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -871,7 +871,7 @@ pub unsafe extern "C" fn fmi3GetInt16(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt16(
-            fmi3_messages::Fmi3GetInt16 { value_references }
+            fmi3_messages::Fmi3GetInt16 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -955,7 +955,7 @@ pub unsafe extern "C" fn fmi3GetUInt16(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt16(
-            fmi3_messages::Fmi3GetUInt16 { value_references }
+            fmi3_messages::Fmi3GetUInt16 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -1039,7 +1039,7 @@ pub unsafe extern "C" fn fmi3GetInt32(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt32(
-            fmi3_messages::Fmi3GetInt32 { value_references }
+            fmi3_messages::Fmi3GetInt32 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -1117,7 +1117,7 @@ pub unsafe extern "C" fn fmi3GetUInt32(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt32(
-            fmi3_messages::Fmi3GetUInt32 { value_references }
+            fmi3_messages::Fmi3GetUInt32 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -1195,7 +1195,7 @@ pub unsafe extern "C" fn fmi3GetInt64(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetInt64(
-            fmi3_messages::Fmi3GetInt64 { value_references }
+            fmi3_messages::Fmi3GetInt64 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -1273,7 +1273,7 @@ pub unsafe extern "C" fn fmi3GetUInt64(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetUInt64(
-            fmi3_messages::Fmi3GetUInt64 { value_references }
+            fmi3_messages::Fmi3GetUInt64 { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -1351,7 +1351,7 @@ pub unsafe extern "C" fn fmi3GetBoolean(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetBoolean(
-            fmi3_messages::Fmi3GetBoolean { value_references }
+            fmi3_messages::Fmi3GetBoolean { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -1429,7 +1429,7 @@ pub unsafe extern "C" fn fmi3GetString(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetString(
-            fmi3_messages::Fmi3GetString { value_references }
+            fmi3_messages::Fmi3GetString { value_references, n_values: n_values as u64 }
         )),
     };
 
@@ -1498,7 +1498,7 @@ pub unsafe extern "C" fn fmi3GetBinary(
 
     let cmd = Fmi3Command {
         command: Some(Command::Fmi3GetBinary(
-            fmi3_messages::Fmi3GetBinary { value_references }
+            fmi3_messages::Fmi3GetBinary { value_references, n_values: n_values as u64 }
         )),
     };
 

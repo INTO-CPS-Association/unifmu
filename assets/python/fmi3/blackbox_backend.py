@@ -191,16 +191,17 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_float_32=Fmi3GetFloat32Return(
                                 status=0,
-                                values=self.fmu.getFloat32(data.value_references)
+                                values=self.fmu.getFloat32(data.value_references, data.n_values)
                             )
                         )
                     )
+
                 case "Fmi3GetFloat64":
                     self.send_reply(
                         Fmi3Return(
                             get_float_64=Fmi3GetFloat64Return(
                                 status=0,
-                                values=self.fmu.getFloat64(data.value_references)
+                                values=self.fmu.getFloat64(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -210,7 +211,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_int_8=Fmi3GetInt8Return(
                                 status=0,
-                                values=self.fmu.getInt8(data.value_references)
+                                values=self.fmu.getInt8(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -220,7 +221,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_u_int_8=Fmi3GetUInt8Return(
                                 status=0,
-                                values=self.fmu.getUInt8(data.value_references)
+                                values=self.fmu.getUInt8(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -230,7 +231,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_int_16=Fmi3GetInt16Return(
                                 status=0,
-                                values=self.fmu.getInt16(data.value_references)
+                                values=self.fmu.getInt16(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -240,7 +241,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_u_int_16=Fmi3GetUInt16Return(
                                 status=0,
-                                values=self.fmu.getUInt16(data.value_references)
+                                values=self.fmu.getUInt16(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -250,7 +251,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_int_32=Fmi3GetInt32Return(
                                 status=0,
-                                values=self.fmu.getInt32(data.value_references)
+                                values=self.fmu.getInt32(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -260,7 +261,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_u_int_32=Fmi3GetUInt32Return(
                                 status=0,
-                                values=self.fmu.getUInt32(data.value_references)
+                                values=self.fmu.getUInt32(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -270,7 +271,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_int_64=Fmi3GetInt64Return(
                                 status=0,
-                                values=self.fmu.getInt64(data.value_references)
+                                values=self.fmu.getInt64(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -280,7 +281,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_u_int_64=Fmi3GetUInt64Return(
                                 status=0,
-                                values=self.fmu.getUInt64(data.value_references)
+                                values=self.fmu.getUInt64(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -290,7 +291,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_boolean=Fmi3GetBooleanReturn(
                                 status=0,
-                                values=self.fmu.getBoolean(data.value_references)
+                                values=self.fmu.getBoolean(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -299,7 +300,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_string=Fmi3GetStringReturn(
                                 status=0,
-                                values=self.fmu.getString(data.value_references)
+                                values=self.fmu.getString(data.value_references, data.n_values)
                             )
                         )
                     )
@@ -309,7 +310,7 @@ class BlackboxBackend(AbstractBackend):
                         Fmi3Return(
                             get_binary=Fmi3GetBinaryReturn(
                                 status=0,
-                                values=self.fmu.getBinary(data.value_references)
+                                values=self.fmu.getBinary(data.value_references, data.n_values)
                             )
                         )
                     )
