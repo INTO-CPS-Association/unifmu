@@ -9,7 +9,7 @@
   - [Language specific documentation and backend development](#language-specific-documentation-and-backend-development)
   - [Supported Features](#supported-features)
     - [FMI2](#fmi2)
-    - [FMI3 (in progress)](#fmi3-in-progress)
+    - [FMI3](#fmi3)
   - [Building and deployment](#building-and-deployment)
     - [Building during development](#building-during-development)
     - [Building for deployment](#building-for-deployment)
@@ -254,7 +254,7 @@ The readme file, as well as other source files for each backend are in the respe
 | fmi2GetStringStatus               | x         |       |
 
 
-### FMI3 (in progress)
+### FMI3
 
 | Name                                | Supported | Notes |
 | ----------------------------------- | --------- | ----- |
