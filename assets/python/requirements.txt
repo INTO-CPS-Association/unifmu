@@ -1,6 +1,6 @@
 colorama
 coloredlogs
 FMPy
-protobuf==5.27.3
+protobuf==7.36.2
 pyzmq
 toml

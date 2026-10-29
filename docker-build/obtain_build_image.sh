@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-image="lausdahl/unifmu-build:latest"
+image="lausdahl/unifmu-build:protobuf-36.2"
 local_image="unifmu-build:latest"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 

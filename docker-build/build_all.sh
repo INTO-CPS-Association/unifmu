@@ -4,6 +4,12 @@ set -euo pipefail
 VER=$(python3 scripts/version.py)
 echo "Building UniFMU ${VER}"
 
+if [[ "$(protoc --version)" != "libprotoc 36.2" ]]; then
+    echo "Expected protoc 36.2; obtain or rebuild the protobuf-36.2 build image." >&2
+    exit 1
+fi
+python3 -c 'import google.protobuf; assert google.protobuf.__version__ == "7.36.2", "Expected Python protobuf 7.36.2; rebuild the build image"'
+
 host_target=$(rustc -vV | sed -n 's/^host: //p')
 case "${host_target}" in
     x86_64-unknown-linux-gnu|aarch64-unknown-linux-gnu) ;;

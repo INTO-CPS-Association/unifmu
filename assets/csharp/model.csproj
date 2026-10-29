@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="Google.Protobuf" Version="3.27.3" />
+    <PackageReference Include="Google.Protobuf" Version="3.36.2" />
     <PackageReference Include="NetMQ" Version="4.0.1.13" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Tomlyn" Version="0.17.0" />

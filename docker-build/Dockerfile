@@ -38,7 +38,7 @@ RUN apt-get update -qq \
 
 ENV PATH="/opt/unifmu-venv/bin:/root/.cargo/bin:/usr/osxcross/target/bin:${PATH}"
 RUN python3 -m venv /opt/unifmu-venv \
-    && pip install --no-cache-dir pyzmq protobuf==5.27.3 colorama coloredlogs toml fmpy
+    && pip install --no-cache-dir pyzmq protobuf==7.36.2 colorama coloredlogs toml fmpy
 
 # install protoc
 RUN case "${TARGETARCH}" in \
@@ -46,7 +46,7 @@ RUN case "${TARGETARCH}" in \
       arm64) protoc_arch=aarch_64 ;; \
       *) echo "Unsupported build host architecture: ${TARGETARCH}" >&2; exit 1 ;; \
     esac \
-    && curl -fsSL "https://github.com/protocolbuffers/protobuf/releases/download/v27.3/protoc-27.3-linux-${protoc_arch}.zip" \
+    && curl -fsSL "https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-linux-${protoc_arch}.zip" \
       -o /tmp/protoc.zip \
     && unzip -oq /tmp/protoc.zip -d /usr \
     && rm /tmp/protoc.zip
