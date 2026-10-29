@@ -117,6 +117,8 @@ pub unsafe extern "C" fn fmi2Instantiate(
         logging_on
     );
 
+    logger.ok(concat!("UniFMU ", env!("CARGO_PKG_VERSION"), " FMI2 runtime"));
+
     // Erroring out in case the importer tries to instantiate the FMU for
     // Model Exchange as that is not yet implemented.
     if let Fmi2Type::Fmi2ModelExchange = fmu_type {

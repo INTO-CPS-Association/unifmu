@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+VER=$(python3 scripts/version.py)
+echo "Building UniFMU ${VER}"
+
 host_target=$(rustc -vV | sed -n 's/^host: //p')
 case "${host_target}" in
     x86_64-unknown-linux-gnu|aarch64-unknown-linux-gnu) ;;
@@ -55,10 +58,11 @@ done
 
 # ------------------------------ compress for release ------------------------------
 
-echo "querying for version number of unifmu via 'unifmu --version', the version is defined in cli/cargo.toml"
-VER=$("./target/${host_target}/release/unifmu" --version)
-VER=${VER#* }
-echo "detected version" ${VER}
+actual_version=$("./target/${host_target}/release/unifmu" --version)
+if [[ "${actual_version}" != "unifmu ${VER}" ]]; then
+    echo "CLI version mismatch: expected unifmu ${VER}, got ${actual_version}" >&2
+    exit 1
+fi
 
 for target in "${targets[@]}"; do
     executable=unifmu

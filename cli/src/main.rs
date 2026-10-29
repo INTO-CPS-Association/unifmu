@@ -79,6 +79,8 @@ fn main() {
         .format_module_path(false)
         .init();
 
+    info!("UniFMU {}", env!("CARGO_PKG_VERSION"));
+
     match opt.cmd {
         Command::Generate {
             language,
@@ -110,6 +112,23 @@ fn main() {
                 error!("an error ocurred during the generation of the FMUs: {:?}", e);
                 exit(-1);
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn version_flags_report_workspace_version() {
+        for flag in ["--version", "-V"] {
+            let error = Arguments::try_parse_from(["unifmu", flag]).unwrap_err();
+            assert_eq!(error.kind(), clap::error::ErrorKind::DisplayVersion);
+            assert_eq!(
+                error.to_string(),
+                format!("unifmu {}\n", env!("CARGO_PKG_VERSION"))
+            );
         }
     }
 }

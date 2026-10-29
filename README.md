@@ -13,6 +13,7 @@
   - [Building and deployment](#building-and-deployment)
     - [Building during development](#building-during-development)
     - [Building for deployment](#building-for-deployment)
+    - [Versioning and releases](#versioning-and-releases)
     - [Troubleshooting](#troubleshooting)
       - [Errors while running the docker build](#errors-while-running-the-docker-build)
   - [Frequently Asked Questions](#frequently-asked-questions)
@@ -460,6 +461,39 @@ FMI2 Linux FMUs use `linux64` for x86-64 and `aarch64-linux` for ARM64. Importer
     This generates five target-triple folders and five `unifmu-<target>-<version>.zip` CLI archives in the local `target` directory.
 
     **Note: On windows, git may be configured to replace LF line-endings with CRLF, which are not compatible with bash.**
+
+### Versioning and releases
+
+The UniFMU version is set once in the root `Cargo.toml`, under `[workspace.package]`.
+All Rust crates inherit it. `unifmu --version` (or `-V`) reports that version, and
+the CLI logs it at startup. The FMI2 and FMI3 native runtimes report their compiled
+UniFMU version through the importer's logger when logging is enabled; their FMI
+`GetVersion` functions still return the FMI specification version, not the UniFMU version.
+The deployment build reads the shared version and verifies that the built CLI
+reports it before naming the five release archives.
+
+To release, run **Actions > Release > Run workflow** on the desired branch.
+Leave **Release version** blank to increment the patch version from the highest
+workspace version or stable Git tag (for example, `0.14.0` becomes `0.14.1`).
+Alternatively, enter a stable version such as `0.14.1` or `v0.14.1`.
+New versions must not precede the workspace version and must exceed existing
+stable tags; new tags always use `vMAJOR.MINOR.PATCH`.
+
+The workflow commits the selected version, tags that commit, builds and tests all
+five targets, and creates a GitHub release with generated release notes and the
+five CLI ZIPs. **Release automatically** is unchecked by default, so the release
+remains a draft for review. Check it to publish after the build succeeds.
+After creating the draft, the workflow fast-forwards the selected branch to the
+version commit. It never force-pushes: if the branch has diverged or branch
+protection prevents the update, the release fails.
+
+On failure or cancellation, a cleanup job removes the new release and tag,
+checking that the tag still points to this run's commit before deleting it.
+Existing tags and releases are never overwritten. The workflow needs
+`contents: write` permission and permission to update the selected branch.
+Do not manually publish a draft while its workflow is still running.
+If publication fails after the branch update, the version commit remains on the
+branch; cleanup does not rewind shared branch history.
 
 ### Troubleshooting
 
