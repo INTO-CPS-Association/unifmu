@@ -36,7 +36,8 @@ Run commands from the repository root.
 
 Install:
 
-- [Rust and Cargo](https://www.rust-lang.org/tools/install), plus a native C compiler/linker.
+- [Rust and Cargo](https://www.rust-lang.org/tools/install) (Rust 1.89 or newer),
+  plus a native C compiler/linker.
 - [Protocol Buffers compiler 27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3)
   (`protoc`) on your `PATH`.
 - Python 3.10 or newer for the Python backend; Python 3.11 or newer for
@@ -138,6 +139,27 @@ without Python or generated FMUs:
 
 ```bash
 cargo test --package fmiapi --lib common::dispatcher::backend_subprocess::tests
+```
+
+The Rust runtime uses the published `zeromq` 0.7 series, which handles receive
+errors without the disconnect panic present in 0.4.1. Python (PyZMQ), Java
+(JeroMQ), and C# (NetMQ) use independent version numbers; they communicate using
+the same ZeroMQ REQ/REP wire protocol and unchanged UniFMU protobuf messages.
+
+A communication failure invalidates that FMU instance's connection. Subsequent
+calls return an error rather than reusing a potentially inconsistent socket;
+create a new instance to recover. Local disconnect errors include the backend
+exit status and captured output when the process exits within the diagnostic
+collection window. Communication panics are caught before reaching the C FMI
+boundary in normal unwind-enabled builds; builds using `panic = "abort"` cannot
+provide this containment.
+
+The crash-isolated regressions exercise abrupt exits during startup, handshake,
+instantiation, initialization, and stepping for FMI2 and FMI3, including continued
+operation of an independent healthy instance:
+
+```bash
+cargo test --package fmiapi --lib common::dispatcher::tests
 ```
 
 For version-selection and CLI-version tests without running simulations:

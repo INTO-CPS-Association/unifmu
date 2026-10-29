@@ -2,9 +2,9 @@
 #![allow(unused_variables)]
 
 mod fmi3_logger;
-mod fmi3_messages;
-mod fmi3_slave;
-mod fmi3_types;
+pub(crate) mod fmi3_messages;
+pub(crate) mod fmi3_slave;
+pub(crate) mod fmi3_types;
 
 use fmi3_logger::Fmi3Logger;
 use fmi3_messages::{

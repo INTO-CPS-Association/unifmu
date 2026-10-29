@@ -6,9 +6,9 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod fmi2_logger;
-mod fmi2_messages;
-mod fmi2_slave;
-mod fmi2_types;
+pub(crate) mod fmi2_messages;
+pub(crate) mod fmi2_slave;
+pub(crate) mod fmi2_types;
 
 use fmi2_logger::Fmi2Logger;
 use fmi2_messages::{
