@@ -26,5 +26,8 @@ tracing-subscriber = { version = "0.3", features = ["registry", "std"] }
 url = "2.5"
 zeromq = { version = "0.4", default-features = false, features = ["tokio-runtime", "tcp-transport"] }
 
+[dev-dependencies]
+fmi2_logger_test = { path = "tests/logger_callback" }
+
 [build-dependencies]
 prost-build = "0.14"

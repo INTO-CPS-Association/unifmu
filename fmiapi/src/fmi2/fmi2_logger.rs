@@ -89,11 +89,85 @@ impl Logger for Fmi2Logger {
             self.instance_name,
             status,
             c_category.as_ptr(),
+            // The FMI2 callback takes a printf format, not a literal message.
+            b"%s\0".as_ptr().cast(),
             c_message.as_ptr()
         ); }
     }
 
     fn filter(&mut self) -> &mut CategoryFilter<Self::Category> {
         &mut self.filter
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fmi2_logger_test as _;
+    use std::ffi::{c_char, c_int};
+
+    #[repr(C)]
+    struct LogCapture {
+        message: [c_char; 512],
+        calls: usize,
+        valid_format: c_int,
+    }
+
+    extern "C" {
+        fn fmi2_test_logger(
+            environment: *const ComponentEnvironment,
+            instance_name: Fmi2String,
+            status: Fmi2Status,
+            category: Fmi2String,
+            format: Fmi2String,
+            ...
+        );
+    }
+
+    #[test]
+    fn callback_preserves_literal_messages() {
+        let mut capture = LogCapture {
+            message: [0; 512],
+            calls: 0,
+            valid_format: 0,
+        };
+        let logger = Fmi2Logger::new(
+            fmi2_test_logger,
+            b"test\0".as_ptr().cast(),
+            (&mut capture as *mut LogCapture).cast(),
+            true,
+        );
+        for (index, message) in [
+            "ordinary log message",
+            "done 50%s of %d",
+            "https://example.com/file%3Bname%22s",
+            "100% complete",
+            "literal %% and %n",
+            "Traceback:\n    print('%s')",
+            "",
+        ].iter().enumerate() {
+            logger.log(Fmi2Status::Ok, Fmi2LogCategory::LogAll, message);
+            assert_eq!(capture.calls, index + 1);
+            assert_eq!(capture.valid_format, 1, "message used as format: {message:?}");
+            let actual = unsafe { CStr::from_ptr(capture.message.as_ptr()) };
+            assert_eq!(actual.to_str().unwrap(), *message);
+        }
+    }
+
+    #[test]
+    fn disabled_logging_does_not_call_importer() {
+        let mut capture = LogCapture {
+            message: [0; 512],
+            calls: 0,
+            valid_format: 0,
+        };
+        let logger = Fmi2Logger::new(
+            fmi2_test_logger,
+            b"test\0".as_ptr().cast(),
+            (&mut capture as *mut LogCapture).cast(),
+            false,
+        );
+        logger.log(Fmi2Status::Ok, Fmi2LogCategory::LogAll, "%s %d %n");
+        assert_eq!(capture.calls, 0);
     }
 }
