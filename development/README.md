@@ -129,6 +129,17 @@ without generating FMUs:
 cargo test --package fmiapi --lib fmi2::fmi2_logger::tests
 ```
 
+Local backends have stdout and stderr drained continuously, including between
+FMI calls. The combined output is relayed to the importer's stdout as it arrives
+(subject to the backend's own buffering). Unexpected-exit diagnostics retain the
+last 64 KiB of combined output and indicate when earlier output was truncated.
+This applies to both FMI2 and FMI3. Test pipe draining and diagnostic capture
+without Python or generated FMUs:
+
+```bash
+cargo test --package fmiapi --lib common::dispatcher::backend_subprocess::tests
+```
+
 For version-selection and CLI-version tests without running simulations:
 
 ```bash
