@@ -8,6 +8,7 @@ and the [backend documentation](../README.md#use-other-languages-or-fmi3).
 
 - [Repository layout](#repository-layout)
 - [Native development build](#native-development-build)
+- [Protocol Buffers versions](#protocol-buffers-versions)
 - [Testing](#testing)
 - [Cross-platform release build](#cross-platform-release-build)
 - [Maintaining the build image](#maintaining-the-build-image)
@@ -38,7 +39,7 @@ Install:
 
 - [Rust and Cargo](https://www.rust-lang.org/tools/install) (Rust 1.89 or newer),
   plus a native C compiler/linker.
-- [Protocol Buffers compiler 27.3](https://github.com/protocolbuffers/protobuf/releases/tag/v27.3)
+- [Protocol Buffers compiler 36.2](https://github.com/protocolbuffers/protobuf/releases/tag/v36.2)
   (`protoc`) on your `PATH`.
 - Python 3.10 or newer for the Python backend; Python 3.11 or newer for
   `scripts/version.py`, which uses `tomllib`.
@@ -50,11 +51,14 @@ Install:
 Use a Python virtual environment and install the test dependencies:
 
 ```bash
-python3 -m pip install pyzmq protobuf==5.27.3 fmpy colorama coloredlogs toml
+python3 -m pip install pyzmq protobuf==7.36.2 fmpy colorama coloredlogs toml
 ```
 
 Keep the protobuf compiler and backend dependency versions consistent when
 upgrading the messaging schema tooling.
+
+See [Protocol Buffers versions](#protocol-buffers-versions) for the compatible
+compiler/runtime set and upgrade procedure.
 
 ### Build the native runtime
 
@@ -227,9 +231,48 @@ baseline. Raising the Linux build-image version can raise runtime requirements:
 check compatibility on the oldest supported Linux system before changing it.
 FMI2 ARM64 Linux libraries use `aarch64-linux`, which requires importer support.
 
+## Protocol Buffers versions
+
+| Component | Version | Configuration |
+| --- | --- | --- |
+| `protoc` compiler | 36.2 | [Build-image Dockerfile](../docker-build/Dockerfile) |
+| Python `protobuf` | 7.36.2 | [requirements.txt](../assets/python/requirements.txt) and build-image Dockerfile |
+| Java `protobuf-java` | 4.36.2 | [build.gradle](../assets/java/build.gradle) |
+| C# `Google.Protobuf` | 3.36.2 | [model.csproj](../assets/csharp/model.csproj) |
+| Rust `prost` / `prost-build` | 0.14.4 | [fmiapi/Cargo.toml](../fmiapi/Cargo.toml) |
+| Published build image | `lausdahl/unifmu-build:protobuf-36.2` | [Obtain](../docker-build/obtain_build_image.sh) and [publish](../docker-build/build_and_push_image.sh) scripts |
+
+The official language runtimes share the `36.2` release suffix but have different
+major versions by design. Prost is a separate Rust implementation with its own
+version numbering. See the upstream [version support and numbering
+policy](https://protobuf.dev/support/version-support/).
+
+When upgrading:
+
+1. Select stable compiler and runtime releases that support the existing schemas
+   and language versions; update the configurations above and this table.
+2. Update the compiler/runtime checks in
+   [build_all.sh](../docker-build/build_all.sh), the image tag in both image
+   scripts, and the installation instructions in this guide and the
+   [Python guide](../assets/python/README.md).
+3. [Rebuild and publish the build image](#maintaining-the-build-image). Updating
+   the Dockerfile alone does not update an image already published to Docker Hub.
+4. Regenerate bindings for Python, Java, and C# using the command in
+   [Generate messaging bindings and build the CLI](#generate-messaging-bindings-and-build-the-cli).
+   Rebuild `fmiapi` to regenerate the Rust bindings, copy its libraries into the
+   embedded assets, then rebuild the CLI.
+5. Exercise FMI2/FMI3 simulation and backend-failure handling with Python, Java,
+   and C# before publishing a release.
+
+Existing generated projects retain their old dependency manifests and bindings;
+upgrading the UniFMU CLI does not update those projects automatically. If updating
+an existing project manually, regenerate its bindings and update its matching
+runtime dependencies together, preserving the model and its XML.
+
 ## Maintaining the build image
 
-To build and push both host architectures to `lausdahl/unifmu-build:latest`:
+To build and push both host architectures to
+`lausdahl/unifmu-build:protobuf-36.2`:
 
 ```bash
 docker login
@@ -250,8 +293,10 @@ docker run --rm -v "$(pwd):/workdir" unifmu-build:latest ./docker-build/build_al
 The obtain script pulls the published image and tags it locally as
 `unifmu-build:latest`. If pulling fails, it reports the failure and builds an
 AMD64 image locally. It does not push an image from CI.
-Republish the image after changing its Dockerfile; pulling `latest` does not
-rebuild it from the checked-out source.
+Republish the image after changing its Dockerfile; pulling an image does not
+rebuild it from the checked-out source. The published tag includes the compiler
+version so CI does not reuse the previous protobuf toolchain. The release build
+also checks the compiler and Python runtime versions before generating bindings.
 
 ## Versioning and releases
 
