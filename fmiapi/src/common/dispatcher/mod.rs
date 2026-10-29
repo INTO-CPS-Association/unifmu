@@ -3,6 +3,9 @@
 mod backend_subprocess;
 mod backend_socket;
 
+#[cfg(test)]
+mod tests;
+
 use backend_subprocess::{BackendSubprocess, SubprocessError};
 use backend_socket::{BackendSocket, SocketError};
 
@@ -11,12 +14,36 @@ use super::unifmu_handshake::{HandshakeStatus, HandshakeReply};
 use std::{
     error::Error,
     fmt::{Debug, Display},
+    panic::{catch_unwind, AssertUnwindSafe},
     path::Path
 };
 
 use prost::{Message, UnknownEnumValue};
 use tokio::runtime::Runtime;
 use tokio::select;
+
+fn guarded_communication<T>(
+    failed: &mut bool,
+    operation: impl FnOnce() -> DispatcherResult<T>,
+) -> DispatcherResult<T> {
+    if *failed {
+        return Err(DispatcherError::ConnectionFailed);
+    }
+    // A panic can leave socket state partially mutated. Contain unwinding
+    // before the C FMI ABI, but never reuse the failed connection.
+    let result = catch_unwind(AssertUnwindSafe(operation)).unwrap_or_else(|payload| {
+        let message = if let Some(message) = payload.downcast_ref::<String>() {
+            message.clone()
+        } else if let Some(message) = payload.downcast_ref::<&str>() {
+            message.to_string()
+        } else {
+            "non-string panic payload".to_owned()
+        };
+        Err(DispatcherError::CommunicationPanic(message))
+    });
+    *failed = result.is_err();
+    result
+}
 
 /// Generic Dispatcher for dispatching FMI commands to arbitrary backend.
 /// Can send and recieve messages and await handshake from backend.
@@ -94,6 +121,7 @@ pub struct LocalDispatcher {
     socket: BackendSocket,
     subprocess: BackendSubprocess,
     runtime: Runtime,
+    failed: bool,
 }
 
 impl LocalDispatcher {
@@ -119,7 +147,8 @@ impl LocalDispatcher {
             Self {
                 socket,
                 subprocess,
-                runtime
+                runtime,
+                failed: false,
             }
         )
     }
@@ -127,33 +156,67 @@ impl LocalDispatcher {
 
 impl Dispatch for LocalDispatcher {
     fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
-        self.runtime.block_on(async {
-            select! {
-                Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
-                result = self.socket.send::<S>(msg) => Ok(result?),
-            }
-        })
+        let result = guarded_communication(&mut self.failed, || {
+            self.runtime.block_on(async {
+                select! {
+                    Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
+                    result = self.socket.send::<S>(msg) => Ok(result?),
+                }
+            })
+        });
+        self.with_exit_diagnostics(result)
     }
 
     fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R> {
-        self.runtime.block_on(async {
-            select! {
-                Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
-                result = self.socket.recv::<R>() => Ok(result?),
-            }
-        })
+        let result = guarded_communication(&mut self.failed, || {
+            self.runtime.block_on(async {
+                select! {
+                    Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
+                    result = self.socket.recv::<R>() => Ok(result?),
+                }
+            })
+        });
+        self.with_exit_diagnostics(result)
     }
 
     fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R> {
-        self.runtime.block_on(async {
-            select! {
-                result = self.socket.send_and_recv::<S, R>(msg) => Ok(result?),
-                Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
+        let result = guarded_communication(&mut self.failed, || {
+            self.runtime.block_on(async {
+                select! {
+                    result = self.socket.send_and_recv::<S, R>(msg) => Ok(result?),
+                    Err(e) = self.subprocess.monitor_subprocess() => Ok(Err(e)?),
+                }
+            })
+        });
+        self.with_exit_diagnostics(result)
+    }
+}
+
+impl LocalDispatcher {
+    fn with_exit_diagnostics<T>(&mut self, result: DispatcherResult<T>) -> DispatcherResult<T> {
+        match result {
+            Err(error @ (DispatcherError::Socket(_) | DispatcherError::CommunicationPanic(_))) => {
+                // Socket disconnects can precede OS exit notification. Allow a
+                // bounded wait to recover the exit status and backend traceback.
+                let exit = self.runtime.block_on(async {
+                    tokio::time::timeout(
+                        std::time::Duration::from_millis(200),
+                        self.subprocess.monitor_subprocess(),
+                    ).await
+                });
+                match exit {
+                    Ok(Err(exit_error)) => Err(DispatcherError::BackendDisconnected {
+                        communication: Box::new(error),
+                        subprocess: exit_error,
+                    }),
+                    _ => Err(error),
+                }
             }
-        })
+            result => result,
+        }
     }
 }
 
@@ -163,6 +226,7 @@ impl Dispatch for LocalDispatcher {
 pub struct RemoteDispatcher {
     socket: BackendSocket,
     runtime: Runtime,
+    failed: bool,
 }
 
 impl RemoteDispatcher {
@@ -184,6 +248,7 @@ impl RemoteDispatcher {
             Self {
                 socket,
                 runtime,
+                failed: false,
             }
         )
     }
@@ -191,18 +256,24 @@ impl RemoteDispatcher {
 
 impl Dispatch for RemoteDispatcher {
     fn send<S: Message + Debug>(&mut self, msg: &S) -> DispatcherResult<()> {
-        Ok(self.runtime.block_on(self.socket.send::<S>(msg))?)
+        guarded_communication(&mut self.failed, || {
+            Ok(self.runtime.block_on(self.socket.send::<S>(msg))?)
+        })
     }
 
     fn recv<R: Message + Default>(&mut self) -> DispatcherResult<R> {
-        Ok(self.runtime.block_on(self.socket.recv::<R>())?)
+        guarded_communication(&mut self.failed, || {
+            Ok(self.runtime.block_on(self.socket.recv::<R>())?)
+        })
     }
 
     fn send_and_recv<S: Message + Debug, R: Message + Default>(
         &mut self,
         msg: &S,
     ) -> DispatcherResult<R> {
-        Ok(self.runtime.block_on(self.socket.send_and_recv::<S, R>(msg))?)
+        guarded_communication(&mut self.failed, || {
+            Ok(self.runtime.block_on(self.socket.send_and_recv::<S, R>(msg))?)
+        })
     }
 }
 
@@ -263,7 +334,13 @@ pub enum DispatcherError {
     DeniedHandshake,
     Socket(SocketError),
     Subprocess(SubprocessError),
-    RuntimeSetup(std::io::Error)
+    RuntimeSetup(std::io::Error),
+    ConnectionFailed,
+    CommunicationPanic(String),
+    BackendDisconnected {
+        communication: Box<DispatcherError>,
+        subprocess: SubprocessError,
+    },
 }
 
 impl Display for DispatcherError {
@@ -283,7 +360,12 @@ impl Display for DispatcherError {
             ),
             Self::RuntimeSetup(io_error) => write!(
                 f, "couldn't setup concurrency runtime; {}", io_error
-            )
+            ),
+            Self::ConnectionFailed => write!(f, "backend connection has failed; create a new FMU instance"),
+            Self::CommunicationPanic(message) => write!(f, "backend communication panicked: {message}"),
+            Self::BackendDisconnected { communication, subprocess } => {
+                write!(f, "{communication}; {subprocess}")
+            }
         }
     }
 }

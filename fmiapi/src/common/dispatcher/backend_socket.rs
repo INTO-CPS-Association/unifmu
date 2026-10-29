@@ -7,20 +7,23 @@ use std::{
 };
 
 use bytes::Bytes;
+use futures::{channel::mpsc::Receiver, StreamExt};
 use prost::{DecodeError, Message};
-use zeromq::{Endpoint, RepSocket, Socket, SocketRecv, SocketSend, ZmqError};
+use zeromq::{Endpoint, RepSocket, Socket, SocketEvent, SocketRecv, SocketSend, ZmqError};
 
 /// Represents the communication socket with the backend process.
 /// 
 /// Stores the actual ZeroMQ Socket for concurrency reasons.
 pub struct BackendSocket {
     socket: RepSocket,
+    events: Receiver<SocketEvent>,
     pub endpoint: Endpoint
 }
 
 impl BackendSocket {
     pub async fn create(endpoint: &str) -> SocketResult<Self> {
         let mut socket = RepSocket::new();
+        let events = socket.monitor();
 
         let endpoint = match socket.bind(endpoint).await {
             Ok(endpoint) => endpoint,
@@ -29,7 +32,7 @@ impl BackendSocket {
             }
         };
 
-        Ok(Self {socket, endpoint})
+        Ok(Self {socket, events, endpoint})
     }
 
     /// Sends the contents of a message through the ZeroMQ socket to
@@ -44,7 +47,11 @@ impl BackendSocket {
     /// message has been received when this returns. 
     pub async fn send<S: Message + Debug>(&mut self, msg: &S) -> SocketResult<()> {
         let bytes_send: Bytes = msg.encode_to_vec().into();
-        match  self.socket.send(bytes_send.into()).await {
+        let result = tokio::select! {
+            error = Self::wait_for_disconnect(&mut self.events) => return Err(error),
+            result = self.socket.send(bytes_send.into()) => result,
+        };
+        match result {
             Ok(_) => Ok(()),
             Err(error) => {
                 Err(SocketError::ZmqSend(format!("{:?}", msg), error))
@@ -62,7 +69,11 @@ impl BackendSocket {
     /// A call to recv() will await until a message is received through the
     /// ZeroMQ socket.
     pub async fn recv<R: Message + Default>(&mut self) -> SocketResult<R> {
-        match self.socket.recv().await {
+        let result = tokio::select! {
+            error = Self::wait_for_disconnect(&mut self.events) => return Err(error),
+            result = self.socket.recv() => result,
+        };
+        match result {
             Ok(buf) => {
                 let buf: Bytes = match buf.get(0) {
                     Some(bytes) => bytes,
@@ -81,6 +92,17 @@ impl BackendSocket {
                 Err(SocketError::ZmqReceive(error))
             }
         }
+    }
+
+    async fn wait_for_disconnect(events: &mut Receiver<SocketEvent>) -> SocketError {
+        while let Some(event) = events.next().await {
+            match event {
+                SocketEvent::Disconnected(_) => return SocketError::Disconnected,
+                SocketEvent::Closed => return SocketError::Closed,
+                _ => {}
+            }
+        }
+        SocketError::Closed
     }
 
     /// Shorthand for a call to BackendSocket::send() followed by a call to
@@ -102,7 +124,9 @@ pub enum SocketError {
     ZmqSend(String, ZmqError),
     ZmqReceive(ZmqError),
     EmptyBuffer,
-    Decode(DecodeError)
+    Decode(DecodeError),
+    Disconnected,
+    Closed,
 }
 
 impl Display for SocketError {
@@ -122,7 +146,9 @@ impl Display for SocketError {
             ),
             Self::Decode(error) => write!(
                 f, "couldn't decode received message; {}", error
-            )
+            ),
+            Self::Disconnected => write!(f, "backend disconnected from socket"),
+            Self::Closed => write!(f, "backend socket monitor closed"),
         }
     }
 }
