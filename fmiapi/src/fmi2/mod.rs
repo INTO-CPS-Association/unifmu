@@ -1320,11 +1320,11 @@ pub extern "C" fn fmi2FreeFMUstate(
         let state_ptr = *state;
 
         if state_ptr.is_null() {
-            unsafe { (*slave).logger.warning(
+             (*slave).logger.warning(
                 "fmi2FreeFMUstate called with state pointing to null!"
             ); }
             return Fmi2Status::Warning;
-        }
+
 
         drop(Box::from_raw(state_ptr)); 
         *state = std::ptr::null_mut(); // Setting the state to null

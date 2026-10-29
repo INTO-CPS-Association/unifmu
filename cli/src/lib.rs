@@ -53,6 +53,7 @@ lazy_static! {
             ("python/main_local.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi2/backend.py", "backend.py"),
+            ("python/fmi2/fmi2_model_description.py", "fmi2_model_description.py"),
             ("python/fmi2/model.py", "model.py"),
             (
                 "auto_generated/fmi2_messages_pb2.py",
@@ -192,6 +193,7 @@ lazy_static! {
             ("python/compilation_resources/unifmu_pyinstaller_build_script.sh", "compilation_resources/unifmu_pyinstaller_build_script.sh"),
             ("python/compilation_resources/unifmu_pyinstaller_build_script.bat", "compilation_resources/unifmu_pyinstaller_build_script.bat"),
             ("python/requirements.txt", "requirements.txt"),
+             ("python/fmi2/fmi2_model_description.py", "fmi2_model_description.py"),
             ("python/main_remote.py", "main.py"),
             ("python/fmi2/abstract_backend.py", "abstract_backend.py"),
             ("python/fmi2/backend.py", "backend.py"),

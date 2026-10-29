@@ -22,7 +22,7 @@ use zip::CompressionMethod;
 
 /// When set true all FMUs that fail during the python tests are persisted
 /// instead of being cleaned up at the end of the test.
-static DEBUG_PERSIST_FAILING_TEST_FMUS: bool = false;
+static DEBUG_PERSIST_FAILING_TEST_FMUS: bool = true;
 
 /// Relative path from the cli directory to the directory to store test FMUs
 /// created with the new_persistent() method.
@@ -648,7 +648,7 @@ impl BreakableFmu for LocalFmu {
             },
             FmuBackendImplementationLanguage::Python => {
                 match self.version() {
-                    FmiVersion::Fmi2 => 38,
+                    FmiVersion::Fmi2 => 92,
                     FmiVersion::Fmi3 => 209
                 }
             },
