@@ -14,6 +14,7 @@ for individual capabilities.
 - [Use other languages or FMI3](#use-other-languages-or-fmi3)
 - [Run a distributed model](#run-a-distributed-model)
 - [Configure the runtime](#configure-the-runtime)
+- [FAQ](#faq)
 - [How it works](#how-it-works)
 - [Help and further reading](#help-and-further-reading)
 - [Citing UniFMU](#citing-unifmu)
@@ -297,6 +298,27 @@ your model actually supports in `modelDescription.xml`. For example, enabling
 state serialization requires corresponding state save/restore methods in the
 model, not just flags in the XML. See the backend guides and
 [supported function reference](docs/fmi-support.md).
+
+## FAQ
+
+### Can a Python FMU use NumPy, PyTorch, or other Python libraries?
+
+Yes. The Python backend runs as a separate process, so your model can import
+NumPy, PyTorch, and other libraries as ordinary Python dependencies. Install them
+in the environment used by the interpreter in `resources/launch.toml`; packing
+the FMU does not install or bundle these dependencies automatically. See
+[Configure the runtime](#configure-the-runtime).
+
+Keep supporting Python modules and model files, such as trained weights, under
+`resources/` and load them relative to your Python module's location. Run your
+model's computation or inference from its FMI lifecycle methods, such as
+`do_step`.
+
+Tensors and neural networks can remain internal Python objects; they are not
+automatically exposed as FMI variables or parameters. Map the inputs, outputs,
+and parameters you want the simulator to access to supported FMI types and
+declare them in `modelDescription.xml`. For local Python FMI2 models, the
+[annotation workflow](#edit-and-pack-a-python-fmi2-model) can generate this XML.
 
 ## How it works
 
