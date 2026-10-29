@@ -1,0 +1,9 @@
+[package]
+name = "fmi2_logger_test"
+version.workspace = true
+edition = "2021"
+publish = false
+links = "fmi2_logger_test_callback"
+
+[build-dependencies]
+cc = "1"

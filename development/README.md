@@ -121,6 +121,14 @@ runtime dependencies for the tested backends.
 cargo test
 ```
 
+The FMI2 logger regression tests use a small C callback to check the variadic
+FMI2 logging ABI and preserve percent signs as literal message text. Run them
+without generating FMUs:
+
+```bash
+cargo test --package fmiapi --lib fmi2::fmi2_logger::tests
+```
+
 For version-selection and CLI-version tests without running simulations:
 
 ```bash
