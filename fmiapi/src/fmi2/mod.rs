@@ -117,6 +117,8 @@ pub unsafe extern "C" fn fmi2Instantiate(
         logging_on
     );
 
+    logger.ok(concat!("UniFMU ", env!("CARGO_PKG_VERSION"), " FMI2 runtime"));
+
     // Erroring out in case the importer tries to instantiate the FMU for
     // Model Exchange as that is not yet implemented.
     if let Fmi2Type::Fmi2ModelExchange = fmu_type {
@@ -1320,11 +1322,11 @@ pub extern "C" fn fmi2FreeFMUstate(
         let state_ptr = *state;
 
         if state_ptr.is_null() {
-            unsafe { (*slave).logger.warning(
+             (*slave).logger.warning(
                 "fmi2FreeFMUstate called with state pointing to null!"
             ); }
             return Fmi2Status::Warning;
-        }
+
 
         drop(Box::from_raw(state_ptr)); 
         *state = std::ptr::null_mut(); // Setting the state to null

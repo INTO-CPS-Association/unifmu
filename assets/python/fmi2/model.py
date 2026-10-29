@@ -1,8 +1,75 @@
 import pickle
+from typing import Annotated
 
+from fmi2_model_description import (
+    ScalarVariable,
+    RealType,
+    IntegerType,
+    BooleanType,
+    StringType,
+    Causality,
+    Variability,
+    Initial,
+    fmi_model, build_reference_to_attribute_map,
+)
+
+
+@fmi_model("Your Name")
 class Model:
+    real_a: Annotated[float, ScalarVariable(causality=Causality.INPUT,
+                                            variability=Variability.CONTINUOUS,
+                                            variable_type=RealType(start=0.0))]
+
+    real_b: Annotated[float, ScalarVariable(causality=Causality.INPUT,
+                                            variability=Variability.CONTINUOUS,
+                                            variable_type=RealType(start=0.0))]
+
+    real_c: Annotated[float, ScalarVariable(causality=Causality.OUTPUT,
+                                            variability=Variability.CONTINUOUS,
+                                            initial=Initial.CALCULATED,
+                                            variable_type=RealType())]
+
+    integer_a: Annotated[int, ScalarVariable(causality=Causality.INPUT,
+                                             variability=Variability.DISCRETE,
+                                             variable_type=IntegerType(start=0))]
+
+    integer_b: Annotated[int, ScalarVariable(causality=Causality.INPUT,
+                                             variability=Variability.DISCRETE,
+                                             variable_type=IntegerType(start=0))]
+
+    integer_c: Annotated[int, ScalarVariable(causality=Causality.OUTPUT,
+                                             variability=Variability.DISCRETE,
+                                             initial=Initial.CALCULATED,
+                                             variable_type=IntegerType())]
+
+    boolean_a: Annotated[bool, ScalarVariable(causality=Causality.INPUT,
+                                              variability=Variability.DISCRETE,
+                                              variable_type=BooleanType(start=False))]
+
+    boolean_b: Annotated[bool, ScalarVariable(causality=Causality.INPUT,
+                                              variability=Variability.DISCRETE,
+                                              variable_type=BooleanType(start=False))]
+
+    boolean_c: Annotated[bool, ScalarVariable(causality=Causality.OUTPUT,
+                                              variability=Variability.DISCRETE,
+                                              initial=Initial.CALCULATED,
+                                              variable_type=BooleanType())]
+
+    string_a: Annotated[str, ScalarVariable(causality=Causality.INPUT,
+                                            variability=Variability.DISCRETE,
+                                            variable_type=StringType(start=""))]
+
+    string_b: Annotated[str, ScalarVariable(causality=Causality.INPUT,
+                                            variability=Variability.DISCRETE,
+                                            variable_type=StringType(start=""))]
+
+    string_c: Annotated[str, ScalarVariable(causality=Causality.OUTPUT,
+                                            variability=Variability.DISCRETE,
+                                            initial=Initial.CALCULATED,
+                                            variable_type=StringType())]
+
     def __init__(self, _log_callback) -> None:
-        self._log_callback = _log_callback # Removing this line will break logging
+        self._log_callback = _log_callback  # Removing this line will break logging
 
         self.real_a = 0.0
         self.real_b = 0.0
@@ -13,27 +80,14 @@ class Model:
         self.string_a = ""
         self.string_b = ""
 
-        self.reference_to_attribute = {
-            0: "real_a",
-            1: "real_b",
-            2: "real_c",
-            3: "integer_a",
-            4: "integer_b",
-            5: "integer_c",
-            6: "boolean_a",
-            7: "boolean_b",
-            8: "boolean_c",
-            9: "string_a",
-            10: "string_b",
-            11: "string_c",
-        }
+        self.reference_to_attribute = build_reference_to_attribute_map(self)
 
         self.fmi2Reset()
 
     # ================= FMI2 =================
 
     def fmi2DoStep(
-        self, current_time, step_size, no_set_fmu_state_prior_to_current_point
+            self, current_time, step_size, no_set_fmu_state_prior_to_current_point
     ):
         self._update_outputs()
         return Fmi2Status.ok
@@ -139,7 +193,7 @@ class Model:
 
     def fmi2SetString(self, references, values):
         return self._set_value(references, values)
-    
+
     # ================= Logging =================
 
     """ UniFMU logging function
@@ -166,7 +220,8 @@ class Model:
                 - logStatusPending
                 - logAll
     """
-    def log(self, message, status, category = "logAll"):
+
+    def log(self, message, status, category="logAll"):
         # Feel free to expand on the functionality of the function.
         # The model will be informed of whether or not to output logging and
         # what categories to log through a call to fmi2SetDebugLogging().
@@ -174,7 +229,7 @@ class Model:
         # the FMU importer only receives logging events that is interested in,
         # but if you want to filter before sending the events to the UniFMU 
         # layer to save on message bandwidth, feel free to do so.
-        
+
         # Removing the line below will break logging.
         self._log_callback(status, category, message)
 

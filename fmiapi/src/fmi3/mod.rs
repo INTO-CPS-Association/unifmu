@@ -194,6 +194,8 @@ pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
         logging_on
     );
 
+    logger.ok(concat!("UniFMU ", env!("CARGO_PKG_VERSION"), " FMI3 runtime"));
+
     let instance_name = match c2non_empty_s(instance_name) {
         Ok(name) => name,
         Err(error) => {

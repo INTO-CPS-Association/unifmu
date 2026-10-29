@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 0.14.1 or v0.14.1); blank selects the next patch"
+        required: false
+        type: string
+      release_automatically:
+        description: "Release automatically (leave unchecked to create a draft)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: unifmu-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare version and tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - name: Require a branch
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+        run: test "$REF_TYPE" = branch
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check version selection
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+
+      - name: Set release version
+        id: version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          version=$(python3 scripts/version.py --prepare --version "$REQUESTED_VERSION")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Reject an existing release
+        uses: actions/github-script@v8
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        with:
+          script: |
+            try {
+              await github.rest.repos.getReleaseByTag({
+                ...context.repo, tag: process.env.RELEASE_TAG
+              });
+              core.setFailed(`Release ${process.env.RELEASE_TAG} already exists`);
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+      - name: Commit version and push tag
+        id: tag
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml
+          if ! git diff --cached --quiet; then
+            git commit -m "Release $RELEASE_TAG" \
+              -m "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+          fi
+          git tag "$RELEASE_TAG"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git push origin "refs/tags/$RELEASE_TAG"
+
+  build:
+    name: Build and create release
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Obtain build image
+        run: docker-build/obtain_build_image.sh
+
+      - name: Build and test tagged version
+        run: docker run --rm -v "$(pwd):/workdir" unifmu-build:latest docker-build/build_all.sh
+
+      - name: Create draft with release notes and binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          targets=(
+            x86_64-unknown-linux-gnu
+            aarch64-unknown-linux-gnu
+            x86_64-pc-windows-gnu
+            x86_64-apple-darwin
+            aarch64-apple-darwin
+          )
+          assets=()
+          for target in "${targets[@]}"; do
+            asset="target/unifmu-$target-$RELEASE_VERSION.zip"
+            test -s "$asset"
+            assets+=("$asset")
+          done
+          gh release create "$RELEASE_TAG" "${assets[@]}" \
+            --verify-tag --draft --generate-notes --title "UniFMU $RELEASE_TAG"
+
+      - name: Persist version on release branch
+        env:
+          RELEASE_BRANCH: ${{ github.ref_name }}
+        run: git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+
+      - name: Publish release
+        if: inputs.release_automatically
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: gh release edit "$RELEASE_TAG" --draft=false
+
+  rollback:
+    name: Remove failed release and tag
+    needs: [prepare, build]
+    if: ${{ always() && needs.prepare.outputs.sha != '' && (needs.prepare.result != 'success' || needs.build.result != 'success') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v8
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+        with:
+          script: |
+            const tag = process.env.RELEASE_TAG;
+            let ref;
+            try {
+              ref = await github.rest.git.getRef({...context.repo, ref: `tags/${tag}`});
+            } catch (error) {
+              if (error.status === 404) return;
+              throw error;
+            }
+            if (ref.data.object.sha !== process.env.RELEASE_SHA) {
+              core.setFailed(`Refusing to delete ${tag}: it no longer points at this release commit`);
+              return;
+            }
+            try {
+              const release = await github.rest.repos.getReleaseByTag({...context.repo, tag});
+              await github.rest.repos.deleteRelease({...context.repo, release_id: release.data.id});
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            await github.rest.git.deleteRef({...context.repo, ref: `tags/${tag}`});

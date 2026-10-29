@@ -13,4 +13,4 @@ Depending on your operating system run the following command from within the "re
 **linux/mac**
     ./gradlew compileJava --build-cache
 
-**Note:** Java version should be smaller or equal to java 17.
+The release build uses Java 21 and Gradle 8.14.3.

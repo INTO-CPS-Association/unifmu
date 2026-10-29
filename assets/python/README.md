@@ -7,6 +7,83 @@ The `resources/model.py` file defines the functional relationship between inputs
 
 ## Declaring inputs and outputs
 
+### Annotation-based FMI2 models
+
+For a local Python FMI2 project, first run `unifmu generate python my_model fmi2`
+without `--zipped`. Keep the resulting directory as your editable project.
+The generated `resources/model.py` already uses annotations; modify its
+declarations and behavior rather than generating a fresh project for every edit.
+Use Python 3.10 or newer and install `resources/requirements.txt` in your
+activated virtual environment.
+
+For example, declarations inside the generated `Model` can describe a real input
+and a calculated output:
+
+```python
+from typing import Annotated
+from fmi2_model_description import (
+    ScalarVariable, RealType, Causality, Variability, Initial,
+    fmi_model, build_reference_to_attribute_map,
+)
+
+
+@fmi_model("Your Name")
+class Model:
+    a: Annotated[float, ScalarVariable(
+        causality=Causality.INPUT,
+        variability=Variability.CONTINUOUS,
+        variable_type=RealType(start=0.0),
+    )]
+    b: Annotated[float, ScalarVariable(
+        causality=Causality.OUTPUT,
+        variability=Variability.CONTINUOUS,
+        initial=Initial.CALCULATED,
+        variable_type=RealType(),
+        dependencies=["a"],
+    )]
+```
+
+This is a declaration example, not a complete replacement for the generated
+class. Retain its FMI lifecycle methods, logging callback, and state handling,
+adapting them to your variables. Initialize `self.a` and `self.b`, calculate
+`self.b` from `self.a` in your model behavior, and retain:
+
+```python
+self.reference_to_attribute = build_reference_to_attribute_map(self)
+```
+
+Variable names default to the Python attribute names. Numeric value references
+are assigned in annotation order, starting at zero; both XML generation and the
+runtime mapping use that order. `IntegerType`, `BooleanType`, and `StringType`
+are also available. Annotations describe the FMI interface; they do not
+initialize Python attributes or implement calculations.
+
+From the generated project's `resources` directory, run:
+
+```bash
+python3 main.py --model-description
+python3 main.py --pack
+```
+
+The first command overwrites `../modelDescription.xml` using `Model(None)`.
+The second creates `../my_model.fmu` when the project directory is named
+`my_model`. For a custom location, use `python3 main.py --pack --output /path/to/my_model.fmu`.
+Relative output paths are resolved from your current working directory.
+On Windows, use `python` if that is your interpreter command.
+
+**Regenerate the description before packing whenever you change declarations.**
+`--pack` uses an existing XML unchanged and generates one from annotations only
+if it is missing. Run `--model-description` and `--pack` separately; passing both
+flags only performs description generation. XML regeneration replaces manual XML
+edits, so preserve any custom metadata separately if needed.
+
+Packing archives the existing binaries and resources; it does not compile
+Python, rebuild native libraries, or install dependencies. Remove unwanted
+cache/build files from `resources` before packing. This annotation workflow is
+for local FMI2 projects; FMI3 and distributed projects do not use this generator.
+
+### Manually maintained model descriptions
+
 By default, each input, output or parameter declared in the `modelDescription.xml` file is represented as attributes on the instance of the `Model` class.
 For instance if a variable `a` is declared in the `modelDescription.xml` file, it an attribute of the same name should be declared in the `Model` class:
 

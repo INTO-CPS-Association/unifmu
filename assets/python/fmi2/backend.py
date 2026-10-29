@@ -15,7 +15,6 @@ from schemas.fmi2_messages_pb2 import (
 from abstract_backend import AbstractBackend
 from model import Model
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 
 class Backend(AbstractBackend):

@@ -1,24 +1,47 @@
 #!/bin/bash
+set -euo pipefail
+
+VER=$(python3 scripts/version.py)
+echo "Building UniFMU ${VER}"
+
+host_target=$(rustc -vV | sed -n 's/^host: //p')
+case "${host_target}" in
+    x86_64-unknown-linux-gnu|aarch64-unknown-linux-gnu) ;;
+    *) echo "Unsupported release build host: ${host_target}" >&2; exit 1 ;;
+esac
+
+targets=(
+    x86_64-unknown-linux-gnu
+    aarch64-unknown-linux-gnu
+    x86_64-pc-windows-gnu
+    x86_64-apple-darwin
+    aarch64-apple-darwin
+)
+
 # ------------------------------ fmiapi ------------------------------
-tgt=fmiapi
-echo "building fmiapi for linux"
-cargo build --package ${tgt} --target x86_64-unknown-linux-gnu --release
+for target in "${targets[@]}"; do
+    echo "building fmiapi for ${target}"
+    cargo build --package fmiapi --target "${target}" --release
 
-echo "building fmiapi for windows"
-cargo build --package ${tgt} --target x86_64-pc-windows-gnu --release
+    case "${target}" in
+        *-unknown-linux-gnu) platform="${target%%-*}-linux"; library=libfmiapi.so; extension=so ;;
+        *-pc-windows-gnu) platform="${target%%-*}-windows"; library=fmiapi.dll; extension=dll ;;
+        *-apple-darwin) platform="${target%%-*}-darwin"; library=libfmiapi.dylib; extension=dylib ;;
+    esac
+    mkdir -p "assets/auto_generated/binaries/${platform}"
+    cp "target/${target}/release/${library}" \
+        "assets/auto_generated/binaries/${platform}/unifmu.${extension}"
+done
 
-echo "building fmiapi for macos"
-export PATH=/usr/osxcross/target/bin/:$PATH
-export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=/usr/osxcross/target/bin/x86_64-apple-darwin20.4-clang
-cargo build --package ${tgt} --target x86_64-apple-darwin --release
-
-echo "copying fmiapi into cli assets"
-mkdir -p assets/auto_generated/binaries/x86_64-linux
-mkdir -p assets/auto_generated/binaries/x86_64-windows
-mkdir -p assets/auto_generated/binaries/x86_64-darwin
-cp target/x86_64-unknown-linux-gnu/release/lib${tgt}.so assets/auto_generated/binaries/x86_64-linux/unifmu.so
-cp target/x86_64-pc-windows-gnu/release/${tgt}.dll assets/auto_generated/binaries/x86_64-windows/unifmu.dll
-cp target/x86_64-apple-darwin/release/lib${tgt}.dylib assets/auto_generated/binaries/x86_64-darwin/unifmu.dylib
+echo "creating universal macOS fmiapi library"
+universal_library=assets/auto_generated/binaries/universal-darwin/unifmu.dylib
+mkdir -p "$(dirname "${universal_library}")"
+lipo -create \
+    target/x86_64-apple-darwin/release/libfmiapi.dylib \
+    target/aarch64-apple-darwin/release/libfmiapi.dylib \
+    -output "${universal_library}"
+lipo "${universal_library}" -verify_arch x86_64 arm64
+lipo -info "${universal_library}"
 
 # ------------------------------ schemas ------------------------------
 echo "generating protobuf schemas for python, csharp, and java backends"
@@ -26,40 +49,26 @@ mkdir -p assets/auto_generated/fmi2
 mkdir -p assets/auto_generated/fmi3
 protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out=assets/auto_generated fmi2_messages.proto fmi3_messages.proto unifmu_handshake.proto
 # ------------------------------ cli ------------------------------
-tgt=unifmu
-echo "installing dependencies for testing cli in linux"
-apt install -qq -y python3-zmq python3-pip # Used by python backend
-pip3 install protobuf==5.27.3 --break-system-packages # Used by python backend
-pip3 install colorama coloredlogs toml --break-system-packages # Used by the private backend in distributed FMU
-pip3 install fmpy --break-system-packages
-echo "testing cli for linux"
-cargo test --target x86_64-unknown-linux-gnu --release
-echo "building cli for linux"
-cargo build --package ${tgt} --target x86_64-unknown-linux-gnu --release
-
-echo "building cli for windows"
-cargo build --package ${tgt} --target x86_64-pc-windows-gnu --release
-
-echo "building cli for macos"
-cargo build --package ${tgt} --target x86_64-apple-darwin --release
+echo "testing cli for ${host_target}"
+cargo test --target "${host_target}" --release
+for target in "${targets[@]}"; do
+    echo "building cli for ${target}"
+    cargo build --package unifmu --target "${target}" --release
+done
 
 # ------------------------------ compress for release ------------------------------
 
-echo "querying for version number of unifmu via 'unifmu --version', the version is defined in cli/cargo.toml"
-VER=$(./target/x86_64-unknown-linux-gnu/release/unifmu --version)
-arrVER=(${VER//\ / })
-VER=${arrVER[1]}
-echo "detected version" ${VER}
+actual_version=$("./target/${host_target}/release/unifmu" --version)
+if [[ "${actual_version}" != "unifmu ${VER}" ]]; then
+    echo "CLI version mismatch: expected unifmu ${VER}, got ${actual_version}" >&2
+    exit 1
+fi
 
-echo "zipping linux cli"
-t=x86_64-unknown-linux-gnu
-zip -qj target/unifmu-${t}-${VER}.zip target/${t}/release/unifmu
-
-echo "zipping windows cli"
-t=x86_64-pc-windows-gnu
-zip -qj target/unifmu-${t}-${VER}.zip target/${t}/release/unifmu.exe
-
-echo "zipping macos cli"
-t=x86_64-apple-darwin
-zip -qj target/unifmu-${t}-${VER}.zip target/${t}/release/unifmu
-
+for target in "${targets[@]}"; do
+    executable=unifmu
+    if [[ "${target}" == *-pc-windows-gnu ]]; then
+        executable=unifmu.exe
+    fi
+    echo "zipping cli for ${target}"
+    zip -qj "target/unifmu-${target}-${VER}.zip" "target/${target}/release/${executable}"
+done

@@ -2,3 +2,6 @@
 resolver = "2"
 
 members = ["fmiapi", "cli", "unifmu_macros"]
+
+[workspace.package]
+version = "0.14.0"
