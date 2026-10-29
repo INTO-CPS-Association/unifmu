@@ -6,6 +6,7 @@
   - [Getting the tool](#getting-the-tool)
   - [Getting help](#getting-help)
   - [How to use the command line interface](#how-to-use-the-command-line-interface)
+    - [Developing and packing an annotated Python FMI2 model](#developing-and-packing-an-annotated-python-fmi2-model)
   - [Language specific documentation and backend development](#language-specific-documentation-and-backend-development)
   - [Supported Features](#supported-features)
     - [FMI2](#fmi2)
@@ -192,6 +193,55 @@ python path/to/model_distributed_private/backend.py PORT_NUMBER
 ```
 
 (**Note:** the argument `PORT_NUMBER` is used to pass the port of the proxy directly to the process running the private model)
+
+### Developing and packing an annotated Python FMI2 model
+
+Use UniFMU once to create an **uncompressed local FMI2 project**, including the
+native libraries, backend, and Python model template:
+
+```bash
+unifmu generate python my_model fmi2
+python3 -m pip install -r my_model/resources/requirements.txt
+```
+
+Use Python 3.10 or newer for this workflow (`python` instead of `python3` on
+Windows, if appropriate). We recommend an activated virtual environment.
+Edit `my_model/resources/model.py` to implement your model. The FMI2 template
+uses `typing.Annotated` and `ScalarVariable` metadata to declare inputs and outputs,
+and `@fmi_model("Your Name")` to set the author. The XML and runtime value-reference
+mapping can then be derived from the same declarations, rather than maintained
+separately. See the [Python backend documentation](assets/python/README.md#annotation-based-fmi2-models)
+for an annotation example.
+
+After changing the model, regenerate its description and pack the project:
+
+```bash
+python3 my_model/resources/main.py --model-description
+python3 my_model/resources/main.py --pack
+```
+
+This writes `my_model/modelDescription.xml` and then creates
+`my_model/my_model.fmu`. To choose a different archive path instead, run:
+
+```bash
+python3 my_model/resources/main.py --pack --output my_model.fmu
+```
+
+**Run the two commands separately.** `--pack` preserves an existing
+`modelDescription.xml`; it only generates one from annotations when the file is
+missing. After changing variable declarations, always run `--model-description`
+before packing so the XML matches your Python model. Regeneration overwrites
+manual XML changes.
+
+You do not need to rerun `unifmu generate` for subsequent edits: keep the
+uncompressed project as your source and use its `main.py` to regenerate and
+repack. Packing reuses its native libraries and includes its resources; it does
+not rebuild the libraries, compile Python, or bundle your Python environment.
+Use a clean project directory to avoid including caches or other unwanted files
+inside `resources/`.
+
+Annotation-based description generation currently applies to **local Python
+FMI2 projects**, not FMI3 or distributed projects.
 
 ## Language specific documentation and backend development
 
