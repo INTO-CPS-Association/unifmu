@@ -16,10 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-# initial image is build using docker buildx build   --build-arg BUILDKIT_INLINE_CACHE=1   -t   lausdahl/unifmu-build:latest  --push . from the docker folder
-
     - name: Create Build Image
-      run: docker buildx build --progress=plain --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from lausdahl/unifmu-build:latest -t unifmu-build:latest -f docker-build/Dockerfile docker-build
+      run: docker-build/obtain_build_image.sh
 
     - name: Build and Test
       run: docker run --rm -v "$(pwd):/workdir" unifmu-build:latest docker-build/build_all.sh

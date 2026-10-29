@@ -446,6 +446,8 @@ FMI2 Linux FMUs use `linux64` for x86-64 and `aarch64-linux` for ARM64. Importer
 
 3. Build the docker image using `docker build -t unifmu-docker docker-build`. The image runs natively on either AMD64 or ARM64 (including Apple Silicon). Both host architectures cross-compile the same five release targets; tests and version lookup run using the host-native Linux target.
 
+   For the CI build image, run `docker login` and then `docker-build/build_and_push_image.sh` to build and push the AMD64 and ARM64 images to `lausdahl/unifmu-build:latest`. CI uses `docker-build/obtain_build_image.sh` to pull that image, building a local AMD64 image if it is not available.
+
 4. Build the unifmu project in docker using the following command:
     ```powershell
     docker run --name builder -it --rm -v <location_of_unifmu_repository_on_local_pc>:/workdir unifmu-docker ./docker-build/build_all.sh
