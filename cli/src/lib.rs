@@ -33,6 +33,19 @@ pub enum FmiFmuVersion {
 #[folder = "../assets"]
 struct Assets;
 
+fn write_asset(src: &str, destination: &Path) -> std::io::Result<()> {
+    let asset = Assets::get(src).expect("missing embedded asset");
+    match src {
+        "common/fmi2/modelDescription.xml"
+        | "common/fmi3/modelDescription.xml"
+        | "python/fmi2/fmi2_model_description.py" => {
+            let text = std::str::from_utf8(&asset.data).expect("invalid UTF-8 in versioned asset");
+            fs::write(destination, text.replace("__UNIFMU_VERSION__", env!("CARGO_PKG_VERSION")))
+        }
+        _ => fs::write(destination, asset.data),
+    }
+}
+
 pub mod utils;
 
 struct LanguageAssets {
@@ -61,6 +74,57 @@ fn binary_platforms(fmu_version: &FmiFmuVersion) -> impl Iterator<Item = (&'stat
 #[cfg(test)]
 mod binary_tests {
     use super::*;
+    use std::io::Read;
+
+    fn assert_generator_version(project: &Path, zipped: bool) {
+        let xml = if zipped {
+            let mut archive = zip::ZipArchive::new(File::open(project.with_extension("fmu")).unwrap()).unwrap();
+            let mut xml = String::new();
+            archive.by_name("modelDescription.xml").unwrap().read_to_string(&mut xml).unwrap();
+            xml
+        } else {
+            fs::read_to_string(project.join("modelDescription.xml")).unwrap()
+        };
+        assert!(xml.contains(&format!(
+            "generationTool=\"unifmu-{}\"", env!("CARGO_PKG_VERSION")
+        )));
+        assert!(!xml.contains("__UNIFMU_VERSION__"));
+    }
+
+    #[test]
+    fn generated_fmus_identify_generator_version() {
+        for version in [FmiFmuVersion::FMI2, FmiFmuVersion::FMI3] {
+            for language in [Language::Python, Language::CSharp, Language::Java] {
+                for zipped in [false, true] {
+                    let output = TempDir::new().unwrap();
+                    let local = output.path().join("local");
+                    generate(&language, &version, &local, zipped).unwrap();
+                    assert_generator_version(&local, zipped);
+                    for black_box in [false, true] {
+                        let distributed = output.path().join(format!("distributed_{black_box}"));
+                        generate_distributed(
+                            &language, &version, &distributed, zipped,
+                            "127.0.0.1:5000".to_owned(), black_box,
+                        ).unwrap();
+                        let proxy = output.path().join(format!("distributed_{black_box}_proxy"));
+                        assert_generator_version(&proxy, zipped);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn python_xml_helper_retains_generator_version() {
+        let output = TempDir::new().unwrap();
+        let helper = output.path().join("fmi2_model_description.py");
+        write_asset("python/fmi2/fmi2_model_description.py", &helper).unwrap();
+        let helper = fs::read_to_string(helper).unwrap();
+        assert!(helper.contains(&format!(
+            "UNIFMU_VERSION = \"{}\"", env!("CARGO_PKG_VERSION")
+        )));
+        assert!(!helper.contains("__UNIFMU_VERSION__"));
+    }
 
     #[test]
     fn macos_binary_packaging() {
@@ -574,21 +638,11 @@ pub fn generate(
 
         match fmu_version {
             FmiFmuVersion::FMI2 => {
-                std::fs::write(
-                    &md,
-                    Assets::get("common/fmi2/modelDescription.xml")
-                        .unwrap()
-                        .data,
-                )
+                write_asset("common/fmi2/modelDescription.xml", &md)
                 .unwrap();
             }
             FmiFmuVersion::FMI3 => {
-                std::fs::write(
-                    &md,
-                    Assets::get("common/fmi3/modelDescription.xml")
-                        .unwrap()
-                        .data,
-                )
+                write_asset("common/fmi3/modelDescription.xml", &md)
                 .unwrap();
             }
         }
@@ -603,7 +657,7 @@ pub fn generate(
                 error!("File does not exist: {:?}", src);
             }
 
-            std::fs::write(dst_resources, Assets::get(src).unwrap().data).unwrap();
+            write_asset(src, &dst_resources).unwrap();
         }
     };
 
@@ -794,21 +848,11 @@ pub fn generate_distributed(
 
         match fmu_version {
             FmiFmuVersion::FMI2 => {
-                std::fs::write(
-                    &md,
-                    Assets::get("common/fmi2/modelDescription.xml")
-                        .unwrap()
-                        .data,
-                )
+                write_asset("common/fmi2/modelDescription.xml", &md)
                 .unwrap();
             }
             FmiFmuVersion::FMI3 => {
-                std::fs::write(
-                    &md,
-                    Assets::get("common/fmi3/modelDescription.xml")
-                        .unwrap()
-                        .data,
-                )
+                write_asset("common/fmi3/modelDescription.xml", &md)
                 .unwrap();
             }
         }
@@ -823,7 +867,7 @@ pub fn generate_distributed(
                 error!("File does not exist: {:?}", src);
             }
 
-            std::fs::write(dst_resources, Assets::get(src).unwrap().data).unwrap();
+            write_asset(src, &dst_resources).unwrap();
         }
     };
 
@@ -845,7 +889,7 @@ pub fn generate_distributed(
                 error!("File does not exist: {:?}", src);
             }
 
-            std::fs::write(dst_resources, Assets::get(src).unwrap().data).unwrap();
+            write_asset(src, &dst_resources).unwrap();
         }
     };
 

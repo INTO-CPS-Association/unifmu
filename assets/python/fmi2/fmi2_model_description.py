@@ -12,6 +12,8 @@ import xml.etree.ElementTree as ET
 from typing import get_type_hints, get_origin, Annotated, get_args
 from datetime import datetime, timezone
 
+UNIFMU_VERSION = "__UNIFMU_VERSION__"
+
 class DependencyKind(Enum):
     """The types of dependency"""
     CONSTANT = "constant"
@@ -465,7 +467,7 @@ class ModelDescriptionXmlWriter:
                 "author": model_metadata.author or "Unknown",
                 "generationDateAndTime": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "variableNamingConvention": "flat",
-                "generationTool": "unifmu",
+                "generationTool": f"unifmu-{UNIFMU_VERSION}",
             },
         )
 
@@ -553,5 +555,4 @@ def build_reference_to_attribute_map(my_model):
 def generate_model_description_xml(my_model):
     """Convenience wrapper to import XML generation directly from this module."""
     return ModelDescriptionXmlWriter.generate_model_description_xml(my_model)
-
 
