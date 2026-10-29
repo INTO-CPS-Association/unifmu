@@ -43,6 +43,72 @@ struct LanguageAssets {
 static FMI3_OS_NAMES: [&str; 3] = ["darwin", "linux", "windows"];
 static FMI3_ARCHITECTURES: [&str; 4] = ["aarch32", "aarch64", "x86", "x86_64"];
 
+fn binary_platforms(fmu_version: &FmiFmuVersion) -> impl Iterator<Item = (&'static str, &'static str)> {
+    let universal_macos = matches!(fmu_version, FmiFmuVersion::FMI2)
+        && Assets::get("auto_generated/binaries/universal-darwin/unifmu.dylib").is_some();
+    FMI3_OS_NAMES.iter()
+        .flat_map(|os| FMI3_ARCHITECTURES.iter().map(move |arch| (*arch, *os)))
+        .filter(move |(arch, os)| !(universal_macos && *os == "darwin" && *arch == "aarch64"))
+        .map(move |(arch, os)| {
+            if universal_macos && os == "darwin" && arch == "x86_64" {
+                ("universal", os)
+            } else {
+                (arch, os)
+            }
+        })
+}
+
+#[cfg(test)]
+mod binary_tests {
+    use super::*;
+
+    #[test]
+    fn macos_binary_packaging() {
+        for version in [FmiFmuVersion::FMI2, FmiFmuVersion::FMI3] {
+            let output = TempDir::new().unwrap();
+            let local = output.path().join("local");
+            let distributed = output.path().join("distributed");
+            generate(&Language::Python, &version, &local, false).unwrap();
+            generate_distributed(
+                &Language::Python,
+                &version,
+                &distributed,
+                false,
+                "127.0.0.1:5000".to_owned(),
+                false,
+            ).unwrap();
+
+            let universal = Assets::get("auto_generated/binaries/universal-darwin/unifmu.dylib");
+            for fmu in [local, output.path().join("distributed_proxy")] {
+                let binaries = fmu.join("binaries");
+                if matches!(version, FmiFmuVersion::FMI2) && universal.is_some() {
+                    assert_eq!(
+                        fs::read(binaries.join("darwin64/unifmu.dylib")).unwrap(),
+                        universal.as_ref().unwrap().data.as_ref(),
+                    );
+                    assert!(!binaries.join("aarch64-darwin").exists());
+                    assert!(!binaries.join("x86_64-darwin").exists());
+                } else {
+                    for arch in ["x86_64", "aarch64"] {
+                        let asset = format!("auto_generated/binaries/{}-darwin/unifmu.dylib", arch);
+                        if let Some(asset) = Assets::get(&asset) {
+                            let folder = match (&version, arch) {
+                                (FmiFmuVersion::FMI2, "x86_64") => "darwin64".to_owned(),
+                                _ => format!("{}-darwin", arch),
+                            };
+                            assert_eq!(
+                                fs::read(binaries.join(folder).join("unifmu.dylib")).unwrap(),
+                                asset.data.as_ref(),
+                            );
+                        }
+                    }
+                }
+                assert!(!binaries.join("universal-darwin").exists());
+            }
+        }
+    }
+}
+
 lazy_static! {
     static ref PYTHONASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
@@ -411,13 +477,7 @@ pub fn generate(
         outpath
     );
 
-    match FMI3_OS_NAMES.iter()
-        .flat_map(|os_name| {
-            FMI3_ARCHITECTURES.iter()
-                .map(move |arch| {
-                    (*arch, *os_name)
-                })
-        })
+    match binary_platforms(fmu_version)
         .map(|platform_tuple| {
             let library_name = match platform_tuple.1 {
                 "darwin" => "unifmu.dylib",
@@ -440,7 +500,7 @@ pub fn generate(
                                 "windows" => "win32".to_owned(),
                                 _ => format!("{}32", platform_tuple.1)
                             }
-                            "x86_64" => match platform_tuple.1 {
+                            "x86_64" | "universal" => match platform_tuple.1 {
                                 "windows" => "win64".to_owned(),
                                 _ => format!("{}64", platform_tuple.1)
                             }
@@ -646,13 +706,7 @@ pub fn generate_distributed(
 
     // First FMU (Proxy)
     // copy common files to root directory and binaries
-    match FMI3_OS_NAMES.iter()
-        .flat_map(|os_name| {
-            FMI3_ARCHITECTURES.iter()
-                .map(move |arch| {
-                    (*arch, *os_name)
-                })
-        })
+    match binary_platforms(fmu_version)
         .map(|platform_tuple| {
             let library_name = match platform_tuple.1 {
                 "darwin" => "unifmu.dylib",
@@ -675,7 +729,7 @@ pub fn generate_distributed(
                                 "windows" => "win32".to_owned(),
                                 _ => format!("{}32", platform_tuple.1)
                             }
-                            "x86_64" => match platform_tuple.1 {
+                            "x86_64" | "universal" => match platform_tuple.1 {
                                 "windows" => "win64".to_owned(),
                                 _ => format!("{}64", platform_tuple.1)
                             }
