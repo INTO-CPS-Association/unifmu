@@ -28,6 +28,11 @@ Download and extract the archive for your operating system and CPU from
 The CLI is a single executable that embeds the native libraries and model templates.
 Add it to your `PATH`, or invoke it with `./unifmu` (`.\unifmu.exe` in PowerShell).
 
+Generated FMUs identify the generator version in `modelDescription.xml`, for
+example `generationTool="unifmu-0.14.0"`. This applies to local FMUs and distributed
+proxies for FMI2 and FMI3. The Python annotation helper retains this version when
+regenerating the XML; repacking an existing XML file preserves its metadata.
+
 ```bash
 unifmu --version
 unifmu --help
