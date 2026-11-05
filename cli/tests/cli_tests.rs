@@ -214,11 +214,13 @@ fn test_java_fmi3_protocol_with_in_memory_channel() {
     let output = duct::cmd!(
         shell,
         gradle,
+        "-Dunifmu.launch.mode=local",
         "-Dunifmu.channel.impl=org.intocps.unifmu.testfixtures.Fmi3ProtocolFixtureChannel",
         "run",
         "--no-daemon"
     )
         .dir(resources)
+        .env("UNIFMU_DISPATCHER_ENDPOINT", "in-memory://fixture")
         .stdout_capture()
         .stderr_capture()
         .unchecked()
@@ -251,11 +253,13 @@ fn test_java_fmi2_protocol_with_in_memory_channel() {
     let output = duct::cmd!(
         shell,
         gradle,
+        "-Dunifmu.launch.mode=local",
         "-Dunifmu.channel.impl=org.intocps.unifmu.testfixtures.Fmi2ProtocolFixtureChannel",
         "run",
         "--no-daemon"
     )
         .dir(resources)
+        .env("UNIFMU_DISPATCHER_ENDPOINT", "in-memory://fixture")
         .stdout_capture()
         .stderr_capture()
         .unchecked()
