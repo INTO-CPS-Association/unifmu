@@ -3,8 +3,9 @@ syntax = "proto3";
 package unifmu_handshake;
 
 // https://developers.google.com/protocol-buffers/docs/reference/java-generated#package
-option java_package = "";
+option java_package = "org.intocps.unifmu.protocol";
 option java_outer_classname = "UnifmuHandshake";
+option csharp_namespace = "Org.Intocps.UniFMU.Protocol";
 
 enum HandshakeStatus {
     STATUS_UNSPECIFIED = 0;

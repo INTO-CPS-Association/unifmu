@@ -3,7 +3,6 @@ FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
-# .NET 8 runtime is still required by the net8.0 C# backend.
 RUN apt-get update -qq \
     && apt-get install -qq -y --no-install-recommends \
       build-essential \
@@ -14,7 +13,6 @@ RUN apt-get update -qq \
       cpio \
       curl \
       dotnet-sdk-10.0 \
-      dotnet-runtime-8.0 \
       gcc-aarch64-linux-gnu \
       gcc-x86-64-linux-gnu \
       git \

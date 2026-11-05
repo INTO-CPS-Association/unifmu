@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (e.g. 0.14.1 or v0.14.1); blank selects the next patch"
+        description: "Release version (e.g. 0.14.1 or v0.14.1); blank selects the next patch or a new major/minor at patch zero"
         required: false
         type: string
       release_automatically:
@@ -94,8 +94,14 @@ jobs:
       - name: Obtain build image
         run: docker-build/obtain_build_image.sh
 
-      - name: Build and test tagged version
+      - name: Build tagged version
         run: docker run --rm -v "$(pwd):/workdir" unifmu-build:latest docker-build/build_all.sh
+
+      - name: Prepare native tests
+        uses: ./.github/actions/native-test-setup
+
+      - name: Test on Linux host
+        run: ./test.sh
 
       - name: Create draft with release notes and binaries
         env:
@@ -116,6 +122,9 @@ jobs:
             test -s "$asset"
             assets+=("$asset")
           done
+          java_runtime="assets/java/runtime/build/libs/unifmu-java-runtime-$RELEASE_VERSION.jar"
+          test -s "$java_runtime"
+          assets+=("$java_runtime")
           gh release create "$RELEASE_TAG" "${assets[@]}" \
             --verify-tag --draft --generate-notes --title "UniFMU $RELEASE_TAG"
 

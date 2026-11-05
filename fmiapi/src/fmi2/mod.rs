@@ -10,6 +10,9 @@ pub(crate) mod fmi2_messages;
 pub(crate) mod fmi2_slave;
 pub(crate) mod fmi2_types;
 
+#[cfg(test)]
+mod tests;
+
 use fmi2_logger::Fmi2Logger;
 use fmi2_messages::{
     Fmi2Command,
@@ -1285,6 +1288,8 @@ pub extern "C" fn fmi2GetFMUstate(
 
 /// Free previously recorded state of slave
 /// If state points to null the call is ignored as defined by the specification
+/// Non-null handles must come from fmi2GetFMUstate or fmi2DeSerializeFMUstate.
+/// After freeing a handle, the caller's state pointer is set to null.
 ///
 /// # Parameters
 /// - `slave`: A raw pointer to the FMU slave instance.
@@ -1312,23 +1317,18 @@ pub extern "C" fn fmi2FreeFMUstate(
     }
 
     if state.is_null() {
-        unsafe { (*slave).logger.warning(
-            "fmi2FreeFMUstate called with state pointing to null!"
-        ); }
-        return Fmi2Status::Warning;
+        return Fmi2Status::Ok;
     }
 
     unsafe {
         let state_ptr = *state;
 
         if state_ptr.is_null() {
-             (*slave).logger.warning(
-                "fmi2FreeFMUstate called with state pointing to null!"
-            ); }
-            return Fmi2Status::Warning;
+            return Fmi2Status::Ok;
+        }
 
-
-        drop(Box::from_raw(state_ptr)); 
+        // GetFMUstate and DeSerializeFMUstate allocate these handles with Box::into_raw.
+        drop(Box::from_raw(state_ptr));
         *state = std::ptr::null_mut(); // Setting the state to null
 
     }

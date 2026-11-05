@@ -16,10 +16,15 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(select_version("1.2.3", ["v1.4.0"], None), "1.4.1")
         self.assertEqual(select_version("1.2.3", [], None), "1.2.4")
 
+    def test_new_major_or_minor_starts_at_patch_zero(self):
+        self.assertEqual(select_version("1.0.0", ["v0.14.0"], None), "1.0.0")
+        self.assertEqual(select_version("0.15.7", ["v0.14.5"], None), "0.15.0")
+
     def test_override(self):
         self.assertEqual(select_version("0.14.0", ["v0.14.0"], "v0.14.1"), "0.14.1")
         self.assertEqual(select_version("0.15.0", ["v0.14.0"], "0.15.0"), "0.15.0")
         self.assertEqual(select_version("0.14.0", [], "0.14.0"), "0.14.0")
+        self.assertEqual(select_version("0.14.0", ["v0.14.0"], "1.0.0"), "1.0.0")
 
     def test_reject_invalid_or_existing_version(self):
         for value in ["0.14.0", "0.13.1", "0.15.0-beta", "01.15.0", "0.15", "v0.15.0\nbad"]:
@@ -66,6 +71,12 @@ class VersionTests(unittest.TestCase):
             )
             self.assertEqual(result.stdout.strip(), "0.14.1")
             self.assertEqual(tomllib.loads(manifest.read_text())["workspace"]["package"]["version"], "0.14.1")
+            result = subprocess.run(
+                [sys.executable, str(script), "--prepare", "--version", "1.0.0"],
+                check=True, capture_output=True, text=True,
+            )
+            self.assertEqual(result.stdout.strip(), "1.0.0")
+            self.assertEqual(tomllib.loads(manifest.read_text())["workspace"]["package"]["version"], "1.0.0")
             prepared = manifest.read_text()
             result = subprocess.run(
                 [sys.executable, str(script), "--prepare", "--version", "bad"],

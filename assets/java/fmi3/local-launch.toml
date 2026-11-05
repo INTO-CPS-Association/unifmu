@@ -1,0 +1,3 @@
+linux = ["bash", "gradlew", "-Dunifmu.launch.mode=local", "-Dunifmu.fmi.version=fmi3", "-Dunifmu.model.impl=org.intocps.unifmu.example.fmi3.Model", "run", "--build-cache"]
+macos = ["zsh", "./gradlew", "-Dunifmu.launch.mode=local", "-Dunifmu.fmi.version=fmi3", "-Dunifmu.model.impl=org.intocps.unifmu.example.fmi3.Model", "run", "--build-cache"]
+windows = ["powershell.exe", "./gradlew.bat", "-Dunifmu.launch.mode=local", "-Dunifmu.fmi.version=fmi3", "-Dunifmu.model.impl=org.intocps.unifmu.example.fmi3.Model", "run", "--build-cache"]

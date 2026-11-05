@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Numerics;
 
 using System.Linq;
-using Fmi3Messages;
+using Org.Intocps.UniFMU.Protocol;
 
 public delegate void LogCallback(Fmi3Status status, String category, String message);
 

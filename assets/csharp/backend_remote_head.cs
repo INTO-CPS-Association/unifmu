@@ -16,14 +16,10 @@ namespace Launch
 
             bool inputOk = false;
             var port_str = "";
-            int port_int = 0;
-
-            if (args.Length > 1 && args.Length == 2){
-                try {
-                    port_str = args[1];
-                    port_int = Int32.Parse(port_str);
-                    inputOk = true;
-                } catch(Exception e) {
+            if (args.Length == 1){
+                port_str = args[0];
+                inputOk = Int32.TryParse(port_str, out _);
+                if (!inputOk) {
                     Console.Error.WriteLine(RED + "Only one argument for the port in integer format is accepted." + RESET);
                 }
             }
@@ -31,10 +27,8 @@ namespace Launch
             while (!inputOk) {
                 Console.WriteLine(BACKGROUNDGREEN + "Input the port for remote proxy FMU:" + RESET);
                 port_str = Console.ReadLine();
-                try {
-                    port_int = Int32.Parse(port_str);
-                    inputOk = true;
-                } catch(Exception e2) {
+                inputOk = Int32.TryParse(port_str, out _);
+                if (!inputOk) {
                     Console.Error.WriteLine(RED + "Only integers accepted." + RESET);
                 }
             }

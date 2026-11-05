@@ -1,3 +1,5 @@
+package org.intocps.unifmu.example.fmi3;
+
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.math.BigDecimal;
@@ -13,6 +15,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.io.Serializable;
+import java.util.function.Consumer;
+import org.intocps.unifmu.model.fmi3.Fmi3Model;
+import org.intocps.unifmu.protocol.Fmi3Messages;
 
 interface NonScalar<T> {
     public void setAll(Iterator<T> value_iterator);
@@ -120,7 +125,7 @@ class FloatMatrix implements NonScalar<Float>, Serializable {
     }
 }
 
-public class Model implements Serializable {
+public class Model implements Fmi3Model, Serializable {
     // No valid datatypes between Protobuf and Java for int8, uint8, int16, uint16 -> all handled as Integer
     // No valid datatypes in Java for uint64 -> handled as Long
 
@@ -132,6 +137,7 @@ public class Model implements Serializable {
     private Boolean event_mode_used = false;
     private Boolean early_return_allowed = false;
     private transient List<Integer> required_intermediate_variables;
+    private transient Consumer<Fmi3Model.LogMessage> logHandler = ignored -> {};
 
     private int state = FMIState.FMIInstantiatedState;
     public Float float32_a = 0.0f;
@@ -385,6 +391,28 @@ public class Model implements Serializable {
 
     }
 
+    public Model(
+        org.intocps.unifmu.protocol.Fmi3Messages.Fmi3InstantiateCoSimulation instantiation,
+        Consumer<Fmi3Model.LogMessage> logHandler
+    ) throws Exception {
+        this(
+            instantiation.getInstanceName(),
+            instantiation.getInstantiationToken(),
+            instantiation.getResourcePath(),
+            instantiation.getVisible(),
+            instantiation.getLoggingOn(),
+            instantiation.getEventModeUsed(),
+            instantiation.getEarlyReturnAllowed(),
+            instantiation.getRequiredIntermediateVariablesList()
+        );
+        setLogHandler(logHandler);
+    }
+
+    @Override
+    public void setLogHandler(Consumer<Fmi3Model.LogMessage> logHandler) {
+        this.logHandler = logHandler == null ? ignored -> {} : logHandler;
+    }
+
     public Fmi3Status fmi3SetDebugLogging(Iterable<String> categories, Boolean logging_on) {
         return Fmi3Status.OK;
     }
@@ -427,7 +455,7 @@ public class Model implements Serializable {
      *   them.
      */
     public void log(String message, Fmi3Status status, String category) {
-        Backend.loggingCallback(status, category, message);
+        logHandler.accept(new Fmi3Model.LogMessage(status, category, message));
     }
 
     /* doStep and updateDiscreteStates */
@@ -440,7 +468,7 @@ public class Model implements Serializable {
         Boolean early_return = false;
         Double last_successful_time = currentCommunicationPoint + communicationStepSize;
 
-        return new Fmi3DoStepResult<>(Fmi3Status.OK,event_handling_needed,terminate_simulation,early_return,last_successful_time);
+        return new Fmi3DoStepResult(Fmi3Status.OK,event_handling_needed,terminate_simulation,early_return,last_successful_time);
     }
 
     public Fmi3UpdateDiscreteStatesResult fmi3UpdateDiscreteStates(){
@@ -454,7 +482,7 @@ public class Model implements Serializable {
 
         update_clocked_outputs();
 
-        return new Fmi3UpdateDiscreteStatesResult<>(Fmi3Status.OK, discrete_states_need_update, terminate_simulation, nominals_continuous_states_changed, values_continuous_states_changed, next_event_time_defined, next_event_time);
+        return new Fmi3UpdateDiscreteStatesResult(Fmi3Status.OK, discrete_states_need_update, terminate_simulation, nominals_continuous_states_changed, values_continuous_states_changed, next_event_time_defined, next_event_time);
     }
         
 
@@ -1141,133 +1169,6 @@ public class Model implements Serializable {
 
     private void update_clocked_outputs(){
         this.clocked_variable_c += this.clocked_variable_a + this.clocked_variable_b;
-    }
-
-    class Fmi3DoStepResult<T> {
-        Fmi3Status status;
-        Boolean event_handling_needed;
-        Boolean terminate_simulation;
-        Boolean early_return;
-        Double last_successful_time;
-
-        Fmi3DoStepResult(Fmi3Status status, Boolean event_handling_needed, Boolean terminate_simulation, Boolean early_return, Double last_successful_time)
-
-        {
-            this.status = status;
-            this.event_handling_needed = event_handling_needed;
-            this.terminate_simulation = terminate_simulation;
-            this.early_return = early_return;
-            this.last_successful_time = last_successful_time;
-        }
-    }
-
-    class Fmi3UpdateDiscreteStatesResult<T> {
-        Fmi3Status status;
-        Boolean discrete_states_need_update;
-        Boolean terminate_simulation;
-        Boolean nominals_continuous_states_changed;
-        Boolean values_continuous_states_changed;
-        Boolean next_event_time_defined;
-        Double next_event_time;
-
-        Fmi3UpdateDiscreteStatesResult(Fmi3Status status, Boolean discrete_states_need_update, Boolean terminate_simulation, Boolean nominals_continuous_states_changed, Boolean values_continuous_states_changed, Boolean next_event_time_defined, Double next_event_time)
-
-        {
-            this.status = status;
-            this.discrete_states_need_update = discrete_states_need_update;
-            this.terminate_simulation = terminate_simulation;
-            this.nominals_continuous_states_changed = nominals_continuous_states_changed;
-            this.values_continuous_states_changed = values_continuous_states_changed;
-            this.next_event_time_defined = next_event_time_defined;
-            this.next_event_time = next_event_time;
-        }
-    }
-
-    class Fmi3GetValuePair<T> {
-        Fmi3Status status;
-        List<T> values;
-
-        Fmi3GetValuePair(Fmi3Status status, List<T> values)
-
-        {
-            this.status = status;
-            this.values = values;
-        }
-    }
-
-    class Fmi3GetIntervalDecimalPair<T, U> {
-        Fmi3Status status;
-        List<T> intervals;
-        List<U> qualifiers;
-
-        Fmi3GetIntervalDecimalPair(Fmi3Status status, List<T> intervals, List<U> qualifiers)
-
-        {
-            this.status = status;
-            this.intervals = intervals;
-            this.qualifiers = qualifiers;
-        }
-    }
-
-    class Fmi3GetIntervalFractionPair<T, U> {
-        Fmi3Status status;
-        List<T> counters;
-        List<T> resolutions;
-        List<U> qualifiers;
-
-        Fmi3GetIntervalFractionPair(Fmi3Status status, List<T> counters, List<T> resolutions, List<U> qualifiers)
-
-        {
-            this.status = status;
-            this.counters = counters;
-            this.resolutions = resolutions;
-            this.qualifiers = qualifiers;
-        }
-    }
-
-    class Fmi3GetShiftDecimalPair<T> {
-        Fmi3Status status;
-        List<T> shifts;
-
-        Fmi3GetShiftDecimalPair(Fmi3Status status, List<T> shifts)
-
-        {
-            this.status = status;
-            this.shifts = shifts;
-        }
-    }
-
-    class Fmi3GetShiftFractionPair<T> {
-        Fmi3Status status;
-        List<T> counters;
-        List<T> resolutions;
-
-        Fmi3GetShiftFractionPair(Fmi3Status status, List<T> counters, List<T> resolutions)
-
-        {
-            this.status = status;
-            this.counters = counters;
-            this.resolutions = resolutions;
-        }
-    }    
-
-    class Fmi3SerializeFmuStatePair {
-        public Fmi3Status status;
-        public ByteBuffer bytes;
-
-        Fmi3SerializeFmuStatePair(Fmi3Status status, ByteBuffer bytes) {
-            this.status = status;
-            this.bytes = bytes;
-        }
-    }
-
-    enum Fmi3Status {
-        OK,
-        Warning,
-        Discard,
-        Error,
-        Fatal,
-        Pending
     }
 
     class FMIState {

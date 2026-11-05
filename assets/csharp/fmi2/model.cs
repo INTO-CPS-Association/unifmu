@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 
 using System.Linq;
-using Fmi2Messages;
+using Org.Intocps.UniFMU.Protocol;
 
 public delegate void LogCallback(Fmi2Status status, String category, String message);
 

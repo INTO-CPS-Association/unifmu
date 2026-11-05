@@ -1,24 +1,36 @@
+package org.intocps.unifmu.protocol.fmi2;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import org.zeromq.SocketType;
-import org.zeromq.ZMQ;
-import org.zeromq.ZContext;
+import org.intocps.unifmu.protocol.Fmi2Messages;
+import org.intocps.unifmu.protocol.UnifmuHandshake;
+import org.intocps.unifmu.communication.CommunicationChannel;
+import org.intocps.unifmu.model.fmi2.Fmi2Model;
+import org.intocps.unifmu.model.fmi2.Fmi2ModelFactory;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-public abstract class AbstractBackend {
-    static ZMQ.Socket socket;
-    static Model model;
+public class Fmi2Protocol {
+    private final CommunicationChannel channel;
+    private final Fmi2ModelFactory modelFactory;
+    private Fmi2Model model;
 
-    static Fmi2Messages.Fmi2Command recvCommand() throws InvalidProtocolBufferException {
-        return Fmi2Messages.Fmi2Command.parseFrom(socket.recv());
+    public Fmi2Protocol(CommunicationChannel channel, Fmi2ModelFactory modelFactory) {
+        this.channel = channel;
+        this.modelFactory = modelFactory;
     }
 
-    static void sendReply(Message reply) {
-        socket.send(reply.toByteArray(), 0);
+    Fmi2Messages.Fmi2Command recvCommand() throws IOException, InvalidProtocolBufferException {
+        return Fmi2Messages.Fmi2Command.parseFrom(channel.receive());
     }
 
-    static void sendStatusReply(Model.Fmi2Status status) {
+    void sendReply(Message reply) throws IOException {
+        channel.send(reply.toByteArray());
+    }
+
+    void sendStatusReply(Fmi2Model.Fmi2Status status) throws IOException {
         sendReply(
             Fmi2Messages.Fmi2Return
                 .newBuilder()
@@ -35,42 +47,35 @@ public abstract class AbstractBackend {
         );
     }
 
-    public static void loggingCallback(Model.Fmi2Status status, String category, String message) {
-        sendReply(
-            Fmi2Messages.Fmi2Return
-                .newBuilder()
-                .setLog(
-                    Fmi2Messages.Fmi2LogReturn
-                        .newBuilder()
-                        .setStatus(
-                            Fmi2Messages.Fmi2Status
-                                .forNumber(status.ordinal())
-                        )
-                        .setCategory(category)
-                        .setLogMessage(message)
-                        .build()
-                )
-                .build()
-        );
-
+    private void loggingCallback(Fmi2Model.LogMessage log) {
         try {
-            Fmi2Messages.Fmi2Command command = recvCommand();
+            sendReply(
+                Fmi2Messages.Fmi2Return.newBuilder()
+                    .setLog(Fmi2Messages.Fmi2LogReturn.newBuilder()
+                        .setStatus(Fmi2Messages.Fmi2Status.forNumber(log.status().ordinal()))
+                        .setCategory(log.category())
+                        .setLogMessage(log.message())
+                        .build())
+                    .build()
+            );
 
+            Fmi2Messages.Fmi2Command command = recvCommand();
             switch (command.getCommandCase()) {
                 case FMI2CALLBACKCONTINUE:
                     break;
                 default:
-                    System.out.println("Unexpected command received after replying with a logging message.");
-                    System.exit(1);
+                    throw new IllegalStateException(
+                        "Unexpected command received after replying with a logging message."
+                    );
             }
-        }
-        catch(Exception e) {
-            System.out.println("A fatal error occured while parsing expected continue command from UniFMU API layer.");
-            System.exit(1);
+        } catch (IOException e) {
+            throw new UncheckedIOException(
+                "Could not receive the expected callback-continue command.", e
+            );
         }
     }
 
-    static void handshake() {
+    void handshake() throws IOException {
         sendReply(
             UnifmuHandshake.HandshakeReply
                 .newBuilder()
@@ -79,19 +84,21 @@ public abstract class AbstractBackend {
         );
     }
 
-    static void connectToEndpoint(ZContext context, String endpoint) {
-        socket = context.createSocket(SocketType.REQ);
-        socket.connect(endpoint);
+    public void run() throws Exception {
+        handshake();
+        commandReplyLoop();
     }
 
-    static void commandReplyLoop() throws Exception{
+    void commandReplyLoop() throws Exception {
         while (true) {
             Fmi2Messages.Fmi2Command command = recvCommand();
 
             switch (command.getCommandCase()) {        
                     
                 case FMI2INSTANTIATE:
-                    model = new Model();
+                    model = modelFactory.create(
+                        command.getFmi2Instantiate(), this::loggingCallback
+                    );
                     sendReply(
                         Fmi2Messages.Fmi2Return
                             .newBuilder()
@@ -273,7 +280,7 @@ public abstract class AbstractBackend {
                     break;
 
                 case FMI2FREEINSTANCE:
-                    System.exit(0);
+                    return;
 
                 case FMI2RESET:
                     sendStatusReply(model.fmi2Reset());

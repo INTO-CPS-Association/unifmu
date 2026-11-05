@@ -1,6 +1,5 @@
 using System;
-using Fmi3Messages;
-using UnifmuHandshake;
+using Org.Intocps.UniFMU.Protocol;
 using System.Collections.Generic;
 using NetMQ.Sockets;
 using Google.Protobuf;

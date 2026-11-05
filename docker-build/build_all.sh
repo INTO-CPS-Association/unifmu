@@ -54,9 +54,8 @@ echo "generating protobuf schemas for python, csharp, and java backends"
 mkdir -p assets/auto_generated/fmi2
 mkdir -p assets/auto_generated/fmi3
 protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out=assets/auto_generated fmi2_messages.proto fmi3_messages.proto unifmu_handshake.proto
+./assets/java/gradlew -p assets/java/runtime prepareEmbeddedRuntime --no-daemon
 # ------------------------------ cli ------------------------------
-echo "testing cli for ${host_target}"
-cargo test --target "${host_target}" --release
 for target in "${targets[@]}"; do
     echo "building cli for ${target}"
     cargo build --package unifmu --target "${target}" --release

@@ -1,0 +1,27 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['unifmu-java-runtime-*.jar'])
+}
+
+def unifmuDefaults = new Properties()
+file('unifmu.properties').withInputStream { unifmuDefaults.load(it) }
+
+application {
+    mainClass = 'org.intocps.unifmu.Main'
+}
+
+run {
+    standardInput = System.in
+    systemProperty 'unifmu.fmi.version',
+        System.getProperty('unifmu.fmi.version', unifmuDefaults.getProperty('unifmu.fmi.version'))
+    systemProperty 'unifmu.launch.mode',
+        System.getProperty('unifmu.launch.mode', 'auto')
+    systemProperty 'unifmu.model.impl',
+        System.getProperty('unifmu.model.impl', unifmuDefaults.getProperty('unifmu.model.impl'))
+    if (System.getProperty('unifmu.channel.impl') != null) {
+        systemProperty 'unifmu.channel.impl', System.getProperty('unifmu.channel.impl')
+    }
+}

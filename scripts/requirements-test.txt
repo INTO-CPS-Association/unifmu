@@ -1,0 +1,6 @@
+pyzmq
+protobuf==7.36.2
+fmpy
+colorama
+coloredlogs
+toml

@@ -20,6 +20,7 @@ use common::{
     BasicFmu,
     BreakableFmu
 };
+use common::{FmiVersion, FmuBackendImplementationLanguage, LocalFmu};
 
 #[for_each_fmu]
 #[test]
@@ -191,4 +192,80 @@ fn test_unexpected_exit_during_command() {
     fmu.inject_fault_into_backend_do_step_function();
 
     fmu_python_test(fmu, "fmi3_simulate");
+}
+
+#[test]
+fn test_java_fmi3_protocol_with_in_memory_channel() {
+    let fmu = LocalFmu::new(
+        String::from("java_fmi3_in_memory_channel"),
+        FmiVersion::Fmi3,
+        FmuBackendImplementationLanguage::Java,
+    );
+    fmu.configure_java_fixture(
+        "Fmi3ProtocolFixtureChannel.java",
+        "unifmu.channel.impl",
+        "org.intocps.unifmu.testfixtures.Fmi3ProtocolFixtureChannel",
+    );
+
+    let resources = fmu.directory().join(fmu.name()).join("resources");
+    let (shell, gradle) = common::gradle_command_base();
+    let output = duct::cmd!(
+        shell,
+        gradle,
+        "-Dunifmu.launch.mode=local",
+        "-Dunifmu.channel.impl=org.intocps.unifmu.testfixtures.Fmi3ProtocolFixtureChannel",
+        "run",
+        "--no-daemon"
+    )
+        .dir(resources)
+        .env("UNIFMU_DISPATCHER_ENDPOINT", "in-memory://fixture")
+        .stdout_capture()
+        .stderr_capture()
+        .unchecked()
+        .run()
+        .expect("Java backend process should start with the in-memory channel fixture.");
+    assert!(
+        output.status.success(),
+        "Java in-memory protocol fixture failed:\n{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
+    );
+}
+
+#[test]
+fn test_java_fmi2_protocol_with_in_memory_channel() {
+    let fmu = LocalFmu::new(
+        String::from("java_fmi2_in_memory_channel"),
+        FmiVersion::Fmi2,
+        FmuBackendImplementationLanguage::Java,
+    );
+    fmu.configure_java_fixture(
+        "Fmi2ProtocolFixtureChannel.java",
+        "unifmu.channel.impl",
+        "org.intocps.unifmu.testfixtures.Fmi2ProtocolFixtureChannel",
+    );
+
+    let resources = fmu.directory().join(fmu.name()).join("resources");
+    let (shell, gradle) = common::gradle_command_base();
+    let output = duct::cmd!(
+        shell,
+        gradle,
+        "-Dunifmu.launch.mode=local",
+        "-Dunifmu.channel.impl=org.intocps.unifmu.testfixtures.Fmi2ProtocolFixtureChannel",
+        "run",
+        "--no-daemon"
+    )
+        .dir(resources)
+        .env("UNIFMU_DISPATCHER_ENDPOINT", "in-memory://fixture")
+        .stdout_capture()
+        .stderr_capture()
+        .unchecked()
+        .run()
+        .expect("Java backend process should start with the in-memory channel fixture.");
+    assert!(
+        output.status.success(),
+        "Java in-memory protocol fixture failed:\n{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
+    );
 }
