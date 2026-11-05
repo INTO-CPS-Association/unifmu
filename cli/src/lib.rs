@@ -35,6 +35,14 @@ struct Assets;
 
 fn write_asset(src: &str, destination: &Path) -> std::io::Result<()> {
     let asset = Assets::get(src).expect("missing embedded asset");
+    let destination = if src == "auto_generated/java/unifmu-java-runtime.jar" {
+        destination.with_file_name(format!(
+            "unifmu-java-runtime-{}.jar",
+            env!("CARGO_PKG_VERSION")
+        ))
+    } else {
+        destination.to_path_buf()
+    };
     match src {
         "common/fmi2/modelDescription.xml"
         | "common/fmi3/modelDescription.xml"
@@ -76,6 +84,38 @@ mod binary_tests {
     use super::*;
     use std::io::Read;
 
+    fn assert_java_project_layout(project: &Path, version: &str) {
+        let model_package = format!("org/intocps/unifmu/example/{version}");
+        let model = project
+            .join("src/main/java")
+            .join(&model_package)
+            .join("Model.java");
+        assert!(
+            model.is_file(),
+            "missing editable model source: {}",
+            model.display()
+        );
+        assert!(
+            project
+                .join(format!("libs/unifmu-java-runtime-{}.jar", env!("CARGO_PKG_VERSION")))
+                .is_file(),
+            "missing versioned Java runtime JAR in {}",
+            project.display()
+        );
+        assert!(project.join("build.gradle").is_file());
+        assert!(project.join("unifmu.properties").is_file());
+
+        let java_sources = WalkDir::new(project.join("src/main/java"))
+            .into_iter()
+            .filter_map(Result::ok)
+            .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "java"))
+            .count();
+        assert_eq!(
+            java_sources, 1,
+            "generated project should only ship its model source"
+        );
+    }
+
     fn assert_generator_version(project: &Path, zipped: bool) {
         let xml = if zipped {
             let mut archive = zip::ZipArchive::new(File::open(project.with_extension("fmu")).unwrap()).unwrap();
@@ -111,6 +151,45 @@ mod binary_tests {
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn generated_java_projects_bundle_runtime_and_only_editable_model_source() {
+        for (fmu_version, version) in [
+            (FmiFmuVersion::FMI2, "fmi2"),
+            (FmiFmuVersion::FMI3, "fmi3"),
+        ] {
+            let output = TempDir::new().unwrap();
+            let local = output.path().join("local");
+            generate(&Language::Java, &fmu_version, &local, false).unwrap();
+            let local_resources = local.join("resources");
+            assert_java_project_layout(&local_resources, version);
+            let launch = fs::read_to_string(local_resources.join("launch.toml")).unwrap();
+            assert!(
+                launch.contains(&format!(
+                    "unifmu.model.impl=org.intocps.unifmu.example.{version}.Model"
+                ))
+            );
+
+            let distributed = output.path().join("distributed");
+            generate_distributed(
+                &Language::Java,
+                &fmu_version,
+                &distributed,
+                false,
+                "127.0.0.1:5000".to_owned(),
+                false,
+            )
+            .unwrap();
+            let private_project = PathBuf::from(format!("{}_private", distributed.display()));
+            assert_java_project_layout(&private_project, version);
+            let launch = fs::read_to_string(private_project.join("launch.toml")).unwrap();
+            assert!(
+                launch.contains(&format!(
+                    "unifmu.model.impl=org.intocps.unifmu.example.{version}.Model"
+                ))
+            );
         }
     }
 
@@ -248,18 +327,12 @@ lazy_static! {
     static ref JAVAASSETS: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/common/java/LocalBackend.java",
-                "src/main/java/Backend.java"
-            ),
-            (
                 "java/src/fmi2/java/Model.java",
-                "src/main/java/Model.java"
+                "src/main/java/org/intocps/unifmu/example/fmi2/Model.java"
             ),
-            (
-                "java/src/fmi2/java/AbstractBackend.java",
-                "src/main/java/AbstractBackend.java"
-            ),
-            ("java/build.gradle", "build.gradle"),
+            ("auto_generated/java/unifmu-java-runtime.jar", "libs/unifmu-java-runtime.jar"),
+            ("java/fmi2/unifmu.properties", "unifmu.properties"),
+            ("java/fmu-build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
                 "java/gradle/wrapper/gradle-wrapper.jar",
@@ -270,31 +343,17 @@ lazy_static! {
                 "gradle/wrapper/gradle-wrapper.properties"
             ),
             ("java/gradlew.bat", "gradlew.bat"),
-            ("java/launch.toml", "launch.toml"),
+            ("java/fmi2/local-launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
-            (
-                "auto_generated/Fmi2Messages.java",
-                "src/main/java/Fmi2Messages.java"
-            ),
-            (
-                "auto_generated/UnifmuHandshake.java",
-                "src/main/java/UnifmuHandshake.java"
-            ),
         ],
         fmi3_resources: vec![
             (
-                "java/src/common/java/LocalBackend.java",
-                "src/main/java/Backend.java"
-            ),
-            (
                 "java/src/fmi3/java/Model.java",
-                "src/main/java/Model.java"
+                "src/main/java/org/intocps/unifmu/example/fmi3/Model.java"
             ),
-            (
-                "java/src/fmi3/java/AbstractBackend.java",
-                "src/main/java/AbstractBackend.java"
-            ),
-            ("java/build.gradle", "build.gradle"),
+            ("auto_generated/java/unifmu-java-runtime.jar", "libs/unifmu-java-runtime.jar"),
+            ("java/fmi3/unifmu.properties", "unifmu.properties"),
+            ("java/fmu-build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
                 "java/gradle/wrapper/gradle-wrapper.jar",
@@ -305,16 +364,8 @@ lazy_static! {
                 "gradle/wrapper/gradle-wrapper.properties"
             ),
             ("java/gradlew.bat", "gradlew.bat"),
-            ("java/launch.toml", "launch.toml"),
+            ("java/fmi3/local-launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
-            (
-                "auto_generated/Fmi3Messages.java",
-                "src/main/java/Fmi3Messages.java"
-            ),
-            (
-                "auto_generated/UnifmuHandshake.java",
-                "src/main/java/UnifmuHandshake.java"
-            ),
         ],
     };
     static ref PYTHONASSETSREMOTE: LanguageAssets = LanguageAssets {
@@ -364,18 +415,12 @@ lazy_static! {
     static ref JAVAASSETSREMOTE: LanguageAssets = LanguageAssets {
         fmi2_resources: vec![
             (
-                "java/src/common/java/RemoteBackend.java",
-                "src/main/java/Backend.java"
-            ),
-            (
                 "java/src/fmi2/java/Model.java",
-                "src/main/java/Model.java"
+                "src/main/java/org/intocps/unifmu/example/fmi2/Model.java"
             ),
-            (
-                "java/src/fmi2/java/AbstractBackend.java",
-                "src/main/java/AbstractBackend.java"
-            ),
-            ("java/build.gradle", "build.gradle"),
+            ("auto_generated/java/unifmu-java-runtime.jar", "libs/unifmu-java-runtime.jar"),
+            ("java/fmi2/unifmu.properties", "unifmu.properties"),
+            ("java/fmu-build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
                 "java/gradle/wrapper/gradle-wrapper.jar",
@@ -386,32 +431,17 @@ lazy_static! {
                 "gradle/wrapper/gradle-wrapper.properties"
             ),
             ("java/gradlew.bat", "gradlew.bat"),
-            ("java/launch.toml", "launch.toml"),
+            ("java/fmi2/remote-launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
-            (
-                "auto_generated/Fmi2Messages.java",
-                "src/main/java/Fmi2Messages.java"
-            ),
-            (
-                "auto_generated/UnifmuHandshake.java",
-                "src/main/java/UnifmuHandshake.java"
-            ),
         ],
         fmi3_resources: vec![
-            
-            (
-                "java/src/common/java/RemoteBackend.java",
-                "src/main/java/Backend.java"
-            ),
             (
                 "java/src/fmi3/java/Model.java",
-                "src/main/java/Model.java"
+                "src/main/java/org/intocps/unifmu/example/fmi3/Model.java"
             ),
-            (
-                "java/src/fmi3/java/AbstractBackend.java",
-                "src/main/java/AbstractBackend.java"
-            ),
-            ("java/build.gradle", "build.gradle"),
+            ("auto_generated/java/unifmu-java-runtime.jar", "libs/unifmu-java-runtime.jar"),
+            ("java/fmi3/unifmu.properties", "unifmu.properties"),
+            ("java/fmu-build.gradle", "build.gradle"),
             ("java/gradlew", "gradlew"),
             (
                 "java/gradle/wrapper/gradle-wrapper.jar",
@@ -422,16 +452,8 @@ lazy_static! {
                 "gradle/wrapper/gradle-wrapper.properties"
             ),
             ("java/gradlew.bat", "gradlew.bat"),
-            ("java/launch.toml", "launch.toml"),
+            ("java/fmi3/remote-launch.toml", "launch.toml"),
             ("java/README.md", "README.md"),
-            (
-                "auto_generated/Fmi3Messages.java",
-                "src/main/java/Fmi3Messages.java"
-            ),
-            (
-                "auto_generated/UnifmuHandshake.java",
-                "src/main/java/UnifmuHandshake.java"
-            ),
         ],
     };
 

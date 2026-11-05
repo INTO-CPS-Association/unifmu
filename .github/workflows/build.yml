@@ -19,8 +19,17 @@ jobs:
     - name: Create Build Image
       run: docker-build/obtain_build_image.sh
 
-    - name: Build and Test
+    - name: Build all platforms
       run: docker run --rm -v "$(pwd):/workdir" unifmu-build:latest docker-build/build_all.sh
+
+    - name: Prepare native tests
+      uses: ./.github/actions/native-test-setup
+
+    - name: Build Java runtime library
+      run: ./assets/java/gradlew -p assets/java/runtime build
+
+    - name: Test on Linux host
+      run: ./test.sh
 
     - name: artifact
       uses: actions/upload-artifact@v6
@@ -28,4 +37,5 @@ jobs:
         name: unifmu-build-artifacts
         path: |
           target/unifmu-*.zip
+          assets/java/runtime/build/libs/unifmu-java-runtime-*.jar
         retention-days: 7

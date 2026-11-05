@@ -1,0 +1,84 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.gradleup.shadow' version '8.3.8'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+group = 'org.intocps.unifmu'
+
+def workspacePackage = file('../../../Cargo.toml').text.split(/\[workspace\.package\]/, 2)[1]
+def workspaceVersion = workspacePackage =~ /(?m)^version\s*=\s*"([^"]+)"/
+if (!workspaceVersion.find()) {
+    throw new GradleException('Could not read [workspace.package].version from Cargo.toml')
+}
+version = providers.gradleProperty('unifmuVersion').getOrElse(workspaceVersion.group(1))
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir '../src/common/java'
+            srcDir '../src/fmi2/java'
+            srcDir '../src/fmi3/java'
+            srcDir 'src/main/java'
+        }
+        proto {
+            srcDirs = ['../../../schemas']
+        }
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:4.36.2'
+    }
+}
+
+dependencies {
+    api 'com.google.protobuf:protobuf-java:4.36.2'
+    implementation 'org.zeromq:jeromq:0.5.2'
+    implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+}
+
+tasks.named('jar') {
+    archiveClassifier = 'plain'
+}
+
+shadowJar {
+    archiveBaseName = 'unifmu-java-runtime'
+    archiveClassifier = ''
+    mergeServiceFiles()
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.register('prepareEmbeddedRuntime') {
+    dependsOn tasks.shadowJar
+    inputs.file(tasks.shadowJar.archiveFile)
+    outputs.file(file('../../auto_generated/java/unifmu-java-runtime.jar'))
+    doLast {
+        copy {
+            from tasks.shadowJar.archiveFile
+            into file('../../auto_generated/java')
+            rename { 'unifmu-java-runtime.jar' }
+        }
+    }
+}
+
+publishing {
+    publications {
+        javaRuntime(MavenPublication) {
+            artifactId = 'unifmu-java-runtime'
+            artifact tasks.shadowJar
+        }
+    }
+}

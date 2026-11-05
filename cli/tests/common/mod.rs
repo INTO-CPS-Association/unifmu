@@ -7,7 +7,7 @@
 use std::{
     collections::HashMap,
     ffi::OsString,
-    fs::{copy, create_dir, create_dir_all, read_dir, remove_dir_all, File},
+    fs::{copy, create_dir, create_dir_all, read_dir, read_to_string, remove_dir_all, write, File},
     io::{self, BufRead, BufReader, Write},
     path::{Path, PathBuf},
     sync::LazyLock
@@ -322,16 +322,25 @@ impl FmuBackendImplementationLanguage {
     pub fn fault_str(&self) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "throw new Exception();",
-            FmuBackendImplementationLanguage::Java => "int doesNotCompute = 1/0;",
+            FmuBackendImplementationLanguage::Java => {
+                unreachable!("Java failures are exercised with test fixtures")
+            }
             FmuBackendImplementationLanguage::Python => "raise Exception()"
         }
     }
 
     /// Location of the model file in relation to the FMU root directory
-    pub fn model_str(&self) -> &str {
+    pub fn model_str(&self, version: &FmiVersion) -> &str {
         match self {
             FmuBackendImplementationLanguage::CSharp => "model.cs",
-            FmuBackendImplementationLanguage::Java => "src/main/java/Model.java",
+            FmuBackendImplementationLanguage::Java => match version {
+                FmiVersion::Fmi2 => {
+                    "src/main/java/org/intocps/unifmu/example/fmi2/Model.java"
+                }
+                FmiVersion::Fmi3 => {
+                    "src/main/java/org/intocps/unifmu/example/fmi3/Model.java"
+                }
+            },
             FmuBackendImplementationLanguage::Python => "model.py"
         }
     }
@@ -348,7 +357,7 @@ impl FmuBackendImplementationLanguage {
 
 /// Returns the name of a shell and the relative path to gradle dependent
 /// on the current OS
-fn gradle_command_base() -> (String, String) {
+pub fn gradle_command_base() -> (String, String) {
     match std::env::consts::OS {
         "windows" => (
             String::from("powershell.exe"),
@@ -629,7 +638,7 @@ impl BreakableFmu for LocalFmu {
         self.directory()
             .join(self.name())
             .join("resources")
-            .join(self.language().model_str())
+            .join(self.language().model_str(self.version()))
     }
 
     fn do_step_function_line_number(&self) -> u64 {
@@ -640,12 +649,8 @@ impl BreakableFmu for LocalFmu {
                     FmiVersion::Fmi3 => 395
                 }
             },
-            FmuBackendImplementationLanguage::Java => {
-                match self.version() {
-                    FmiVersion::Fmi2 => 94,
-                    FmiVersion::Fmi3 => 436
-                }
-            },
+            FmuBackendImplementationLanguage::Java =>
+                unreachable!("Java failures are exercised with test fixtures"),
             FmuBackendImplementationLanguage::Python => {
                 match self.version() {
                     FmiVersion::Fmi2 => 92,
@@ -1623,9 +1628,16 @@ pub trait BreakableFmu: BasicFmu {
 
     fn do_step_function_injection_prefix(&self) -> &str;
 
-    /// Breaks the model by adding an error/exception to the first line of
-    /// the code.
+    /// Causes the backend to fail before the handshake.
     fn inject_fault_into_backend_model_file(&self) {
+        if self.language() == &FmuBackendImplementationLanguage::Java {
+            self.configure_java_fixture(
+                "HandshakeFailureChannel.java",
+                "unifmu.channel.impl",
+                "org.intocps.unifmu.testfixtures.HandshakeFailureChannel",
+            );
+            return;
+        }
         inject_line(
             &self.model_file_path(),
             self.language().fault_str(),
@@ -1633,9 +1645,22 @@ pub trait BreakableFmu: BasicFmu {
         ).expect("Should be able to inject fault into model.");
     }
 
-    /// Breaks the do_step function in the model by addind an error/exception
-    /// after the function definition.
+    /// Causes doStep to return an error. Java uses dedicated model fixtures.
     fn inject_fault_into_backend_do_step_function(&self) {
+        if self.language() == &FmuBackendImplementationLanguage::Java {
+            let (fixture, class_name) = match self.version() {
+                FmiVersion::Fmi2 => (
+                    "Fmi2DoStepFailureModel.java",
+                    "org.intocps.unifmu.testfixtures.Fmi2DoStepFailureModel",
+                ),
+                FmiVersion::Fmi3 => (
+                    "Fmi3DoStepFailureModel.java",
+                    "org.intocps.unifmu.testfixtures.Fmi3DoStepFailureModel",
+                ),
+            };
+            self.configure_java_fixture(fixture, "unifmu.model.impl", class_name);
+            return;
+        }
         let injection = format!(
             "{}{}",
             self.do_step_function_injection_prefix(),
@@ -1647,6 +1672,39 @@ pub trait BreakableFmu: BasicFmu {
             &injection,
             self.do_step_function_line_number()
         ).expect("Should be able to inject fault into model.");
+    }
+
+    fn configure_java_fixture(&self, fixture: &str, property: &str, class_name: &str) {
+        let fixture_path = std::env::current_dir()
+            .expect("Should be able to access the test working directory")
+            .join("tests")
+            .join("java_fixtures")
+            .join(fixture);
+        let fixture_directory = self.directory()
+            .join(self.name())
+            .join("resources")
+            .join("src/main/java/org/intocps/unifmu/testfixtures");
+        create_dir_all(&fixture_directory)
+            .expect("Should be able to create the Java test fixture source directory.");
+        copy(
+            fixture_path,
+            fixture_directory.join(fixture),
+        ).expect("Should be able to copy Java test fixture into generated FMU.");
+
+        let launch_path = self.directory()
+            .join(self.name())
+            .join("resources")
+            .join("launch.toml");
+        let launch = read_to_string(&launch_path)
+            .expect("Should be able to read generated Java launch configuration.");
+        let run_command = "\"run\", \"--build-cache\"";
+        assert!(launch.contains(run_command), "Java launch configuration changed unexpectedly.");
+        let configured_launch = launch.replace(
+            run_command,
+            &format!("\"-D{property}={class_name}\", {run_command}"),
+        );
+        write(launch_path, configured_launch)
+            .expect("Should be able to configure Java fixture selection.");
     }
 }
 
@@ -1700,7 +1758,7 @@ pub trait RemoteBackend: DistributedFileStructure {
     fn get_remote_command(&self, port: String) -> duct::Expression {
         let backend_process_cmd = match self.language() {
             FmuBackendImplementationLanguage::CSharp => duct::cmd!(
-                "dotnet", "run", "backend_head.cs", port
+                "dotnet", "run", "--project", "model.csproj", "--", port
             ),
             FmuBackendImplementationLanguage::Java => {
                 let args_list = format!("--args='{port}'");

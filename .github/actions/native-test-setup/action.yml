@@ -1,0 +1,27 @@
+name: Prepare native tests
+description: Install host tools for the UniFMU test suite on Linux CI runners
+runs:
+  using: composite
+  steps:
+    - name: Restore host ownership of Docker build outputs
+      shell: bash
+      run: sudo chown -R "$(id -u):$(id -g)" target assets/auto_generated fmiapi/src
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: '21'
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.0.x'
+    - name: Install native Protocol Buffers compiler
+      shell: bash
+      run: |
+        curl -fsSL https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-linux-x86_64.zip -o "$RUNNER_TEMP/protoc.zip"
+        unzip -oq "$RUNNER_TEMP/protoc.zip" -d "$HOME/.local"
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+    - name: Check Rust toolchain
+      shell: bash
+      run: cargo --version && rustc --version

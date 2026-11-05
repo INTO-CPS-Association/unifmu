@@ -1,3 +1,0 @@
-linux = ["bash", "gradlew", "run", "--build-cache"]
-macos = ["zsh", "./gradlew", "run", "--build-cache"]
-windows = ["powershell.exe", "./gradlew.bat", "run", "--build-cache"]

@@ -1,15 +1,20 @@
+package org.intocps.unifmu.example.fmi2;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
+import org.intocps.unifmu.model.fmi2.Fmi2Model;
+import org.intocps.unifmu.protocol.Fmi2Messages;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.function.Consumer;
 
-public class Model implements Serializable {
+public class Model implements Fmi2Model, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -27,6 +32,7 @@ public class Model implements Serializable {
     public String string_c;
 
     private transient ArrayList<Field> references_to_attributes;
+    private transient Consumer<Fmi2Model.LogMessage> logHandler = ignored -> {};
 
     public Model() throws Exception {
         super();
@@ -46,6 +52,19 @@ public class Model implements Serializable {
         this.references_to_attributes.add(this.getClass().getField("string_c"));
 
         fmi2Reset();
+    }
+
+    public Model(
+        org.intocps.unifmu.protocol.Fmi2Messages.Fmi2Instantiate instantiation,
+        Consumer<Fmi2Model.LogMessage> logHandler
+    ) throws Exception {
+        this();
+        setLogHandler(logHandler);
+    }
+
+    @Override
+    public void setLogHandler(Consumer<Fmi2Model.LogMessage> logHandler) {
+        this.logHandler = logHandler == null ? ignored -> {} : logHandler;
     }
 
     /**
@@ -87,7 +106,7 @@ public class Model implements Serializable {
      *   them.
      */
     public void log(String message, Fmi2Status status, String category) {
-        Backend.loggingCallback(status, category, message);
+        logHandler.accept(new Fmi2Model.LogMessage(status, category, message));
     }
 
     public Fmi2Status fmi2DoStep(double current_time, double step_size, boolean noStepPrior) {
@@ -238,37 +257,6 @@ public class Model implements Serializable {
         this.boolean_c = this.boolean_a || this.boolean_b;
         this.string_c = this.string_a + this.string_b;
 
-    }
-
-    class Fmi2GetValuePair<T> {
-        Fmi2Status status;
-        List<T> values;
-
-        Fmi2GetValuePair(Fmi2Status status, List<T> values)
-
-        {
-            this.status = status;
-            this.values = values;
-        }
-    }
-
-    class Fmi2SerializeFmuStatePair {
-        public Fmi2Status status;
-        public byte[] bytes;
-
-        Fmi2SerializeFmuStatePair(Fmi2Status status, byte[] bytes) {
-            this.status = status;
-            this.bytes = bytes;
-        }
-    }
-
-    enum Fmi2Status {
-        OK,
-        Warning,
-        Discard,
-        Error,
-        Fatal,
-        Pending
     }
 
 }

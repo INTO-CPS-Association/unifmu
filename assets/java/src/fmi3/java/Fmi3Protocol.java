@@ -1,35 +1,45 @@
+package org.intocps.unifmu.protocol.fmi3;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import org.zeromq.SocketType;
-import org.zeromq.ZMQ;
-import org.zeromq.ZContext;
-
+import org.intocps.unifmu.protocol.Fmi3Messages;
+import org.intocps.unifmu.protocol.UnifmuHandshake;
+import org.intocps.unifmu.communication.CommunicationChannel;
+import org.intocps.unifmu.model.fmi3.Fmi3Model;
+import org.intocps.unifmu.model.fmi3.Fmi3ModelFactory;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public abstract class AbstractBackend {
-    static ZMQ.Socket socket;
-    static Model model;
+public class Fmi3Protocol {
+    private final CommunicationChannel channel;
+    private final Fmi3ModelFactory modelFactory;
+    private Fmi3Model model;
 
-    static Fmi3Messages.Fmi3Command recvCommand() throws InvalidProtocolBufferException {
-        return Fmi3Messages.Fmi3Command.parseFrom(socket.recv());
+    public Fmi3Protocol(CommunicationChannel channel, Fmi3ModelFactory modelFactory) {
+        this.channel = channel;
+        this.modelFactory = modelFactory;
     }
 
-    static void sendReply(Message reply) {
-        socket.send(reply.toByteArray(), 0);
+    Fmi3Messages.Fmi3Command recvCommand() throws IOException, InvalidProtocolBufferException {
+        return Fmi3Messages.Fmi3Command.parseFrom(channel.receive());
     }
 
-    static Fmi3Messages.Fmi3Status toProtobufStatus(Model.Fmi3Status status) {
+    void sendReply(Message reply) throws IOException {
+        channel.send(reply.toByteArray());
+    }
+
+    static Fmi3Messages.Fmi3Status toProtobufStatus(Fmi3Model.Fmi3Status status) {
         return Fmi3Messages.Fmi3Status
             .forNumber(status.ordinal());
     }
 
-    static void sendStatusReply(Model.Fmi3Status status) {
+    void sendStatusReply(Fmi3Model.Fmi3Status status) throws IOException {
         sendReply(
             Fmi3Messages.Fmi3Return
                 .newBuilder()
@@ -43,53 +53,41 @@ public abstract class AbstractBackend {
         );
     }
 
-    public static void loggingCallback(Model.Fmi3Status status, String category, String message) {
-        sendReply(
-            Fmi3Messages.Fmi3Return
-                .newBuilder()
-                .setLog(
-                    Fmi3Messages.Fmi3LogReturn
-                        .newBuilder()
-                        .setStatus(
-                            Fmi3Messages.Fmi3Status
-                                .forNumber(status.ordinal())
-                        )
-                        .setCategory(category)
-                        .setLogMessage(message)
-                        .build()
-                )
-                .build()
-        );
-
+    private void loggingCallback(Fmi3Model.LogMessage log) {
         try {
-            Fmi3Messages.Fmi3Command command = recvCommand();
+            sendReply(
+                Fmi3Messages.Fmi3Return.newBuilder()
+                    .setLog(Fmi3Messages.Fmi3LogReturn.newBuilder()
+                        .setStatus(Fmi3Messages.Fmi3Status.forNumber(log.status().ordinal()))
+                        .setCategory(log.category())
+                        .setLogMessage(log.message())
+                        .build())
+                    .build()
+            );
 
+            Fmi3Messages.Fmi3Command command = recvCommand();
             switch (command.getCommandCase()) {
                 case FMI3CALLBACKCONTINUE:
                     break;
                 default:
-                    System.out.println("Unexpected command received after replying with a logging message.");
-                    System.exit(1);
+                    throw new IllegalStateException(
+                        "Unexpected command received after replying with a logging message."
+                    );
             }
-        }
-        catch(Exception e) {
-            System.out.println("A fatal error occured while parsing expected continue command from UniFMU API layer.");
-            System.exit(1);
+        } catch (IOException e) {
+            throw new UncheckedIOException(
+                "Could not receive the expected callback-continue command.", e
+            );
         }
     }
 
-    static void handshake() {
+    void handshake() throws IOException {
         sendReply(
             UnifmuHandshake.HandshakeReply
                 .newBuilder()
                 .setStatus(UnifmuHandshake.HandshakeStatus.OK)
                 .build()
         );
-    }
-
-    static void connectToEndpoint(ZContext context, String endpoint) {
-        socket = context.createSocket(SocketType.REQ);
-        socket.connect(endpoint);
     }
 
     static Iterable<ByteBuffer> convertToByteBufferArrayList(List<ByteString> byteStrings) {
@@ -108,7 +106,12 @@ public abstract class AbstractBackend {
         return byteStringList;
     }
 
-    static void commandReplyLoop() throws Exception{
+    public void run() throws Exception {
+        handshake();
+        commandReplyLoop();
+    }
+
+    void commandReplyLoop() throws Exception {
         while (true) {
             Fmi3Messages.Fmi3Command command = recvCommand();
 
@@ -116,16 +119,7 @@ public abstract class AbstractBackend {
                     
                 case FMI3INSTANTIATECOSIMULATION: {
                     var c = command.getFmi3InstantiateCoSimulation();
-                    model = new Model(
-                        c.getInstanceName(),
-                        c.getInstantiationToken(),
-                        c.getResourcePath(),
-                        c.getVisible(),
-                        c.getLoggingOn(),
-                        c.getEventModeUsed(),
-                        c.getEarlyReturnAllowed(),
-                        c.getRequiredIntermediateVariablesList()
-                    );
+                    model = modelFactory.create(c, this::loggingCallback);
                     sendReply(
                         Fmi3Messages.Fmi3Return
                             .newBuilder()
@@ -742,7 +736,7 @@ public abstract class AbstractBackend {
                     break;
 
                 case FMI3FREEINSTANCE:
-                    System.exit(0);
+                    return;
 
                 case FMI3RESET:
                     sendStatusReply(model.fmi3Reset());

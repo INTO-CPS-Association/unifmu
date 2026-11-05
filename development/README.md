@@ -23,7 +23,8 @@ and the [backend documentation](../README.md#use-other-languages-or-fmi3).
 | `fmiapi/` | Native FMI2/FMI3 runtime libraries |
 | `unifmu_macros/` | Test-generation macros |
 | `assets/` | Backend templates and resources embedded into the CLI |
-| `assets/auto_generated/` | Generated protobuf bindings and compiled runtime libraries; ignored by Git |
+| `assets/java/runtime/` | Standalone Java runtime library and Maven publication |
+| `assets/auto_generated/` | Generated bindings, native libraries, and embedded Java runtime JAR; ignored by Git |
 | `schemas/` | Protocol Buffer message definitions |
 | `docker-build/` | Cross-compilation image and build scripts |
 | `scripts/` | Shared-version reader, release-version selection, and tests |
@@ -45,13 +46,17 @@ Install:
   `scripts/version.py`, which uses `tomllib`.
 - Java 21 JDK for Java backends and
   [VDMCheck](https://github.com/INTO-CPS-Association/FMI-VDM-Model).
-- .NET SDK and the .NET 8 runtime for the C# backend. The release image uses
-  the .NET 10 SDK alongside the .NET 8 runtime.
+- .NET 10 SDK for the C# backend, which targets `net10.0`.
+  Ensure `dotnet --version` selects SDK 10 or newer, rather than an older
+  installation earlier on `PATH`.
 
-Use a Python virtual environment and install the test dependencies:
+`./test.sh` creates and reuses `target/native-test-venv/`, installs the
+dependencies from `scripts/requirements-test.txt`, and puts that environment on
+`PATH` for all tests and backend subprocesses. No manual activation is needed.
+It finds Python 3.11 or newer; set `PYTHON` to select an interpreter explicitly:
 
 ```bash
-python3 -m pip install pyzmq protobuf==7.36.2 fmpy colorama coloredlogs toml
+PYTHON=python3.12 ./test.sh
 ```
 
 Keep the protobuf compiler and backend dependency versions consistent when
@@ -108,6 +113,7 @@ Then generate the Python, C#, and Java bindings:
 
 ```bash
 protoc -I=schemas --python_out=assets/auto_generated --csharp_out=assets/auto_generated --java_out=assets/auto_generated fmi2_messages.proto fmi3_messages.proto unifmu_handshake.proto
+./assets/java/gradlew -p assets/java/runtime prepareEmbeddedRuntime
 cargo build --package unifmu --release
 cargo run --bin unifmu --release -- generate python myfmu fmi2
 ```
@@ -175,6 +181,28 @@ cargo test --package unifmu --bin unifmu
 
 The Python command above requires Python 3.11 or newer.
 
+The self-contained Java runtime JAR is built from `assets/java/runtime/` and
+contains both FMI2/FMI3 protocol support, protobuf bindings, the launcher, and
+example models in `org.intocps.unifmu.example.fmi2` /
+`org.intocps.unifmu.example.fmi3`. Generated Java FMUs embed that JAR under
+`resources/libs` and include only the editable example model source plus a
+minimal Gradle application project. Their `launch.toml` sets
+`unifmu.fmi.version` and `unifmu.model.impl`. Test-only model/channel fixtures
+remain in `cli/tests/java_fixtures`.
+
+`./test.sh` and `docker-build/build_all.sh` build and stage the runtime JAR in
+`assets/auto_generated/java/` before compiling the CLI. To publish it locally for
+another Java project, run
+`./assets/java/gradlew -p assets/java/runtime publishToMavenLocal`; see the
+[Java backend guide](../assets/java/README.md#building-and-using-the-runtime-jar)
+for Maven coordinates.
+
+The FMI3 in-memory-channel test verifies actual protobuf requests and replies
+without a ZeroMQ socket. Java FMI2/FMI3 local and remote generated projects can
+be compiled by running `gradlew compileJava` in the local `resources` or remote
+private backend directory. Only the editable model is compiled from source;
+the versioned runtime dependency is bundled in `resources/libs`.
+
 To try a generated archive manually:
 
 ```bash
@@ -189,8 +217,10 @@ See [FMI function support](../docs/fmi-support.md) for the documented interface.
 ## Cross-platform release build
 
 The [Dockerfile](../docker-build/Dockerfile) pins Ubuntu 24.04 and includes Java
-21, the .NET 10 SDK, the .NET 8 runtime, and a Python virtual environment with test
-dependencies. Both AMD64 and ARM64 hosts build the same five targets:
+21, the .NET 10 SDK and runtime, and a Python virtual environment with test
+dependencies. Docker uses the host CPU architecture without emulation and
+cross-compiles all five targets. Tests run separately on the host OS, not inside
+the build container:
 
 | Platform | Rust target |
 | --- | --- |
@@ -200,11 +230,24 @@ dependencies. Both AMD64 and ARM64 hosts build the same five targets:
 | macOS Intel | `x86_64-apple-darwin` |
 | macOS Apple Silicon | `aarch64-apple-darwin` |
 
-From the repository root, build a host-native image and run the release script:
+From the repository root, run the top-level build script:
 
 ```bash
-docker build -t unifmu-build:local docker-build
-docker run --rm -v "$(pwd):/workdir" unifmu-build:local ./docker-build/build_all.sh
+./build.sh
+```
+
+The script obtains the pinned build image (pulling it when available or building
+it locally as a fallback), then runs the cross-platform build in Docker followed
+by `./test.sh` on the host. Install the native development prerequisites before
+running it; Python test dependencies are installed automatically in its virtual
+environment.
+It writes generated bindings and native libraries under `assets/auto_generated/`
+and produces the five CLI archives in `target/`.
+
+To run only the build in an already prepared build image, use:
+
+```bash
+docker run --rm -v "$(pwd):/workdir" unifmu-build:latest ./docker-build/build_all.sh
 ```
 
 In PowerShell, use `-v "${PWD}:/workdir"` for the volume mount.
@@ -213,9 +256,23 @@ The [release script](../docker-build/build_all.sh):
 1. Reads the shared workspace version and compiles all five native libraries.
 2. Uses osxcross's Linux-compatible `lipo` to merge the Intel and ARM64 macOS
    libraries and verify both slices.
-3. Generates protobuf bindings and runs tests using the host-native Linux target.
+3. Generates protobuf bindings without running tests in the container.
 4. Builds all five CLIs and checks that the host CLI reports the expected version.
 5. Writes five `target/unifmu-<target>-<version>.zip` archives.
+
+Run `./test.sh` separately to test the generated assets natively without
+repeating the Docker build. It uses `target/native-tests/` for Cargo build
+metadata, separate from Docker, and accepts Cargo test arguments. For example:
+
+```bash
+./test.sh --package unifmu --test cli_tests test_instantiate
+```
+
+CI installs native test dependencies and runs the same script on its Linux
+runner before uploading artifacts or creating a release. Tests exercise only
+the current host platform; compiling five targets does not test all five.
+Native ARM64 Linux FMI2 testing remains limited by FMPy's legacy platform
+lookup and bundled logger; macOS ARM64 testing uses the universal macOS library.
 
 Each release CLI embeds all five single-architecture libraries and the universal
 macOS library at `assets/auto_generated/binaries/universal-darwin/unifmu.dylib`.
@@ -237,7 +294,7 @@ FMI2 ARM64 Linux libraries use `aarch64-linux`, which requires importer support.
 | --- | --- | --- |
 | `protoc` compiler | 36.2 | [Build-image Dockerfile](../docker-build/Dockerfile) |
 | Python `protobuf` | 7.36.2 | [requirements.txt](../assets/python/requirements.txt) and build-image Dockerfile |
-| Java `protobuf-java` | 4.36.2 | [build.gradle](../assets/java/build.gradle) |
+| Java `protobuf-java` | 4.36.2 | [runtime/build.gradle](../assets/java/runtime/build.gradle) |
 | C# `Google.Protobuf` | 3.36.2 | [model.csproj](../assets/csharp/model.csproj) |
 | Rust `prost` / `prost-build` | 0.14.4 | [fmiapi/Cargo.toml](../fmiapi/Cargo.toml) |
 | Published build image | `lausdahl/unifmu-build:protobuf-36.2` | [Obtain](../docker-build/obtain_build_image.sh) and [publish](../docker-build/build_and_push_image.sh) scripts |
@@ -271,7 +328,7 @@ runtime dependencies together, preserving the model and its XML.
 
 ## Maintaining the build image
 
-To build and push both host architectures to
+To build and push AMD64 and ARM64 images to
 `lausdahl/unifmu-build:protobuf-36.2`:
 
 ```bash
@@ -280,19 +337,20 @@ docker login
 ```
 
 You need push access to that Docker Hub repository. The script creates or reuses
-the `unifmu-multiarch` Buildx builder with the `docker-container` driver, avoiding
-the default driver's multi-platform limitation. It does not publish UniFMU releases.
+the `unifmu-multiarch` Buildx builder with the `docker-container` driver.
+It does not publish UniFMU releases.
 
 CI calls [obtain_build_image.sh](../docker-build/obtain_build_image.sh):
 
 ```bash
 ./docker-build/obtain_build_image.sh
 docker run --rm -v "$(pwd):/workdir" unifmu-build:latest ./docker-build/build_all.sh
+./test.sh
 ```
 
 The obtain script pulls the published image and tags it locally as
 `unifmu-build:latest`. If pulling fails, it reports the failure and builds an
-AMD64 image locally. It does not push an image from CI.
+host-native image locally. It does not push an image from CI.
 Republish the image after changing its Dockerfile; pulling an image does not
 rebuild it from the checked-out source. The published tag includes the compiler
 version so CI does not reuse the previous protobuf toolchain. The release build
@@ -337,7 +395,7 @@ update, the version commit remains: cleanup does not rewind shared history.
 For build-image problems, open an interactive container:
 
 ```bash
-docker run -it --rm -v "$(pwd):/workdir" unifmu-build:local bash
+docker run -it --rm -v "$(pwd):/workdir" unifmu-build:latest bash
 ```
 
 On Windows, ensure shell scripts use LF line endings, not CRLF. Missing backend
