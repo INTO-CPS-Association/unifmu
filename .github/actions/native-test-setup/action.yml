@@ -5,7 +5,7 @@ runs:
   steps:
     - name: Restore host ownership of Docker build outputs
       shell: bash
-      run: sudo chown -R "$(id -u):$(id -g)" target assets/auto_generated fmiapi/src
+      run: sudo chown -R "$(id -u):$(id -g)" target assets/auto_generated assets/java/runtime fmiapi/src
     - uses: actions/setup-python@v6
       with:
         python-version: '3.12'
