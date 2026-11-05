@@ -30,6 +30,8 @@ def select_version(current, tags, requested):
         version = parse_version(requested)
         if version < current_version or version <= latest:
             raise ValueError("Release version must not precede the workspace version and must exceed existing stable tags")
+    elif latest != (-1, -1, -1) and current_version[:2] > latest[:2]:
+        version = (*current_version[:2], 0)
     else:
         major, minor, patch = max(current_version, latest)
         version = (major, minor, patch + 1)

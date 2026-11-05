@@ -369,12 +369,14 @@ To release, run **Actions > Release > Run workflow** on the desired branch:
 
 | Input | Behavior |
 | --- | --- |
-| Release version | Optional stable version such as `0.14.1` or `v0.14.1`; blank increments the patch from the highest workspace version or stable Git tag |
+| Release version | Optional stable version such as `0.14.1` or `v0.14.1`; blank increments the patch, unless the workspace major/minor is newer than the latest stable tag, in which case it selects patch zero |
 | Release automatically | Unchecked by default: create a draft for review. Check to publish automatically after a successful build |
 
-For example, the default after `0.14.0` is `0.14.1`. An explicit version must not
-precede the workspace version and must exceed existing stable tags. New tags
-always use `vMAJOR.MINOR.PATCH`; existing tags and releases are never overwritten.
+For example, the default after `0.14.0` is `0.14.1`; if the workspace is updated
+to `1.0.0` while the latest stable tag is `0.14.0`, the default is `1.0.0`.
+An explicit version is used exactly as entered and must not precede the workspace
+version or existing stable tags. New tags always use `vMAJOR.MINOR.PATCH`;
+existing tags and releases are never overwritten.
 
 The [release workflow](../.github/workflows/release.yml) commits the selected
 version, tags that commit, builds and tests all five targets, and creates a draft

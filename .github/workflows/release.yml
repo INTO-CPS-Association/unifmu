@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (e.g. 0.14.1 or v0.14.1); blank selects the next patch"
+        description: "Release version (e.g. 0.14.1 or v0.14.1); blank selects the next patch or a new major/minor at patch zero"
         required: false
         type: string
       release_automatically:
