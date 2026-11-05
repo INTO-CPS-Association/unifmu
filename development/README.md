@@ -268,9 +268,10 @@ metadata, separate from Docker, and accepts Cargo test arguments. For example:
 ./test.sh --package unifmu --test cli_tests test_instantiate
 ```
 
-CI installs native test dependencies and runs the same script on its Linux
-runner before uploading artifacts or creating a release. Tests exercise only
-the current host platform; compiling five targets does not test all five.
+CI installs native test dependencies and runs the full suite on Linux before
+uploading artifacts or creating a release. It also runs the Java FMI2/FMI3
+protocol fixture tests natively on macOS. Tests exercise only the current host
+platform; compiling five targets does not test all five.
 Native ARM64 Linux FMI2 testing remains limited by FMPy's legacy platform
 lookup and bundled logger; macOS ARM64 testing uses the universal macOS library.
 

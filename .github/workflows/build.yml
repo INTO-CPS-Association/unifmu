@@ -38,4 +38,25 @@ jobs:
         path: |
           target/unifmu-*.zip
           assets/java/runtime/build/libs/unifmu-java-runtime-*.jar
+          assets/auto_generated/binaries/
         retention-days: 7
+
+  macos-java-tests:
+    name: Java protocol tests on macOS
+    needs: build
+    runs-on: macos-14
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Download build assets
+      uses: actions/download-artifact@v6
+      with:
+        name: unifmu-build-artifacts
+        path: .
+
+    - name: Prepare native tests
+      uses: ./.github/actions/native-test-setup
+
+    - name: Test Java FMI2 and FMI3 protocols
+      run: ./test.sh --package unifmu --test cli_tests test_java_fmi

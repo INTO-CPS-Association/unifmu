@@ -20,7 +20,6 @@ use common::{
     BasicFmu,
     BreakableFmu
 };
-#[cfg(target_os = "linux")]
 use common::{FmiVersion, FmuBackendImplementationLanguage, LocalFmu};
 
 #[for_each_fmu]
@@ -196,7 +195,6 @@ fn test_unexpected_exit_during_command() {
 }
 
 #[test]
-#[cfg(target_os = "linux")]
 fn test_java_fmi3_protocol_with_in_memory_channel() {
     let fmu = LocalFmu::new(
         String::from("java_fmi3_in_memory_channel"),
@@ -235,7 +233,6 @@ fn test_java_fmi3_protocol_with_in_memory_channel() {
 }
 
 #[test]
-#[cfg(target_os = "linux")]
 fn test_java_fmi2_protocol_with_in_memory_channel() {
     let fmu = LocalFmu::new(
         String::from("java_fmi2_in_memory_channel"),
