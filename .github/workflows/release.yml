@@ -122,9 +122,6 @@ jobs:
             test -s "$asset"
             assets+=("$asset")
           done
-          java_runtime="assets/java/runtime/build/libs/unifmu-java-runtime-$RELEASE_VERSION.jar"
-          test -s "$java_runtime"
-          assets+=("$java_runtime")
           gh release create "$RELEASE_TAG" "${assets[@]}" \
             --verify-tag --draft --generate-notes --title "UniFMU $RELEASE_TAG"
 

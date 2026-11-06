@@ -261,7 +261,9 @@ The [release script](../docker-build/build_all.sh):
 5. Writes five CLI archives in `target/`. Linux archives are named
    `unifmu-linux-x86_64-<version>.zip` and `unifmu-linux-arm64-<version>.zip`.
    Windows and macOS archives retain `unifmu-<target>-<version>.zip` naming.
-   Cargo target names and build directories are unchanged.
+   Cargo target names and build directories are unchanged. GitHub releases attach
+   only these five CLI ZIPs; the Java runtime JAR is already embedded in each CLI
+   alongside the native libraries and is not attached separately.
 
 Run `./test.sh` separately to test the generated assets natively without
 repeating the Docker build. It uses `target/native-tests/` for Cargo build
