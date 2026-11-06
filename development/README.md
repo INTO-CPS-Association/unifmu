@@ -258,7 +258,10 @@ The [release script](../docker-build/build_all.sh):
    libraries and verify both slices.
 3. Generates protobuf bindings without running tests in the container.
 4. Builds all five CLIs and checks that the host CLI reports the expected version.
-5. Writes five `target/unifmu-<target>-<version>.zip` archives.
+5. Writes five CLI archives in `target/`. Linux archives are named
+   `unifmu-linux-x86_64-<version>.zip` and `unifmu-linux-arm64-<version>.zip`.
+   Windows and macOS archives retain `unifmu-<target>-<version>.zip` naming.
+   Cargo target names and build directories are unchanged.
 
 Run `./test.sh` separately to test the generated assets natively without
 repeating the Docker build. It uses `target/native-tests/` for Cargo build
