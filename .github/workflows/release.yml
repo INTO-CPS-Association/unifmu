@@ -109,22 +109,19 @@ jobs:
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
         run: |
-          targets=(
-            x86_64-unknown-linux-gnu
-            aarch64-unknown-linux-gnu
+          platforms=(
+            linux-x86_64
+            linux-arm64
             x86_64-pc-windows-gnu
             x86_64-apple-darwin
             aarch64-apple-darwin
           )
           assets=()
-          for target in "${targets[@]}"; do
-            asset="target/unifmu-$target-$RELEASE_VERSION.zip"
+          for platform in "${platforms[@]}"; do
+            asset="target/unifmu-$platform-$RELEASE_VERSION.zip"
             test -s "$asset"
             assets+=("$asset")
           done
-          java_runtime="assets/java/runtime/build/libs/unifmu-java-runtime-$RELEASE_VERSION.jar"
-          test -s "$java_runtime"
-          assets+=("$java_runtime")
           gh release create "$RELEASE_TAG" "${assets[@]}" \
             --verify-tag --draft --generate-notes --title "UniFMU $RELEASE_TAG"
 

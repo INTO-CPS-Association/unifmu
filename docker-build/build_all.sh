@@ -71,9 +71,14 @@ fi
 
 for target in "${targets[@]}"; do
     executable=unifmu
+    archive_platform="${target}"
+    case "${target}" in
+        x86_64-unknown-linux-gnu) archive_platform=linux-x86_64 ;;
+        aarch64-unknown-linux-gnu) archive_platform=linux-arm64 ;;
+    esac
     if [[ "${target}" == *-pc-windows-gnu ]]; then
         executable=unifmu.exe
     fi
     echo "zipping cli for ${target}"
-    zip -qj "target/unifmu-${target}-${VER}.zip" "target/${target}/release/${executable}"
+    zip -qj "target/unifmu-${archive_platform}-${VER}.zip" "target/${target}/release/${executable}"
 done
